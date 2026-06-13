@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-13T21:17:23.870Z",
+  "updatedAt": "2026-06-13T21:24:46.937Z",
   "matches": [
     {
       "home": "Korea Republic",
@@ -13,8 +13,8 @@
       "home": "Canada",
       "away": "Bosnia-H.",
       "status": "FINISHED",
-      "homeScore": 1,
-      "awayScore": 1,
+      "homeScore": null,
+      "awayScore": null,
       "utcDate": "2026-06-12T19:00:00Z"
     },
     {

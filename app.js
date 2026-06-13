@@ -3,12 +3,13 @@
   const D = window.BETTING_DATA;
   const cur = D.currency;
   const fmt = (n) => cur + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmt0 = (n) => cur + Math.round(n).toLocaleString();
   const $ = (id) => document.getElementById(id);
 
   const settled = D.bets.filter((b) => b.result === "won" || b.result === "lost");
   const wins = D.bets.filter((b) => b.result === "won");
   const losses = D.bets.filter((b) => b.result === "lost");
-  const lastWin = wins.length ? wins[wins.length - 1] : null;
+  const broken = losses.length > 0;
 
   // current bankroll = return of last settled bet (or starting bankroll)
   let bankroll = D.startingBankroll;
@@ -21,29 +22,46 @@
   const currentLeg = Math.min(legsDone + 1, D.targetLegs);
   const profit = bankroll - D.startingBankroll;
   const hitRate = settled.length ? (wins.length / settled.length) * 100 : 0;
+  const targetNow = D.startingBankroll * Math.pow(D.targetMultiplierPerLeg, legsDone);
+  const onPace = bankroll >= targetNow;
 
-  // ---- top summary cards ----
-  $("summary").innerHTML = `
-    <div class="card">
-      <div class="label">Bankroll</div>
-      <div class="value ${profit >= 0 ? "green" : "red"}">${fmt(bankroll)}</div>
-      <div class="sub">started ${fmt(D.startingBankroll)}</div>
-    </div>
-    <div class="card">
-      <div class="label">Profit</div>
-      <div class="value ${profit >= 0 ? "green" : "red"}">${profit >= 0 ? "+" : ""}${fmt(profit)}</div>
-      <div class="sub">${(bankroll / D.startingBankroll).toFixed(2)}× of stake</div>
-    </div>
-    <div class="card">
-      <div class="label">Progress</div>
-      <div class="value">${losses.length ? "Streak broken" : "Leg " + currentLeg}</div>
-      <div class="sub">${wins.length} of ${D.targetLegs} legs won</div>
-    </div>
-    <div class="card">
-      <div class="label">Hit rate</div>
-      <div class="value">${hitRate.toFixed(0)}%</div>
-      <div class="sub">${wins.length}W / ${losses.length}L</div>
-    </div>`;
+  // ---- HERO ----
+  $("legLabel").textContent = broken ? "Streak broken" : "Leg " + currentLeg + " of " + D.targetLegs;
+  const bankEl = $("bankroll");
+  bankEl.textContent = fmt(bankroll);
+  bankEl.className = "bankroll " + (profit >= 0 ? "green" : "red");
+  const profEl = $("profit");
+  profEl.textContent = (profit >= 0 ? "▲ +" : "▼ ") + fmt(Math.abs(profit)) + " from " + fmt(D.startingBankroll);
+  profEl.className = "profit " + (profit >= 0 ? "green" : "red");
+  $("pace").textContent = broken
+    ? "Streak ended — review & reset"
+    : onPace
+    ? "✓ On / ahead of pace (target " + fmt0(targetNow) + ")"
+    : "Behind pace (target " + fmt0(targetNow) + ")";
+
+  const pct = Math.min((wins.length / D.targetLegs) * 100, 100);
+  $("progressBar").style.width = pct + "%";
+  $("progressLabel").textContent = wins.length + " / " + D.targetLegs + " legs won · final target ≈ " + fmt0(D.startingBankroll * Math.pow(D.targetMultiplierPerLeg, D.targetLegs));
+
+  // ---- mini stats ----
+  $("mini").innerHTML = `
+    <div class="card"><div class="v">${wins.length}W / ${losses.length}L</div><div class="l">Record</div></div>
+    <div class="card"><div class="v">${hitRate.toFixed(0)}%</div><div class="l">Hit rate</div></div>`;
+
+  // ---- today's pick ----
+  const p = D.todaysPick;
+  if (p) {
+    $("pick").innerHTML = `
+      <span class="tag">Recommended next</span>
+      <div class="h">${p.headline}</div>
+      <div class="m">${p.market}</div>
+      <div class="r">${p.rationale}</div>
+      ${p.backups && p.backups.length
+        ? `<div class="bu"><div class="lbl">Backups</div><ul>${p.backups.map((b) => `<li>${b}</li>`).join("")}</ul></div>`
+        : ""}`;
+  } else {
+    $("pick").innerHTML = `<div class="r">No pick logged yet.</div>`;
+  }
 
   // ---- streak dots ----
   let dots = "";
@@ -55,32 +73,26 @@
   }
   $("streak").innerHTML = dots;
 
-  // ---- today's pick ----
-  const p = D.todaysPick;
-  if (p) {
-    $("pick").innerHTML = `
-      <div class="h">${p.headline}</div>
-      <div class="m">${p.match} — ${p.market}</div>
-      <div class="r">${p.rationale}</div>
-      ${p.backups && p.backups.length ? "<ul>" + p.backups.map((b) => `<li>${b}</li>`).join("") + "</ul>" : ""}`;
-  }
-
-  // ---- results table ----
-  const rows = D.bets
+  // ---- results as stacked cards ----
+  const cards = D.bets
     .slice()
     .reverse()
     .map((b) => `
-      <tr>
-        <td>${b.leg}</td>
-        <td>${b.date}</td>
-        <td>${b.match}<div class="sel">${(b.selections || []).join(" · ")}</div></td>
-        <td class="num">${b.odds.toFixed(2)}</td>
-        <td class="num">${fmt(b.stake)}</td>
-        <td><span class="pill ${b.result}">${b.result}</span></td>
-        <td class="num">${b.result === "pending" ? "—" : fmt(b.returnAmount)}</td>
-      </tr>`)
+      <div class="bet ${b.result}">
+        <div class="bet-top">
+          <span class="leg">Leg ${b.leg} · ${b.date}</span>
+          <span class="pill ${b.result}">${b.result}</span>
+        </div>
+        <div class="bet-match">${b.match}</div>
+        <div class="bet-sel">${(b.selections || []).join(" · ")}</div>
+        <div class="bet-fig">
+          <span>Odds <b>${b.odds.toFixed(2)}</b></span>
+          <span>Stake <b>${fmt(b.stake)}</b></span>
+          <span class="ret ${b.result === "won" ? "won" : ""}">${b.result === "pending" ? "in play" : "→ " + fmt(b.returnAmount)}</span>
+        </div>
+      </div>`)
     .join("");
-  $("results").innerHTML = rows || `<tr><td colspan="7">No bets logged yet.</td></tr>`;
+  $("results").innerHTML = cards || `<div class="card">No bets logged yet.</div>`;
 
   // ---- bankroll vs target chart ----
   const labels = ["Start"];
@@ -102,48 +114,28 @@
     data: {
       labels,
       datasets: [
-        {
-          label: "Target (1.4× / leg)",
-          data: target,
-          borderColor: "#7a86a8",
-          borderDash: [6, 5],
-          pointRadius: 0,
-          tension: 0.25,
-          borderWidth: 2,
-        },
-        {
-          label: "Actual bankroll",
-          data: actual,
-          borderColor: "#2ecc71",
-          backgroundColor: "rgba(46,204,113,.12)",
-          fill: true,
-          spanGaps: true,
-          pointRadius: 3,
-          tension: 0.25,
-          borderWidth: 2.5,
-        },
+        { label: "Target", data: target, borderColor: "#7a86a8", borderDash: [5, 4], pointRadius: 0, tension: 0.25, borderWidth: 2 },
+        { label: "Actual", data: actual, borderColor: "#2ee37a", backgroundColor: "rgba(46,227,122,.12)", fill: true, spanGaps: true, pointRadius: 3, tension: 0.25, borderWidth: 2.5 },
       ],
     },
     options: {
-      responsive: true,
+      responsive: true, maintainAspectRatio: true,
       plugins: {
-        legend: { labels: { color: "#cdd7f2" } },
-        tooltip: { callbacks: { label: (c) => c.dataset.label + ": " + (c.parsed.y == null ? "—" : fmt(c.parsed.y)) } },
+        legend: { labels: { color: "#cdd7f2", boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: (c) => c.dataset.label + ": " + (c.parsed.y == null ? "—" : fmt0(c.parsed.y)) } },
       },
       scales: {
-        x: { ticks: { color: "#93a0c0" }, grid: { color: "#26304f" } },
-        y: { ticks: { color: "#93a0c0", callback: (v) => cur + (v >= 1000 ? (v / 1000).toFixed(0) + "k" : v) }, grid: { color: "#26304f" }, type: "logarithmic" },
+        x: { ticks: { color: "#93a0c0", font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 9 }, grid: { display: false } },
+        y: { type: "logarithmic", ticks: { color: "#93a0c0", font: { size: 10 }, callback: (v) => cur + (v >= 1000 ? (v / 1000) + "k" : v) }, grid: { color: "#26304f" } },
       },
     },
   });
 
-  // ---- reality-check probability ----
-  // P(completing remaining legs) at the group's realized hit-rate, capped sensibly.
+  // ---- reality check ----
   const remaining = D.targetLegs - wins.length;
   const pLeg = settled.length >= 1 ? Math.min(hitRate / 100, 0.95) : 0.8;
-  const pFinish = losses.length ? 0 : Math.pow(pLeg, Math.max(remaining, 0));
-  $("reality").innerHTML = losses.length
-    ? `Streak broken at leg ${losses[0].leg}. Reset, review the log, and decide on a fresh disposable budget before continuing.`
-    : `At your current ${(pLeg * 100).toFixed(0)}% per-leg hit rate, the rough chance of completing all ${remaining} remaining legs is <b>${(pFinish * 100).toFixed(1)}%</b>. ` +
-      `Keep this in view: even a strong streak is fragile — only stake money you can fully lose.`;
+  const pFinish = broken ? 0 : Math.pow(pLeg, Math.max(remaining, 0));
+  $("reality").innerHTML = broken
+    ? `Streak broke at leg ${losses[0].leg}. Review the log and decide on a fresh, disposable budget before continuing.`
+    : `${wins.length} straight wins so far — nice, but the odds don't reset. At your current ${(pLeg * 100).toFixed(0)}% per-leg rate, the rough chance of completing the remaining <b>${remaining}</b> legs is about <b>${(pFinish * 100).toFixed(1)}%</b>. Stay disciplined: only stake money you can fully lose.`;
 })();

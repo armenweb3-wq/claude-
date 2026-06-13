@@ -2,62 +2,67 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>World Cup 2026 — Group Betting Tracker</title>
-  <meta name="description" content="Compounding World Cup 2026 betting streak tracker: daily picks, results, and performance vs. the 1.4×-per-leg target." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>World Cup 2026 — Betting Tracker</title>
+  <meta name="description" content="Compounding World Cup 2026 betting streak: daily pick, results, and pace vs. the 1.4×-per-leg target." />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="wrap">
     <header class="site">
-      <h1>⚽ World Cup 2026 — Betting Streak Tracker</h1>
-      <p>Target: 17 legs · ~1.4× each · compounding. Daily group reference.</p>
+      <h1>⚽ World Cup 2026 Tracker</h1>
+      <p>17 legs · ~1.4× each · compounding</p>
     </header>
 
-    <div class="disclaimer">
-      For entertainment only. A 17-leg compounding streak is high-variance and most attempts fail —
-      stake only money you can fully afford to lose. Not financial advice.
+    <!-- HERO: the one thing you check -->
+    <div class="card hero">
+      <div class="leg" id="legLabel">—</div>
+      <div class="bankroll" id="bankroll">—</div>
+      <div class="profit" id="profit">—</div>
+      <div class="pace" id="pace">—</div>
+      <div class="progress"><span id="progressBar"></span></div>
+      <div class="progress-label" id="progressLabel">—</div>
     </div>
 
-    <div id="summary" class="grid cards"></div>
+    <div class="mini" id="mini"></div>
 
+    <!-- TODAY'S PICK -->
     <div class="section">
-      <h2>Streak — 17 legs</h2>
-      <div id="streak" class="streak"></div>
-    </div>
-
-    <div class="section">
-      <h2>Today's recommendation</h2>
+      <h2>Next bet</h2>
       <div id="pick" class="pick"></div>
     </div>
 
-    <div class="section two-col">
-      <div class="chart-box">
-        <h2>Bankroll vs. target (log scale)</h2>
-        <canvas id="bankrollChart" height="220"></canvas>
-      </div>
-      <div class="chart-box">
-        <h2>Reality check</h2>
-        <p id="reality" style="color:#cdd7f2;font-size:.9rem;"></p>
-      </div>
+    <!-- STREAK -->
+    <div class="section">
+      <h2>Streak (17 legs)</h2>
+      <div id="streak" class="streak"></div>
     </div>
 
+    <!-- CHART -->
+    <div class="section">
+      <h2>Bankroll vs. target</h2>
+      <div class="chart-box"><canvas id="bankrollChart" height="200"></canvas></div>
+    </div>
+
+    <!-- REALITY CHECK -->
+    <div class="section">
+      <h2>Reality check</h2>
+      <div class="card reality" id="reality"></div>
+    </div>
+
+    <!-- RESULTS -->
     <div class="section">
       <h2>Results log</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Leg</th><th>Date</th><th>Match &amp; selections</th>
-            <th class="num">Odds</th><th class="num">Stake</th><th>Result</th><th class="num">Return</th>
-          </tr>
-        </thead>
-        <tbody id="results"></tbody>
-      </table>
+      <div id="results"></div>
     </div>
 
-    <footer>
-      Update <code>data.js</code> each day → commit → push. The site recalculates everything automatically.
-    </footer>
+    <div class="disclaimer">
+      For entertainment only — a 17-leg compounding streak is high-variance and most attempts fail.
+      Stake only what you can fully afford to lose.
+    </div>
+
+    <footer>Updated by editing <code>data.js</code> → the page recalculates itself.</footer>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>

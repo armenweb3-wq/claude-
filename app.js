@@ -48,6 +48,8 @@
       case "btts": return hs > 0 && as > 0 ? "hit" : fin ? "miss" : "pending";
       case "team_win": { const s = teamSide(m, sel.team); if (!s) return "manual"; const w = s === "home" ? hs > as : as > hs; return fin ? (w ? "hit" : "miss") : "pending"; }
       case "double_chance": { const s = teamSide(m, sel.team); if (!s) return "manual"; const ok = s === "home" ? hs >= as : as >= hs; return fin ? (ok ? "hit" : "miss") : "pending"; }
+      case "draw": return fin ? (hs === as ? "hit" : "miss") : "pending";
+      case "no_draw": return fin ? (hs !== as ? "hit" : "miss") : "pending";
       default: return "manual";
     }
   }
@@ -164,6 +166,7 @@
       : `${wins.length} win(s) so far. The odds don't reset each leg — at a ${(pLeg * 100).toFixed(0)}% per-leg rate, completing the remaining <b>${remaining}</b> legs is ~<b>${(pFinish * 100).toFixed(1)}%</b>. Stake only what you can lose.`;
 
     if (lastMatches.length) renderLiveList(lastMatches, activeEff ? activeEff.bet : firstCandidate());
+    renderBuilder(lastMatches);
     updateCountdowns();
   }
 
@@ -259,6 +262,127 @@
       const m = Math.floor(s / 60); s -= m * 60;
       el.textContent = (d ? d + "d " : "") + (h || d ? h + "h " : "") + m + "m " + String(s).padStart(2, "0") + "s";
     });
+  }
+
+  // =====================================================================
+  //  BET BUILDER (tap a game -> pick markets -> place into your attempt)
+  // =====================================================================
+  function activeLocalAttempt() {
+    const locals = loadLocal();
+    for (let i = locals.length - 1; i >= 0; i--) if ((locals[i].status || "active") === "active") return { att: locals[i], all: locals, idx: i };
+    return null;
+  }
+  function attemptBankroll(att) {
+    let bank = att.startingBankroll;
+    for (const b of att.bets || []) {
+      if (b.result === "won") bank = b.returnAmount;
+      else if (b.result === "lost") { bank = 0; break; }
+    }
+    return bank;
+  }
+
+  function renderBuilder(matches) {
+    const upcoming = matches.filter((m) => m.status === "TIMED" || m.status === "SCHEDULED");
+    if (!upcoming.length) { $("builder").innerHTML = `<div class="card" style="font-size:.85rem;color:var(--muted)">No upcoming games in the feed right now.</div>`; return; }
+    $("builder").innerHTML = upcoming.map((m, i) =>
+      `<button class="gamebtn" data-i="${i}">${m.home} vs ${m.away} <span class="go">＋ build bet</span></button>`).join("");
+    $("builder").querySelectorAll(".gamebtn").forEach((b) => { b.onclick = () => openBuilder(upcoming[+b.dataset.i]); });
+  }
+
+  let draftLegs = [];
+  function openBuilder(m) {
+    draftLegs = [];
+    const chip = (label, attrs) => `<button class="mchip" ${attrs}>${label}</button>`;
+    const html = `
+      <div class="modal-head">
+        <div class="modal-title">${m.home} vs ${m.away}</div>
+        <button class="modal-x" id="mClose">✕</button>
+      </div>
+      <div class="modal-scroll">
+        <div class="mkt"><div class="mkt-l">Result (1 X 2)</div>
+          ${chip("1 · " + m.home, `data-t="team_win" data-team="${m.home}" data-lab="${m.home} to win"`)}
+          ${chip("X · Draw", `data-t="draw" data-lab="Draw"`)}
+          ${chip("2 · " + m.away, `data-t="team_win" data-team="${m.away}" data-lab="${m.away} to win"`)}
+        </div>
+        <div class="mkt"><div class="mkt-l">Double chance</div>
+          ${chip("1X", `data-t="double_chance" data-team="${m.home}" data-lab="${m.home} or draw (1X)"`)}
+          ${chip("12", `data-t="no_draw" data-lab="No draw (12)"`)}
+          ${chip("X2", `data-t="double_chance" data-team="${m.away}" data-lab="${m.away} or draw (X2)"`)}
+        </div>
+        <div class="mkt"><div class="mkt-l">Goals</div>
+          ${[0.5, 1.5, 2.5, 3.5].map((l) => chip("Over " + l, `data-t="over_goals" data-line="${l}" data-lab="Over ${l} goals"`)).join("")}
+          ${[2.5, 3.5].map((l) => chip("Under " + l, `data-t="under_goals" data-line="${l}" data-lab="Under ${l} goals"`)).join("")}
+          ${chip("BTTS", `data-t="btts" data-lab="Both teams to score"`)}
+        </div>
+        <div class="mkt"><div class="mkt-l">Cards (manual)</div>
+          ${[2.5, 3.5, 4.5].map((l) => chip("Over " + l, `data-t="cards" data-manual="1" data-lab="Over ${l} cards"`)).join("")}
+        </div>
+        <div class="mkt"><div class="mkt-l">Corners (manual)</div>
+          ${[7.5, 8.5, 9.5, 10.5].map((l) => chip("Over " + l, `data-t="corners" data-manual="1" data-lab="Over ${l} corners"`)).join("")}
+        </div>
+        <div class="mkt"><div class="mkt-l">Custom</div>
+          <div class="custom-row"><input id="customIn" class="inp" placeholder="e.g. Mbappé to score" /><button id="customAdd" class="addbtn">Add</button></div>
+        </div>
+        <div class="draft"><div class="mkt-l">Your legs</div><div id="draftList" class="draft-list"></div></div>
+        <div class="place-row">
+          <label>Odds<input id="oddsIn" class="inp" inputmode="decimal" placeholder="1.40" /></label>
+          <label>Stake (${cur})<input id="stakeIn" class="inp" inputmode="decimal" /></label>
+        </div>
+        <button id="placeBtn" class="place-btn">Place bet</button>
+        <div class="place-note" id="placeNote"></div>
+      </div>`;
+    $("modalCard").innerHTML = html;
+    $("modal").style.display = "flex";
+
+    const act = activeLocalAttempt();
+    $("stakeIn").value = act ? attemptBankroll(act.att).toFixed(2) : "";
+    $("placeNote").textContent = act ? `Placing into ${act.att.label} (bankroll ${fmt(attemptBankroll(act.att))}).` : "Tip: tap ↻ Restart first to start your attempt, then place bets.";
+
+    $("modalCard").querySelectorAll(".mchip").forEach((b) => {
+      b.onclick = () => {
+        const d = b.dataset;
+        const sel = { label: d.lab, type: d.t };
+        if (d.team) sel.team = d.team;
+        if (d.line) sel.line = parseFloat(d.line);
+        if (d.manual) sel.manual = true;
+        draftLegs.push(sel); renderDraft();
+      };
+    });
+    $("customAdd").onclick = () => { const v = $("customIn").value.trim(); if (v) { draftLegs.push({ label: v, type: "other", manual: true }); $("customIn").value = ""; renderDraft(); } };
+    $("mClose").onclick = closeModal;
+    $("modal").onclick = (e) => { if (e.target === $("modal")) closeModal(); };
+    $("placeBtn").onclick = () => placeBet(m);
+    renderDraft();
+  }
+  function renderDraft() {
+    const el = $("draftList"); if (!el) return;
+    el.innerHTML = draftLegs.length
+      ? draftLegs.map((l, i) => `<span class="dchip">${l.label}<b data-i="${i}">✕</b></span>`).join("")
+      : `<span class="sub">No legs yet — tap markets above.</span>`;
+    el.querySelectorAll("b[data-i]").forEach((x) => { x.onclick = () => { draftLegs.splice(+x.dataset.i, 1); renderDraft(); }; });
+  }
+  function closeModal() { $("modal").style.display = "none"; draftLegs = []; }
+  function placeBet(m) {
+    if (!draftLegs.length) { alert("Add at least one leg."); return; }
+    const odds = parseFloat(($("oddsIn").value || "").replace(",", "."));
+    const stake = parseFloat(($("stakeIn").value || "").replace(",", "."));
+    if (!(odds > 1)) { alert("Enter the odds, e.g. 1.40"); return; }
+    if (!(stake > 0)) { alert("Enter a stake."); return; }
+    const act = activeLocalAttempt();
+    if (!act) { alert("Tap ↻ Restart (top-left) to start your attempt first, then place the bet."); return; }
+    const bets = act.att.bets || (act.att.bets = []);
+    bets.push({
+      leg: bets.length + 1,
+      date: new Date().toISOString().slice(0, 10),
+      match: m.home + " vs " + m.away,
+      selections: draftLegs.slice(),
+      stake: stake, odds: odds, result: "pending", returnAmount: 0,
+    });
+    saveLocal(act.all);
+    closeModal();
+    viewIdx = null; // jump back to your active attempt
+    render(lastMatches);
+    alert("Bet placed into " + act.att.label + " ✅\nIt'll auto-track from the live score.");
   }
 
   // ---- Restart button ----

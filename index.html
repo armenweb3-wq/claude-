@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b1020" />
   <title>World Cup 2026 — Betting Tracker</title>
   <meta name="description" content="Compounding World Cup 2026 betting streak: daily pick, results, and pace vs. the 1.4×-per-leg target." />
-  <link rel="stylesheet" href="styles.css?v=5" />
+  <link rel="stylesheet" href="styles.css?v=6" />
 </head>
 <body>
   <div class="wrap">
@@ -35,6 +35,12 @@
     <div class="section" id="activeSection" style="display:none">
       <h2>Your active bet</h2>
       <div id="active" class="pick"></div>
+    </div>
+
+    <!-- PLACE A BET (tap a game -> build your bet) -->
+    <div class="section">
+      <h2>➕ Place a bet <span class="live-updated">· tap a game to choose markets</span></h2>
+      <div id="builder"></div>
     </div>
 
     <!-- DAILY PICKS (risk-rated, tap to expand) -->
@@ -81,8 +87,11 @@
     <footer>Updated by editing <code>data.js</code> → the page recalculates itself.</footer>
   </div>
 
+  <!-- Bet builder modal -->
+  <div id="modal" class="modal" style="display:none"><div class="modal-card" id="modalCard"></div></div>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="data.js?v=5"></script>
-  <script src="app.js?v=5"></script>
+  <script src="data.js?v=6"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>

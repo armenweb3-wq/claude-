@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>World Cup 2026 — Group Betting Tracker</title>
+  <meta name="description" content="Compounding World Cup 2026 betting streak tracker: daily picks, results, and performance vs. the 1.4×-per-leg target." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="site">
+      <h1>⚽ World Cup 2026 — Betting Streak Tracker</h1>
+      <p>Target: 17 legs · ~1.4× each · compounding. Daily group reference.</p>
+    </header>
+
+    <div class="disclaimer">
+      For entertainment only. A 17-leg compounding streak is high-variance and most attempts fail —
+      stake only money you can fully afford to lose. Not financial advice.
+    </div>
+
+    <div id="summary" class="grid cards"></div>
+
+    <div class="section">
+      <h2>Streak — 17 legs</h2>
+      <div id="streak" class="streak"></div>
+    </div>
+
+    <div class="section">
+      <h2>Today's recommendation</h2>
+      <div id="pick" class="pick"></div>
+    </div>
+
+    <div class="section two-col">
+      <div class="chart-box">
+        <h2>Bankroll vs. target (log scale)</h2>
+        <canvas id="bankrollChart" height="220"></canvas>
+      </div>
+      <div class="chart-box">
+        <h2>Reality check</h2>
+        <p id="reality" style="color:#cdd7f2;font-size:.9rem;"></p>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Results log</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Leg</th><th>Date</th><th>Match &amp; selections</th>
+            <th class="num">Odds</th><th class="num">Stake</th><th>Result</th><th class="num">Return</th>
+          </tr>
+        </thead>
+        <tbody id="results"></tbody>
+      </table>
+    </div>
+
+    <footer>
+      Update <code>data.js</code> each day → commit → push. The site recalculates everything automatically.
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

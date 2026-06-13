@@ -120,6 +120,9 @@ header.site p { margin: 3px 0 0; color: var(--muted); font-size: .85rem; }
 .verdict.wait { background: rgba(255,190,77,.16); color: var(--amber); border: 1px solid var(--amber); }
 
 /* daily picks (accordion + risk) */
+.daytoggle { display: flex; gap: 8px; margin-bottom: 4px; }
+.daybtn { flex: 1; cursor: pointer; font: inherit; font-size: .82rem; font-weight: 700; color: var(--muted); background: var(--panel); border: 1px solid var(--border); border-radius: 999px; padding: 9px 10px; }
+.daybtn.active { color: #fff; background: linear-gradient(180deg, #2c69ff, #1c4fd0); border-color: var(--accent); }
 .pick-head { margin-bottom: 6px; }
 details.cand { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; margin-top: 10px; overflow: hidden; }
 details.cand[open] { border-color: var(--accent); }

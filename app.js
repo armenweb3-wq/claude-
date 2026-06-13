@@ -156,14 +156,23 @@
       ? `Streak broke at leg ${losses[0].bet.leg}. Review the log and decide on a fresh, disposable budget before continuing.`
       : `${wins.length} straight wins so far — nice, but the odds don't reset. At your current ${(pLeg * 100).toFixed(0)}% per-leg rate, the rough chance of completing the remaining <b>${remaining}</b> legs is about <b>${(pFinish * 100).toFixed(1)}%</b>. Stay disciplined: only stake money you can fully lose.`;
 
-    if (matches.length) renderLiveList(matches, activeEff ? activeEff.bet : (D.todaysPick && D.todaysPick.candidates && D.todaysPick.candidates[0] ? { match: D.todaysPick.candidates[0].match } : null));
+    if (matches.length) renderLiveList(matches, activeEff ? activeEff.bet : firstCandidate());
   }
 
+  let pickView = "today";
   function renderPicks() {
-    const p = D.todaysPick;
-    if (!p || !p.candidates || !p.candidates.length) { $("pick").innerHTML = `<div class="r">No pick logged yet.</div>`; return; }
-    const head = `<div class="pick-head"><span class="tag">Daily picks${p.date ? " · " + p.date : ""}</span></div>`;
-    $("pick").innerHTML = head + p.candidates.map((c, i) => {
+    // support both the new picks{today,tomorrow} shape and a legacy single set
+    const P = D.picks || (D.todaysPick ? { today: D.todaysPick } : null);
+    if (!P) { $("pick").innerHTML = `<div class="r">No picks logged yet.</div>`; return; }
+    if (!P[pickView]) pickView = P.today ? "today" : "tomorrow";
+    const set = P[pickView];
+
+    const dayBtn = (k, label) => P[k]
+      ? `<button class="daybtn ${pickView === k ? "active" : ""}" data-day="${k}">${label}${P[k].date ? " · " + P[k].date : ""}</button>`
+      : "";
+    const toggle = `<div class="daytoggle">${dayBtn("today", "Today")}${dayBtn("tomorrow", "Tomorrow")}</div>`;
+
+    const cands = (set.candidates || []).map((c, i) => {
       const risk = (c.risk || "medium").toLowerCase();
       return `<details class="cand" ${i === 0 ? "open" : ""}>
         <summary>
@@ -178,6 +187,14 @@
         </div>
       </details>`;
     }).join("");
+
+    $("pick").innerHTML = toggle + cands;
+    $("pick").querySelectorAll(".daybtn").forEach((b) => { b.onclick = () => { pickView = b.dataset.day; renderPicks(); }; });
+  }
+  function firstCandidate() {
+    const P = D.picks || (D.todaysPick ? { today: D.todaysPick } : null);
+    const set = P && (P.today || P.tomorrow);
+    return set && set.candidates && set.candidates[0] ? { match: set.candidates[0].match } : null;
   }
 
   let chart;

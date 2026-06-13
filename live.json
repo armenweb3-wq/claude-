@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-13T20:54:35.688Z",
+  "updatedAt": "2026-06-13T21:17:23.870Z",
   "matches": [
     {
       "home": "Korea Republic",
@@ -28,8 +28,8 @@
     {
       "home": "Qatar",
       "away": "Switzerland",
-      "status": "IN_PLAY",
-      "homeScore": 0,
+      "status": "FINISHED",
+      "homeScore": 1,
       "awayScore": 1,
       "utcDate": "2026-06-13T19:00:00Z"
     },

@@ -110,6 +110,20 @@ header.site p { margin: 3px 0 0; color: var(--muted); font-size: .85rem; }
 .bet-fig .ret { margin-left: auto; font-weight: 700; }
 .bet-fig .ret.won { color: var(--green); }
 
+/* live scores */
+.live-updated { font-size: .68rem; color: var(--muted); text-transform: none; letter-spacing: 0; font-weight: 400; }
+.match { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px 13px; margin-bottom: 8px; }
+.match.mine { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.match .teams { font-size: .9rem; font-weight: 600; }
+.match .sub { font-size: .72rem; color: var(--muted); font-weight: 400; }
+.match .score { font-size: 1.1rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.match .badge { font-size: .66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 2px 8px; border-radius: 999px; }
+.badge.live { background: rgba(255,91,110,.18); color: var(--red); animation: pulse 1.6s infinite; }
+.badge.ft { background: rgba(46,227,122,.16); color: var(--green); }
+.badge.soon { background: var(--panel-2); color: var(--muted); }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+.live-score-pill { display:inline-block; margin-top:8px; font-size:.82rem; font-weight:700; padding:3px 10px; border-radius:999px; background:rgba(255,91,110,.16); color:var(--red); }
+
 footer { text-align: center; color: var(--muted); font-size: .76rem; margin-top: 36px; line-height: 1.6; }
 code { background: #ffffff10; padding: 1px 6px; border-radius: 6px; font-size: .85em; }
 

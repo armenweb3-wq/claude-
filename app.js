@@ -138,4 +138,68 @@
   $("reality").innerHTML = broken
     ? `Streak broke at leg ${losses[0].leg}. Review the log and decide on a fresh, disposable budget before continuing.`
     : `${wins.length} straight wins so far — nice, but the odds don't reset. At your current ${(pLeg * 100).toFixed(0)}% per-leg rate, the rough chance of completing the remaining <b>${remaining}</b> legs is about <b>${(pFinish * 100).toFixed(1)}%</b>. Stay disciplined: only stake money you can fully lose.`;
+
+  // ---- LIVE SCORES (auto-updated by the GitHub Action -> live.json) ----
+  const norm = (s) => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  // Which match are we watching? The current pending bet, else today's pick.
+  const pendingBet = D.bets.find((b) => b.result === "pending");
+  const watchText = pendingBet ? pendingBet.match : (D.todaysPick ? D.todaysPick.match : "");
+  const watchTeams = norm(watchText).split(/\s+vs\.?\s+|\s+-\s+/).map((s) => s.trim()).filter(Boolean);
+
+  const statusMeta = (s) => {
+    if (s === "IN_PLAY" || s === "PAUSED") return { cls: "live", label: "Live" };
+    if (s === "FINISHED") return { cls: "ft", label: "FT" };
+    return { cls: "soon", label: "Soon" };
+  };
+  const isMine = (m) =>
+    watchTeams.length >= 2 &&
+    watchTeams.every((t) => norm(m.home).includes(t) || norm(m.away).includes(t) || t.includes(norm(m.home)) || t.includes(norm(m.away)));
+
+  async function refreshLive() {
+    try {
+      const r = await fetch("./live.json?t=" + Date.now(), { cache: "no-store" });
+      if (!r.ok) return;
+      const live = await r.json();
+      const matches = live.matches || [];
+      if (!matches.length) return;
+
+      $("liveSection").style.display = "";
+      if (live.updatedAt) {
+        const t = new Date(live.updatedAt);
+        $("liveUpdated").textContent = "· updated " + t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      }
+
+      // sort: live first, then soon, then finished
+      const order = { IN_PLAY: 0, PAUSED: 0, TIMED: 1, SCHEDULED: 1, FINISHED: 2 };
+      matches.sort((a, b) => (order[a.status] ?? 3) - (order[b.status] ?? 3));
+
+      $("live").innerHTML = matches
+        .map((m) => {
+          const meta = statusMeta(m.status);
+          const mine = isMine(m);
+          const score = m.homeScore == null ? "–" : `${m.homeScore} – ${m.awayScore}`;
+          return `<div class="match ${mine ? "mine" : ""}">
+            <div class="teams">${m.home} <span class="sub">vs</span> ${m.away}${mine ? ' <span class="sub">· your bet</span>' : ""}</div>
+            <div style="text-align:right">
+              <div class="score">${score}</div>
+              <span class="badge ${meta.cls}">${meta.label}</span>
+            </div>
+          </div>`;
+        })
+        .join("");
+
+      // inject the watched match's live score into the pick card
+      const mineMatch = matches.find(isMine);
+      if (mineMatch && document.getElementById("pick") && mineMatch.homeScore != null) {
+        const meta = statusMeta(mineMatch.status);
+        const existing = document.getElementById("pickLive");
+        const html = `<div id="pickLive" class="live-score-pill">${meta.label}: ${mineMatch.home} ${mineMatch.homeScore} – ${mineMatch.awayScore} ${mineMatch.away}</div>`;
+        if (existing) existing.outerHTML = html;
+        else document.getElementById("pick").insertAdjacentHTML("beforeend", html);
+      }
+    } catch (e) { /* offline / not set up yet — silently ignore */ }
+  }
+
+  refreshLive();
+  setInterval(refreshLive, 60000); // re-check every 60s
 })();

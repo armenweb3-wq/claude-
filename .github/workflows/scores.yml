@@ -2,7 +2,7 @@ name: Update live scores
 
 on:
   schedule:
-    - cron: "*/10 * * * *"   # every 10 minutes (GitHub may delay during busy periods)
+    - cron: "*/5 * * * *"   # every 5 minutes (GitHub's scheduler is best-effort and may delay)
   workflow_dispatch: {}        # lets you run it manually from the Actions tab
 
 permissions:

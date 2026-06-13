@@ -110,6 +110,35 @@ header.site p { margin: 3px 0 0; color: var(--muted); font-size: .85rem; }
 .bet-fig .ret { margin-left: auto; font-weight: 700; }
 .bet-fig .ret.won { color: var(--green); }
 
+/* active-bet legs + verdict */
+.legs { list-style: none; margin: 12px 0 0; padding: 0; font-size: .9rem; }
+.legs li { padding: 5px 0; border-bottom: 1px solid #ffffff10; }
+.legs li:last-child { border-bottom: 0; }
+.verdict { margin-top: 12px; padding: 10px 12px; border-radius: 10px; font-weight: 800; text-align: center; font-size: .92rem; }
+.verdict.won { background: rgba(46,227,122,.16); color: var(--green); border: 1px solid var(--green); }
+.verdict.lost { background: rgba(255,91,110,.18); color: var(--red); border: 1px solid var(--red); }
+.verdict.wait { background: rgba(255,190,77,.16); color: var(--amber); border: 1px solid var(--amber); }
+
+/* daily picks (accordion + risk) */
+.pick-head { margin-bottom: 6px; }
+details.cand { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; margin-top: 10px; overflow: hidden; }
+details.cand[open] { border-color: var(--accent); }
+details.cand summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 14px; font-weight: 700; }
+details.cand summary::-webkit-details-marker { display: none; }
+details.cand summary::after { content: "▾"; color: var(--muted); transition: transform .2s; }
+details.cand[open] summary::after { transform: rotate(180deg); }
+.cand-title { font-size: .98rem; }
+.risk { font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: .6px; padding: 3px 9px; border-radius: 999px; white-space: nowrap; margin-left: auto; }
+.risk.low { background: rgba(46,227,122,.16); color: var(--green); }
+.risk.medium { background: rgba(255,190,77,.16); color: var(--amber); }
+.risk.high { background: rgba(255,91,110,.18); color: var(--red); }
+.cand-body { padding: 0 14px 14px; font-size: .88rem; }
+.cand-body .m { color: var(--accent); font-weight: 600; margin-bottom: 8px; }
+.cand-body .r { color: #d7def2; margin-bottom: 8px; }
+.cand-body .why { color: var(--muted); margin-bottom: 8px; }
+.cand-body .whyrisk { color: #ffd9b0; background: #2a1c1099; border: 1px solid #5a3b18; border-radius: 8px; padding: 8px 10px; }
+.cand-body b { color: var(--text); }
+
 /* live scores */
 .live-updated { font-size: .68rem; color: var(--muted); text-transform: none; letter-spacing: 0; font-weight: 400; }
 .match { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 10px 13px; margin-bottom: 8px; }

@@ -48,6 +48,23 @@
     <div class="card"><div class="v">${wins.length}W / ${losses.length}L</div><div class="l">Record</div></div>
     <div class="card"><div class="v">${hitRate.toFixed(0)}%</div><div class="l">Hit rate</div></div>`;
 
+  // ---- active (placed, in-play) bet ----
+  const activeBet = D.bets.find((b) => b.result === "pending");
+  if (activeBet) {
+    const ret = activeBet.stake * activeBet.odds;
+    $("activeSection").style.display = "";
+    $("active").innerHTML = `
+      <span class="tag">Placed · in play</span>
+      <div class="h">${activeBet.match}</div>
+      <div class="m">Leg ${activeBet.leg} · odds ${activeBet.odds.toFixed(2)}</div>
+      <div class="r"><b>Your selections:</b><ul style="margin:6px 0 0;padding-left:18px">${(activeBet.selections || []).map((s) => `<li>${s}</li>`).join("")}</ul></div>
+      <div class="bet-fig" style="margin-top:12px">
+        <span>Stake <b>${fmt(activeBet.stake)}</b></span>
+        <span class="ret">Returns <b>${fmt(ret)}</b> if it lands</span>
+      </div>
+      <div id="activeLive"></div>`;
+  }
+
   // ---- today's pick ----
   const p = D.todaysPick;
   if (p) {
@@ -188,14 +205,15 @@
         })
         .join("");
 
-      // inject the watched match's live score into the pick card
+      // inject the watched match's live score into the active-bet card (or the pick card)
       const mineMatch = matches.find(isMine);
-      if (mineMatch && document.getElementById("pick") && mineMatch.homeScore != null) {
+      const host = document.getElementById("activeLive") || document.getElementById("pick");
+      if (mineMatch && host && mineMatch.homeScore != null) {
         const meta = statusMeta(mineMatch.status);
-        const existing = document.getElementById("pickLive");
-        const html = `<div id="pickLive" class="live-score-pill">${meta.label}: ${mineMatch.home} ${mineMatch.homeScore} – ${mineMatch.awayScore} ${mineMatch.away}</div>`;
+        const existing = document.getElementById("watchLive");
+        const html = `<div id="watchLive" class="live-score-pill">${meta.label}: ${mineMatch.home} ${mineMatch.homeScore} – ${mineMatch.awayScore} ${mineMatch.away}</div>`;
         if (existing) existing.outerHTML = html;
-        else document.getElementById("pick").insertAdjacentHTML("beforeend", html);
+        else host.insertAdjacentHTML(host.id === "activeLive" ? "afterbegin" : "beforeend", html);
       }
     } catch (e) { /* offline / not set up yet — silently ignore */ }
   }

@@ -4,7 +4,10 @@
   const cur = D.currency;
   const fmt = (n) => cur + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const fmt0 = (n) => cur + Math.round(n).toLocaleString();
-  const $ = (id) => document.getElementById(id);
+  // Safe element lookup: if a container is missing (e.g. a stale cached page),
+  // return a harmless stub so one missing node can never blank the whole app.
+  const STUB = { innerHTML: "", textContent: "", value: "", style: {}, dataset: {}, classList: { add() {}, remove() {}, toggle() {} }, querySelectorAll() { return []; }, insertAdjacentHTML() {}, set onclick(f) {}, get onclick() { return null; } };
+  const $ = (id) => document.getElementById(id) || STUB;
   const norm = (s) => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
   // ---- attempts: committed (shared via data.js) + local (this device only) ----
@@ -77,6 +80,9 @@
   // =====================================================================
   let lastMatches = [];
   function render(matches) {
+    try { renderInner(matches); } catch (e) { console.error("render error:", e); }
+  }
+  function renderInner(matches) {
     lastMatches = matches || [];
     const attempts = getAttempts();
     if (viewIdx == null) {
@@ -415,7 +421,7 @@
     } catch { return null; }
   }
   render([]);
-  loadLive().then((m) => render(m || []));
-  setInterval(() => loadLive().then((m) => render(m || [])), 60000);
+  loadLive().then((m) => render(m || [])).catch(() => {});
+  setInterval(() => loadLive().then((m) => render(m || [])).catch(() => {}), 60000);
   setInterval(updateCountdowns, 1000); // smooth kickoff countdowns
 })();

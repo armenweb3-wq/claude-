@@ -56,6 +56,14 @@ window.BETTING_DATA = {
       ],
     },
     // New attempts get added here (or created on your phone via the Restart button).
+    {
+      // Your live attempt — shared with the group. Tell me bets and I add them here.
+      id: 3,
+      label: "Attempt 2",
+      startingBankroll: 340, // placeholder — tell me your real new budget and I'll update
+      status: "active",
+      bets: [],
+    },
 
     {
       // Claude's own parallel run — same 17-leg / 1.4x goal, separate €500 bankroll.

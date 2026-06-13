@@ -105,7 +105,8 @@
     const hitRate = settled.length ? (wins.length / settled.length) * 100 : 0;
     const targetNow = startBank * Math.pow(D.targetMultiplierPerLeg, legsDone);
 
-    $("legLabel").textContent = broken ? A.label + " · streak broken" : A.label + " · Leg " + currentLeg + " of " + D.targetLegs;
+    const shareTag = A.source === "local" ? " · 📱 on this phone only (tell AI to share)" : "";
+    $("legLabel").textContent = (broken ? A.label + " · streak broken" : A.label + " · Leg " + currentLeg + " of " + D.targetLegs) + shareTag;
     const bankEl = $("bankroll"); bankEl.textContent = fmt(bankroll); bankEl.className = "bankroll " + (profit >= 0 ? "green" : "red");
     const profEl = $("profit"); profEl.textContent = (profit >= 0 ? "▲ +" : "▼ ") + fmt(Math.abs(profit)) + " from " + fmt(startBank); profEl.className = "profit " + (profit >= 0 ? "green" : "red");
     $("pace").textContent = broken ? "Streak ended — tap Restart to start a new attempt" : bankroll >= targetNow ? "✓ On / ahead of pace (target " + fmt0(targetNow) + ")" : "Behind pace (target " + fmt0(targetNow) + ")";
@@ -174,7 +175,8 @@
     if (attempts.length <= 1) { $("attemptSwitch").innerHTML = ""; return; }
     $("attemptSwitch").innerHTML = attempts.map((a, i) => {
       const tag = a.status === "busted" ? "✗" : a.status === "won" ? "✓" : "•";
-      return `<button class="attbtn ${i === viewIdx ? "active" : ""}" data-i="${i}">${a.label} ${tag}</button>`;
+      const local = a.source === "local" ? " 📱" : "";
+      return `<button class="attbtn ${i === viewIdx ? "active" : ""}" data-i="${i}">${a.label} ${tag}${local}</button>`;
     }).join("");
     $("attemptSwitch").querySelectorAll(".attbtn").forEach((b) => { b.onclick = () => { viewIdx = +b.dataset.i; render(lastMatches); }; });
   }

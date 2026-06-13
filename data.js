@@ -80,17 +80,19 @@ window.BETTING_DATA = {
 
   // ---- Today's recommendation shown at the top of the site ----
   todaysPick: {
-    headline: "Leg 4 — selection pending",
-    match: "TBD (pick from 14 June fixtures)",
-    market: "Double chance 1X / DNB on a motivated non-loser is the safest ~1.40 profile",
+    headline: "Leg 4 — Germany vs Curaçao (14 Jun)",
+    match: "Germany vs Curaçao",
+    market: "Goals + corners combo on the favourite (analysis-driven, NOT bookmaker-led)",
     rationale:
-      "Apply the checklist: team that must-not-lose vs. an opponent happy with a draw, " +
-      "OR a wing-based favourite vs. a deep block for over-corners, " +
-      "OR a confirmed card-heavy referee in a high-stakes match for over-cards. " +
-      "Line-shop 2-3 books and take the best price near 1.40.",
+      "Clearest mismatch of the day. Germany play possession + wide/crossing football; " +
+      "Curaçao (smallest nation ever at a World Cup) will sit in a deep low block, " +
+      "which forces sustained pressure -> goals and corners pile up. Germany must win to " +
+      "keep pace in the group. Suggested 3-fold to reach ~1.40: Germany to win + Over 1.5 " +
+      "total goals + Germany over 4.5 team corners. AVOID card legs here — a one-sided game " +
+      "rarely turns fractious, so cards are the weakest selection in this fixture.",
     backups: [
-      "Backup A: over corners on the day's most dominant favourite vs. a defensive side",
-      "Backup B: over total cards in the day's highest-stakes / rivalry match (ref confirmed)",
+      "Backup A: Sweden vs Tunisia — Over total cards (Tunisia are physical/defensive, tighter game) + Sweden DNB",
+      "Backup B: Netherlands vs Japan — Over 1.5 goals + Netherlands DNB (higher variance: Japan are dangerous on the break)",
     ],
   },
 };

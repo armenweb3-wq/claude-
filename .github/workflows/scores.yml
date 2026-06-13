@@ -1,0 +1,42 @@
+name: Update live scores
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"   # every 10 minutes (GitHub may delay during busy periods)
+  workflow_dispatch: {}        # lets you run it manually from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: live-scores
+  cancel-in-progress: false
+
+jobs:
+  scores:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/world-cup-betting-strategy-tsvivl
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Fetch scores
+        env:
+          FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+        run: node scripts/fetch-scores.mjs
+
+      - name: Commit if changed
+        run: |
+          git config user.name "scores-bot"
+          git config user.email "actions@github.com"
+          if ! git diff --quiet -- live.json; then
+            git add live.json
+            git commit -m "chore: update live scores [skip ci]"
+            git push
+          else
+            echo "No changes to commit."
+          fi

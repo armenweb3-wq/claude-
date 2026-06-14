@@ -1,11 +1,15 @@
 """HTTP control surface for the bot."""
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from ..config import settings
+from .auth import require_api_key
 
 router = APIRouter()
+
+# All state-changing control endpoints require the API key (when configured).
+control = APIRouter(prefix="/control", dependencies=[Depends(require_api_key)])
 
 
 def _bot(request: Request):
@@ -40,25 +44,28 @@ def status(request: Request) -> dict:
     }
 
 
-@router.post("/control/start")
+@control.post("/start")
 async def start(request: Request) -> dict:
     await _bot(request).start()
     return {"running": True}
 
 
-@router.post("/control/stop")
+@control.post("/stop")
 async def stop(request: Request) -> dict:
     await _bot(request).stop()
     return {"running": False}
 
 
-@router.post("/control/pause")
+@control.post("/pause")
 def pause(request: Request) -> dict:
     _bot(request).pause()
     return {"paused": True}
 
 
-@router.post("/control/resume")
+@control.post("/resume")
 def resume(request: Request) -> dict:
     _bot(request).resume()
     return {"paused": False}
+
+
+router.include_router(control)

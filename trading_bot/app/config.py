@@ -76,6 +76,15 @@ class Settings:
     api_host: str = field(default_factory=lambda: _get("API_HOST", "0.0.0.0"))
     api_port: int = field(default_factory=lambda: _get_int("API_PORT", 8000))
 
+    # Shared secret protecting the control API (X-API-Key header).
+    # When empty, control endpoints are UNPROTECTED — fine for local dry-run,
+    # but you must set this before exposing the bot or going live.
+    control_api_key: str = field(default_factory=lambda: _get("CONTROL_API_KEY"))
+
+    @property
+    def auth_enabled(self) -> bool:
+        return bool(self.control_api_key)
+
     @property
     def is_live(self) -> bool:
         """True only when live trading is explicitly enabled AND keys exist."""

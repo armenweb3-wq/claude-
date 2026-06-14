@@ -28,6 +28,11 @@ log = logging.getLogger("trading_bot")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     log.info("Booting crypto-trading-bot — %s", settings.safety_summary())
+    if not settings.auth_enabled:
+        log.warning(
+            "CONTROL_API_KEY is not set — /control endpoints are UNPROTECTED. "
+            "Set it before exposing the bot or enabling live trading."
+        )
     app.state.bot = TradingBot(strategy_name="sma_crossover")
     yield
     if app.state.bot.state.running:

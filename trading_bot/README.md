@@ -82,6 +82,22 @@ npm run build      # production build into frontend/dist
 
 Run the backend (`uvicorn app.main:app`) alongside it for live data.
 
+## Control-API authentication
+
+The state-changing `/control/*` endpoints are protected by a shared secret.
+
+- Set `CONTROL_API_KEY` in `.env`; clients must send it as the `X-API-Key`
+  header. `/health` and `/status` stay open.
+- If `CONTROL_API_KEY` is empty, control endpoints are **unprotected** (a
+  loud warning is logged on startup) — acceptable for local dry-run only.
+- The React dashboard reads `VITE_CONTROL_API_KEY` and attaches it to
+  control requests. For browser exposure, prefer a reverse proxy that
+  injects the header rather than shipping the key to the client.
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"   # make a key
+```
+
 ## Going live (when you're ready)
 
 1. Create Bybit **testnet** keys; set `BYBIT_TESTNET=true`, fill the keys.

@@ -136,6 +136,7 @@
         <input id="enabled" type="checkbox" style="width:auto"/> Bot enabled (trade automatically)</label>
       <button class="primary" onclick="saveSettings()">Save settings</button>
       <div class="msg" id="dashMsg"></div>
+      <div id="botActivity" class="disc" style="margin-top:12px"></div>
     </div>
 
     <!-- ADMIN -->
@@ -248,7 +249,22 @@ function render(){
   $('riskPct').value=ME.settings.risk_pct;
   $('symbols').value=ME.settings.symbols;
   $('enabled').checked=ME.settings.enabled;
+  if(active) loadBot();
   if(ME.is_admin) loadAdmin();
+}
+async function loadBot(){
+  try{
+    const b=await api('/bot');
+    if(!b.running){ $('botActivity').textContent='Engine is not running yet (admin hasn’t enabled execution).'; return; }
+    const r=b.last_run;
+    if(!r){ $('botActivity').textContent=(b.dry_run?'TEST MODE — ':'')+'Waiting for the next run…'; return; }
+    if(r.error){ $('botActivity').innerHTML='<span class="err">'+r.error+'</span>'; return; }
+    const sigs=Object.entries(r.signals||{}).map(([k,v])=>`${k}: ${v}`).join('<br>');
+    $('botActivity').innerHTML=(b.dry_run?'<b>TEST MODE (no real orders)</b><br>':'')
+      +`equity $${r.equity??'—'} · open ${r.positions??0}`
+      +(r.market?`<br>market: ${r.market}`:'')
+      +(sigs?`<br>${sigs}`:'');
+  }catch(e){ $('botActivity').textContent=''; }
 }
 async function boot(){
   try{ ME=await api('/me'); render(); }

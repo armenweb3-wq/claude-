@@ -55,8 +55,18 @@ async def lifespan(app: FastAPI):
         log.info("AUTO_START enabled — starting trading loop")
         await app.state.bot.start()
 
+    app.state.saas_runner = None
+    if settings.saas_exec_enabled:
+        from .saas.routes import store
+        from .saas.runner import MultiUserRunner
+
+        app.state.saas_runner = MultiUserRunner(store())
+        app.state.saas_runner.start()
+
     yield
 
+    if app.state.saas_runner is not None:
+        app.state.saas_runner.stop()
     if app.state.telegram is not None:
         await app.state.telegram.stop()
     if app.state.bot.state.running:

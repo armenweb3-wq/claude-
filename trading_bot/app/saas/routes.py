@@ -160,6 +160,15 @@ def _is_active(user: dict) -> bool:
     return True
 
 
+@router.get("/api/bot")
+def bot_status(request: Request) -> dict:
+    user = current_user(request)
+    runner = getattr(request.app.state, "saas_runner", None)
+    res = runner.results.get(user["id"]) if runner else None
+    return {"running": runner is not None, "dry_run": settings.saas_dry_run,
+            "last_run": res}
+
+
 @router.get("/api/me")
 def me(request: Request) -> dict:
     user = current_user(request)

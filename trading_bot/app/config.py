@@ -115,6 +115,10 @@ class Settings:
     pay_wallet_address: str = field(default_factory=lambda: _get("PAY_WALLET_ADDRESS"))
     pay_coin_network: str = field(default_factory=lambda: _get("PAY_COIN_NETWORK", "USDT (TRC-20)"))
     pay_price: str = field(default_factory=lambda: _get("PAY_PRICE", "30 USDT / month"))
+    # Phase 2 — per-user execution engine (off by default for safety).
+    saas_exec_enabled: bool = field(default_factory=lambda: _get_bool("SAAS_EXEC_ENABLED", False))
+    saas_dry_run: bool = field(default_factory=lambda: _get_bool("SAAS_DRY_RUN", True))
+    saas_loop_seconds: int = field(default_factory=lambda: _get_int("SAAS_LOOP_SECONDS", 900))
 
     @property
     def auth_enabled(self) -> bool:

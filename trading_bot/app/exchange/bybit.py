@@ -26,17 +26,21 @@ log = logging.getLogger(__name__)
 class BybitExchange(ExchangeAdapter):
     name = "bybit"
 
-    def __init__(self) -> None:
-        if not settings.is_live:
-            raise RuntimeError("BybitExchange requires TRADING_MODE=live and API keys.")
+    def __init__(self, api_key: str | None = None, api_secret: str | None = None,
+                 testnet: bool | None = None, category: str | None = None) -> None:
+        # No explicit keys → use the single-user bot's global config (requires live).
+        if api_key is None:
+            if not settings.is_live:
+                raise RuntimeError("BybitExchange requires TRADING_MODE=live and API keys.")
+            api_key, api_secret = settings.bybit_api_key, settings.bybit_api_secret
+            log.warning("Bybit LIVE client initialised — %s", settings.safety_summary())
         self._client = HTTP(
-            testnet=settings.bybit_testnet,
-            api_key=settings.bybit_api_key,
-            api_secret=settings.bybit_api_secret,
+            testnet=settings.bybit_testnet if testnet is None else testnet,
+            api_key=api_key,
+            api_secret=api_secret,
         )
-        self._category = settings.bybit_category
+        self._category = category or settings.bybit_category
         self._rules_cache: dict[str, InstrumentRules] = {}
-        log.warning("Bybit LIVE client initialised — %s", settings.safety_summary())
 
     def get_klines(self, symbol: str, interval: str, limit: int = 200) -> pd.DataFrame:
         resp = self._client.get_kline(

@@ -92,10 +92,17 @@
       viewIdx = idx;
     }
     if (viewIdx >= attempts.length) viewIdx = attempts.length - 1;
+    const labels = displayLabels(attempts);
     const A = attempts[viewIdx];
+    const Alabel = labels[viewIdx];
     const startBank = A.startingBankroll;
 
-    renderAttemptBar(attempts);
+    // delete button: only for phone-local attempts (committed ones are the shared truth)
+    const delBtn = $("deleteBtn");
+    if (A.source === "local") { delBtn.style.display = ""; delBtn.onclick = () => deleteAttempt(A.id); }
+    else delBtn.style.display = "none";
+
+    renderAttemptBar(attempts, labels);
 
     const eff = (A.bets || []).map((b) => ({ bet: b, ...effectiveResult(b, lastMatches) }));
     const settled = eff.filter((e) => e.result === "won" || e.result === "lost");
@@ -112,7 +119,7 @@
     const targetNow = startBank * Math.pow(D.targetMultiplierPerLeg, legsDone);
 
     const shareTag = A.source === "local" ? " · 📱 on this phone only (tell AI to share)" : "";
-    $("legLabel").textContent = (broken ? A.label + " · streak broken" : A.label + " · Leg " + currentLeg + " of " + D.targetLegs) + shareTag;
+    $("legLabel").textContent = (broken ? Alabel + " · streak broken" : Alabel + " · Leg " + currentLeg + " of " + D.targetLegs) + shareTag;
     const bankEl = $("bankroll"); bankEl.textContent = fmt(bankroll); bankEl.className = "bankroll " + (profit >= 0 ? "green" : "red");
     const profEl = $("profit"); profEl.textContent = (profit >= 0 ? "▲ +" : "▼ ") + fmt(Math.abs(profit)) + " from " + fmt(startBank); profEl.className = "profit " + (profit >= 0 ? "green" : "red");
     $("pace").textContent = broken ? "Streak ended — tap Restart to start a new attempt" : bankroll >= targetNow ? "✓ On / ahead of pace (target " + fmt0(targetNow) + ")" : "Behind pace (target " + fmt0(targetNow) + ")";
@@ -177,12 +184,24 @@
     updateCountdowns();
   }
 
-  function renderAttemptBar(attempts) {
+  // Display labels renumber automatically: non-AI attempts become Attempt 1..N
+  // by position, so deleting one re-sequences the rest. AI keeps its own name.
+  function displayLabels(attempts) {
+    let n = 0;
+    return attempts.map((a) => ((a.owner || "") === "AI" ? (a.label || "🤖 AI") : "Attempt " + (++n)));
+  }
+  function deleteAttempt(id) {
+    if (typeof confirm === "function" && !confirm("Delete this attempt? This removes it from this phone and renumbers the rest.")) return;
+    saveLocal(loadLocal().filter((a) => a.id !== id));
+    viewIdx = null;
+    render(lastMatches);
+  }
+  function renderAttemptBar(attempts, labels) {
     if (attempts.length <= 1) { $("attemptSwitch").innerHTML = ""; return; }
     $("attemptSwitch").innerHTML = attempts.map((a, i) => {
       const tag = a.status === "busted" ? "✗" : a.status === "won" ? "✓" : "•";
       const local = a.source === "local" ? " 📱" : "";
-      return `<button class="attbtn ${i === viewIdx ? "active" : ""}" data-i="${i}">${a.label} ${tag}${local}</button>`;
+      return `<button class="attbtn ${i === viewIdx ? "active" : ""}" data-i="${i}">${labels[i]} ${tag}${local}</button>`;
     }).join("");
     $("attemptSwitch").querySelectorAll(".attbtn").forEach((b) => { b.onclick = () => { viewIdx = +b.dataset.i; render(lastMatches); }; });
   }

@@ -26,6 +26,11 @@ const localStorage = {
   setItem(k, v) { this._m[k] = String(v); },
   removeItem(k) { delete this._m[k]; },
 };
+// seed two phone-local attempts to test delete + renumbering
+localStorage.setItem("wc_local_attempts_v1", JSON.stringify([
+  { id: 4, label: "Attempt 4", startingBankroll: 100, status: "active", bets: [], source: "local" },
+  { id: 5, label: "Attempt 5", startingBankroll: 200, status: "active", bets: [], source: "local" },
+]));
 const liveJson = JSON.parse(fs.readFileSync("live.json", "utf8"));
 const fetch = async () => ({ ok: true, json: async () => liveJson });
 const window = {};
@@ -64,6 +69,8 @@ try {
   };
   console.log("RENDER OK");
   console.log(JSON.stringify(checks, null, 2));
+  console.log("attemptSwitch:", (els.attemptSwitch?.innerHTML || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+  console.log("deleteBtn.display:", els.deleteBtn?.style?.display);
 } catch (e) {
   console.error("RUNTIME ERROR:", e && e.stack ? e.stack : e);
   process.exit(1);

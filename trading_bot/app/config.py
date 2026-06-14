@@ -54,8 +54,10 @@ class Settings:
 
     # trading params
     symbols: list[str] = field(default_factory=lambda: _get_list("SYMBOLS", "BTCUSDT"))
-    timeframe: str = field(default_factory=lambda: _get("TIMEFRAME", "15"))
-    loop_interval_seconds: int = field(default_factory=lambda: _get_int("LOOP_INTERVAL_SECONDS", 60))
+    # Daily is where backtests showed a real, multi-year edge; shorter
+    # timeframes (1h/4h) were break-even-to-losing after fees.
+    timeframe: str = field(default_factory=lambda: _get("TIMEFRAME", "D"))
+    loop_interval_seconds: int = field(default_factory=lambda: _get_int("LOOP_INTERVAL_SECONDS", 900))
 
     # BTC-led market filter: block longs when BTC is crashing/bearish and
     # shorts when BTC is pumping/bullish (alts follow BTC).

@@ -117,34 +117,50 @@ class TradingBot:
             log.warning("daily drawdown breached — no new entries")
             return
 
-        open_positions = sum(
-            1 for s in settings.symbols if self.exchange.get_position(s).side is not None
-        )
+        # Snapshot open positions up front (resilient to per-symbol errors).
+        positions: dict[str, object] = {}
+        open_positions = 0
+        for symbol in settings.symbols:
+            try:
+                pos = self.exchange.get_position(symbol)
+                positions[symbol] = pos
+                if pos.side is not None:
+                    open_positions += 1
+            except Exception as exc:  # one bad symbol must not break the rest
+                log.warning("position check failed for %s: %s", symbol, exc)
 
         for symbol in settings.symbols:
-            df = self.exchange.get_klines(symbol, settings.timeframe, limit=250)
-            signal = self.strategy.generate(df)
-            self.state.last_signals[symbol] = f"{signal.action}: {signal.reason}"
-            price = float(df["close"].iloc[-1]) if not df.empty else 0.0
-            self.storage.record_signal(
-                symbol=symbol, action=signal.action, reason=signal.reason, price=price
-            )
+            # Each symbol is independent: a failure here is logged and skipped,
+            # never aborts the whole cycle.
+            try:
+                df = self.exchange.get_klines(symbol, settings.timeframe, limit=250)
+                signal = self.strategy.generate(df)
+                self.state.last_signals[symbol] = f"{signal.action}: {signal.reason}"
+                price = float(df["close"].iloc[-1]) if not df.empty else 0.0
+                self.storage.record_signal(
+                    symbol=symbol, action=signal.action, reason=signal.reason, price=price
+                )
 
-            if signal.action not in {"long", "short"}:
-                continue  # exits are handled by exchange-side SL/TP orders
+                if signal.action not in {"long", "short"}:
+                    continue  # exits are handled by exchange-side SL/TP orders
 
-            # Gate: daily cap, max concurrent positions, already-in-position.
-            if self.state.trades_today >= settings.max_trades_per_day:
-                log.info("daily trade cap reached (%s)", settings.max_trades_per_day)
-                break
-            if open_positions >= settings.max_open_positions:
+                # Gate: daily cap, max concurrent positions, already-in-position.
+                if self.state.trades_today >= settings.max_trades_per_day:
+                    log.info("daily trade cap reached (%s)", settings.max_trades_per_day)
+                    break
+                if open_positions >= settings.max_open_positions:
+                    continue
+                pos = positions.get(symbol)
+                if pos is not None and pos.side is not None:
+                    continue  # don't stack/reverse an existing position
+
+                if self._open_from_signal(symbol, signal, equity):
+                    open_positions += 1
+                    self.state.trades_today += 1
+            except Exception as exc:
+                log.warning("symbol %s failed: %s", symbol, exc)
+                self.state.last_signals[symbol] = f"error: {exc}"
                 continue
-            if self.exchange.get_position(symbol).side is not None:
-                continue  # don't stack/reverse an existing position
-
-            if self._open_from_signal(symbol, signal, equity):
-                open_positions += 1
-                self.state.trades_today += 1
 
     def _open_from_signal(self, symbol, signal, equity) -> bool:
         """Size, broadcast, and execute a single signal. Returns True if opened."""

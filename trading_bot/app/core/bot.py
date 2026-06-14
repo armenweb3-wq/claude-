@@ -170,12 +170,18 @@ class TradingBot:
                 positions[symbol] = pos
                 if pos.side is not None:
                     open_positions += 1
+                    self._manage_breakeven(symbol, pos)  # may update pos.stop_loss
+                    tps, sl, is_long = self._trade_levels(pos)
+                    at_be = (sl >= pos.entry_price) if is_long else (0 < sl <= pos.entry_price)
                     open_details.append({
                         "symbol": symbol,
                         "side": pos.side,
                         "size": pos.size,
                         "entry_price": pos.entry_price,
                         "unrealised_pnl": round(pos.unrealised_pnl, 4),
+                        "stop_loss": sl,
+                        "take_profits": tps,
+                        "breakeven": at_be,
                     })
             except Exception as exc:  # one bad symbol must not break the rest
                 log.warning("position check failed for %s: %s", symbol, exc)
@@ -263,6 +269,51 @@ class TradingBot:
             f"lev {result.leverage:g}x SL {signal.stop_loss}"
         )
         return True
+
+    def _trade_levels(self, pos):
+        """Entry/TP/SL price levels for an open position, derived from the
+        strategy's ladder so the dashboard and chart can draw them."""
+        cfg = getattr(self.strategy, "cfg", None)
+        ladder = getattr(cfg, "tp_ladder", None) or [(6.0, 0.30), (12.0, 0.40), (20.0, 0.30)]
+        stop_pct = getattr(cfg, "stop_pct", 3.0)
+        is_long = (pos.side or "").lower() in ("buy", "long")
+        sign = 1.0 if is_long else -1.0
+        entry = pos.entry_price
+        tps = [round(entry * (1 + sign * p / 100), 6) for p, _ in ladder]
+        sl = pos.stop_loss if pos.stop_loss else round(entry * (1 - sign * stop_pct / 100), 6)
+        return tps, sl, is_long
+
+    def _manage_breakeven(self, symbol, pos) -> None:
+        """Once price has run past TP1, move the stop to break-even (plus a
+        small buffer for fees) so the trade can no longer become a loss."""
+        pct = settings.breakeven_after_pct
+        if pct <= 0 or pos.entry_price <= 0:
+            return
+        is_long = (pos.side or "").lower() in ("buy", "long")
+        buf = 0.0012  # ~0.12% past entry to cover round-trip taker fees
+        try:
+            price = self.exchange.last_price(symbol)
+        except Exception:
+            return
+        if is_long:
+            if price < pos.entry_price * (1 + pct / 100):
+                return
+            be = round(pos.entry_price * (1 + buf), 6)
+            if pos.stop_loss and pos.stop_loss >= be:
+                return
+        else:
+            if price > pos.entry_price * (1 - pct / 100):
+                return
+            be = round(pos.entry_price * (1 - buf), 6)
+            if pos.stop_loss and 0 < pos.stop_loss <= be:
+                return
+        try:
+            self.exchange.set_stop_loss(symbol, be)
+            pos.stop_loss = be  # reflect immediately for display
+            self.notifier.send(f"🛡️ {symbol} stop moved to break-even @ {be}")
+            log.info("break-even stop set for %s @ %s", symbol, be)
+        except Exception as exc:
+            log.warning("break-even update failed for %s: %s", symbol, exc)
 
     def _assess_market(self):
         """Read BTC and decide what the market allows (long/short)."""

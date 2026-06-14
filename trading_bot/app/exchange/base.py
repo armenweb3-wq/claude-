@@ -28,6 +28,7 @@ class Position:
     size: float
     entry_price: float
     unrealised_pnl: float = 0.0
+    stop_loss: float = 0.0  # current protective stop on the exchange (0 = none)
 
 
 @dataclass
@@ -117,3 +118,8 @@ class ExchangeAdapter(ABC):
         if df.empty:
             raise RuntimeError(f"no price data for {symbol}")
         return float(df["close"].iloc[-1])
+
+    def set_stop_loss(self, symbol: str, stop_price: float) -> None:
+        """Move the protective stop for an open position. No-op by default;
+        live adapters override this to update the exchange-side stop."""
+        return None

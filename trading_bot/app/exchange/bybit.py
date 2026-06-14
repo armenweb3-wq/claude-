@@ -72,8 +72,21 @@ class BybitExchange(ExchangeAdapter):
                     size=size,
                     entry_price=float(item.get("avgPrice") or 0.0),
                     unrealised_pnl=float(item.get("unrealisedPnl") or 0.0),
+                    stop_loss=float(item.get("stopLoss") or 0.0),
                 )
         return Position(symbol, None, 0.0, 0.0)
+
+    def set_stop_loss(self, symbol: str, stop_price: float) -> None:
+        log.warning("[LIVE] move stop %s -> %s", symbol, stop_price)
+        try:
+            self._client.set_trading_stop(
+                category=self._category, symbol=symbol,
+                stopLoss=str(round(stop_price, 6)), slTriggerBy="LastPrice",
+                positionIdx=0,
+            )
+        except Exception as exc:  # pragma: no cover - benign "not modified" codes
+            if not any(c in str(exc) for c in ("34040", "110043", "not modified")):
+                raise
 
     def place_order(self, order: Order) -> Order:
         log.warning(

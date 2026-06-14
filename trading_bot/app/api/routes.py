@@ -51,6 +51,21 @@ def status(request: Request) -> dict:
     }
 
 
+@router.get("/klines")
+def klines(request: Request, symbol: str, limit: int = 200) -> dict:
+    bot = _bot(request)
+    df = bot.exchange.get_klines(symbol, settings.timeframe, limit=min(limit, 1000))
+    candles = [
+        {
+            "time": int(ts.timestamp()),
+            "open": float(row["open"]), "high": float(row["high"]),
+            "low": float(row["low"]), "close": float(row["close"]),
+        }
+        for ts, row in df.iterrows()
+    ]
+    return {"symbol": symbol, "timeframe": settings.timeframe, "candles": candles}
+
+
 @router.get("/errors")
 def errors(request: Request, limit: int = 50) -> dict:
     return {"errors": _bot(request).storage.recent_errors(limit=limit)}

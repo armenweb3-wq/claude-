@@ -1,0 +1,20 @@
+# Web framework
+fastapi>=0.110
+uvicorn[standard]>=0.29
+
+# Exchange + HTTP
+pybit>=5.7
+requests>=2.31
+
+# Data / indicators
+pandas>=2.0
+numpy>=1.26
+
+# Storage
+psycopg2-binary>=2.9
+
+# Config
+python-dotenv>=1.0
+
+# Notifications
+python-telegram-bot>=21.0

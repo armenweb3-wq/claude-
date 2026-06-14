@@ -12,9 +12,11 @@ import logging
 import threading
 from datetime import datetime, timezone
 
+import pandas as pd
 from fastapi import APIRouter, Depends, Request
 
 from .auth import require_api_key
+from ..config import settings
 from ..backtest.data import fetch_bybit
 from ..backtest.engine import BacktestConfig, Backtester
 from ..backtest.metrics import compute_metrics
@@ -22,10 +24,19 @@ from ..backtest.metrics import compute_metrics
 log = logging.getLogger(__name__)
 router = APIRouter()
 
-# Defaults: majors with the most Bybit history, daily timeframe (cycle scale).
+# Majors with the most Bybit history. We validate the live timeframes (1h, 4h)
+# plus daily for the cycle view. Per-timeframe history is bounded so 1h runs
+# finish in reasonable time on a small instance.
 DEFAULT_SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "BNBUSDT"]
-DEFAULT_TFS = ["1d"]
-DEFAULT_START = "2019-01-01"   # Bybit data effectively starts ~2020
+TF_WINDOWS = [  # (timeframe, months of history)
+    ("1d", 84),   # ~ as far back as Bybit has
+    ("4h", 24),
+    ("1h", 12),
+]
+
+
+def _start_for(months: int) -> str:
+    return (pd.Timestamp.utcnow() - pd.DateOffset(months=months)).strftime("%Y-%m-%d")
 
 
 def _state(request: Request) -> dict:
@@ -37,28 +48,36 @@ def _state(request: Request) -> dict:
     return st
 
 
-def _run(app_state, symbols, timeframes, start) -> None:
+def _run(app_state, symbols, tf_windows) -> None:
     st = app_state.backtest
     results = []
+    # Backtest mirrors the live risk settings so results reflect reality.
+    cfg = BacktestConfig(
+        risk_pct=settings.risk_per_trade_pct,
+        leverage_cap=settings.max_leverage,
+        max_trades_per_day=settings.max_trades_per_day,
+    )
     try:
-        bt = Backtester(config=BacktestConfig())
-        for sym in symbols:
-            for tf in timeframes:
+        bt = Backtester(config=cfg)
+        for tf, months in tf_windows:           # daily first (fast), then 4h, 1h
+            start = _start_for(months)
+            for sym in symbols:
                 try:
                     df = fetch_bybit(sym, tf, start=start)
                     if df is None or len(df) < 260:
                         results.append({"symbol": sym, "timeframe": tf,
                                         "note": f"not enough data ({0 if df is None else len(df)})"})
-                        continue
-                    res = bt.run(df, sym, tf)
-                    m = compute_metrics(res)
-                    m["bars"] = len(df)
-                    m["from"] = str(df.index[0].date())
-                    m["to"] = str(df.index[-1].date())
-                    results.append(m)
-                    st["results"] = results  # progressive updates
+                    else:
+                        res = bt.run(df, sym, tf)
+                        m = compute_metrics(res)
+                        m["bars"] = len(df)
+                        m["from"] = str(df.index[0].date())
+                        m["to"] = str(df.index[-1].date())
+                        results.append(m)
+                    st["results"] = list(results)  # progressive updates
                 except Exception as exc:  # pragma: no cover - per-config
                     results.append({"symbol": sym, "timeframe": tf, "error": str(exc)})
+                    st["results"] = list(results)
         st["status"] = "done"
     except Exception as exc:  # pragma: no cover
         st["status"] = "error"
@@ -74,9 +93,10 @@ def start_backtest(request: Request) -> dict:
         return {"status": "running", "message": "a backtest is already in progress"}
     st.update(status="running", results=[], error=None,
               started=datetime.now(timezone.utc).isoformat(), finished=None,
-              params={"symbols": DEFAULT_SYMBOLS, "timeframes": DEFAULT_TFS, "start": DEFAULT_START})
+              params={"symbols": DEFAULT_SYMBOLS, "timeframes": [t for t, _ in TF_WINDOWS],
+                      "risk_pct": settings.risk_per_trade_pct})
     threading.Thread(
-        target=_run, args=(request.app.state, DEFAULT_SYMBOLS, DEFAULT_TFS, DEFAULT_START),
+        target=_run, args=(request.app.state, DEFAULT_SYMBOLS, TF_WINDOWS),
         daemon=True,
     ).start()
     return {"status": "running", "message": "backtest started"}

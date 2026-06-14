@@ -56,12 +56,14 @@ def fetch_bybit(
     cursor = start_ms
     session = requests.Session()
     session.headers.update({"User-Agent": "Mozilla/5.0"})
+    # Walk FORWARD from `start` (omit `end` so Bybit returns from the cursor
+    # rather than anchoring to the most-recent window).
     while cursor < end_ms:
         resp = session.get(
             "https://api.bybit.com/v5/market/kline",
             params={
                 "category": category, "symbol": symbol, "interval": interval,
-                "start": cursor, "end": end_ms, "limit": 1000,
+                "start": cursor, "limit": 1000,
             },
             timeout=20,
         )
@@ -70,10 +72,13 @@ def fetch_bybit(
         if not batch:
             break
         batch = list(reversed(batch))  # API returns newest-first
+        batch = [b for b in batch if int(b[0]) >= cursor]
+        if not batch:
+            break
         rows.extend(batch)
         last_ts = int(batch[-1][0])
-        if last_ts <= cursor:
-            break
+        if last_ts <= cursor or len(batch) < 1000:
+            break  # no progress, or reached the latest data
         cursor = last_ts + 1
         time.sleep(0.2)  # be polite to the API
 

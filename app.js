@@ -12,13 +12,17 @@
 
   // ---- attempts: committed (shared via data.js) + local (this device only) ----
   const LS_KEY = "wc_local_attempts_v1";
+  const DEL_KEY = "wc_deleted_ids_v1";
   const loadLocal = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; } };
   const saveLocal = (a) => localStorage.setItem(LS_KEY, JSON.stringify(a));
+  const loadDeleted = () => { try { return JSON.parse(localStorage.getItem(DEL_KEY)) || []; } catch { return []; } };
+  const saveDeleted = (a) => localStorage.setItem(DEL_KEY, JSON.stringify(a));
   function getAttempts() {
     const shared = (D.attempts || []).map((a) => ({ ...a, source: "shared" }));
     const local = loadLocal().map((a) => ({ ...a, source: "local" }));
-    let all = shared.concat(local);
-    if (!all.length) all = [{ id: 1, label: "Attempt 1", startingBankroll: 340, status: "active", bets: [], source: "local" }];
+    const deleted = loadDeleted();
+    let all = shared.concat(local).filter((a) => !deleted.includes("s" + a.id) && !deleted.includes(a.id));
+    if (!all.length) all = [{ id: 1, label: "Attempt 1", startingBankroll: 340, status: "active", bets: [], source: "shared", _placeholder: true }];
     return all;
   }
   let viewIdx = null; // which attempt is being viewed; null => latest
@@ -97,10 +101,13 @@
     const Alabel = labels[viewIdx];
     const startBank = A.startingBankroll;
 
-    // delete button: only for phone-local attempts (committed ones are the shared truth)
+    // delete works on every attempt; shared ones are hidden on-device (restorable)
     const delBtn = $("deleteBtn");
-    if (A.source === "local") { delBtn.style.display = ""; delBtn.onclick = () => deleteAttempt(A.id); }
-    else delBtn.style.display = "none";
+    delBtn.style.display = "";
+    delBtn.onclick = () => deleteAttempt(A);
+    const restoreBtn = $("restoreBtn");
+    if (loadDeleted().length) { restoreBtn.style.display = ""; restoreBtn.onclick = () => { saveDeleted([]); viewIdx = null; render(lastMatches); }; }
+    else restoreBtn.style.display = "none";
 
     renderAttemptBar(attempts, labels);
 
@@ -190,9 +197,13 @@
     let n = 0;
     return attempts.map((a) => ((a.owner || "") === "AI" ? (a.label || "🤖 AI") : "Attempt " + (++n)));
   }
-  function deleteAttempt(id) {
-    if (typeof confirm === "function" && !confirm("Delete this attempt? This removes it from this phone and renumbers the rest.")) return;
-    saveLocal(loadLocal().filter((a) => a.id !== id));
+  function deleteAttempt(a) {
+    const msg = "Delete this attempt?" + (a.source === "local"
+      ? " Removes it from this phone."
+      : " Hides it on this device (tap Restore to undo, or tell AI to remove it for everyone).");
+    if (typeof confirm === "function" && !confirm(msg)) return;
+    if (a.source === "local") saveLocal(loadLocal().filter((x) => x.id !== a.id));
+    else { const t = loadDeleted(); if (!t.includes("s" + a.id)) t.push("s" + a.id); saveDeleted(t); }
     viewIdx = null;
     render(lastMatches);
   }

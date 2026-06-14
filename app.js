@@ -100,6 +100,8 @@
     const A = attempts[viewIdx];
     const Alabel = labels[viewIdx];
     const startBank = A.startingBankroll;
+    const tLegs = A.targetLegs || D.targetLegs;            // per-strategy target legs
+    const tMult = A.targetMultiplierPerLeg || D.targetMultiplierPerLeg; // per-strategy odds/leg
 
     // delete works on every attempt; shared ones are hidden on-device (restorable)
     const delBtn = $("deleteBtn");
@@ -120,18 +122,18 @@
     let bankroll = startBank;
     if (settled.length) { const last = settled[settled.length - 1]; bankroll = last.result === "won" ? last.ret : 0; }
     const legsDone = settled.length;
-    const currentLeg = Math.min(legsDone + 1, D.targetLegs);
+    const currentLeg = Math.min(legsDone + 1, tLegs);
     const profit = bankroll - startBank;
     const hitRate = settled.length ? (wins.length / settled.length) * 100 : 0;
-    const targetNow = startBank * Math.pow(D.targetMultiplierPerLeg, legsDone);
+    const targetNow = startBank * Math.pow(tMult, legsDone);
 
     const shareTag = A.source === "local" ? " · 📱 on this phone only (tell AI to share)" : "";
-    $("legLabel").textContent = (broken ? Alabel + " · streak broken" : Alabel + " · Leg " + currentLeg + " of " + D.targetLegs) + shareTag;
+    $("legLabel").textContent = (broken ? Alabel + " · streak broken" : Alabel + " · Leg " + currentLeg + " of " + tLegs + " (×" + tMult + ")") + shareTag;
     const bankEl = $("bankroll"); bankEl.textContent = fmt(bankroll); bankEl.className = "bankroll " + (profit >= 0 ? "green" : "red");
     const profEl = $("profit"); profEl.textContent = (profit >= 0 ? "▲ +" : "▼ ") + fmt(Math.abs(profit)) + " from " + fmt(startBank); profEl.className = "profit " + (profit >= 0 ? "green" : "red");
     $("pace").textContent = broken ? "Streak ended — tap Restart to start a new attempt" : bankroll >= targetNow ? "✓ On / ahead of pace (target " + fmt0(targetNow) + ")" : "Behind pace (target " + fmt0(targetNow) + ")";
-    $("progressBar").style.width = Math.min((wins.length / D.targetLegs) * 100, 100) + "%";
-    $("progressLabel").textContent = wins.length + " / " + D.targetLegs + " legs won · final target ≈ " + fmt0(startBank * Math.pow(D.targetMultiplierPerLeg, D.targetLegs));
+    $("progressBar").style.width = Math.min((wins.length / tLegs) * 100, 100) + "%";
+    $("progressLabel").textContent = wins.length + " / " + tLegs + " legs won · final target ≈ " + fmt0(startBank * Math.pow(tMult, tLegs));
 
     $("mini").innerHTML = `
       <div class="card"><div class="v">${wins.length}W / ${losses.length}L</div><div class="l">Record</div></div>
@@ -159,7 +161,7 @@
 
     // STREAK
     let dots = "";
-    for (let i = 1; i <= D.targetLegs; i++) {
+    for (let i = 1; i <= tLegs; i++) {
       const e = eff.find((x) => x.bet.leg === i);
       let cls = "dot"; if (e) cls += " " + (e.result === "won" ? "won" : e.result === "lost" ? "lost" : "pending");
       dots += `<div class="${cls}" title="${e ? e.bet.match : "Leg " + i}">${i}</div>`;
@@ -177,10 +179,10 @@
       </div>`;
     }).join("") || `<div class="card">No bets yet in this attempt.</div>`;
 
-    drawChart(eff, startBank);
+    drawChart(eff, startBank, tLegs, tMult);
 
-    const remaining = D.targetLegs - wins.length;
-    const pLeg = settled.length >= 1 ? Math.min(hitRate / 100, 0.95) : 0.8;
+    const remaining = tLegs - wins.length;
+    const pLeg = settled.length >= 1 ? Math.min(hitRate / 100, 0.95) : (tMult >= 1.9 ? 0.5 : 0.8);
     const pFinish = broken ? 0 : Math.pow(pLeg, Math.max(remaining, 0));
     $("reality").innerHTML = broken
       ? `This attempt broke at leg ${losses[0].bet.leg}. That's the math of a long chain — one swing ends it. Restart only with money you can fully lose.`
@@ -195,7 +197,7 @@
   // by position, so deleting one re-sequences the rest. AI keeps its own name.
   function displayLabels(attempts) {
     let n = 0;
-    return attempts.map((a) => ((a.owner || "") === "AI" ? (a.label || "🤖 AI") : "Attempt " + (++n)));
+    return attempts.map((a) => ((a.owner || "") === "AI" || a.keepLabel ? (a.label || "Strategy") : "Attempt " + (++n)));
   }
   function deleteAttempt(a) {
     const msg = "Delete this attempt?" + (a.source === "local"
@@ -244,11 +246,12 @@
   }
 
   let chart;
-  function drawChart(eff, startBank) {
+  function drawChart(eff, startBank, tLegs, tMult) {
+    tLegs = tLegs || D.targetLegs; tMult = tMult || D.targetMultiplierPerLeg;
     const labels = ["Start"], actual = [startBank], target = [startBank];
-    for (let i = 1; i <= D.targetLegs; i++) {
+    for (let i = 1; i <= tLegs; i++) {
       labels.push("L" + i);
-      target.push(startBank * Math.pow(D.targetMultiplierPerLeg, i));
+      target.push(startBank * Math.pow(tMult, i));
       const e = eff.find((x) => x.bet.leg === i);
       actual.push(e && (e.result === "won" || e.result === "lost") ? e.ret : null);
     }

@@ -102,6 +102,32 @@ window.BETTING_DATA = {
         },
       ],
     },
+
+    {
+      // NEW STRATEGY: 6 games, ~2.0 odds each, compounding (Bet Builder slips allowed).
+      // Higher risk than the 1.4 plan. Game 1 = the Germany-Curaçao 5-leg builder.
+      id: 5,
+      label: "🎯 6×€2 Strategy",
+      keepLabel: true,
+      startingBankroll: 100, // PLACEHOLDER — tell me your real stake and I'll update
+      targetLegs: 6,
+      targetMultiplierPerLeg: 2.0,
+      status: "active",
+      bets: [
+        {
+          leg: 1, date: "2026-06-14", match: "Germany vs Curaçao",
+          selections: [
+            { label: "Over 6.5 total corners", type: "corners", manual: true },
+            { label: "Over 1.5 total cards", type: "cards", manual: true },
+            { label: "Over 0.5 first-half goal", type: "other", manual: true },
+            { label: "Germany over 1.5 first-half corners", type: "corners", manual: true },
+            { label: "Over 15.5 total fouls", type: "other", manual: true },
+          ],
+          stake: 100, odds: 2.05, // Stoiximan Bet Builder
+          result: "pending", returnAmount: 0,
+        },
+      ],
+    },
   ],
 
   // ---- Daily recommendations: ONE mainstream market per match (placeable

@@ -105,6 +105,11 @@ def icon() -> FileResponse:
     return FileResponse(_WEB / "icon.svg", media_type="image/svg+xml")
 
 
+@router.get("/legal")
+def legal() -> FileResponse:
+    return FileResponse(_WEB / "legal.html")
+
+
 # ── auth ────────────────────────────────────────────────────
 @router.post("/api/register")
 def register(body: Creds, response: Response, request: Request) -> dict:

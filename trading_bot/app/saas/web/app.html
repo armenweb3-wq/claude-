@@ -70,6 +70,10 @@
       <h2 id="authTitle">Log in</h2>
       <label>Email</label><input id="email" type="email" autocomplete="email"/>
       <label>Password</label><input id="password" type="password" autocomplete="current-password"/>
+      <label id="agreeWrap" class="hide" style="display:flex;align-items:flex-start;gap:8px;margin-top:14px">
+        <input id="agree" type="checkbox" style="width:auto;margin-top:3px"/>
+        <span style="font-size:.8rem;color:var(--muted)">I am 18+, I understand the risks, and I agree to the
+          <a class="link" href="/app/legal" target="_blank">Terms, Risk Disclosure &amp; Privacy Policy</a>.</span></label>
       <button class="primary" id="authBtn" onclick="doAuth()">Log in</button>
       <div class="msg" id="authMsg"></div>
       <div style="margin-top:12px"><span class="link" id="authSwap" onclick="swapAuth()">New here? Create an account</span></div>
@@ -82,6 +86,7 @@
       leverage is high-risk — you can lose some or all of your funds. This is not financial
       advice. You connect your own exchange account and remain in full control of it; we
       never take custody of your funds. Use only money you can afford to lose.</p>
+      <p class="disc"><a class="link" href="/app/legal" target="_blank">Read full Terms, Risk Disclosure &amp; Privacy Policy →</a></p>
     </div>
   </div>
 
@@ -179,9 +184,12 @@ function swapAuth(){ isRegister=!isRegister;
   $('authTitle').textContent=isRegister?'Create account':'Log in';
   $('authBtn').textContent=isRegister?'Create account':'Log in';
   $('authSwap').textContent=isRegister?'Have an account? Log in':'New here? Create an account';
+  $('agreeWrap').classList.toggle('hide',!isRegister);
   $('authMsg').textContent=''; }
 async function doAuth(){
-  const m=$('authMsg'); m.className='msg'; m.textContent='…';
+  const m=$('authMsg'); m.className='msg';
+  if(isRegister && !$('agree').checked){ m.className='msg err'; m.textContent='Please agree to the Terms to continue.'; return; }
+  m.textContent='…';
   try{
     await api(isRegister?'/register':'/login','POST',{email:$('email').value,password:$('password').value});
     await boot();

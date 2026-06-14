@@ -79,7 +79,15 @@ window.BETTING_DATA = {
           selections: [
             { label: "Over 1.5 total goals", type: "over_goals", line: 1.5 },
           ],
-          stake: 500, odds: 1.45, // odds illustrative (~1.4 target)
+          stake: 500, odds: 1.45, // Brazil 1-1 Morocco = 2 goals -> WON
+          result: "won", returnAmount: 725,
+        },
+        {
+          leg: 2, date: "2026-06-14", match: "Germany vs Curaçao",
+          selections: [
+            { label: "Over 2.5 total goals", type: "over_goals", line: 2.5 },
+          ],
+          stake: 725, odds: 1.45, // illustrative; Germany should beat a minnow by 3+
           result: "pending", returnAmount: 0,
         },
       ],
@@ -89,61 +97,35 @@ window.BETTING_DATA = {
   // ---- Daily recommendations (risk-rated; Today / Tomorrow toggle) ----
   picks: {
     today: {
-      date: "2026-06-13",
-      candidates: [
-        {
-          match: "Brazil vs Morocco", risk: "medium",
-          market: "Over 1.5 total goals + Brazil over 4.5 corners",
-          summary: "Lean on goals/corners, NOT a Brazil win.",
-          why: "Brazil's possession and wing play vs a deeper Morocco block should generate corners and goals.",
-          whyRisk: "Medium — Morocco (2022 semi-finalists) are elite defensively and lethal on the counter; a 'Brazil win' leg would be HIGH risk.",
-        },
-        {
-          match: "Haiti vs Scotland", risk: "low",
-          market: "Scotland Double Chance (draw or win) + over corners",
-          summary: "Safest profile left on tonight's slate.",
-          why: "Scotland are a settled side vs debutants Haiti; they should control the ball and territory.",
-          whyRisk: "Low — but debutants defend deep and Scotland aren't prolific, so back Double Chance, not a straight win.",
-        },
-        {
-          match: "Australia vs Turkey", risk: "medium",
-          market: "Turkey Double Chance + over 1.5 goals",
-          summary: "Overnight kickoff — third option.",
-          why: "Turkey are stronger and more attacking and shouldn't lose to Australia.",
-          whyRisk: "Medium — Australia are physical and can grind a draw; a cagey game threatens the goals leg.",
-        },
-      ],
-    },
-    tomorrow: {
       date: "2026-06-14",
       candidates: [
         {
           match: "Germany vs Curaçao", risk: "low",
-          market: "Germany win + Over 1.5 goals + Germany over 4.5 corners (~1.40 combo)",
-          summary: "The clearest mismatch of the weekend — the safest leg available.",
+          market: "Over 2.5 goals + Germany over 4.5 corners (skip a Germany-win leg only if you want max safety)",
+          summary: "Clearest mismatch of the day — the safest leg (kicks off 17:00 UTC).",
           why: "Germany (possession + wide play) vs Curaçao (smallest nation ever at a WC) defending deep reliably produces goals AND corners.",
-          whyRisk: "Lowest risk on the board, but still a 3-leg combo; minnows can frustrate early and the corners leg is manual.",
+          whyRisk: "Lowest risk on the board, but still multi-leg; a minnow can frustrate for ~60 mins and the corners leg is manual.",
         },
         {
-          match: "Sweden vs Tunisia", risk: "medium",
-          market: "Over total cards + Sweden Double Chance (1X)",
-          summary: "Cards-led angle in a tighter game.",
-          why: "Physical, defensive Tunisia vs a Sweden side that must break them down — the profile for fouls.",
-          whyRisk: "Medium — cards hinge on the referee (check the assignment) and a tight game can stay clean.",
+          match: "Spain vs Cape Verde", risk: "low",
+          market: "Spain win + Over 1.5 goals (or Spain over corners)",
+          summary: "Second clear mismatch — Spain are elite vs WC debutants Cape Verde.",
+          why: "Spain dominate possession and create high volume; Cape Verde will sit deep, feeding Spanish corners and chances.",
+          whyRisk: "Low, but debutants can park the bus early; keep goal lines modest and avoid a big handicap.",
+        },
+        {
+          match: "Belgium vs Egypt", risk: "medium",
+          market: "Over 1.5 goals + Belgium Double Chance",
+          summary: "Solid but not a gimme.",
+          why: "Belgium have the attacking quality; over 1.5 is reasonable and DC covers a draw.",
+          whyRisk: "Medium — Egypt with Salah are dangerous and well-organised; an upset or low-scoring game is live.",
         },
         {
           match: "Netherlands vs Japan", risk: "high",
           market: "Over 1.5 goals + Netherlands DNB",
-          summary: "More variance — only if safer options aren't at ~1.40.",
-          why: "Netherlands should control and create; over 1.5 is reasonable and DNB covers a draw.",
+          summary: "Higher variance — only if safer options aren't at ~1.40.",
+          why: "Netherlands should control and create; over 1.5 reasonable, DNB covers a draw.",
           whyRisk: "High — Japan are dangerous on the break; a low-scoring upset threatens both legs.",
-        },
-        {
-          match: "Ivory Coast vs Ecuador", risk: "high",
-          market: "Over total cards",
-          summary: "Avoid unless you want a pure cards punt with a card-heavy ref.",
-          why: "Two physical sides in an even game — the profile for fouls.",
-          whyRisk: "High — even match = coin-flip result (no safe win leg) and cards still hinge on the referee.",
         },
       ],
     },

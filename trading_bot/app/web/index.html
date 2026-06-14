@@ -92,8 +92,8 @@
     align-items:center;justify-content:center;flex-direction:column;padding:18px}
   .modal.show{display:flex}
   #shareCanvas{max-width:100%;max-height:70vh;border-radius:18px;box-shadow:var(--shadow)}
-  .modal .row{display:flex;gap:10px;margin-top:16px}
-  .modal .row button{flex:0;min-width:140px;max-width:none}
+  .modal .row{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap;justify-content:center}
+  .modal .row button{flex:0;min-width:96px;max-width:none;padding:13px 14px;font-size:.85rem}
 
   .controls{position:fixed;left:0;right:0;bottom:0;
     background:linear-gradient(180deg,transparent,var(--bg) 35%);
@@ -170,7 +170,8 @@
   <canvas id="shareCanvas" width="1000" height="1300"></canvas>
   <div class="row">
     <button onclick="saveCard()" class="start">⬇ Save image</button>
-    <button onclick="closeShare()" class="pausebtn">Close</button>
+    <button onclick="editName()" class="pausebtn">✎ Name</button>
+    <button onclick="closeShare()" class="stop">Close</button>
   </div>
   <div class="note" style="margin-top:10px;text-align:center">On iPhone you can also long-press the image to save it.</div>
 </div>
@@ -364,60 +365,64 @@ function renderCoins(s){
 }
 
 // ── shareable P&L card ──────────────────────────────────────
+const NAME=()=>localStorage.getItem('traderName')||'Prince Armen';
+let lastShare=null;
 function openShare(sym){
   const p=((lastStatus&&lastStatus.positions)||[]).find(x=>x.symbol===sym);
   if(!p) return;
   const isLong=/buy|long/.test((p.side||'').toLowerCase());
   const pnl=p.unrealised_pnl||0, size=p.size||0, entry=p.entry_price||0;
   const last=size?(isLong?entry+pnl/size:entry-pnl/size):entry;
-  drawCard({sym, side:isLong?'Long':'Short', isLong, lev:+p.leverage||0,
-            pnl, pct:p.pnl_pct||0, entry, last, live:(lastStatus&&lastStatus.is_live)});
+  lastShare={sym, side:isLong?'Long':'Short', isLong, lev:+p.leverage||0,
+            pnl, pct:p.pnl_pct||0, entry, last, live:(lastStatus&&lastStatus.is_live)};
+  drawCard(lastShare);
   document.getElementById('shareModal').classList.add('show');
 }
 function closeShare(){ document.getElementById('shareModal').classList.remove('show'); }
+function editName(){ const n=prompt('Name on share card:', NAME());
+  if(n!==null){ localStorage.setItem('traderName', n.trim()); if(lastShare) drawCard(lastShare); } }
 function fmtP(v){ return Number(v).toLocaleString(undefined,{maximumFractionDigits:2}); }
+function rr(x,a,b,w,h,r){ x.beginPath(); x.moveTo(a+r,b); x.arcTo(a+w,b,a+w,b+h,r);
+  x.arcTo(a+w,b+h,a,b+h,r); x.arcTo(a,b+h,a,b,r); x.arcTo(a,b,a+w,b,r); x.closePath(); }
 function drawCard(d){
   const c=document.getElementById('shareCanvas'), x=c.getContext('2d');
-  const W=c.width, H=c.height, green='#22c55e', red='#ef4444';
-  const col=d.pnl>=0?green:red;
-  const g=x.createLinearGradient(0,0,W,H);
-  g.addColorStop(0,'#0b1018'); g.addColorStop(1,'#05070c');
+  const W=c.width, H=c.height, green='#16c784', red='#ea3943', muted='#7c8aa5';
+  const col=d.pnl>=0?green:red, F='-apple-system,Segoe UI,Roboto,sans-serif';
+  // background
+  const g=x.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0e1422'); g.addColorStop(1,'#070a12');
   x.fillStyle=g; x.fillRect(0,0,W,H);
-  // faint accent glow
-  const rg=x.createRadialGradient(W*0.8,H*0.15,40,W*0.8,H*0.15,W*0.7);
-  rg.addColorStop(0,'rgba(91,140,255,0.18)'); rg.addColorStop(1,'rgba(0,0,0,0)');
-  x.fillStyle=rg; x.fillRect(0,0,W,H);
-  x.textBaseline='alphabetic';
-  // header
-  x.fillStyle='#eef2fb'; x.font='800 56px -apple-system,Segoe UI,Roboto,sans-serif';
-  x.fillText('🤖 Trading Bot', 70, 130);
-  x.fillStyle='#8893ab'; x.font='400 36px -apple-system,sans-serif';
-  x.fillText(new Date().toISOString().replace('T',' ').slice(0,19), 70, 185);
+  const rg=x.createRadialGradient(W*0.85,H*0.1,30,W*0.85,H*0.1,W*0.8);
+  rg.addColorStop(0, d.pnl>=0?'rgba(22,199,132,0.14)':'rgba(234,57,57,0.12)');
+  rg.addColorStop(1,'rgba(0,0,0,0)'); x.fillStyle=rg; x.fillRect(0,0,W,H);
+  // decorative diamonds (top-right)
+  x.save(); x.translate(W*0.82,H*0.13); x.rotate(Math.PI/4);
+  x.fillStyle='rgba(255,255,255,0.025)';
+  for(let i=0;i<3;i++) rr(x,i*90-160,-160,170,170,28),x.fill();
+  x.restore();
+  x.textBaseline='alphabetic'; x.textAlign='left';
+  // avatar + name
+  const initials=NAME().split(/\s+/).map(w=>w[0]||'').join('').slice(0,2).toUpperCase()||'PA';
+  x.fillStyle='#1b2740'; x.beginPath(); x.arc(120,118,62,0,7); x.fill();
+  x.fillStyle='#9db4ff'; x.font='800 50px '+F; x.textAlign='center'; x.fillText(initials,120,136); x.textAlign='left';
+  x.fillStyle='#eef2fb'; x.font='800 56px '+F; x.fillText(NAME(), 210, 105);
+  x.fillStyle=muted; x.font='400 34px '+F;
+  x.fillText(new Date().toISOString().replace('T',' ').slice(0,19), 210, 158);
   // symbol + side/lev
-  x.fillStyle='#eef2fb'; x.font='800 78px -apple-system,sans-serif';
-  x.fillText(d.sym+' Perpetual', 70, 430);
-  x.fillStyle=d.isLong?green:red; x.font='600 46px -apple-system,sans-serif';
-  const sideTxt=d.side; x.fillText(sideTxt, 70, 500);
-  x.fillStyle='#8893ab';
-  const sw=x.measureText(sideTxt).width;
-  x.fillText('  |  '+(d.lev?d.lev+'x':'cross'), 70+sw, 500);
-  // big PnL %
-  x.fillStyle=col; x.font='800 150px -apple-system,sans-serif';
-  x.fillText((d.pct>=0?'+':'')+fmtP(d.pct)+'%', 66, 700);
-  // PnL amount
-  x.font='700 60px -apple-system,sans-serif';
-  x.fillText((d.pnl>=0?'+':'')+fmtP(d.pnl)+' USDT', 70, 790);
+  x.fillStyle='#eef2fb'; x.font='800 76px '+F; x.fillText(d.sym+' Perpetual', 70, 410);
+  x.fillStyle=d.isLong?green:red; x.font='700 46px '+F; x.fillText(d.side, 70, 482);
+  const sw=x.measureText(d.side).width;
+  x.fillStyle=muted; x.fillText('  |  '+(d.lev?d.lev+'x':'cross'), 70+sw, 482);
+  // big ROI%
+  x.fillStyle=col; x.font='800 158px '+F; x.fillText((d.pct>=0?'+':'')+fmtP(d.pct)+'%', 66, 690);
+  x.font='700 58px '+F; x.fillText((d.pnl>=0?'+':'')+fmtP(d.pnl)+' USDT', 70, 778);
   // entry / last
-  x.fillStyle='#8893ab'; x.font='400 40px -apple-system,sans-serif';
-  x.fillText('Entry Price', 70, 950); x.fillText('Last Price', 540, 950);
-  x.fillStyle='#eef2fb'; x.font='700 56px -apple-system,sans-serif';
-  x.fillText(fmtP(d.entry), 70, 1015); x.fillText(fmtP(d.last), 540, 1015);
+  x.fillStyle=muted; x.font='400 40px '+F; x.fillText('Entry Price', 70, 940); x.fillText('Last Price', 540, 940);
+  x.fillStyle='#eef2fb'; x.font='700 56px '+F; x.fillText(fmtP(d.entry), 70, 1008); x.fillText(fmtP(d.last), 540, 1008);
   // divider + footer
-  x.strokeStyle='#212c44'; x.lineWidth=2; x.beginPath(); x.moveTo(70,1130); x.lineTo(W-70,1130); x.stroke();
-  x.fillStyle=col; x.font='800 50px -apple-system,sans-serif';
-  x.fillText('CRYPTO BOT', 70, 1210);
-  x.fillStyle='#8893ab'; x.font='400 36px -apple-system,sans-serif';
-  x.fillText((d.live?'LIVE':'DRY-RUN')+' · automated', 70, 1255);
+  x.strokeStyle='#212c44'; x.lineWidth=2; x.beginPath(); x.moveTo(70,1120); x.lineTo(W-70,1120); x.stroke();
+  x.fillStyle=col; x.font='800 52px '+F; x.fillText('🤖 CRYPTO BOT', 70, 1205);
+  x.fillStyle=muted; x.font='400 36px '+F; x.fillText((d.live?'LIVE':'DRY-RUN')+' · automated trading', 70, 1255);
 }
 function saveCard(){
   const c=document.getElementById('shareCanvas');

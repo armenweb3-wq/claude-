@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-14T20:50:55.877Z",
+  "updatedAt": "2026-06-14T20:55:25.426Z",
   "matches": [
     {
       "home": "USA",
@@ -52,7 +52,7 @@
     {
       "home": "Netherlands",
       "away": "Japan",
-      "status": "IN_PLAY",
+      "status": "PAUSED",
       "homeScore": 0,
       "awayScore": 0,
       "utcDate": "2026-06-14T20:00:00Z"

@@ -13,11 +13,15 @@ import { gsap, ScrollTrigger, prefersReducedMotion } from "@/lib/gsap";
 export default function Journey() {
   const section = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
-  const [reduced, setReduced] = useState(false);
+  // Use the static stacked layout when we can't pin reliably: reduced-motion
+  // users and small/touch screens (mobile ScrollTrigger pinning desyncs with
+  // the browser's collapsing address bar and causes overlap).
+  const [staticLayout, setStaticLayout] = useState(false);
 
   useEffect(() => {
-    if (prefersReducedMotion()) {
-      setReduced(true);
+    const canPin = !prefersReducedMotion() && window.innerWidth >= 1024;
+    if (!canPin) {
+      setStaticLayout(true);
       return;
     }
 
@@ -76,8 +80,8 @@ export default function Journey() {
     };
   }, []);
 
-  // ---- Reduced-motion / no-JS friendly static stack ----
-  if (reduced) {
+  // ---- Static stack: reduced-motion, small/touch screens, and no-JS ----
+  if (staticLayout) {
     return (
       <section id="journey" aria-label="Our developments">
         {developments.map((d) => (

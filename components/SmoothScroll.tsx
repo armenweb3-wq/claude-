@@ -21,6 +21,10 @@ export default function SmoothScroll({
       duration: 1.1,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
+      // Drive touch scrolling too, so phones get the same eased scroll
+      // (and ScrollTrigger stays in sync on touch devices).
+      syncTouch: true,
+      touchMultiplier: 1.4,
     });
 
     // Keep ScrollTrigger informed of Lenis-driven scroll updates.

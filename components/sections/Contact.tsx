@@ -4,6 +4,9 @@ import { useState } from "react";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { contact } from "@/data/content";
 
+/** Treat the "Coming soon" placeholders as non-linkable plain text. */
+const isPlaceholder = (v: string) => v.trim().toLowerCase() === "coming soon";
+
 export default function Contact() {
   const [sent, setSent] = useState(false);
 
@@ -27,17 +30,25 @@ export default function Contact() {
             <div>
               <dt className="text-[0.65rem] uppercase tracking-widest text-stone-50/50">Email</dt>
               <dd className="mt-1">
-                <a href={`mailto:${contact.email}`} className="text-stone-50 hover:text-gold">
-                  {contact.email}
-                </a>
+                {isPlaceholder(contact.email) ? (
+                  <span className="text-stone-50/80">{contact.email}</span>
+                ) : (
+                  <a href={`mailto:${contact.email}`} className="text-stone-50 hover:text-gold">
+                    {contact.email}
+                  </a>
+                )}
               </dd>
             </div>
             <div>
               <dt className="text-[0.65rem] uppercase tracking-widest text-stone-50/50">Telephone</dt>
               <dd className="mt-1">
-                <a href={`tel:${contact.phone.replace(/\s/g, "")}`} className="text-stone-50 hover:text-gold">
-                  {contact.phone}
-                </a>
+                {isPlaceholder(contact.phone) ? (
+                  <span className="text-stone-50/80">{contact.phone}</span>
+                ) : (
+                  <a href={`tel:${contact.phone.replace(/\s/g, "")}`} className="text-stone-50 hover:text-gold">
+                    {contact.phone}
+                  </a>
+                )}
               </dd>
             </div>
             <div>

@@ -1,5 +1,8 @@
 import { contact } from "@/data/content";
 
+/** Treat the "Coming soon" placeholders as non-linkable plain text. */
+const isPlaceholder = (v: string) => v.trim().toLowerCase() === "coming soon";
+
 export default function Footer() {
   return (
     <footer className="bg-ink text-stone-50">
@@ -17,14 +20,22 @@ export default function Footer() {
           <address className="space-y-1 not-italic text-sm text-stone-50/70">
             <p>{contact.address}</p>
             <p>
-              <a href={`mailto:${contact.email}`} className="hover:text-gold">
-                {contact.email}
-              </a>
+              {isPlaceholder(contact.email) ? (
+                contact.email
+              ) : (
+                <a href={`mailto:${contact.email}`} className="hover:text-gold">
+                  {contact.email}
+                </a>
+              )}
             </p>
             <p>
-              <a href={`tel:${contact.phone.replace(/\s/g, "")}`} className="hover:text-gold">
-                {contact.phone}
-              </a>
+              {isPlaceholder(contact.phone) ? (
+                contact.phone
+              ) : (
+                <a href={`tel:${contact.phone.replace(/\s/g, "")}`} className="hover:text-gold">
+                  {contact.phone}
+                </a>
+              )}
             </p>
           </address>
         </div>

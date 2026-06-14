@@ -69,7 +69,7 @@ export const contact = {
   heading: "Enquire about a residence.",
   intro:
     "Share a few details and a member of our team in Paphos will be in touch. No obligation — simply the start of a conversation.",
-  email: "enquiries@mkhitaryandevelopers.com",
-  phone: "+357 26 000 000",
-  address: "Poseidonos Avenue, Paphos 8042, Cyprus",
+  email: "Coming soon",
+  phone: "Coming soon",
+  address: "Coming soon",
 };

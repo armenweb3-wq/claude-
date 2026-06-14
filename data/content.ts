@@ -29,7 +29,7 @@ export const fullService = {
   eyebrow: "Turnkey, end to end",
   heading: "We handle everything for our clients.",
   intro:
-    "From the first conversation to the keys in your hand — and long after — a single dedicated team manages every detail of acquiring and owning in Cyprus.",
+    "From the first conversation to the keys in your hand — and long after — a single dedicated team manages every detail of acquiring, renovating and owning in Cyprus.",
   steps: [
     {
       n: "01",
@@ -60,6 +60,11 @@ export const fullService = {
       n: "06",
       title: "Management",
       body: "Ongoing property management, rentals and concierge — your home cared for year-round.",
+    },
+    {
+      n: "07",
+      title: "Renovations",
+      body: "Full design-and-build renovation of existing properties — from refreshing a single residence to reimagining an entire home, project-managed end to end.",
     },
   ],
 };

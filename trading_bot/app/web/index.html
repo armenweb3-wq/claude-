@@ -87,6 +87,13 @@
   .trade .sym{font-weight:800;font-size:1.02rem}
   .trade .grid{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);gap:8px}
   .trade .grid b{color:var(--text);font-weight:700}
+  .share{cursor:pointer;-webkit-user-select:none;user-select:none}
+  .modal{display:none;position:fixed;inset:0;z-index:60;background:rgba(2,4,10,.85);
+    align-items:center;justify-content:center;flex-direction:column;padding:18px}
+  .modal.show{display:flex}
+  #shareCanvas{max-width:100%;max-height:70vh;border-radius:18px;box-shadow:var(--shadow)}
+  .modal .row{display:flex;gap:10px;margin-top:16px}
+  .modal .row button{flex:0;min-width:140px;max-width:none}
 
   .controls{position:fixed;left:0;right:0;bottom:0;
     background:linear-gradient(180deg,transparent,var(--bg) 35%);
@@ -157,6 +164,15 @@
   <div class="foot">
     Auto-refreshes every 15s · <a class="link" href="#" onclick="setKey();return false">set control key</a>
   </div>
+</div>
+
+<div class="modal" id="shareModal">
+  <canvas id="shareCanvas" width="1000" height="1300"></canvas>
+  <div class="row">
+    <button onclick="saveCard()" class="start">⬇ Save image</button>
+    <button onclick="closeShare()" class="pausebtn">Close</button>
+  </div>
+  <div class="note" style="margin-top:10px;text-align:center">On iPhone you can also long-press the image to save it.</div>
 </div>
 
 <div class="controls">
@@ -297,11 +313,14 @@ function renderPositions(s){
     const up=p.unrealised_pnl||0;
     const be=p.breakeven?` <span class="pill long" style="padding:3px 8px">BE ✔</span>`:'';
     const tps=(p.take_profits||[]).map((t,i)=>`TP${i+1} ${money(t)}`).join(' · ');
+    const pct=p.pnl_pct||0; const pcls=up>0?'pos':up<0?'neg':'';
     return `<div class="trade"><div class="top"><span class="sym">${p.symbol}${be}</span>
-      <span class="pill ${cls}">${label}</span></div>
+      <span class="pill ${cls}">${label}${p.leverage?' '+(+p.leverage)+'x':''}</span></div>
       <div class="grid"><span>entry <b>${money(p.entry_price)}</b></span>
         <span>size <b>${p.size}</b></span>
-        <span>uPnL <b class="${up>0?'pos':up<0?'neg':''}">${(up>=0?'+':'')+money(up)}</b></span></div>
+        <span class="share" onclick="openShare('${p.symbol}')">uPnL
+          <b class="${pcls}">${(up>=0?'+':'')+money(up)}</b>
+          <b class="${pcls}">(${(pct>=0?'+':'')+pct}%)</b> 📤</span></div>
       <div class="grid" style="margin-top:6px"><span>SL <b class="${p.breakeven?'pos':'neg'}">${money(p.stop_loss)}</b></span>
         <span style="text-align:right;color:var(--green)">${tps}</span></div></div>`;
   }).join('');
@@ -342,6 +361,74 @@ function renderCoins(s){
       +(coinsExpanded?`▴ Show less`:`▾ Show ${rest.length} more`)+`</button>`;
   }
   document.getElementById('coins').innerHTML=html;
+}
+
+// ── shareable P&L card ──────────────────────────────────────
+function openShare(sym){
+  const p=((lastStatus&&lastStatus.positions)||[]).find(x=>x.symbol===sym);
+  if(!p) return;
+  const isLong=/buy|long/.test((p.side||'').toLowerCase());
+  const pnl=p.unrealised_pnl||0, size=p.size||0, entry=p.entry_price||0;
+  const last=size?(isLong?entry+pnl/size:entry-pnl/size):entry;
+  drawCard({sym, side:isLong?'Long':'Short', isLong, lev:+p.leverage||0,
+            pnl, pct:p.pnl_pct||0, entry, last, live:(lastStatus&&lastStatus.is_live)});
+  document.getElementById('shareModal').classList.add('show');
+}
+function closeShare(){ document.getElementById('shareModal').classList.remove('show'); }
+function fmtP(v){ return Number(v).toLocaleString(undefined,{maximumFractionDigits:2}); }
+function drawCard(d){
+  const c=document.getElementById('shareCanvas'), x=c.getContext('2d');
+  const W=c.width, H=c.height, green='#22c55e', red='#ef4444';
+  const col=d.pnl>=0?green:red;
+  const g=x.createLinearGradient(0,0,W,H);
+  g.addColorStop(0,'#0b1018'); g.addColorStop(1,'#05070c');
+  x.fillStyle=g; x.fillRect(0,0,W,H);
+  // faint accent glow
+  const rg=x.createRadialGradient(W*0.8,H*0.15,40,W*0.8,H*0.15,W*0.7);
+  rg.addColorStop(0,'rgba(91,140,255,0.18)'); rg.addColorStop(1,'rgba(0,0,0,0)');
+  x.fillStyle=rg; x.fillRect(0,0,W,H);
+  x.textBaseline='alphabetic';
+  // header
+  x.fillStyle='#eef2fb'; x.font='800 56px -apple-system,Segoe UI,Roboto,sans-serif';
+  x.fillText('🤖 Trading Bot', 70, 130);
+  x.fillStyle='#8893ab'; x.font='400 36px -apple-system,sans-serif';
+  x.fillText(new Date().toISOString().replace('T',' ').slice(0,19), 70, 185);
+  // symbol + side/lev
+  x.fillStyle='#eef2fb'; x.font='800 78px -apple-system,sans-serif';
+  x.fillText(d.sym+' Perpetual', 70, 430);
+  x.fillStyle=d.isLong?green:red; x.font='600 46px -apple-system,sans-serif';
+  const sideTxt=d.side; x.fillText(sideTxt, 70, 500);
+  x.fillStyle='#8893ab';
+  const sw=x.measureText(sideTxt).width;
+  x.fillText('  |  '+(d.lev?d.lev+'x':'cross'), 70+sw, 500);
+  // big PnL %
+  x.fillStyle=col; x.font='800 150px -apple-system,sans-serif';
+  x.fillText((d.pct>=0?'+':'')+fmtP(d.pct)+'%', 66, 700);
+  // PnL amount
+  x.font='700 60px -apple-system,sans-serif';
+  x.fillText((d.pnl>=0?'+':'')+fmtP(d.pnl)+' USDT', 70, 790);
+  // entry / last
+  x.fillStyle='#8893ab'; x.font='400 40px -apple-system,sans-serif';
+  x.fillText('Entry Price', 70, 950); x.fillText('Last Price', 540, 950);
+  x.fillStyle='#eef2fb'; x.font='700 56px -apple-system,sans-serif';
+  x.fillText(fmtP(d.entry), 70, 1015); x.fillText(fmtP(d.last), 540, 1015);
+  // divider + footer
+  x.strokeStyle='#212c44'; x.lineWidth=2; x.beginPath(); x.moveTo(70,1130); x.lineTo(W-70,1130); x.stroke();
+  x.fillStyle=col; x.font='800 50px -apple-system,sans-serif';
+  x.fillText('CRYPTO BOT', 70, 1210);
+  x.fillStyle='#8893ab'; x.font='400 36px -apple-system,sans-serif';
+  x.fillText((d.live?'LIVE':'DRY-RUN')+' · automated', 70, 1255);
+}
+function saveCard(){
+  const c=document.getElementById('shareCanvas');
+  try{
+    c.toBlob(b=>{
+      const url=URL.createObjectURL(b);
+      const a=document.createElement('a'); a.href=url; a.download='trade-pnl.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),3000);
+    },'image/png');
+  }catch(e){ alert('Could not save automatically — long-press the image to save.'); }
 }
 
 async function ctl(action){

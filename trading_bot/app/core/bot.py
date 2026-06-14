@@ -173,12 +173,18 @@ class TradingBot:
                     self._manage_breakeven(symbol, pos)  # may update pos.stop_loss
                     tps, sl, is_long = self._trade_levels(pos)
                     at_be = (sl >= pos.entry_price) if is_long else (0 < sl <= pos.entry_price)
+                    # ROI on margin (leveraged) — matches the % exchanges show.
+                    notional = pos.size * pos.entry_price
+                    margin = (notional / pos.leverage) if pos.leverage else notional
+                    pnl_pct = round(pos.unrealised_pnl / margin * 100, 2) if margin else 0.0
                     open_details.append({
                         "symbol": symbol,
                         "side": pos.side,
                         "size": pos.size,
                         "entry_price": pos.entry_price,
                         "unrealised_pnl": round(pos.unrealised_pnl, 4),
+                        "pnl_pct": pnl_pct,
+                        "leverage": pos.leverage,
                         "stop_loss": sl,
                         "take_profits": tps,
                         "breakeven": at_be,

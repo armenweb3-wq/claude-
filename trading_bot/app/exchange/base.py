@@ -29,6 +29,7 @@ class Position:
     entry_price: float
     unrealised_pnl: float = 0.0
     stop_loss: float = 0.0  # current protective stop on the exchange (0 = none)
+    leverage: float = 0.0   # position leverage (0 = unknown)
 
 
 @dataclass

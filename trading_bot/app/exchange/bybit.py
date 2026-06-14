@@ -73,6 +73,7 @@ class BybitExchange(ExchangeAdapter):
                     entry_price=float(item.get("avgPrice") or 0.0),
                     unrealised_pnl=float(item.get("unrealisedPnl") or 0.0),
                     stop_loss=float(item.get("stopLoss") or 0.0),
+                    leverage=float(item.get("leverage") or 0.0),
                 )
         return Position(symbol, None, 0.0, 0.0)
 

@@ -48,6 +48,10 @@ async def lifespan(app: FastAPI):
         except Exception as exc:  # pragma: no cover - startup best effort
             log.warning("Telegram control failed to start: %s", exc)
 
+    if settings.auto_start:
+        log.info("AUTO_START enabled — starting trading loop")
+        await app.state.bot.start()
+
     yield
 
     if app.state.telegram is not None:

@@ -84,6 +84,10 @@ class Settings:
     api_host: str = field(default_factory=lambda: _get("API_HOST", "0.0.0.0"))
     api_port: int = field(default_factory=lambda: _get_int("API_PORT", 8000))
 
+    # Auto-start the trading loop on boot (for hands-off cloud deploys).
+    # Leave false for the first runs so you start it deliberately.
+    auto_start: bool = field(default_factory=lambda: _get_bool("AUTO_START", False))
+
     # Shared secret protecting the control API (X-API-Key header).
     # When empty, control endpoints are UNPROTECTED — fine for local dry-run,
     # but you must set this before exposing the bot or going live.

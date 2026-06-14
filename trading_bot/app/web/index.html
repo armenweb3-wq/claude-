@@ -79,6 +79,14 @@
   .conf{display:flex;justify-content:space-between;font-size:.74rem;color:var(--muted);margin-top:7px}
   .note{font-size:.76rem;color:var(--muted);margin-top:4px}
   .gate{opacity:.7}
+  .morebtn{width:100%;flex:none;max-width:none;background:var(--card2);color:var(--muted);
+    border:1px solid var(--border);border-radius:14px;padding:12px;font-size:.82rem;font-weight:700;margin-bottom:11px}
+  .trade{background:linear-gradient(180deg,var(--card),#0f1626);border:1px solid var(--border);
+    border-radius:16px;padding:13px 14px;margin-bottom:11px;box-shadow:var(--shadow)}
+  .trade .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .trade .sym{font-weight:800;font-size:1.02rem}
+  .trade .grid{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);gap:8px}
+  .trade .grid b{color:var(--text);font-weight:700}
 
   .controls{position:fixed;left:0;right:0;bottom:0;
     background:linear-gradient(180deg,transparent,var(--bg) 35%);
@@ -117,6 +125,9 @@
     <div class="meta" id="cycleMeta"></div>
     <div class="note" id="cycleNote"></div>
   </div>
+
+  <h2>Open Trades <span id="posCount" class="note"></span></h2>
+  <div id="positions"></div>
 
   <h2>Chart</h2>
   <div class="chartcard">
@@ -238,30 +249,70 @@ async function load(){
       document.getElementById('cycleNote').textContent=s.cycle.note||'';
     }
 
-    // coins + chart selector
-    const syms=s.symbols||[]; const sig=s.last_signals||{};
-    document.getElementById('coinCount').textContent=syms.length?`(${syms.length})`:'';
+    // open trades + chart selector + coins
+    renderPositions(s);
+    const syms=s.symbols||[];
     fillSelect(syms);
-    const coins=document.getElementById('coins');
-    coins.innerHTML=syms.map(sym=>{
-      const p=parseSignal(sig[sym]||'no read yet');
-      const special={error:'ERROR',blocked:'BLOCKED',nobalance:'NO FUNDS'};
-      if(special[p.action]){
-        const cls=p.action==='blocked'?'blocked':'error';
-        return `<div class="coin"><div class="top"><span class="sym">${sym}</span>
-          <span class="pill ${cls}">${special[p.action]}</span></div>
-          <div class="note">${(sig[sym]||'').replace(/^error:\s*/i,'')}</div></div>`;
-      }
-      const pct=Math.min(100,Math.round(p.conf*100));
-      const cls=(p.action==='long'||p.action==='short')?p.action:'hold';
-      return `<div class="coin"><div class="top"><span class="sym">${sym}</span>
-        <span class="pill ${cls}">${p.action.toUpperCase()}</span></div>
-        <div class="bar"><i style="width:${pct}%;background:${barColor(p.conf)}"></i></div>
-        <div class="conf"><span>confidence ${pct}%</span><span class="gate">target 70%</span></div></div>`;
-    }).join('');
+    lastStatus=s;
+    renderCoins(s);
   }catch(e){
     document.getElementById('safety').textContent='Waking up… (free server can take ~30s)';
   }
+}
+
+function renderPositions(s){
+  const wrap=document.getElementById('positions');
+  const pos=s.positions||[];
+  document.getElementById('posCount').textContent=pos.length?`(${pos.length})`:'';
+  if(!pos.length){ wrap.innerHTML='<div class="trade"><div class="note" style="margin:0">No open trades right now.</div></div>'; return; }
+  wrap.innerHTML=pos.map(p=>{
+    const side=(p.side||'').toLowerCase();
+    const cls=side==='buy'||side==='long'?'long':'short';
+    const label=cls==='long'?'LONG':'SHORT';
+    const up=p.unrealised_pnl||0;
+    return `<div class="trade"><div class="top"><span class="sym">${p.symbol}</span>
+      <span class="pill ${cls}">${label}</span></div>
+      <div class="grid"><span>entry <b>${money(p.entry_price)}</b></span>
+        <span>size <b>${p.size}</b></span>
+        <span>uPnL <b class="${up>0?'pos':up<0?'neg':''}">${(up>=0?'+':'')+money(up)}</b></span></div></div>`;
+  }).join('');
+}
+
+function coinCard(sym, sigText){
+  const p=parseSignal(sigText||'no read yet');
+  const special={error:'ERROR',blocked:'BLOCKED',nobalance:'NO FUNDS'};
+  if(special[p.action]){
+    const cls=p.action==='blocked'?'blocked':'error';
+    return `<div class="coin"><div class="top"><span class="sym">${sym}</span>
+      <span class="pill ${cls}">${special[p.action]}</span></div>
+      <div class="note">${(sigText||'').replace(/^error:\s*/i,'')}</div></div>`;
+  }
+  const pct=Math.min(100,Math.round(p.conf*100));
+  const cls=(p.action==='long'||p.action==='short')?p.action:'hold';
+  return `<div class="coin"><div class="top"><span class="sym">${sym}</span>
+    <span class="pill ${cls}">${p.action.toUpperCase()}</span></div>
+    <div class="bar"><i style="width:${pct}%;background:${barColor(p.conf)}"></i></div>
+    <div class="conf"><span>confidence ${pct}%</span><span class="gate">target 70%</span></div></div>`;
+}
+
+const TOP_N=5;
+let coinsExpanded=false;
+let lastStatus=null;
+function toggleCoins(){ coinsExpanded=!coinsExpanded; if(lastStatus) renderCoins(lastStatus); }
+function renderCoins(s){
+  const syms=s.symbols||[]; const sig=s.last_signals||{};
+  document.getElementById('coinCount').textContent=syms.length?`(${syms.length})`:'';
+  // Sort by confidence desc so the coins closest to triggering a trade lead.
+  const ranked=syms.map(sym=>({sym, p:parseSignal(sig[sym]||'no read yet')}))
+    .sort((a,b)=>b.p.conf-a.p.conf);
+  const top=ranked.slice(0,TOP_N), rest=ranked.slice(TOP_N);
+  let html=top.map(r=>coinCard(r.sym, sig[r.sym])).join('');
+  if(rest.length){
+    if(coinsExpanded) html+=rest.map(r=>coinCard(r.sym, sig[r.sym])).join('');
+    html+=`<button class="morebtn" onclick="toggleCoins()">`
+      +(coinsExpanded?`▴ Show less`:`▾ Show ${rest.length} more`)+`</button>`;
+  }
+  document.getElementById('coins').innerHTML=html;
 }
 
 async function ctl(action){

@@ -39,6 +39,7 @@ class BotState:
     equity: float = 0.0
     start_equity: float = 0.0
     open_positions: int = 0
+    positions: list = field(default_factory=list)
     cycle: dict | None = None
 
 
@@ -162,15 +163,24 @@ class TradingBot:
         # Snapshot open positions up front (resilient to per-symbol errors).
         positions: dict[str, object] = {}
         open_positions = 0
+        open_details: list[dict] = []
         for symbol in self.symbols:
             try:
                 pos = self.exchange.get_position(symbol)
                 positions[symbol] = pos
                 if pos.side is not None:
                     open_positions += 1
+                    open_details.append({
+                        "symbol": symbol,
+                        "side": pos.side,
+                        "size": pos.size,
+                        "entry_price": pos.entry_price,
+                        "unrealised_pnl": round(pos.unrealised_pnl, 4),
+                    })
             except Exception as exc:  # one bad symbol must not break the rest
                 log.warning("position check failed for %s: %s", symbol, exc)
         self.state.open_positions = open_positions
+        self.state.positions = open_details
 
         for symbol in self.symbols:
             # Each symbol is independent: a failure here is logged and skipped,

@@ -46,6 +46,7 @@ def status(request: Request) -> dict:
         "start_equity": s.start_equity,
         "session_pnl": round(s.equity - s.start_equity, 4) if s.start_equity else 0.0,
         "open_positions": s.open_positions,
+        "positions": s.positions,
         "error": s.error,
     }
 

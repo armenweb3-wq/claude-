@@ -33,6 +33,20 @@ tests/               offline unit tests (no network/DB/keys needed)
 The exchange, strategy, risk, storage, and notify layers are all swappable —
 the core loop only talks to their interfaces.
 
+## Database (PostgreSQL)
+
+```bash
+# Option A — local Postgres via Docker (schema auto-applied on first run):
+docker compose up -d
+docker compose ps           # wait for "healthy"
+
+# Option B — managed/remote Postgres: set DATABASE_URL in .env, then:
+python scripts/init_db.py   # applies schema.sql idempotently
+```
+
+Tables: `trades`, `signals`, `equity_snapshots`. If `DATABASE_URL` is unset,
+the bot still runs and simply skips persistence (logs a warning).
+
 ## Quick start
 
 ```bash

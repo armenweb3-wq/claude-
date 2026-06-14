@@ -107,6 +107,12 @@ class TradingBot:
         self.risk.register_equity(equity)
         self.storage.record_equity(equity)
 
+        if equity <= 0:
+            note = "no tradable balance — move USDT to your Unified Trading account"
+            self.state.last_signals = {s: note for s in settings.symbols}
+            log.warning(note)
+            return
+
         if self.risk.daily_drawdown_breached(equity):
             log.warning("daily drawdown breached — no new entries")
             return

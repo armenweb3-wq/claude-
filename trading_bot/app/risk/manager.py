@@ -27,12 +27,15 @@ class RiskManager:
 
     def register_equity(self, equity: float) -> None:
         """Call once per day boundary to anchor the daily drawdown guard."""
-        if self._day_start_equity is None:
+        if (self._day_start_equity is None or self._day_start_equity <= 0) and equity > 0:
             self._day_start_equity = equity
 
     def daily_drawdown_breached(self, equity: float) -> bool:
-        if self._day_start_equity is None:
-            self._day_start_equity = equity
+        # No positive anchor yet (e.g. funds not in the trading account):
+        # nothing to measure a drawdown against, so never "breached".
+        if not self._day_start_equity or self._day_start_equity <= 0:
+            if equity > 0:
+                self._day_start_equity = equity
             return False
         loss_pct = (self._day_start_equity - equity) / self._day_start_equity * 100
         if loss_pct >= settings.daily_max_loss_pct:

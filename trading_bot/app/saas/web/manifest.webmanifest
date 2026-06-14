@@ -1,0 +1,12 @@
+{
+  "name": "ZENITH — Algorithmic Trading",
+  "short_name": "ZENITH",
+  "start_url": "/app",
+  "scope": "/app",
+  "display": "standalone",
+  "background_color": "#070a12",
+  "theme_color": "#070a12",
+  "icons": [
+    { "src": "/app/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

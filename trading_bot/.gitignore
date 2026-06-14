@@ -6,3 +6,7 @@ venv/
 *.log
 .pytest_cache/
 .mypy_cache/
+
+# SaaS beta local SQLite db
+*.db
+trading_bot/saas.db

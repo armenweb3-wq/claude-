@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="theme-color" content="#070a12"/>
+<link rel="manifest" href="/app/manifest.webmanifest"/>
+<title>ZENITH — Automated Trading</title>
+<style>
+  :root{--bg:#070a12;--bg2:#0d1320;--card:#121a2b;--card2:#16203450;--border:#212c44;
+    --text:#eef2fb;--muted:#8893ab;--accent:#5b8cff;--green:#16c784;--red:#ea3943;--purple:#a855f7;
+    --shadow:0 8px 30px rgba(0,0,0,.35)}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:radial-gradient(1100px 500px at 85% -10%,rgba(91,140,255,.18),transparent 60%),
+      radial-gradient(900px 500px at -10% 10%,rgba(168,85,247,.14),transparent 55%),var(--bg);
+    padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 24px)}
+  .wrap{max-width:560px;margin:0 auto;padding:22px 16px}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .gem{width:34px;height:34px}
+  .brand h1{font-size:1.4rem;margin:0;font-weight:900;letter-spacing:.04em}
+  .tag{color:var(--muted);font-size:.74rem;letter-spacing:.18em;margin:0 0 18px 44px}
+  .card{background:linear-gradient(180deg,var(--card),#0f1626);border:1px solid var(--border);
+    border-radius:18px;padding:18px;box-shadow:var(--shadow);margin-bottom:14px}
+  h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;margin:2px 0 12px;color:var(--muted)}
+  label{display:block;font-size:.78rem;color:var(--muted);margin:10px 0 5px}
+  input{width:100%;background:var(--bg2);color:var(--text);border:1px solid var(--border);
+    border-radius:12px;padding:13px;font-size:.95rem}
+  button{border:none;border-radius:13px;padding:14px;font-size:.95rem;font-weight:800;color:#fff;
+    box-shadow:var(--shadow);width:100%;margin-top:14px}
+  .primary{background:linear-gradient(135deg,#5b8cff,#3b5bdb)}
+  .green{background:linear-gradient(135deg,#16c784,#0f9d6b)}
+  .ghost{background:var(--card2);color:var(--text);border:1px solid var(--border)}
+  .link{color:var(--accent);text-decoration:none;cursor:pointer;font-size:.85rem}
+  .msg{font-size:.82rem;margin-top:10px;min-height:1em}
+  .err{color:#fca5a5}.ok{color:#86efac}
+  .step{display:flex;gap:11px;margin:11px 0}
+  .num{flex:none;width:26px;height:26px;border-radius:50%;background:var(--card2);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;color:var(--accent)}
+  .step div{font-size:.86rem;line-height:1.45}
+  .warn{background:rgba(234,57,57,.10);border:1px solid #7f2230;border-radius:12px;padding:11px 13px;
+    font-size:.8rem;color:#fecaca;margin-top:10px}
+  .pill{display:inline-block;font-size:.7rem;font-weight:800;padding:5px 11px;border-radius:999px}
+  .pill.on{background:rgba(22,199,132,.18);color:#86efac}
+  .pill.off{background:rgba(245,158,11,.18);color:#fcd34d}
+  .copy{display:flex;gap:8px;align-items:center;background:var(--bg2);border:1px solid var(--border);
+    border-radius:12px;padding:11px;word-break:break-all;font-size:.82rem;margin-top:6px}
+  .disc{font-size:.72rem;color:var(--muted);line-height:1.5;margin-top:10px}
+  table{width:100%;border-collapse:collapse;font-size:.8rem}
+  td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+  .hide{display:none}
+  .stepwrap{display:flex;gap:8px;margin-bottom:14px}
+  .stepwrap .s{flex:1;text-align:center;font-size:.7rem;padding:8px;border-radius:10px;background:var(--card2);
+    border:1px solid var(--border);color:var(--muted)}
+  .stepwrap .s.active{color:var(--text);border-color:var(--accent)}
+  .stepwrap .s.done{color:#86efac}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <canvas class="gem" id="gem" width="68" height="68"></canvas>
+    <h1>ZENITH</h1>
+  </div>
+  <p class="tag">ALGORITHMIC TRADING</p>
+
+  <!-- AUTH -->
+  <div id="authView" class="hide">
+    <div class="card">
+      <h2 id="authTitle">Log in</h2>
+      <label>Email</label><input id="email" type="email" autocomplete="email"/>
+      <label>Password</label><input id="password" type="password" autocomplete="current-password"/>
+      <button class="primary" id="authBtn" onclick="doAuth()">Log in</button>
+      <div class="msg" id="authMsg"></div>
+      <div style="margin-top:12px"><span class="link" id="authSwap" onclick="swapAuth()">New here? Create an account</span></div>
+      <p class="disc" id="seatNote"></p>
+    </div>
+    <div class="card">
+      <h2>Disclaimer</h2>
+      <p class="disc">ZENITH is automated trading software. Performance figures are
+      <b>backtested</b> and <b>not a guarantee</b> of future results. Crypto trading with
+      leverage is high-risk — you can lose some or all of your funds. This is not financial
+      advice. You connect your own exchange account and remain in full control of it; we
+      never take custody of your funds. Use only money you can afford to lose.</p>
+    </div>
+  </div>
+
+  <!-- MAIN (logged in) -->
+  <div id="mainView" class="hide">
+    <div class="stepwrap">
+      <div class="s" id="s1">1 · Connect API</div>
+      <div class="s" id="s2">2 · Activate</div>
+      <div class="s" id="s3">3 · Trade</div>
+    </div>
+
+    <!-- STEP 1: connect keys -->
+    <div class="card" id="keysCard">
+      <h2>Step 1 — Connect your Bybit API key</h2>
+      <div class="step"><div class="num">1</div><div>Log in to <b>Bybit</b> → top-right profile → <b>API</b>.</div></div>
+      <div class="step"><div class="num">2</div><div>Tap <b>Create New Key</b> → choose <b>System-generated API Keys</b>.</div></div>
+      <div class="step"><div class="num">3</div><div>Name it <b>ZenithBot</b>. API key type: <b>Unified Trading</b>.</div></div>
+      <div class="step"><div class="num">4</div><div>Permissions: enable <b>Contract → Orders &amp; Positions</b> (Trade).
+        <b>Leave “Withdraw” OFF.</b></div></div>
+      <div class="step"><div class="num">5</div><div>(Optional) restrict to no IP for now. Tap <b>Submit</b>.</div></div>
+      <div class="step"><div class="num">6</div><div>Copy the <b>API Key</b> and <b>Secret</b> (secret shows once) and paste below.</div></div>
+      <div class="warn">🔒 We verify your key with Bybit and <b>reject any key that can withdraw</b>.
+        Your key is encrypted at rest and only used to place trades on your own account.</div>
+      <label>API Key</label><input id="apiKey"/>
+      <label>API Secret</label><input id="apiSecret" type="password"/>
+      <button class="primary" onclick="connectKeys()">Connect &amp; verify</button>
+      <div class="msg" id="keysMsg"></div>
+    </div>
+
+    <!-- STEP 2: payment -->
+    <div class="card hide" id="payCard">
+      <h2>Step 2 — Activate with crypto</h2>
+      <p style="font-size:.86rem">Send <b id="payPrice"></b> to the wallet below, then paste your
+      transaction hash. Activation is confirmed manually (usually within a few hours).</p>
+      <label>Pay with</label>
+      <div class="copy" id="payCoin"></div>
+      <label>Wallet address</label>
+      <div class="copy"><span id="payWallet"></span><span class="link" onclick="copyWallet()">copy</span></div>
+      <label>Your transaction hash (TxID)</label><input id="txHash"/>
+      <button class="green" onclick="submitPayment()">I’ve paid — submit for activation</button>
+      <div class="msg" id="payMsg"></div>
+      <div id="payStatus" class="disc"></div>
+    </div>
+
+    <!-- STEP 3: dashboard -->
+    <div class="card hide" id="dashCard">
+      <h2>Step 3 — Your bot <span id="actPill" class="pill off">—</span></h2>
+      <p style="font-size:.86rem" id="dashIntro"></p>
+      <label>Risk per trade (%)</label><input id="riskPct" type="number" step="0.5" min="0.5" max="10"/>
+      <label>Symbols (comma-separated)</label><input id="symbols"/>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:14px">
+        <input id="enabled" type="checkbox" style="width:auto"/> Bot enabled (trade automatically)</label>
+      <button class="primary" onclick="saveSettings()">Save settings</button>
+      <div class="msg" id="dashMsg"></div>
+    </div>
+
+    <!-- ADMIN -->
+    <div class="card hide" id="adminCard">
+      <h2>Admin — beta seats (<span id="seatInfo"></span>)</h2>
+      <div id="adminUsers"></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="disc" id="whoami"></span>
+        <span class="link" onclick="logout()">Log out</span>
+      </div>
+      <p class="disc">Backtested, not guaranteed. High-risk. Not financial advice. You keep full
+      custody of your funds; withdrawal-disabled keys only.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// brand gem (small)
+(function(){const c=document.getElementById('gem'),x=c.getContext('2d');const S=58,cx=34,cy=34;
+ const P=p=>[cx+p[0]*S,cy+p[1]*S];const TL=[-.3,-.42],TR=[.3,-.42],L=[-.5,-.15],R=[.5,-.15],Pl=[-.3,-.15],Pr=[.3,-.15],B=[0,.62];
+ const f=(pts,col)=>{x.fillStyle=col;x.beginPath();pts.forEach((p,i)=>{const[a,b]=P(p);i?x.lineTo(a,b):x.moveTo(a,b)});x.closePath();x.fill();
+   x.strokeStyle='rgba(255,255,255,.28)';x.lineWidth=S*.012;x.stroke()};
+ f([TL,Pl,L],'#8fb0ff');f([TL,TR,Pr,Pl],'#d4e3ff');f([TR,R,Pr],'#7f9cf2');f([L,Pl,B],'#6b57ef');f([Pl,Pr,B],'#9070ff');f([Pr,R,B],'#5b3fc9');})();
+
+const $=id=>document.getElementById(id);
+let isRegister=false, ME=null;
+async function api(path,method='GET',body){
+  const o={method,headers:{'Content-Type':'application/json'}};
+  if(body) o.body=JSON.stringify(body);
+  const r=await fetch('/app/api'+path,o);
+  let j={}; try{j=await r.json()}catch(e){}
+  if(!r.ok) throw new Error(j.detail||('error '+r.status));
+  return j;
+}
+function show(id,on){ $(id).classList.toggle('hide',!on); }
+function swapAuth(){ isRegister=!isRegister;
+  $('authTitle').textContent=isRegister?'Create account':'Log in';
+  $('authBtn').textContent=isRegister?'Create account':'Log in';
+  $('authSwap').textContent=isRegister?'Have an account? Log in':'New here? Create an account';
+  $('authMsg').textContent=''; }
+async function doAuth(){
+  const m=$('authMsg'); m.className='msg'; m.textContent='…';
+  try{
+    await api(isRegister?'/register':'/login','POST',{email:$('email').value,password:$('password').value});
+    await boot();
+  }catch(e){ m.className='msg err'; m.textContent=e.message; }
+}
+async function logout(){ try{await api('/logout','POST')}catch(e){} location.reload(); }
+
+async function connectKeys(){
+  const m=$('keysMsg'); m.className='msg'; m.textContent='Verifying with Bybit…';
+  try{ await api('/keys','POST',{api_key:$('apiKey').value,api_secret:$('apiSecret').value});
+    m.className='msg ok'; m.textContent='Key verified and connected ✓'; await boot();
+  }catch(e){ m.className='msg err'; m.textContent=e.message; }
+}
+function copyWallet(){ navigator.clipboard&&navigator.clipboard.writeText(ME.pay.wallet); }
+async function submitPayment(){
+  const m=$('payMsg'); m.className='msg'; m.textContent='…';
+  try{ await api('/payment','POST',{tx_hash:$('txHash').value});
+    m.className='msg ok'; m.textContent='Submitted — pending manual activation.'; await boot();
+  }catch(e){ m.className='msg err'; m.textContent=e.message; }
+}
+async function saveSettings(){
+  const m=$('dashMsg'); m.className='msg'; m.textContent='…';
+  try{ await api('/settings','POST',{risk_pct:parseFloat($('riskPct').value),
+        symbols:$('symbols').value, enabled:$('enabled').checked});
+    m.className='msg ok'; m.textContent='Saved ✓';
+  }catch(e){ m.className='msg err'; m.textContent=e.message; }
+}
+
+async function loadAdmin(){
+  try{ const d=await api('/admin/users');
+    $('seatInfo').textContent=(d.seat_limit-d.seats_left)+' / '+d.seat_limit+' used';
+    $('adminUsers').innerHTML='<table><tr><th>Email</th><th>Keys</th><th>Tx</th><th></th></tr>'+
+      d.users.map(u=>`<tr><td>${u.email}<br><span class="disc">${u.active?'active':'inactive'}</span></td>
+        <td>${u.has_keys?'✓':'—'}</td>
+        <td>${u.latest_payment?('<span class="disc">'+(u.latest_payment.status)+'</span><br>'+u.latest_payment.tx_hash.slice(0,12)+'…'):'—'}</td>
+        <td>${u.active?`<span class="link" onclick="adminDe(${u.id})">deactivate</span>`:`<span class="link" onclick="adminAct(${u.id})">activate</span>`}</td></tr>`).join('')+'</table>';
+    show('adminCard',true);
+  }catch(e){ show('adminCard',false); }
+}
+async function adminAct(id){ await api('/admin/activate','POST',{user_id:id,days:30}); loadAdmin(); }
+async function adminDe(id){ await api('/admin/deactivate','POST',{user_id:id}); loadAdmin(); }
+
+function render(){
+  show('authView',false); show('mainView',true);
+  $('whoami').textContent=ME.email;
+  // step states
+  const hasKeys=ME.has_keys, active=ME.activated;
+  $('s1').className='s '+(hasKeys?'done':'active');
+  $('s2').className='s '+(active?'done':hasKeys?'active':'');
+  $('s3').className='s '+(active?'active':'');
+  show('keysCard',!hasKeys);
+  show('payCard',hasKeys&&!active);
+  show('dashCard',active);
+  // payment info
+  $('payPrice').textContent=ME.pay.price;
+  $('payCoin').textContent=ME.pay.coin_network;
+  $('payWallet').textContent=ME.pay.wallet||'(wallet address not set yet — contact admin)';
+  if(ME.payment){ $('payStatus').textContent='Last submission: '+ME.payment.status+' · '+ME.payment.tx_hash.slice(0,16)+'…'; }
+  // dashboard
+  $('actPill').textContent=active?'ACTIVE':'NOT ACTIVE';
+  $('actPill').className='pill '+(active?'on':'off');
+  $('dashIntro').textContent=active
+    ? 'Your bot is activated and will trade on your connected Bybit account based on the settings below.'
+    : 'Activate your subscription to start automated trading.';
+  $('riskPct').value=ME.settings.risk_pct;
+  $('symbols').value=ME.settings.symbols;
+  $('enabled').checked=ME.settings.enabled;
+  if(ME.is_admin) loadAdmin();
+}
+async function boot(){
+  try{ ME=await api('/me'); render(); }
+  catch(e){
+    show('mainView',false); show('authView',true);
+    try{ const d=await fetch('/app/api/me'); }catch(_){}
+  }
+}
+// show auth first; seat note
+(async function(){
+  show('authView',true);
+  try{ const r=await fetch('/app/api/me'); if(r.ok){ ME=await r.json(); render(); return; } }catch(e){}
+})();
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('/app/sw.js').catch(()=>{}); }
+</script>
+</body>
+</html>

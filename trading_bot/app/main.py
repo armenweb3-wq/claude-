@@ -19,6 +19,7 @@ from fastapi.responses import HTMLResponse
 from .api import backtest_router, router
 from .config import settings
 from .core import TradingBot
+from .saas import saas_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -65,6 +66,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="crypto-trading-bot", version="0.1.0", lifespan=lifespan)
 app.include_router(router)
 app.include_router(backtest_router)
+app.include_router(saas_router)
 
 _DASHBOARD = pathlib.Path(__file__).parent / "web" / "index.html"
 

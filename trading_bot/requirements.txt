@@ -13,6 +13,9 @@ numpy>=1.26
 # Storage
 psycopg2-binary>=2.9
 
+# Multi-user beta: encrypt stored exchange keys at rest
+cryptography>=41.0
+
 # Config
 python-dotenv>=1.0
 

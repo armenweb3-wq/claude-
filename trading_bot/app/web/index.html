@@ -393,34 +393,54 @@ function fmtP(v){ return Number(v).toLocaleString(undefined,{maximumFractionDigi
 function rr(x,a,b,w,h,r){ x.beginPath(); x.moveTo(a+r,b); x.arcTo(a+w,b,a+w,b+h,r);
   x.arcTo(a+w,b+h,a,b+h,r); x.arcTo(a,b+h,a,b,r); x.arcTo(a,b,a+w,b,r); x.closePath(); }
 function drawLogo(x,cx,cy,s){
-  const grad=x.createLinearGradient(cx-s/2,cy-s/2,cx+s/2,cy+s/2);
-  grad.addColorStop(0,'#5b8cff'); grad.addColorStop(1,'#a855f7');
-  x.fillStyle=grad; rr(x,cx-s/2,cy-s/2,s,s,s*0.26); x.fill();
-  x.strokeStyle='#fff'; x.lineWidth=s*0.10; x.lineCap='round'; x.lineJoin='round';
-  x.beginPath(); x.moveTo(cx-s*0.26,cy+s*0.10); x.lineTo(cx-s*0.02,cy-s*0.18); x.lineTo(cx+s*0.24,cy+s*0.04); x.stroke();
-  x.beginPath(); x.moveTo(cx-s*0.26,cy+s*0.26); x.lineTo(cx-s*0.02,cy-s*0.02); x.lineTo(cx+s*0.24,cy+s*0.20); x.stroke();
+  const S=s, P=p=>[cx+p[0]*S, cy+p[1]*S];
+  const TL=[-0.30,-0.42],TR=[0.30,-0.42],L=[-0.50,-0.15],R=[0.50,-0.15],
+        Pl=[-0.30,-0.15],Pr=[0.30,-0.15],B=[0,0.62];
+  const path=pts=>{ x.beginPath();
+    pts.forEach((p,i)=>{const [ax,ay]=P(p); i?x.lineTo(ax,ay):x.moveTo(ax,ay);}); x.closePath(); };
+  // soft glow under the gem silhouette
+  x.save();
+  x.shadowColor='rgba(124,92,255,0.55)'; x.shadowBlur=S*0.5; x.shadowOffsetY=S*0.06;
+  x.fillStyle='#7c5cff'; path([TL,TR,R,B,L]); x.fill();
+  x.restore();
+  // facets (varied shades give the cut look)
+  const facet=(pts,fill)=>{ x.fillStyle=fill; path(pts); x.fill();
+    x.strokeStyle='rgba(255,255,255,0.28)'; x.lineWidth=S*0.012; x.stroke(); };
+  facet([TL,Pl,L],'#8fb0ff');
+  facet([TL,TR,Pr,Pl],'#d4e3ff');
+  facet([TR,R,Pr],'#7f9cf2');
+  facet([L,Pl,B],'#6b57ef');
+  facet([Pl,Pr,B],'#9070ff');
+  facet([Pr,R,B],'#5b3fc9');
+  // sparkle on the table
+  const [sx,sy]=P([-0.12,-0.32]), r=S*0.055;
+  x.fillStyle='rgba(255,255,255,0.92)'; x.beginPath();
+  for(let i=0;i<8;i++){ const a=i*Math.PI/4, rr2=i%2?r*0.38:r;
+    x.lineTo(sx+Math.cos(a)*rr2, sy+Math.sin(a)*rr2); }
+  x.closePath(); x.fill();
 }
 function drawCard(d){
   const c=document.getElementById('shareCanvas'), x=c.getContext('2d');
   const W=c.width, H=c.height, green='#16c784', red='#ea3943', muted='#7c8aa5';
   const col=d.pnl>=0?green:red, F='-apple-system,Segoe UI,Roboto,sans-serif';
-  // background shades: base + accent blobs + side-tint + vignette
-  const g=x.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,'#10172a'); g.addColorStop(0.55,'#0a0f1c'); g.addColorStop(1,'#06080f');
+  // ── background shades ──
+  const g=x.createLinearGradient(0,0,W,H);
+  g.addColorStop(0,'#141d36'); g.addColorStop(0.5,'#0b1120'); g.addColorStop(1,'#05070e');
   x.fillStyle=g; x.fillRect(0,0,W,H);
   const blob=(cx,cy,r,c0)=>{ const rg=x.createRadialGradient(cx,cy,20,cx,cy,r);
     rg.addColorStop(0,c0); rg.addColorStop(1,'rgba(0,0,0,0)'); x.fillStyle=rg; x.fillRect(0,0,W,H); };
-  blob(W*0.85,H*0.10,W*0.8,'rgba(91,140,255,0.16)');
-  blob(W*0.08,H*0.92,W*0.8,'rgba(168,85,247,0.14)');
-  blob(W*0.5,H*0.52,W*0.6, d.pnl>=0?'rgba(22,199,132,0.10)':'rgba(234,57,57,0.10)');
-  // decorative diamonds (top-right)
-  x.save(); x.translate(W*0.83,H*0.12); x.rotate(Math.PI/4);
-  x.fillStyle='rgba(255,255,255,0.03)';
-  for(let i=0;i<3;i++) rr(x,i*92-170,-170,176,176,30),x.fill();
-  x.restore();
-  // vignette
-  const vg=x.createRadialGradient(W/2,H/2,H*0.32,W/2,H/2,H*0.78);
-  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.5)');
+  blob(W*0.90,H*0.06,W*0.9,'rgba(91,140,255,0.22)');
+  blob(W*0.04,H*0.96,W*0.9,'rgba(168,85,247,0.18)');
+  blob(W*0.5,H*0.5,W*0.65, d.pnl>=0?'rgba(22,199,132,0.12)':'rgba(234,57,57,0.12)');
+  // large faint gem watermark (ties the brand into the backdrop)
+  x.save(); x.globalAlpha=0.07; drawLogo(x, W*0.80, H*0.33, 560); x.restore();
+  // spotlight behind the headline
+  const sp=x.createRadialGradient(W*0.34,H*0.48,40,W*0.34,H*0.48,W*0.62);
+  sp.addColorStop(0,'rgba(255,255,255,0.05)'); sp.addColorStop(1,'rgba(0,0,0,0)');
+  x.fillStyle=sp; x.fillRect(0,0,W,H);
+  // vignette for depth
+  const vg=x.createRadialGradient(W/2,H/2,H*0.30,W/2,H/2,H*0.80);
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.55)');
   x.fillStyle=vg; x.fillRect(0,0,W,H);
   x.textBaseline='alphabetic'; x.textAlign='left';
   // avatar + name

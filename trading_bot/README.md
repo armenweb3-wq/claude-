@@ -26,7 +26,9 @@ app/
     sma_crossover.py PLACEHOLDER — replace with your real edge
   risk/manager.py    fixed-fractional sizing + leverage/positions/daily-loss guards
   storage/           PostgreSQL persistence (degrades to no-op if unconfigured)
-  notify/telegram.py Telegram alerts (degrades to logging if unconfigured)
+  notify/            alerts fan out to all configured channels:
+    telegram.py        Telegram Bot API
+    webhook.py         generic JSON webhook (optional HMAC-SHA256 signing)
 tests/               offline unit tests (no network/DB/keys needed)
 ```
 

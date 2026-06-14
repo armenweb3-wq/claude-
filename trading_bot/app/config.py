@@ -72,6 +72,10 @@ class Settings:
     telegram_bot_token: str = field(default_factory=lambda: _get("TELEGRAM_BOT_TOKEN"))
     telegram_chat_id: str = field(default_factory=lambda: _get("TELEGRAM_CHAT_ID"))
 
+    # webhook
+    webhook_url: str = field(default_factory=lambda: _get("WEBHOOK_URL"))
+    webhook_secret: str = field(default_factory=lambda: _get("WEBHOOK_SECRET"))
+
     # api
     api_host: str = field(default_factory=lambda: _get("API_HOST", "0.0.0.0"))
     api_port: int = field(default_factory=lambda: _get_int("API_PORT", 8000))

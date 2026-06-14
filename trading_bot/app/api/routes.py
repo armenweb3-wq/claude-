@@ -40,6 +40,7 @@ def status(request: Request) -> dict:
         "exchange": bot.exchange.name,
         "last_run": s.last_run,
         "last_signals": s.last_signals,
+        "market": s.market,
         "error": s.error,
     }
 

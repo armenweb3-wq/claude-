@@ -35,6 +35,7 @@ class BotState:
     error: str | None = None
     trades_today: int = 0
     trade_day: str | None = None
+    market: str | None = None
 
 
 class TradingBot:
@@ -117,6 +118,10 @@ class TradingBot:
             log.warning("daily drawdown breached — no new entries")
             return
 
+        # BTC-led market filter: assessed once, applied to every symbol.
+        market = self._assess_market()
+        self.state.market = market.reason
+
         # Snapshot open positions up front (resilient to per-symbol errors).
         positions: dict[str, object] = {}
         open_positions = 0
@@ -143,6 +148,15 @@ class TradingBot:
 
                 if signal.action not in {"long", "short"}:
                     continue  # exits are handled by exchange-side SL/TP orders
+
+                # BTC market filter: don't long a falling market or short a
+                # rising one, even if the alt's own signal looks good.
+                if signal.action == "long" and not market.allow_long:
+                    self.state.last_signals[symbol] = f"long blocked — {market.reason}"
+                    continue
+                if signal.action == "short" and not market.allow_short:
+                    self.state.last_signals[symbol] = f"short blocked — {market.reason}"
+                    continue
 
                 # Gate: daily cap, max concurrent positions, already-in-position.
                 if self.state.trades_today >= settings.max_trades_per_day:
@@ -197,6 +211,19 @@ class TradingBot:
             f"lev {result.leverage:g}x SL {signal.stop_loss}"
         )
         return True
+
+    def _assess_market(self):
+        """Read BTC and decide what the market allows (long/short)."""
+        from ..strategy.market_filter import MarketBias, assess_market
+
+        if not settings.btc_filter_enabled:
+            return MarketBias("neutral", True, True, 0.0, "BTC filter off")
+        try:
+            df = self.exchange.get_klines(settings.btc_symbol, settings.timeframe, limit=250)
+            return assess_market(df, crash_pct=settings.btc_crash_pct)
+        except Exception as exc:  # never let the filter break the cycle
+            log.warning("BTC market filter unavailable: %s", exc)
+            return MarketBias("neutral", True, True, 0.0, "BTC data unavailable")
 
     def _roll_day(self) -> None:
         today = datetime.now(timezone.utc).date().isoformat()

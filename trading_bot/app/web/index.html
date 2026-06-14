@@ -24,6 +24,9 @@
   .badge.dry{background:rgba(34,197,94,.16);color:var(--green)}
   .banner{padding:12px 14px;border-radius:12px;margin:10px 0;font-size:.85rem;display:none}
   .banner.err{display:block;background:rgba(239,68,68,.14);border:1px solid var(--red);color:#fca5a5}
+  .banner.up{display:block;background:rgba(34,197,94,.12);border:1px solid var(--green);color:#86efac}
+  .banner.down{display:block;background:rgba(239,68,68,.12);border:1px solid var(--red);color:#fca5a5}
+  .banner.flat{display:block;background:var(--panel2);border:1px solid var(--border);color:var(--muted)}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 16px}
   .stat{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px}
   .stat .l{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
@@ -59,6 +62,7 @@
   </header>
   <div class="sub" id="safety">connecting…</div>
 
+  <div class="banner" id="market"></div>
   <div class="banner" id="errBanner"></div>
 
   <div class="grid">
@@ -124,6 +128,14 @@ async function load(){
     document.getElementById('bStart').disabled = s.running;
     document.getElementById('bStop').disabled = !s.running;
     document.getElementById('bPause').disabled = !s.running || s.paused;
+
+    const mk = document.getElementById('market');
+    if(s.market){
+      const t = s.market.toLowerCase();
+      const cls = t.includes('longs paused')?'down' : t.includes('shorts paused')?'up' : 'flat';
+      mk.className = 'banner '+cls;
+      mk.textContent = '📈 '+s.market;
+    } else { mk.className='banner'; mk.textContent=''; }
 
     const eb = document.getElementById('errBanner');
     if(s.error){ eb.className='banner err'; eb.textContent='⚠️ '+s.error; }

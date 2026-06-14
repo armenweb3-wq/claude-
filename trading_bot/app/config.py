@@ -57,6 +57,12 @@ class Settings:
     timeframe: str = field(default_factory=lambda: _get("TIMEFRAME", "15"))
     loop_interval_seconds: int = field(default_factory=lambda: _get_int("LOOP_INTERVAL_SECONDS", 60))
 
+    # BTC-led market filter: block longs when BTC is crashing/bearish and
+    # shorts when BTC is pumping/bullish (alts follow BTC).
+    btc_filter_enabled: bool = field(default_factory=lambda: _get_bool("BTC_FILTER_ENABLED", True))
+    btc_symbol: str = field(default_factory=lambda: _get("BTC_SYMBOL", "BTCUSDT"))
+    btc_crash_pct: float = field(default_factory=lambda: _get_float("BTC_CRASH_PCT", 3.0))
+
     # risk
     risk_per_trade_pct: float = field(default_factory=lambda: _get_float("RISK_PER_TRADE_PCT", 1.0))
     max_leverage: int = field(default_factory=lambda: _get_int("MAX_LEVERAGE", 3))

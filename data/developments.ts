@@ -1,10 +1,12 @@
 /**
  * Portfolio data — the single swap point for real assets.
  *
- * To use real photography/video: drop files into /public/assets/developments/
- * and update `image` (and optionally `video`) below. The cinematic Journey
- * renders these in array order and treats the entry flagged `flagship: true`
- * as the climax, so keep the flagship LAST.
+ * Images currently point at free Pexels stock photos (commercial use, no
+ * attribution required) as realistic stand-ins. To use YOUR real photography:
+ * either drop files into /public/assets/developments/ and set `image` to e.g.
+ * "/assets/developments/your-photo.jpg", or replace the URL below. The
+ * cinematic Journey renders these in array order and treats the entry flagged
+ * `flagship: true` as the climax, so keep the flagship LAST.
  */
 
 export type Development = {
@@ -33,7 +35,7 @@ export const developments: Development[] = [
     tagline: "Where the harbour meets the horizon.",
     description:
       "Twenty-four sea-facing apartments steps from the ancient harbour, finished in pale travertine and oak with infinity-edge pools that dissolve into the Mediterranean.",
-    image: "/assets/developments/azure-residences.svg",
+    image: "https://images.pexels.com/photos/18821302/pexels-photo-18821302.jpeg?auto=compress&cs=tinysrgb&w=1600",
     stats: [
       { label: "Residences", value: "24" },
       { label: "From", value: "€780k" },
@@ -49,7 +51,7 @@ export const developments: Development[] = [
     tagline: "Stone, shade and the scent of the grove.",
     description:
       "Nine private villas terraced into the Tala hillside among centuries-old olive trees, each with a heated pool and uninterrupted views down to Paphos and the sea beyond.",
-    image: "/assets/developments/olive-grove-villas.svg",
+    image: "https://images.pexels.com/photos/24807132/pexels-photo-24807132.jpeg?auto=compress&cs=tinysrgb&w=1600",
     stats: [
       { label: "Villas", value: "9" },
       { label: "Plots from", value: "1,200m²" },
@@ -65,7 +67,7 @@ export const developments: Development[] = [
     tagline: "A boutique address above the bay.",
     description:
       "An intimate collection of duplexes and penthouses a short walk from Coral Bay's golden sand, designed around a central courtyard garden and a rooftop residents' lounge.",
-    image: "/assets/developments/coral-bay-collection.svg",
+    image: "https://images.pexels.com/photos/30722592/pexels-photo-30722592.jpeg?auto=compress&cs=tinysrgb&w=1600",
     stats: [
       { label: "Homes", value: "18" },
       { label: "Completion", value: "Q4 2025" },
@@ -81,7 +83,7 @@ export const developments: Development[] = [
     tagline: "The flagship. Our highest expression of coastal living.",
     description:
       "Rising along the Paphos seafront, The Meridian is our flagship — a sculptural landmark of full-floor residences, a private wellness level, concierge and a signature restaurant. The culmination of everything we build toward.",
-    image: "/assets/developments/the-meridian.svg",
+    image: "https://images.pexels.com/photos/20587923/pexels-photo-20587923.jpeg?auto=compress&cs=tinysrgb&w=1600",
     video: undefined, // e.g. "/assets/developments/the-meridian.mp4"
     stats: [
       { label: "Floors", value: "22" },

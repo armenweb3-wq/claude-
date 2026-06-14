@@ -2,11 +2,15 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    // The starter ships labeled SVG placeholders. The Next image optimizer
-    // rejects SVGs by default, so we serve images unoptimized for now. When you
-    // swap in real .jpg/.webp photos, set this back to false (and optionally add
-    // remotePatterns) to get automatic optimization again.
+    // Imagery is currently free Pexels stock served from their CDN. We keep
+    // `unoptimized` so browsers load the URLs directly (the `?w=` query keeps
+    // file sizes sensible). Once you've confirmed everything renders, set
+    // `unoptimized: false` to get Vercel's automatic optimization — the
+    // remotePatterns below already allow the Pexels host.
     unoptimized: true,
+    remotePatterns: [
+      { protocol: "https", hostname: "images.pexels.com" },
+    ],
   },
 };
 

@@ -49,8 +49,8 @@ export default function Hero() {
       {/* Background media — swap hero.svg for a real photo, or drop in a <video>. */}
       <div ref={bg} className="absolute inset-0 will-change-transform">
         <Image
-          src="/assets/hero.svg"
-          alt="Aerial view of the Paphos coastline at dusk"
+          src="https://images.pexels.com/photos/30425165/pexels-photo-30425165.jpeg?auto=compress&cs=tinysrgb&w=1920"
+          alt="Aerial view of the Mediterranean coastline"
           fill
           priority
           sizes="100vw"

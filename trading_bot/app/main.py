@@ -10,9 +10,11 @@ deploy.
 from __future__ import annotations
 
 import logging
+import pathlib
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
 
 from .api import router
 from .config import settings
@@ -63,11 +65,21 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="crypto-trading-bot", version="0.1.0", lifespan=lifespan)
 app.include_router(router)
 
+_DASHBOARD = pathlib.Path(__file__).parent / "web" / "index.html"
 
-@app.get("/")
-def root() -> dict:
+
+@app.get("/", response_class=HTMLResponse)
+@app.get("/dashboard", response_class=HTMLResponse)
+def dashboard() -> str:
+    """Mobile-friendly dashboard, served directly from the bot."""
+    return _DASHBOARD.read_text()
+
+
+@app.get("/info")
+def info() -> dict:
     return {
         "service": "crypto-trading-bot",
         "safety": settings.safety_summary(),
         "docs": "/docs",
     }
+

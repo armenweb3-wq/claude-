@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0b0e14" />
+<title>Crypto Trading Bot</title>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#151a24; --panel2:#1c222e; --border:#262e3c;
+    --text:#eef2f8; --muted:#8a93a6; --accent:#3b82f6;
+    --green:#22c55e; --red:#ef4444; --amber:#f59e0b;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 90px)}
+  .wrap{max-width:560px;margin:0 auto;padding:16px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+  h1{font-size:1.25rem;margin:0;font-weight:700}
+  .sub{color:var(--muted);font-size:.8rem;margin-bottom:14px}
+  .badge{font-size:.72rem;font-weight:800;letter-spacing:.06em;padding:6px 12px;border-radius:999px;white-space:nowrap}
+  .badge.live{background:rgba(239,68,68,.16);color:var(--red)}
+  .badge.dry{background:rgba(34,197,94,.16);color:var(--green)}
+  .banner{padding:12px 14px;border-radius:12px;margin:10px 0;font-size:.85rem;display:none}
+  .banner.err{display:block;background:rgba(239,68,68,.14);border:1px solid var(--red);color:#fca5a5}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 16px}
+  .stat{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px}
+  .stat .l{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .stat .v{font-size:1.05rem;font-weight:700;margin-top:4px;word-break:break-word}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .on{background:var(--green)} .off{background:var(--muted)} .pause{background:var(--amber)}
+  h2{font-size:.95rem;margin:16px 0 8px;color:var(--muted);font-weight:600}
+  .coin{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
+  .coin .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .coin .sym{font-weight:800;font-size:1.05rem}
+  .pill{font-size:.7rem;font-weight:800;padding:4px 10px;border-radius:999px}
+  .pill.hold{background:var(--panel2);color:var(--muted)}
+  .pill.long{background:rgba(34,197,94,.16);color:var(--green)}
+  .pill.short{background:rgba(239,68,68,.16);color:var(--red)}
+  .bar{height:10px;border-radius:999px;background:var(--panel2);overflow:hidden}
+  .bar > i{display:block;height:100%;border-radius:999px;transition:width .4s ease}
+  .conf{display:flex;justify-content:space-between;font-size:.74rem;color:var(--muted);margin-top:6px}
+  .gate{opacity:.6}
+  .controls{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(180deg,transparent,var(--bg) 30%);
+    padding:14px 16px calc(env(safe-area-inset-bottom) + 14px);display:flex;gap:10px;justify-content:center}
+  button{flex:1;max-width:170px;border:none;border-radius:14px;padding:15px;font-size:.95rem;font-weight:800;color:#fff}
+  .start{background:var(--green)} .stop{background:var(--red)} .pausebtn{background:var(--amber);color:#1a1205}
+  button:disabled{opacity:.35}
+  .foot{text-align:center;color:var(--muted);font-size:.72rem;margin-top:10px}
+  a.link{color:var(--accent);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🤖 Trading Bot</h1>
+    <span id="mode" class="badge dry">…</span>
+  </header>
+  <div class="sub" id="safety">connecting…</div>
+
+  <div class="banner" id="errBanner"></div>
+
+  <div class="grid">
+    <div class="stat"><div class="l">Status</div><div class="v" id="run"><span class="dot off"></span>—</div></div>
+    <div class="stat"><div class="l">Strategy</div><div class="v" id="strat">—</div></div>
+    <div class="stat"><div class="l">Timeframe</div><div class="v" id="tf">—</div></div>
+    <div class="stat"><div class="l">Last check</div><div class="v" id="last">—</div></div>
+  </div>
+
+  <h2>Coins</h2>
+  <div id="coins"></div>
+
+  <div class="foot">
+    Auto-refreshes every 15s ·
+    <a class="link" href="#" onclick="setKey();return false">set control key</a>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="start" id="bStart" onclick="ctl('start')">Start</button>
+  <button class="pausebtn" id="bPause" onclick="ctl('pause')">Pause</button>
+  <button class="stop" id="bStop" onclick="ctl('stop')">Stop</button>
+</div>
+
+<script>
+const KEY = () => localStorage.getItem('ctlKey') || '';
+function setKey(){
+  const k = prompt('Control API key (leave blank if none set):', KEY());
+  if(k!==null) localStorage.setItem('ctlKey', k.trim());
+}
+function fmtTime(s){ if(!s) return '—'; const d=new Date(s);
+  return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
+
+function parseSignal(text){
+  // e.g. "hold: confidence 0.66 < 0.70"  or  "long: confluence 0.78"
+  const action = (text.split(':')[0]||'hold').trim().toLowerCase();
+  const m = text.match(/([0-9]*\.?[0-9]+)/);
+  const conf = m ? parseFloat(m[1]) : 0;
+  return {action, conf, text};
+}
+function barColor(c){ return c>=0.7? 'var(--green)' : c>=0.5? 'var(--amber)' : 'var(--muted)'; }
+
+async function load(){
+  try{
+    const r = await fetch('/status',{cache:'no-store'});
+    const s = await r.json();
+
+    const live = s.is_live;
+    const mode = document.getElementById('mode');
+    mode.textContent = live ? 'LIVE' : 'DRY-RUN';
+    mode.className = 'badge ' + (live ? 'live':'dry');
+    document.getElementById('safety').textContent = s.safety || '';
+
+    const run = document.getElementById('run');
+    if(!s.running) run.innerHTML = '<span class="dot off"></span>Stopped';
+    else if(s.paused) run.innerHTML = '<span class="dot pause"></span>Paused';
+    else run.innerHTML = '<span class="dot on"></span>Running';
+
+    document.getElementById('strat').textContent = s.strategy || '—';
+    document.getElementById('tf').textContent = (s.timeframe||'—')+'m';
+    document.getElementById('last').textContent = fmtTime(s.last_run);
+
+    document.getElementById('bStart').disabled = s.running;
+    document.getElementById('bStop').disabled = !s.running;
+    document.getElementById('bPause').disabled = !s.running || s.paused;
+
+    const eb = document.getElementById('errBanner');
+    if(s.error){ eb.className='banner err'; eb.textContent='⚠️ '+s.error; }
+    else { eb.className='banner'; eb.textContent=''; }
+
+    const coins = document.getElementById('coins');
+    const sig = s.last_signals || {};
+    const syms = (s.symbols||[]);
+    if(syms.length===0){ coins.innerHTML='<div class="coin">No symbols configured.</div>'; }
+    else coins.innerHTML = syms.map(sym=>{
+      const raw = sig[sym] || 'no read yet';
+      const p = parseSignal(raw);
+      const pct = Math.min(100, Math.round(p.conf*100));
+      const cls = (p.action==='long'||p.action==='short') ? p.action : 'hold';
+      return `<div class="coin">
+        <div class="top"><span class="sym">${sym}</span>
+          <span class="pill ${cls}">${p.action.toUpperCase()}</span></div>
+        <div class="bar"><i style="width:${pct}%;background:${barColor(p.conf)}"></i></div>
+        <div class="conf"><span>confidence ${pct}%</span><span class="gate">target 70%</span></div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    document.getElementById('safety').textContent = 'Cannot reach bot (it may be waking up — wait ~30s).';
+  }
+}
+
+async function ctl(action){
+  try{
+    const h = {}; const k = KEY(); if(k) h['X-API-Key']=k;
+    const r = await fetch('/control/'+action,{method:'POST',headers:h});
+    if(r.status===401){ alert('Control key required or wrong. Tap "set control key".'); return; }
+    setTimeout(load, 600);
+  }catch(e){ alert('Action failed: '+e); }
+}
+
+load();
+setInterval(load, 15000);
+</script>
+</body>
+</html>

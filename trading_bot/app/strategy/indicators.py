@@ -81,3 +81,68 @@ def proximity_pct(price: float, zone: Zone) -> float:
         return 0.0
     edge = zone.low if price < zone.low else zone.high
     return abs(price - edge) / price * 100
+
+
+def adx(df: pd.DataFrame, period: int = 14) -> pd.Series:
+    """Average Directional Index — trend strength (not direction)."""
+    high, low, close = df["high"], df["low"], df["close"]
+    up = high.diff()
+    down = -low.diff()
+    plus_dm = ((up > down) & (up > 0)) * up
+    minus_dm = ((down > up) & (down > 0)) * down
+    prev_close = close.shift(1)
+    tr = pd.concat(
+        [(high - low), (high - prev_close).abs(), (low - prev_close).abs()], axis=1
+    ).max(axis=1)
+    atr_ = tr.ewm(alpha=1 / period, adjust=False).mean()
+    plus_di = 100 * plus_dm.ewm(alpha=1 / period, adjust=False).mean() / atr_.replace(0, np.nan)
+    minus_di = 100 * minus_dm.ewm(alpha=1 / period, adjust=False).mean() / atr_.replace(0, np.nan)
+    dx = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di).replace(0, np.nan)
+    return dx.ewm(alpha=1 / period, adjust=False).mean().fillna(0.0)
+
+
+def to_higher_tf(df: pd.DataFrame, factor: int = 4) -> pd.DataFrame:
+    """Aggregate every `factor` bars into one higher-timeframe candle.
+
+    Works without knowing the exact bar frequency (e.g. 1h -> 4h with
+    factor=4), so it gives a bigger-picture trend from the same data.
+    """
+    group = np.arange(len(df)) // factor
+    agg = df.groupby(group).agg(
+        {"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}
+    )
+    return agg
+
+
+def volume_ratio(df: pd.DataFrame, window: int = 20) -> float:
+    """Latest volume relative to its recent average (>1 = above average)."""
+    if len(df) < window + 1:
+        return 1.0
+    avg = df["volume"].iloc[-window:].mean()
+    if avg <= 0:
+        return 1.0
+    return float(df["volume"].iloc[-1] / avg)
+
+
+def detect_flag(
+    df: pd.DataFrame, pole: int = 5, flag: int = 5,
+    pole_pct: float = 4.0, flag_max_pct: float = 3.0,
+) -> str | None:
+    """Detect a bull/bear flag: a strong impulse (the pole) followed by a
+    tight consolidation (the flag). Returns 'bull', 'bear', or None.
+    """
+    if len(df) < pole + flag + 1:
+        return None
+    close = df["close"].values
+    pole_start = close[-(pole + flag)]
+    pole_end = close[-flag - 1]
+    if pole_start <= 0:
+        return None
+    pole_ret = (pole_end / pole_start - 1) * 100
+    seg = close[-flag:]
+    flag_range = (seg.max() - seg.min()) / seg.min() * 100 if seg.min() > 0 else 100.0
+    if pole_ret >= pole_pct and flag_range <= flag_max_pct:
+        return "bull"
+    if pole_ret <= -pole_pct and flag_range <= flag_max_pct:
+        return "bear"
+    return None

@@ -420,7 +420,8 @@
     closeModal();
     viewIdx = null; // jump back to your active attempt
     render(lastMatches);
-    alert("Bet placed into " + act.att.label + " ✅\nIt'll auto-track from the live score.");
+    const line = m.home + " vs " + m.away + ": " + draftLegs.map((l) => l.label).join(" + ") + ", odds " + odds + ", " + cur + stake;
+    alert("Saved on THIS phone only (not shared with friends yet).\n\nTo publish it to the group, send this line to your AI chat:\n\n" + line);
   }
 
   // ---- Restart button ----

@@ -67,6 +67,21 @@ curl -X POST localhost:8000/control/start
 curl -X POST localhost:8000/control/pause
 ```
 
+## Frontend (React dashboard)
+
+A Vite + React control panel lives in `frontend/`. It polls `/status` and
+drives the `/control/*` endpoints (start/stop/pause/resume), shows a
+LIVE/DRY-RUN safety banner, and lists the latest per-symbol signals.
+
+```bash
+cd frontend
+npm install
+npm run dev        # http://localhost:5173 (proxies /status,/control to :8000)
+npm run build      # production build into frontend/dist
+```
+
+Run the backend (`uvicorn app.main:app`) alongside it for live data.
+
 ## Going live (when you're ready)
 
 1. Create Bybit **testnet** keys; set `BYBIT_TESTNET=true`, fill the keys.

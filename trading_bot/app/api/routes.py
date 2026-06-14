@@ -41,6 +41,11 @@ def status(request: Request) -> dict:
         "last_run": s.last_run,
         "last_signals": s.last_signals,
         "market": s.market,
+        "cycle": s.cycle,
+        "equity": s.equity,
+        "start_equity": s.start_equity,
+        "session_pnl": round(s.equity - s.start_equity, 4) if s.start_equity else 0.0,
+        "open_positions": s.open_positions,
         "error": s.error,
     }
 

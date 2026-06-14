@@ -36,6 +36,10 @@ class BotState:
     trades_today: int = 0
     trade_day: str | None = None
     market: str | None = None
+    equity: float = 0.0
+    start_equity: float = 0.0
+    open_positions: int = 0
+    cycle: dict | None = None
 
 
 class TradingBot:
@@ -47,6 +51,7 @@ class TradingBot:
         self.notifier = get_notifier()
         self.state = BotState(mode=settings.trading_mode, strategy=strategy_name)
         self.symbols: list[str] = list(settings.symbols)
+        self._cycle = None
         self._task: asyncio.Task | None = None
         self._stop = asyncio.Event()
 
@@ -126,6 +131,19 @@ class TradingBot:
         equity = self.exchange.get_equity()
         self.risk.register_equity(equity)
         self.storage.record_equity(equity)
+        self.state.equity = round(equity, 4)
+        if self.state.start_equity <= 0 and equity > 0:
+            self.state.start_equity = round(equity, 4)
+
+        # Cycle-phase context (where we are in the BTC cycle).
+        from ..strategy.cycle import assess_cycle
+        self._cycle = assess_cycle()
+        self.state.cycle = {
+            "phase": self._cycle.phase,
+            "months_since_halving": round(self._cycle.months_since_halving, 1),
+            "months_to_next_halving": round(self._cycle.months_to_next_halving, 1),
+            "note": self._cycle.note,
+        }
 
         if equity <= 0:
             note = "no tradable balance — move USDT to your Unified Trading account"
@@ -152,6 +170,7 @@ class TradingBot:
                     open_positions += 1
             except Exception as exc:  # one bad symbol must not break the rest
                 log.warning("position check failed for %s: %s", symbol, exc)
+        self.state.open_positions = open_positions
 
         for symbol in self.symbols:
             # Each symbol is independent: a failure here is logged and skipped,
@@ -198,10 +217,14 @@ class TradingBot:
     def _open_from_signal(self, symbol, signal, equity) -> bool:
         """Size, broadcast, and execute a single signal. Returns True if opened."""
         side = "Buy" if signal.action == "long" else "Sell"
+        # Cycle phase tightens leverage in distribution/bear phases.
+        cycle = getattr(self, "_cycle", None)
+        cycle_factor = cycle.leverage_factor if cycle else 1.0
+        lev_cap = min(settings.max_leverage, signal.leverage) * cycle_factor
         plan = plan_position(
             equity=equity, risk_pct=settings.risk_per_trade_pct,
             entry=signal.entry, stop=signal.stop_loss, side=signal.action,
-            leverage_cap=min(settings.max_leverage, signal.leverage),
+            leverage_cap=max(1.0, lev_cap),
         )
         if plan.qty <= 0:
             log.info("[%s] sizing produced no quantity", symbol)

@@ -29,3 +29,13 @@ CREATE TABLE IF NOT EXISTS equity_snapshots (
     ts      TIMESTAMPTZ NOT NULL DEFAULT now(),
     equity  DOUBLE PRECISION NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS error_log (
+    id         BIGSERIAL PRIMARY KEY,
+    ts         TIMESTAMPTZ NOT NULL DEFAULT now(),
+    source     TEXT NOT NULL,
+    message    TEXT NOT NULL,
+    traceback  TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_error_log_ts ON error_log (ts DESC);

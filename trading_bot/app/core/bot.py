@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import traceback
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
@@ -77,13 +78,23 @@ class TradingBot:
                     await asyncio.to_thread(self._tick)
                     self.state.error = None
                 except Exception as exc:  # pragma: no cover - defensive
-                    self.state.error = str(exc)
-                    log.exception("tick failed")
-                    self.notifier.send(f"⚠️ bot error: {exc}")
+                    self.handle_error("tick", exc)
             try:
                 await asyncio.wait_for(self._stop.wait(), timeout=settings.loop_interval_seconds)
             except asyncio.TimeoutError:
                 pass
+
+    def handle_error(self, source: str, exc: Exception) -> None:
+        """Record an error to state, logs, the database, and notifiers."""
+        self.state.error = str(exc)
+        log.exception("%s failed: %s", source, exc)
+        try:
+            self.storage.record_error(
+                source=source, message=str(exc), traceback=traceback.format_exc()
+            )
+        except Exception:  # pragma: no cover - never let logging mask the error
+            log.warning("failed to persist error to database")
+        self.notifier.send(f"⚠️ bot error [{source}]: {exc}")
 
     def _tick(self) -> None:
         self.state.last_run = datetime.now(timezone.utc).isoformat()

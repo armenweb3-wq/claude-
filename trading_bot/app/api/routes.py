@@ -44,6 +44,11 @@ def status(request: Request) -> dict:
     }
 
 
+@router.get("/errors")
+def errors(request: Request, limit: int = 50) -> dict:
+    return {"errors": _bot(request).storage.recent_errors(limit=limit)}
+
+
 @control.post("/start")
 async def start(request: Request) -> dict:
     await _bot(request).start()

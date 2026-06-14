@@ -46,8 +46,12 @@ docker compose ps           # wait for "healthy"
 python scripts/init_db.py   # applies schema.sql idempotently
 ```
 
-Tables: `trades`, `signals`, `equity_snapshots`. If `DATABASE_URL` is unset,
-the bot still runs and simply skips persistence (logs a warning).
+Tables: `trades`, `signals`, `equity_snapshots`, `error_log`. If
+`DATABASE_URL` is unset, the bot still runs and simply skips persistence
+(logs a warning).
+
+Runtime errors are captured to `error_log` (source, message, traceback) in
+addition to logs and notifications. Read recent ones via `GET /errors?limit=N`.
 
 ## Quick start
 

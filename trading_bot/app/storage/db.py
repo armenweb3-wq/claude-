@@ -49,6 +49,26 @@ class Storage:
         with self._conn.cursor() as cur:
             cur.execute("INSERT INTO equity_snapshots (equity) VALUES (%s)", (equity,))
 
+    def record_error(self, *, source: str, message: str, traceback: str | None = None) -> None:
+        with self._conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO error_log (source, message, traceback) VALUES (%s,%s,%s)",
+                (source, message, traceback),
+            )
+
+    def recent_errors(self, limit: int = 50) -> list[dict]:
+        with self._conn.cursor() as cur:
+            cur.execute(
+                "SELECT ts, source, message, traceback FROM error_log"
+                " ORDER BY ts DESC LIMIT %s",
+                (limit,),
+            )
+            rows = cur.fetchall()
+        return [
+            {"ts": r[0].isoformat(), "source": r[1], "message": r[2], "traceback": r[3]}
+            for r in rows
+        ]
+
 
 class _NullStorage(Storage):
     """No-op storage used when no DB is configured."""
@@ -59,6 +79,9 @@ class _NullStorage(Storage):
     def record_trade(self, **_: object) -> None: ...
     def record_signal(self, **_: object) -> None: ...
     def record_equity(self, *_: object) -> None: ...
+    def record_error(self, **_: object) -> None: ...
+    def recent_errors(self, limit: int = 50) -> list[dict]:
+        return []
 
 
 def get_storage() -> Storage:

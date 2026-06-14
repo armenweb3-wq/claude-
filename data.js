@@ -109,7 +109,7 @@ window.BETTING_DATA = {
       id: 5,
       label: "🎯 6×€2 Strategy",
       keepLabel: true,
-      startingBankroll: 100, // PLACEHOLDER — tell me your real stake and I'll update
+      startingBankroll: 250,
       targetLegs: 6,
       targetMultiplierPerLeg: 2.0,
       status: "active",
@@ -123,7 +123,7 @@ window.BETTING_DATA = {
             { label: "Germany over 1.5 first-half corners", type: "corners", manual: true },
             { label: "Over 15.5 total fouls", type: "other", manual: true },
           ],
-          stake: 100, odds: 2.05, // Stoiximan Bet Builder
+          stake: 250, odds: 2.05, // Stoiximan Bet Builder
           result: "pending", returnAmount: 0,
         },
       ],

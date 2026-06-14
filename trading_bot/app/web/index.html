@@ -113,7 +113,8 @@
 
   <div class="stats">
     <div class="stat"><div class="l">Equity</div><div class="v" id="equity">—</div></div>
-    <div class="stat"><div class="l">Session P&amp;L</div><div class="v" id="pnl">—</div></div>
+    <div class="stat"><div class="l">Open P&amp;L</div><div class="v" id="openpnl">—</div>
+      <div class="note" id="sesspnl" style="margin-top:3px"></div></div>
     <div class="stat"><div class="l">Status</div><div class="v sm" id="run"><span class="dot off"></span>—</div></div>
     <div class="stat"><div class="l">Open positions</div><div class="v" id="openpos">—</div></div>
   </div>
@@ -234,10 +235,12 @@ async function load(){
     document.getElementById('safety').textContent=s.safety||'';
 
     document.getElementById('equity').textContent=money(s.equity);
-    const pnlEl=document.getElementById('pnl');
-    const pnl=s.session_pnl||0;
-    pnlEl.textContent=(pnl>=0?'+':'')+money(pnl).replace('$','$');
-    pnlEl.className='v '+(pnl>0?'pos':pnl<0?'neg':'');
+    const opnl=s.open_pnl||0;
+    const oEl=document.getElementById('openpnl');
+    oEl.textContent=(opnl>=0?'+':'')+money(opnl);
+    oEl.className='v '+(opnl>0?'pos':opnl<0?'neg':'');
+    const sp=s.session_pnl||0;
+    document.getElementById('sesspnl').textContent='session '+(sp>=0?'+':'')+money(sp);
     document.getElementById('openpos').textContent=(s.open_positions!=null?s.open_positions:'—');
 
     const run=document.getElementById('run');

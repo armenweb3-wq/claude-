@@ -47,6 +47,7 @@ def status(request: Request) -> dict:
         "session_pnl": round(s.equity - s.start_equity, 4) if s.start_equity else 0.0,
         "open_positions": s.open_positions,
         "positions": s.positions,
+        "open_pnl": round(sum(p.get("unrealised_pnl", 0.0) for p in s.positions), 4),
         "error": s.error,
     }
 

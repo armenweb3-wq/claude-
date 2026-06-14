@@ -121,6 +121,42 @@ Set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, and
 Only messages from `TELEGRAM_CHAT_ID` are honoured; everything else is
 ignored. The command listener runs inside the FastAPI process (polling).
 
+## Strategy (confluence)
+
+`app/strategy/confluence.py` is the real strategy: it scores RSI(14),
+50/200 EMA structure, an EMA crossover trigger, and supply/demand-zone
+proximity into a confidence in `[0,1]`, biased by a dynamic market-regime
+detector (`regime.py`). The confidence doubles as the win-probability gate
+(default 0.70). It emits a full plan: BUY/SELL, entry, 3% stop, the
+TP1/TP2/TP3 ladder, blended risk:reward, and a leverage suggestion.
+
+Sizing (`app/risk/sizing.py`) risks a fixed % of equity per trade (default
+5%); the stop distance sets quantity and leverage is chosen (capped) so the
+liquidation price stays beyond the stop.
+
+## Backtesting
+
+```bash
+cd trading_bot
+# Offline demo on reproducible synthetic data (no network):
+python -m app.backtest.run --synthetic
+
+# Real Bybit data (needs egress to api.bybit.com):
+python -m app.backtest.run --source bybit --start 2023-01-01 \
+    --symbols BTCUSDT ETHUSDT SOLUSDT XRPUSDT ADAUSDT DOGEUSDT \
+    --timeframes 1h 4h --json-out report.json
+
+# Offline from CSVs named <SYMBOL>_<TF>.csv:
+python -m app.backtest.run --source csv --csv-dir ./data --symbols BTCUSDT --timeframes 1h
+```
+
+The engine simulates the live rules faithfully: 5%-risk sizing, 3% stop,
+TP ladder partial closes, trailing stop after TP1, daily trade cap, taker
+fees + slippage, and worst-case intrabar fills (stop assumed before TP).
+
+> Note: the liquidation-heatmap input is neutral in backtests (that data is
+> live-only / proxied); the backtest covers the RSI + EMA + supply/demand core.
+
 ## Going live (when you're ready)
 
 1. Create Bybit **testnet** keys; set `BYBIT_TESTNET=true`, fill the keys.

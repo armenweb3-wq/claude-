@@ -18,13 +18,14 @@ export default function SmoothScroll({
     if (prefersReducedMotion()) return;
 
     const lenis = new Lenis({
-      duration: 1.1,
+      duration: 1.2,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
       // Drive touch scrolling too, so phones get the same eased scroll
-      // (and ScrollTrigger stays in sync on touch devices).
+      // (and ScrollTrigger stays in sync on touch devices). Keep the touch
+      // multiplier at/under 1 so a swipe doesn't fling the page too fast.
       syncTouch: true,
-      touchMultiplier: 1.4,
+      touchMultiplier: 0.9,
     });
 
     // Keep ScrollTrigger informed of Lenis-driven scroll updates.

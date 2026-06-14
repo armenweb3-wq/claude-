@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-14T18:10:27.925Z",
+  "updatedAt": "2026-06-14T18:15:27.411Z",
   "matches": [
     {
       "home": "USA",
@@ -44,8 +44,8 @@
     {
       "home": "Germany",
       "away": "Curaçao",
-      "status": "PAUSED",
-      "homeScore": 3,
+      "status": "IN_PLAY",
+      "homeScore": 4,
       "awayScore": 1,
       "utcDate": "2026-06-14T17:00:00Z"
     },

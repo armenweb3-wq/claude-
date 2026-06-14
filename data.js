@@ -96,48 +96,41 @@ window.BETTING_DATA = {
           leg: 2, date: "2026-06-14", match: "Germany vs Curaçao",
           selections: [
             { label: "Over 2.5 total goals", type: "over_goals", line: 2.5 },
-            { label: "Germany over 5.5 corners", type: "corners", manual: true },
-            { label: "Over 1.5 total cards", type: "cards", manual: true },
           ],
-          stake: 725, odds: 1.45, // illustrative ~1.4 combo
+          stake: 725, odds: 1.45, // single market — placeable anywhere
           result: "pending", returnAmount: 0,
         },
       ],
     },
   ],
 
-  // ---- Daily recommendations (risk-rated; Today / Tomorrow toggle) ----
+  // ---- Daily recommendations: ONE mainstream market per match (placeable
+  //  everywhere; combine single legs across DIFFERENT matches to reach ~1.4).
+  //  Never two markets on the same game in a normal bet — that's what gets refused.
   picks: {
     today: {
       date: "2026-06-14",
       candidates: [
         {
           match: "Germany vs Curaçao", risk: "low",
-          market: "Over 2.5 goals + Germany over 4.5 corners (skip a Germany-win leg only if you want max safety)",
-          summary: "Clearest mismatch of the day — the safest leg (kicks off 17:00 UTC).",
-          why: "Germany (possession + wide play) vs Curaçao (smallest nation ever at a WC) defending deep reliably produces goals AND corners.",
-          whyRisk: "Lowest risk on the board, but still multi-leg; a minnow can frustrate for ~60 mins and the corners leg is manual.",
+          market: "SINGLE MARKET → Over 2.5 total goals  (~1.40)",
+          summary: "Clearest mismatch of the day (17:00 UTC). One market — combines with anything.",
+          why: "Germany should win comfortably vs the smallest nation ever at a WC; 3+ goals is the likeliest scoreline.",
+          whyRisk: "Low. A minnow can frustrate for ~60 mins, but Germany's quality usually tells. Single market = always placeable.",
         },
         {
-          match: "Spain vs Cape Verde", risk: "low",
-          market: "Spain win + Over 1.5 goals (or Spain over corners)",
-          summary: "Second clear mismatch — Spain are elite vs WC debutants Cape Verde.",
-          why: "Spain dominate possession and create high volume; Cape Verde will sit deep, feeding Spanish corners and chances.",
-          whyRisk: "Low, but debutants can park the bus early; keep goal lines modest and avoid a big handicap.",
+          match: "Netherlands vs Japan", risk: "medium",
+          market: "SINGLE MARKET → Over 1.5 total goals  (~1.30-1.45)",
+          summary: "20:00 UTC. Note: 'Over 1.5 + DNB' won't combine (same match) — pick just ONE market.",
+          why: "Netherlands should control and create chances; two-plus goals across the game is a fair lean.",
+          whyRisk: "Medium — Japan are organised and dangerous on the break; a 1-0 either way kills an over-1.5.",
         },
         {
-          match: "Belgium vs Egypt", risk: "medium",
-          market: "Over 1.5 goals + Belgium Double Chance",
-          summary: "Solid but not a gimme.",
-          why: "Belgium have the attacking quality; over 1.5 is reasonable and DC covers a draw.",
-          whyRisk: "Medium — Egypt with Salah are dangerous and well-organised; an upset or low-scoring game is live.",
-        },
-        {
-          match: "Netherlands vs Japan", risk: "high",
-          market: "Over 1.5 goals + Netherlands DNB",
-          summary: "Higher variance — only if safer options aren't at ~1.40.",
-          why: "Netherlands should control and create; over 1.5 reasonable, DNB covers a draw.",
-          whyRisk: "High — Japan are dangerous on the break; a low-scoring upset threatens both legs.",
+          match: "Ivory Coast vs Ecuador", risk: "medium",
+          market: "SINGLE MARKET → Over 1.5 total goals  (or Double Chance on your favoured side)",
+          summary: "23:00 UTC. Even game — keep it to one simple market.",
+          why: "Two athletic sides; a single goals or double-chance market is the safest single pick here.",
+          whyRisk: "Medium — evenly matched, so the result is a coin-flip; that's why a single goals line is safer than a winner.",
         },
       ],
     },

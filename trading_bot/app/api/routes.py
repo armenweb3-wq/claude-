@@ -35,7 +35,7 @@ def status(request: Request) -> dict:
         "is_live": settings.is_live,
         "safety": settings.safety_summary(),
         "strategy": s.strategy,
-        "symbols": settings.symbols,
+        "symbols": getattr(bot, "symbols", settings.symbols),
         "timeframe": settings.timeframe,
         "exchange": bot.exchange.name,
         "last_run": s.last_run,

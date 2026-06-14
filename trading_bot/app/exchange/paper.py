@@ -96,6 +96,15 @@ class PaperExchange(ExchangeAdapter):
             raise RuntimeError(f"no price data for {symbol}")
         return float(df["close"].iloc[-1])
 
+    def available_symbols(self) -> set[str]:
+        resp = requests.get(
+            f"{_PUBLIC_BASE}/v5/market/instruments-info",
+            params={"category": settings.bybit_category, "limit": 1000},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        return {i["symbol"] for i in resp.json().get("result", {}).get("list", [])}
+
     # ── execution surface ───────────────────────────────────
     def instrument_rules(self, symbol: str) -> InstrumentRules:
         # Generous defaults for simulation; the live adapter reads the real ones.

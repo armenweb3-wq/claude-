@@ -102,6 +102,10 @@ class BybitExchange(ExchangeAdapter):
             Order(symbol=symbol, side=opposite, qty=pos.size, reduce_only=True)
         )
 
+    def available_symbols(self) -> set[str]:
+        resp = self._client.get_instruments_info(category=self._category, limit=1000)
+        return {i["symbol"] for i in resp.get("result", {}).get("list", [])}
+
     # ── execution surface ───────────────────────────────────
     def instrument_rules(self, symbol: str) -> InstrumentRules:
         if symbol in self._rules_cache:

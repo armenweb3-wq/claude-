@@ -41,6 +41,9 @@
   .pill.hold{background:var(--panel2);color:var(--muted)}
   .pill.long{background:rgba(34,197,94,.16);color:var(--green)}
   .pill.short{background:rgba(239,68,68,.16);color:var(--red)}
+  .pill.error{background:rgba(239,68,68,.16);color:var(--red)}
+  .pill.blocked{background:rgba(245,158,11,.16);color:var(--amber)}
+  .note{font-size:.74rem;color:var(--muted);margin-top:4px}
   .bar{height:10px;border-radius:999px;background:var(--panel2);overflow:hidden}
   .bar > i{display:block;height:100%;border-radius:999px;transition:width .4s ease}
   .conf{display:flex;justify-content:space-between;font-size:.74rem;color:var(--muted);margin-top:6px}
@@ -97,7 +100,12 @@ function fmtTime(s){ if(!s) return '—'; const d=new Date(s);
   return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
 
 function parseSignal(text){
-  // e.g. "hold: confidence 0.66 < 0.70"  or  "long: confluence 0.78"
+  // e.g. "hold: confidence 0.66 < 0.70" | "long: confluence 0.78"
+  //      "error: ..." | "long blocked — BTC ..."
+  const t = (text||'').toLowerCase();
+  if(t.startsWith('error')) return {action:'error', conf:0, text};
+  if(t.includes('blocked')) return {action:'blocked', conf:0, text};
+  if(t.includes('no tradable')) return {action:'nobalance', conf:0, text};
   const action = (text.split(':')[0]||'hold').trim().toLowerCase();
   const m = text.match(/([0-9]*\.?[0-9]+)/);
   const conf = m ? parseFloat(m[1]) : 0;
@@ -148,6 +156,15 @@ async function load(){
     else coins.innerHTML = syms.map(sym=>{
       const raw = sig[sym] || 'no read yet';
       const p = parseSignal(raw);
+      const special = {error:'ERROR', blocked:'BLOCKED', nobalance:'NO FUNDS'};
+      if(special[p.action]){
+        const cls = p.action==='blocked' ? 'blocked' : 'error';
+        const msg = raw.replace(/^error:\s*/i,'');
+        return `<div class="coin">
+          <div class="top"><span class="sym">${sym}</span>
+            <span class="pill ${cls}">${special[p.action]}</span></div>
+          <div class="note">${msg}</div></div>`;
+      }
       const pct = Math.min(100, Math.round(p.conf*100));
       const cls = (p.action==='long'||p.action==='short') ? p.action : 'hold';
       return `<div class="coin">

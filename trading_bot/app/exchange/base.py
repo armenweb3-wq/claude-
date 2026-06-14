@@ -104,6 +104,14 @@ class ExchangeAdapter(ABC):
         loss, and place reduce-only take-profit ladder orders. The stop must
         live on the exchange so the position is protected if the bot dies."""
 
+    def available_symbols(self) -> set[str]:
+        """Set of valid symbols for the configured category.
+
+        Default empty set means "unknown — skip validation". Adapters that
+        can list instruments override this so the bot can drop bad symbols.
+        """
+        return set()
+
     def last_price(self, symbol: str) -> float:
         df = self.get_klines(symbol, "60", limit=1)
         if df.empty:

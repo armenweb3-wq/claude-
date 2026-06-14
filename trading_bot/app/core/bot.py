@@ -46,18 +46,37 @@ class TradingBot:
         self.storage = get_storage()
         self.notifier = get_notifier()
         self.state = BotState(mode=settings.trading_mode, strategy=strategy_name)
+        self.symbols: list[str] = list(settings.symbols)
         self._task: asyncio.Task | None = None
         self._stop = asyncio.Event()
+
+    def _validate_symbols(self) -> None:
+        """Drop symbols Bybit doesn't list (e.g. wrong meme-coin names)."""
+        try:
+            available = self.exchange.available_symbols()
+        except Exception as exc:  # pragma: no cover - network/best effort
+            log.warning("symbol validation skipped: %s", exc)
+            return
+        if not available:
+            return
+        valid = [s for s in settings.symbols if s in available]
+        dropped = [s for s in settings.symbols if s not in available]
+        if dropped:
+            log.warning("dropping invalid symbols: %s", dropped)
+            self.notifier.send("⏭️ skipping invalid symbols: " + ", ".join(dropped))
+        if valid:
+            self.symbols = valid
 
     # ── lifecycle ───────────────────────────────────────────
     async def start(self) -> None:
         if self.state.running:
             return
+        await asyncio.to_thread(self._validate_symbols)
         self._stop.clear()
         self.state.running = True
         self.notifier.send(
             f"🤖 crypto-trading-bot starting — {settings.safety_summary()}\n"
-            f"Strategy: {self.strategy.name} | Symbols: {', '.join(settings.symbols)}"
+            f"Strategy: {self.strategy.name} | {len(self.symbols)} symbols"
         )
         self._task = asyncio.create_task(self._run_loop())
 
@@ -110,7 +129,7 @@ class TradingBot:
 
         if equity <= 0:
             note = "no tradable balance — move USDT to your Unified Trading account"
-            self.state.last_signals = {s: note for s in settings.symbols}
+            self.state.last_signals = {s: note for s in self.symbols}
             log.warning(note)
             return
 
@@ -125,7 +144,7 @@ class TradingBot:
         # Snapshot open positions up front (resilient to per-symbol errors).
         positions: dict[str, object] = {}
         open_positions = 0
-        for symbol in settings.symbols:
+        for symbol in self.symbols:
             try:
                 pos = self.exchange.get_position(symbol)
                 positions[symbol] = pos
@@ -134,7 +153,7 @@ class TradingBot:
             except Exception as exc:  # one bad symbol must not break the rest
                 log.warning("position check failed for %s: %s", symbol, exc)
 
-        for symbol in settings.symbols:
+        for symbol in self.symbols:
             # Each symbol is independent: a failure here is logged and skipped,
             # never aborts the whole cycle.
             try:

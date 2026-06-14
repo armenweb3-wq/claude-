@@ -60,9 +60,19 @@ window.BETTING_DATA = {
       // Your live attempt — shared with the group. Tell me bets and I add them here.
       id: 3,
       label: "Attempt 2",
-      startingBankroll: 340, // placeholder — tell me your real new budget and I'll update
+      startingBankroll: 340,
       status: "active",
-      bets: [],
+      bets: [
+        {
+          leg: 1, date: "2026-06-13", match: "Brazil vs Morocco",
+          selections: [
+            { label: "Over 1.5 total goals", type: "over_goals", line: 1.5 },
+            { label: "Over 4.5 corners", type: "corners", manual: true },
+          ],
+          stake: 340, odds: 1.40,
+          result: "won", returnAmount: 476.00, // 1-1 = over 1.5 ✓; corners well over 4.5 ✓
+        },
+      ],
     },
 
     {

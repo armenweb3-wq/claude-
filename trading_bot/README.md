@@ -100,6 +100,23 @@ The state-changing `/control/*` endpoints are protected by a shared secret.
 python -c "import secrets; print(secrets.token_urlsafe(32))"   # make a key
 ```
 
+## Telegram control (two-way)
+
+Set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, and
+`TELEGRAM_COMMANDS_ENABLED=true` to drive the bot from chat:
+
+| Command   | Action                                   |
+|-----------|------------------------------------------|
+| `/status` | show running/paused/mode/strategy        |
+| `/start`  | start the trading loop                   |
+| `/stop`   | stop the trading loop                    |
+| `/pause`  | pause trading (loop runs, no orders)     |
+| `/resume` | resume trading                           |
+| `/help`   | list commands                            |
+
+Only messages from `TELEGRAM_CHAT_ID` are honoured; everything else is
+ignored. The command listener runs inside the FastAPI process (polling).
+
 ## Going live (when you're ready)
 
 1. Create Bybit **testnet** keys; set `BYBIT_TESTNET=true`, fill the keys.

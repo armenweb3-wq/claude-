@@ -71,6 +71,10 @@ class Settings:
     # telegram
     telegram_bot_token: str = field(default_factory=lambda: _get("TELEGRAM_BOT_TOKEN"))
     telegram_chat_id: str = field(default_factory=lambda: _get("TELEGRAM_CHAT_ID"))
+    # Two-way command control (/status, /start, /stop, /pause, /resume).
+    telegram_commands_enabled: bool = field(
+        default_factory=lambda: _get_bool("TELEGRAM_COMMANDS_ENABLED", False)
+    )
 
     # webhook
     webhook_url: str = field(default_factory=lambda: _get("WEBHOOK_URL"))
@@ -88,6 +92,14 @@ class Settings:
     @property
     def auth_enabled(self) -> bool:
         return bool(self.control_api_key)
+
+    @property
+    def telegram_control_enabled(self) -> bool:
+        return (
+            self.telegram_commands_enabled
+            and bool(self.telegram_bot_token)
+            and bool(self.telegram_chat_id)
+        )
 
     @property
     def is_live(self) -> bool:

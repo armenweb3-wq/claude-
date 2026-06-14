@@ -34,7 +34,24 @@ async def lifespan(app: FastAPI):
             "Set it before exposing the bot or enabling live trading."
         )
     app.state.bot = TradingBot(strategy_name="sma_crossover")
+
+    app.state.telegram = None
+    if settings.telegram_control_enabled:
+        from .integrations import TelegramController
+
+        controller = TelegramController(
+            app.state.bot, settings.telegram_bot_token, settings.telegram_chat_id
+        )
+        try:
+            await controller.run()
+            app.state.telegram = controller
+        except Exception as exc:  # pragma: no cover - startup best effort
+            log.warning("Telegram control failed to start: %s", exc)
+
     yield
+
+    if app.state.telegram is not None:
+        await app.state.telegram.stop()
     if app.state.bot.state.running:
         await app.state.bot.stop()
 

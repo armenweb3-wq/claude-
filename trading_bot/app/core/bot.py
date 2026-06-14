@@ -14,9 +14,10 @@ from datetime import datetime, timezone
 
 from ..config import settings
 from ..exchange import get_exchange
-from ..exchange.base import Order
 from ..notify import get_notifier
+from ..notify.signal_format import format_signal
 from ..risk import RiskManager
+from ..risk.sizing import plan_position
 from ..storage import get_storage
 from ..strategy import get_strategy
 
@@ -28,14 +29,16 @@ class BotState:
     running: bool = False
     paused: bool = False
     mode: str = "dry_run"
-    strategy: str = "sma_crossover"
+    strategy: str = "confluence"
     last_run: str | None = None
     last_signals: dict[str, str] = field(default_factory=dict)
     error: str | None = None
+    trades_today: int = 0
+    trade_day: str | None = None
 
 
 class TradingBot:
-    def __init__(self, strategy_name: str = "sma_crossover") -> None:
+    def __init__(self, strategy_name: str = "confluence") -> None:
         self.exchange = get_exchange()
         self.strategy = get_strategy(strategy_name)
         self.risk = RiskManager()
@@ -98,15 +101,22 @@ class TradingBot:
 
     def _tick(self) -> None:
         self.state.last_run = datetime.now(timezone.utc).isoformat()
+        self._roll_day()
+
         equity = self.exchange.get_equity()
         self.risk.register_equity(equity)
         self.storage.record_equity(equity)
+
+        if self.risk.daily_drawdown_breached(equity):
+            log.warning("daily drawdown breached — no new entries")
+            return
+
         open_positions = sum(
             1 for s in settings.symbols if self.exchange.get_position(s).side is not None
         )
 
         for symbol in settings.symbols:
-            df = self.exchange.get_klines(symbol, settings.timeframe, limit=200)
+            df = self.exchange.get_klines(symbol, settings.timeframe, limit=250)
             signal = self.strategy.generate(df)
             self.state.last_signals[symbol] = f"{signal.action}: {signal.reason}"
             price = float(df["close"].iloc[-1]) if not df.empty else 0.0
@@ -114,49 +124,60 @@ class TradingBot:
                 symbol=symbol, action=signal.action, reason=signal.reason, price=price
             )
 
-            position = self.exchange.get_position(symbol)
+            if signal.action not in {"long", "short"}:
+                continue  # exits are handled by exchange-side SL/TP orders
 
-            if signal.action in {"close", "hold"}:
-                if signal.action == "close" and position.side:
-                    self._close(symbol, signal.reason)
+            # Gate: daily cap, max concurrent positions, already-in-position.
+            if self.state.trades_today >= settings.max_trades_per_day:
+                log.info("daily trade cap reached (%s)", settings.max_trades_per_day)
+                break
+            if open_positions >= settings.max_open_positions:
                 continue
+            if self.exchange.get_position(symbol).side is not None:
+                continue  # don't stack/reverse an existing position
 
-            # Reverse if an opposite position is open.
-            desired_side = "Buy" if signal.action == "long" else "Sell"
-            if position.side and position.side != desired_side:
-                self._close(symbol, "reverse signal")
-                open_positions = max(0, open_positions - 1)
-            elif position.side == desired_side:
-                continue  # already in the right direction
+            if self._open_from_signal(symbol, signal, equity):
+                open_positions += 1
+                self.state.trades_today += 1
 
-            decision = self.risk.evaluate(
-                side=signal.action, equity=equity, price=price, open_positions=open_positions
-            )
-            if not decision.allowed:
-                log.info("[risk] %s skipped: %s", symbol, decision.reason)
-                continue
+    def _open_from_signal(self, symbol, signal, equity) -> bool:
+        """Size, broadcast, and execute a single signal. Returns True if opened."""
+        side = "Buy" if signal.action == "long" else "Sell"
+        plan = plan_position(
+            equity=equity, risk_pct=settings.risk_per_trade_pct,
+            entry=signal.entry, stop=signal.stop_loss, side=signal.action,
+            leverage_cap=min(settings.max_leverage, signal.leverage),
+        )
+        if plan.qty <= 0:
+            log.info("[%s] sizing produced no quantity", symbol)
+            return False
 
-            self._enter(symbol, desired_side, decision.qty, price, signal.reason)
-            open_positions += 1
+        # Broadcast the signal BEFORE execution (per spec).
+        self.notifier.send(format_signal(symbol, signal, dry_run=not settings.is_live))
 
-    # ── order helpers ───────────────────────────────────────
-    def _enter(self, symbol: str, side: str, qty: float, price: float, reason: str) -> None:
-        order = Order(symbol=symbol, side=side, qty=qty)
-        order = self.exchange.place_order(order)
+        result = self.exchange.open_position(
+            symbol=symbol, side=side, qty=plan.qty, leverage=plan.leverage,
+            stop_loss=signal.stop_loss, take_profits=signal.take_profits,
+        )
+        if not result.ok:
+            log.info("[%s] skipped: %s", symbol, result.skipped_reason)
+            self.notifier.send(f"⏭️ {symbol} skipped: {result.skipped_reason}")
+            return False
+
         self.storage.record_trade(
-            symbol=symbol, side=side, qty=qty, price=price, order_id=order.order_id,
-            mode=settings.trading_mode, strategy=self.strategy.name, reason=reason,
+            symbol=symbol, side=side, qty=result.qty, price=signal.entry,
+            order_id=result.entry_order_id, mode=settings.trading_mode,
+            strategy=self.strategy.name, reason=signal.reason,
         )
         tag = "LIVE" if settings.is_live else "DRY-RUN"
-        self.notifier.send(f"[{tag}] {side} {qty} {symbol} @ ~{price} ({reason})")
+        self.notifier.send(
+            f"[{tag}] OPEN {side} {result.qty} {symbol} @ ~{signal.entry} "
+            f"lev {result.leverage:g}x SL {signal.stop_loss}"
+        )
+        return True
 
-    def _close(self, symbol: str, reason: str) -> None:
-        order = self.exchange.close_position(symbol)
-        if order:
-            self.storage.record_trade(
-                symbol=symbol, side=order.side, qty=order.qty, price=None,
-                order_id=order.order_id, mode=settings.trading_mode,
-                strategy=self.strategy.name, reason=f"close: {reason}",
-            )
-            tag = "LIVE" if settings.is_live else "DRY-RUN"
-            self.notifier.send(f"[{tag}] CLOSE {symbol} ({reason})")
+    def _roll_day(self) -> None:
+        today = datetime.now(timezone.utc).date().isoformat()
+        if self.state.trade_day != today:
+            self.state.trade_day = today
+            self.state.trades_today = 0

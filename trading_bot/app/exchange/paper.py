@@ -13,7 +13,14 @@ import pandas as pd
 import requests
 
 from ..config import settings
-from .base import ExchangeAdapter, Order, Position
+from .base import (
+    ExchangeAdapter,
+    ExecutionResult,
+    InstrumentRules,
+    Order,
+    Position,
+    round_step,
+)
 
 log = logging.getLogger(__name__)
 
@@ -88,3 +95,27 @@ class PaperExchange(ExchangeAdapter):
         if df.empty:
             raise RuntimeError(f"no price data for {symbol}")
         return float(df["close"].iloc[-1])
+
+    # ── execution surface ───────────────────────────────────
+    def instrument_rules(self, symbol: str) -> InstrumentRules:
+        # Generous defaults for simulation; the live adapter reads the real ones.
+        return InstrumentRules(min_qty=0.0, qty_step=0.0, min_notional=0.0)
+
+    def set_leverage(self, symbol: str, leverage: float) -> None:
+        log.info("[PAPER] set leverage %s = %sx", symbol, leverage)
+
+    def open_position(self, symbol, side, qty, leverage, stop_loss, take_profits):
+        rules = self.instrument_rules(symbol)
+        qty = round_step(qty, rules.qty_step)
+        if qty <= 0 or qty < rules.min_qty:
+            return ExecutionResult(False, skipped_reason="qty below minimum")
+        self.set_leverage(symbol, leverage)
+        order = self.place_order(Order(symbol=symbol, side=side, qty=qty))
+        log.info(
+            "[PAPER] opened %s %s qty=%s lev=%sx SL=%s TPs=%s",
+            side, symbol, qty, leverage, stop_loss,
+            [round(tp.price, 6) for tp in take_profits],
+        )
+        return ExecutionResult(
+            ok=True, entry_order_id=order.order_id, qty=qty, leverage=leverage
+        )

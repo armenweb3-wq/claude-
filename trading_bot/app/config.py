@@ -60,7 +60,8 @@ class Settings:
     # risk
     risk_per_trade_pct: float = field(default_factory=lambda: _get_float("RISK_PER_TRADE_PCT", 1.0))
     max_leverage: int = field(default_factory=lambda: _get_int("MAX_LEVERAGE", 3))
-    max_open_positions: int = field(default_factory=lambda: _get_int("MAX_OPEN_POSITIONS", 1))
+    max_open_positions: int = field(default_factory=lambda: _get_int("MAX_OPEN_POSITIONS", 3))
+    max_trades_per_day: int = field(default_factory=lambda: _get_int("MAX_TRADES_PER_DAY", 20))
     stop_loss_pct: float = field(default_factory=lambda: _get_float("STOP_LOSS_PCT", 2.0))
     take_profit_pct: float = field(default_factory=lambda: _get_float("TAKE_PROFIT_PCT", 4.0))
     daily_max_loss_pct: float = field(default_factory=lambda: _get_float("DAILY_MAX_LOSS_PCT", 5.0))

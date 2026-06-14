@@ -157,6 +157,24 @@ fees + slippage, and worst-case intrabar fills (stop assumed before TP).
 > Note: the liquidation-heatmap input is neutral in backtests (that data is
 > live-only / proxied); the backtest covers the RSI + EMA + supply/demand core.
 
+## Live execution
+
+When a signal passes the confidence gate, the bot:
+1. sizes the position by the 5%-risk rule (capped leverage),
+2. rounds qty to the exchange lot step and **skips** the symbol if it's below
+   the exchange minimum (so a small balance just trades the affordable coins),
+3. **broadcasts the signal** (Telegram/webhook) *before* executing,
+4. sets leverage, places the market entry **with the stop loss attached on the
+   exchange**, and places the reduce-only TP1/TP2/TP3 ladder.
+
+The stop living on the exchange means your position is protected even if the
+bot or its host goes down. Exits are handled by those exchange-side orders;
+the loop does not need to be alive to honour them.
+
+> Not yet wired: trailing-stop-after-TP1 in live mode (the backtester models
+> it; live currently relies on the fixed exchange stop + TP ladder), and the
+> error-acknowledge-to-resume flow.
+
 ## Going live (when you're ready)
 
 1. Create Bybit **testnet** keys; set `BYBIT_TESTNET=true`, fill the keys.

@@ -11,7 +11,14 @@ import pandas as pd
 from pybit.unified_trading import HTTP
 
 from ..config import settings
-from .base import ExchangeAdapter, Order, Position
+from .base import (
+    ExchangeAdapter,
+    ExecutionResult,
+    InstrumentRules,
+    Order,
+    Position,
+    round_step,
+)
 
 log = logging.getLogger(__name__)
 
@@ -28,6 +35,7 @@ class BybitExchange(ExchangeAdapter):
             api_secret=settings.bybit_api_secret,
         )
         self._category = settings.bybit_category
+        self._rules_cache: dict[str, InstrumentRules] = {}
         log.warning("Bybit LIVE client initialised — %s", settings.safety_summary())
 
     def get_klines(self, symbol: str, interval: str, limit: int = 200) -> pd.DataFrame:
@@ -93,3 +101,71 @@ class BybitExchange(ExchangeAdapter):
         return self.place_order(
             Order(symbol=symbol, side=opposite, qty=pos.size, reduce_only=True)
         )
+
+    # ── execution surface ───────────────────────────────────
+    def instrument_rules(self, symbol: str) -> InstrumentRules:
+        if symbol in self._rules_cache:
+            return self._rules_cache[symbol]
+        resp = self._client.get_instruments_info(category=self._category, symbol=symbol)
+        item = resp["result"]["list"][0]
+        lot = item["lotSizeFilter"]
+        rules = InstrumentRules(
+            min_qty=float(lot.get("minOrderQty") or 0),
+            qty_step=float(lot.get("qtyStep") or 0),
+            min_notional=float(lot.get("minNotionalValue") or 0),
+        )
+        self._rules_cache[symbol] = rules
+        return rules
+
+    def set_leverage(self, symbol: str, leverage: float) -> None:
+        lev = str(int(leverage))
+        try:
+            self._client.set_leverage(
+                category=self._category, symbol=symbol,
+                buyLeverage=lev, sellLeverage=lev,
+            )
+        except Exception as exc:  # pragma: no cover - Bybit errors if unchanged
+            # "leverage not modified" (110043) is benign.
+            if "110043" not in str(exc):
+                raise
+
+    def open_position(self, symbol, side, qty, leverage, stop_loss, take_profits):
+        rules = self.instrument_rules(symbol)
+        qty = round_step(qty, rules.qty_step)
+        price = self.last_price(symbol)
+        if qty <= 0 or qty < rules.min_qty or qty * price < rules.min_notional:
+            return ExecutionResult(
+                False,
+                skipped_reason=(
+                    f"qty {qty} below exchange minimum "
+                    f"(min_qty={rules.min_qty}, min_notional={rules.min_notional})"
+                ),
+            )
+
+        self.set_leverage(symbol, leverage)
+
+        # Market entry with the stop loss attached on the exchange.
+        log.warning("[LIVE] open %s %s qty=%s lev=%sx SL=%s", side, symbol, qty, leverage, stop_loss)
+        entry = self._client.place_order(
+            category=self._category, symbol=symbol, side=side,
+            orderType="Market", qty=str(qty),
+            stopLoss=str(round(stop_loss, 6)), slTriggerBy="LastPrice",
+        )
+        entry_id = entry.get("result", {}).get("orderId")
+
+        # Reduce-only TP ladder.
+        close_side = "Sell" if side == "Buy" else "Buy"
+        for tp in take_profits:
+            tp_qty = round_step(qty * tp.close_fraction, rules.qty_step)
+            if tp_qty <= 0:
+                continue
+            try:
+                self._client.place_order(
+                    category=self._category, symbol=symbol, side=close_side,
+                    orderType="Limit", qty=str(tp_qty), price=str(round(tp.price, 6)),
+                    reduceOnly=True, timeInForce="GTC",
+                )
+            except Exception as exc:  # pragma: no cover - best effort per rung
+                log.warning("TP order failed for %s @ %s: %s", symbol, tp.price, exc)
+
+        return ExecutionResult(ok=True, entry_order_id=entry_id, qty=qty, leverage=leverage)

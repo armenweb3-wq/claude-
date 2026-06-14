@@ -16,7 +16,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
-from .api import router
+from .api import backtest_router, router
 from .config import settings
 from .core import TradingBot
 
@@ -64,6 +64,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="crypto-trading-bot", version="0.1.0", lifespan=lifespan)
 app.include_router(router)
+app.include_router(backtest_router)
 
 _DASHBOARD = pathlib.Path(__file__).parent / "web" / "index.html"
 

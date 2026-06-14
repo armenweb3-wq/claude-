@@ -130,6 +130,17 @@
   <h2>Coins <span id="coinCount" class="note"></span></h2>
   <div id="coins"></div>
 
+  <h2>Backtest</h2>
+  <div class="chartcard">
+    <div class="chartbar">
+      <button id="btBtn" onclick="runBacktest()"
+        style="flex:0;max-width:none;padding:10px 16px;border-radius:12px;background:linear-gradient(135deg,#5b8cff,#3b5bdb)">
+        ▶ Run 2-cycle backtest</button>
+      <span class="note" id="btStatus">idle</span>
+    </div>
+    <div id="btResults" class="note" style="margin-top:6px"></div>
+  </div>
+
   <div class="foot">
     Auto-refreshes every 15s · <a class="link" href="#" onclick="setKey();return false">set control key</a>
   </div>
@@ -262,8 +273,33 @@ async function ctl(action){
   }catch(e){ alert('Action failed: '+e); }
 }
 
+async function runBacktest(){
+  const h={'Content-Type':'application/json'}; const k=KEY(); if(k) h['X-API-Key']=k;
+  const r=await fetch('/backtest',{method:'POST',headers:h});
+  if(r.status===401){ alert('Control key required. Tap "set control key".'); return; }
+  pollBacktest();
+}
+function btColor(v){ return v>=1.3?'var(--green)':v>=1?'var(--amber)':'var(--red)'; }
+async function pollBacktest(){
+  try{
+    const s=await (await fetch('/backtest',{cache:'no-store'})).json();
+    document.getElementById('btStatus').textContent=s.status+(s.status==='running'?' …':'');
+    const rows=(s.results||[]).map(r=>{
+      if(r.error||r.note) return `<div>• ${r.symbol} ${r.timeframe}: ${r.error||r.note}</div>`;
+      return `<div style="margin:6px 0;padding:8px;background:var(--card2);border-radius:10px">
+        <b>${r.symbol} ${r.timeframe}</b> · ${r.from}→${r.to}<br>
+        win <b>${r.win_rate_pct}%</b> · PF <b style="color:${btColor(r.profit_factor||0)}">${r.profit_factor??'—'}</b>
+        · return <b style="color:${(r.total_return_pct||0)>=0?'var(--green)':'var(--red)'}">${r.total_return_pct}%</b>
+        · maxDD ${r.max_drawdown_pct}% · ${r.trades} trades</div>`;
+    }).join('');
+    document.getElementById('btResults').innerHTML=rows||'<i>no results yet</i>';
+    if(s.status==='running') setTimeout(pollBacktest, 4000);
+  }catch(e){ document.getElementById('btStatus').textContent='error'; }
+}
+
 load();
 setInterval(load, 15000);
+pollBacktest();
 </script>
 </body>
 </html>

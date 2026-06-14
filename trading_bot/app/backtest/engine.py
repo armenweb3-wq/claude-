@@ -33,6 +33,7 @@ class BacktestConfig:
     taker_fee: float = 0.00055     # 0.055% Bybit perp taker
     slippage: float = 0.0005       # 0.05% per fill
     warmup: int = 220              # bars before trading (EMA200 + buffer)
+    signal_lookback: int = 400     # bars passed to the strategy per step (keeps it O(n))
 
 
 @dataclass
@@ -103,7 +104,8 @@ class Backtester:
 
             # 2) Look for a new entry only when flat and under the daily cap.
             if pos is None and trades_today < cfg.max_trades_per_day:
-                sig = self.strategy.generate(df.iloc[: i + 1])
+                window = df.iloc[max(0, i + 1 - cfg.signal_lookback) : i + 1]
+                sig = self.strategy.generate(window)
                 if sig.action in ("long", "short") and sig.entry and sig.stop_loss:
                     entry_px = nxt["open"] * (1 + self._slip(sig.action))
                     plan = plan_position(

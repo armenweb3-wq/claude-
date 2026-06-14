@@ -1,24 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Olive Grove Villas, Tala Hills (placeholder)">
   <defs>
-    <linearGradient id="og" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#3A3A2A"/>
-      <stop offset="1" stop-color="#16243B"/>
+    <linearGradient id="og-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#CFE0D9"/>
+      <stop offset="1" stop-color="#EFEAD8"/>
+    </linearGradient>
+    <linearGradient id="og-hill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9FA877"/>
+      <stop offset="1" stop-color="#7C8A5C"/>
     </linearGradient>
   </defs>
-  <rect width="1600" height="1000" fill="url(#og)"/>
-  <g fill="#0E1622" fill-opacity="0.45">
-    <path d="M0 700 Q400 600 800 680 T1600 660 V1000 H0 Z"/>
-    <path d="M0 800 Q500 720 900 800 T1600 780 V1000 H0 Z" fill-opacity="0.5"/>
+  <rect width="1600" height="1000" fill="url(#og-sky)"/>
+  <path d="M0 700 Q400 600 800 680 T1600 660 V1000 H0 Z" fill="url(#og-hill)"/>
+  <path d="M0 800 Q500 730 900 800 T1600 790 V1000 H0 Z" fill="#6B784E" fill-opacity="0.6"/>
+  <g fill="#5E6B41" fill-opacity="0.55">
+    <circle cx="300" cy="650" r="44"/>
+    <circle cx="520" cy="612" r="38"/>
+    <circle cx="1180" cy="632" r="48"/>
+    <circle cx="1360" cy="690" r="40"/>
   </g>
-  <g fill="#B8995A" fill-opacity="0.35">
-    <circle cx="300" cy="640" r="46"/>
-    <circle cx="520" cy="600" r="40"/>
-    <circle cx="1180" cy="620" r="50"/>
+  <g fill="#FBF8F1">
+    <rect x="640" y="520" width="300" height="190"/>
+    <rect x="640" y="500" width="300" height="26"/>
   </g>
-  <g fill="#F4F0E9" fill-opacity="0.1">
-    <rect x="640" y="520" width="280" height="200"/>
-    <rect x="640" y="500" width="280" height="24"/>
-  </g>
-  <text x="80" y="120" font-family="Georgia, serif" font-size="44" fill="#F4F0E9" fill-opacity="0.5">Olive Grove Villas</text>
-  <text x="82" y="160" font-family="Arial, sans-serif" font-size="20" fill="#CDB984" letter-spacing="4">TALA HILLS · PLACEHOLDER</text>
+  <rect x="700" y="560" width="60" height="90" fill="#9FA877" fill-opacity="0.7"/>
+  <text x="80" y="120" font-family="Georgia, serif" font-size="46" fill="#4A5230" fill-opacity="0.9">Olive Grove Villas</text>
+  <text x="82" y="158" font-family="Arial, sans-serif" font-size="19" fill="#4A5230" fill-opacity="0.7" letter-spacing="4">TALA HILLS · PLACEHOLDER</text>
 </svg>

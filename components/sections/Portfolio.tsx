@@ -30,7 +30,7 @@ export default function Portfolio() {
                   sizes={d.flagship ? "100vw" : "(min-width: 640px) 50vw, 100vw"}
                   className="object-cover transition-transform duration-700 ease-luxe group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/25 to-transparent" />
               </div>
 
               <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-6 p-6 text-stone-50 sm:p-8">

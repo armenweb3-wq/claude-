@@ -83,7 +83,7 @@ export default function Journey() {
         {developments.map((d) => (
           <article key={d.slug} className="relative h-[80vh] min-h-[520px] overflow-hidden">
             <Image src={d.image} alt={`${d.name}, ${d.location}`} fill sizes="100vw" className="object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/30 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/20 to-transparent" />
             <PanelCopy index={developments.indexOf(d)} dev={d} />
           </article>
         ))}
@@ -111,7 +111,7 @@ export default function Journey() {
                 className="object-cover"
                 priority={i === 0}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/30 to-ink/10" />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/25 to-transparent" />
             </div>
             <PanelCopy index={i} dev={d} />
           </article>

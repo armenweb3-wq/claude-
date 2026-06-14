@@ -1,32 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Aerial view of the Paphos coastline at dusk (placeholder)">
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Aerial view of the Paphos coastline at golden hour (placeholder)">
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#0E1622"/>
-      <stop offset="0.55" stop-color="#16243B"/>
-      <stop offset="1" stop-color="#1F3350"/>
+      <stop offset="0" stop-color="#2A3A55"/>
+      <stop offset="0.45" stop-color="#5E6F84"/>
+      <stop offset="0.7" stop-color="#C9A56A"/>
+      <stop offset="1" stop-color="#E8C98E"/>
     </linearGradient>
     <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#1F3350"/>
-      <stop offset="1" stop-color="#101B2D"/>
+      <stop offset="0" stop-color="#A9B6C0"/>
+      <stop offset="1" stop-color="#5E7388"/>
     </linearGradient>
     <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#CDB984" stop-opacity="0.9"/>
-      <stop offset="1" stop-color="#CDB984" stop-opacity="0"/>
+      <stop offset="0" stop-color="#FBE8C6"/>
+      <stop offset="0.5" stop-color="#F0D29A" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#F0D29A" stop-opacity="0"/>
     </radialGradient>
   </defs>
   <rect width="1920" height="1080" fill="url(#sky)"/>
-  <circle cx="1380" cy="300" r="260" fill="url(#sun)"/>
-  <circle cx="1380" cy="300" r="70" fill="#CDB984" fill-opacity="0.85"/>
-  <rect y="640" width="1920" height="440" fill="url(#sea)"/>
-  <g fill="#B8995A" fill-opacity="0.18">
-    <path d="M0 660 Q480 630 960 660 T1920 660 V700 H0 Z"/>
-    <path d="M0 720 Q480 700 960 725 T1920 720 V760 H0 Z" fill-opacity="0.12"/>
+  <circle cx="960" cy="540" r="380" fill="url(#sun)"/>
+  <circle cx="960" cy="560" r="86" fill="#FCEFD0"/>
+  <rect y="700" width="1920" height="380" fill="url(#sea)"/>
+  <path d="M0 700 Q480 678 960 700 T1920 700 V760 H0 Z" fill="#FBEFD2" fill-opacity="0.35"/>
+  <g fill="#E9DEC8" fill-opacity="0.55">
+    <rect x="150" y="600" width="60" height="120"/>
+    <rect x="225" y="565" width="60" height="155"/>
+    <rect x="300" y="610" width="60" height="110"/>
+    <rect x="1610" y="595" width="60" height="125"/>
+    <rect x="1690" y="560" width="60" height="160"/>
   </g>
-  <g fill="#0E1622" fill-opacity="0.6">
-    <path d="M0 1080 L0 760 Q260 700 520 740 L520 1080 Z"/>
-    <rect x="120" y="690" width="22" height="120"/>
-    <rect x="180" y="660" width="22" height="150"/>
-    <rect x="240" y="700" width="22" height="110"/>
-  </g>
-  <text x="960" y="1030" text-anchor="middle" font-family="Georgia, serif" font-size="26" fill="#F4F0E9" fill-opacity="0.35" letter-spacing="6">PAPHOS · PLACEHOLDER</text>
+  <text x="960" y="1030" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="#3A2E1C" fill-opacity="0.4" letter-spacing="7">PAPHOS · PLACEHOLDER</text>
 </svg>

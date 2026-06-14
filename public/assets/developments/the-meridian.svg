@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" role="img" aria-label="The Meridian flagship tower, Paphos Seafront (placeholder)">
+  <defs>
+    <linearGradient id="mer" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0E1622"/>
+      <stop offset="1" stop-color="#16243B"/>
+    </linearGradient>
+    <radialGradient id="merglow" cx="0.5" cy="0.35" r="0.6">
+      <stop offset="0" stop-color="#CDB984" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#CDB984" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#mer)"/>
+  <rect width="1600" height="1000" fill="url(#merglow)"/>
+  <g fill="#1F3350" fill-opacity="0.9">
+    <path d="M700 120 L900 120 L940 1000 L660 1000 Z"/>
+  </g>
+  <g fill="#CDB984" fill-opacity="0.6">
+    <rect x="720" y="180" width="160" height="6"/>
+    <rect x="720" y="260" width="160" height="6"/>
+    <rect x="715" y="340" width="170" height="6"/>
+    <rect x="715" y="420" width="170" height="6"/>
+    <rect x="710" y="500" width="180" height="6"/>
+    <rect x="710" y="580" width="180" height="6"/>
+    <rect x="705" y="660" width="190" height="6"/>
+    <rect x="705" y="740" width="190" height="6"/>
+  </g>
+  <g fill="#B8995A" fill-opacity="0.25">
+    <path d="M0 860 Q400 820 800 860 T1600 860 V1000 H0 Z"/>
+  </g>
+  <text x="80" y="120" font-family="Georgia, serif" font-size="52" fill="#F4F0E9" fill-opacity="0.6">The Meridian</text>
+  <text x="82" y="162" font-family="Arial, sans-serif" font-size="20" fill="#CDB984" letter-spacing="5">FLAGSHIP · PAPHOS SEAFRONT · PLACEHOLDER</text>
+</svg>

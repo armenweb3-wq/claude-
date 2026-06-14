@@ -4,11 +4,51 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A single GitHub Actions automation that periodically fetches FIFA World Cup match
-scores from the [football-data.org](https://football-data.org) v4 API and writes
-them to a `live.json` file committed back into the repo. There is no application
-build, package manager, dependency set, or test suite — it's a lone Node script
-plus the workflow that runs it.
+Two unrelated things share this repo:
+
+1. **The Mkhitaryan Developers website** (primary) — a Next.js App Router site:
+   a cinematic, scroll-driven landing page for a Paphos, Cyprus luxury property
+   developer. This is what `npm run dev/build` operates on.
+2. **A live-scores automation** (secondary) — `scripts/fetch-scores.mjs` plus
+   `.github/workflows/scores.yml`, a standalone GitHub Action unrelated to the
+   website. It is *not* part of the Next.js build (it's excluded in `tsconfig`).
+
+## Website — commands
+
+```bash
+npm install        # once
+npm run dev        # local dev server (localhost:3000)
+npm run build      # production build + type check + lint
+npm run lint       # eslint (next/core-web-vitals)
+npm start          # serve the production build
+```
+
+## Website — architecture
+
+- **Stack:** Next.js 14 (App Router), TypeScript, Tailwind v3, GSAP + ScrollTrigger,
+  Lenis smooth scroll, `next/image`. Fonts via `next/font` (Cormorant Garamond serif
+  + Inter sans, exposed as `--font-serif` / `--font-sans` CSS vars).
+- **`app/page.tsx`** composes six sections top-to-bottom: `Hero` → `Journey` →
+  `WhyPaphos` → `FullService` → `Portfolio` → `Contact`.
+- **`components/SmoothScroll.tsx`** is the animation backbone: it runs Lenis and
+  bridges it to GSAP via `gsap.ticker` + `ScrollTrigger.update`. It wraps the whole
+  app in `app/layout.tsx`. **All ScrollTrigger pinning depends on this bridge** —
+  don't reintroduce native smooth-scroll or a second raf loop.
+- **`lib/gsap.ts`** is the *only* place ScrollTrigger is registered, and exports
+  `prefersReducedMotion()`. Every animated component early-returns on reduced motion;
+  `Journey` additionally renders a separate static stacked fallback. Honor this
+  pattern when adding animation.
+- **`components/sections/Journey.tsx`** is the cinematic centerpiece: a pinned stage
+  that cross-dissolves through developments and climaxes on the flagship. It reads
+  `data/developments.ts` in array order and treats the entry flagged
+  `flagship: true` as the climax — **keep the flagship last**.
+- **Content & assets live in `data/`** (`developments.ts`, `content.ts`) — these are
+  the intended edit/swap points. Imagery is placeholder **SVGs** under
+  `public/assets/` served through `next/image` (`dangerouslyAllowSVG` is enabled in
+  `next.config.mjs` for this reason). Swap in real `.jpg`/`.mp4` by replacing files
+  and updating the paths in `data/developments.ts`; tighten the image CSP afterward.
+- The contact form (`Contact.tsx`) has **no backend** — `handleSubmit` just toggles a
+  thank-you state. Wire it to an API route / CRM before production.
 
 ## Running locally
 

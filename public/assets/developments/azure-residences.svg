@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Azure Residences, Kato Paphos (placeholder)">
+  <defs>
+    <linearGradient id="az" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1F3350"/>
+      <stop offset="1" stop-color="#101B2D"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#az)"/>
+  <rect y="620" width="1600" height="380" fill="#16243B" fill-opacity="0.7"/>
+  <g fill="#F4F0E9" fill-opacity="0.08">
+    <rect x="220" y="360" width="320" height="320"/>
+    <rect x="600" y="300" width="360" height="380"/>
+    <rect x="1020" y="380" width="300" height="300"/>
+  </g>
+  <g fill="#CDB984" fill-opacity="0.5">
+    <rect x="660" y="360" width="60" height="8"/>
+    <rect x="760" y="360" width="60" height="8"/>
+    <rect x="860" y="360" width="60" height="8"/>
+    <rect x="660" y="460" width="60" height="8"/>
+    <rect x="760" y="460" width="60" height="8"/>
+  </g>
+  <text x="80" y="120" font-family="Georgia, serif" font-size="44" fill="#F4F0E9" fill-opacity="0.5">Azure Residences</text>
+  <text x="82" y="160" font-family="Arial, sans-serif" font-size="20" fill="#CDB984" letter-spacing="4">KATO PAPHOS · PLACEHOLDER</text>
+</svg>

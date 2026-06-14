@@ -67,7 +67,7 @@ class Keys(BaseModel):
 
 class SettingsIn(BaseModel):
     risk_pct: float = 2.0
-    symbols: str = "BTCUSDT,ETHUSDT,SOLUSDT"
+    symbols: str = ",".join(settings.symbols) or "BTCUSDT"
     enabled: bool = False
 
 

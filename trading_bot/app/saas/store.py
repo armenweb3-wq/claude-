@@ -12,6 +12,10 @@ import time
 
 from ..config import settings
 
+
+def _default_symbols() -> str:
+    return ",".join(settings.symbols) or "BTCUSDT"
+
 # Column types differ slightly between the two backends.
 _PK = {"pg": "SERIAL PRIMARY KEY", "sqlite": "INTEGER PRIMARY KEY AUTOINCREMENT"}
 _TS = {"pg": "DOUBLE PRECISION", "sqlite": "REAL"}
@@ -93,8 +97,8 @@ class Store:
             (email.lower(), salt, pw_hash, 1 if is_admin else 0, time.time()),
         )
         u = self.get_user_by_email(email)
-        self._q("INSERT INTO settings (user_id) VALUES (?) ON CONFLICT(user_id) DO NOTHING",
-                (u["id"],))
+        self._q("INSERT INTO settings (user_id, symbols) VALUES (?,?)"
+                " ON CONFLICT(user_id) DO NOTHING", (u["id"], _default_symbols()))
         return u
 
     def set_activation(self, uid: int, activated: bool, active_until: str | None) -> None:
@@ -145,8 +149,8 @@ class Store:
     def get_settings(self, uid: int) -> dict:
         rows = self._q("SELECT * FROM settings WHERE user_id=?", (uid,))
         if not rows:
-            self._q("INSERT INTO settings (user_id) VALUES (?) ON CONFLICT(user_id) DO NOTHING",
-                    (uid,))
+            self._q("INSERT INTO settings (user_id, symbols) VALUES (?,?)"
+                    " ON CONFLICT(user_id) DO NOTHING", (uid, _default_symbols()))
             rows = self._q("SELECT * FROM settings WHERE user_id=?", (uid,))
         return rows[0]
 

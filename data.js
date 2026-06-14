@@ -86,8 +86,10 @@ window.BETTING_DATA = {
           leg: 2, date: "2026-06-14", match: "Germany vs Curaçao",
           selections: [
             { label: "Over 2.5 total goals", type: "over_goals", line: 2.5 },
+            { label: "Germany over 5.5 corners", type: "corners", manual: true },
+            { label: "Over 1.5 total cards", type: "cards", manual: true },
           ],
-          stake: 725, odds: 1.45, // illustrative; Germany should beat a minnow by 3+
+          stake: 725, odds: 1.45, // illustrative ~1.4 combo
           result: "pending", returnAmount: 0,
         },
       ],

@@ -72,7 +72,7 @@ export default function Contact() {
               </p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid gap-6 sm:grid-cols-2">
                 <Field id="name" label="Full name" autoComplete="name" required />
                 <Field id="email" label="Email" type="email" autoComplete="email" required />

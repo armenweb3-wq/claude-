@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-15T20:10:30.064Z",
+  "updatedAt": "2026-06-15T20:15:40.099Z",
   "matches": [
     {
       "home": "Haiti",
@@ -60,7 +60,7 @@
     {
       "home": "Belgium",
       "away": "Egypt",
-      "status": "PAUSED",
+      "status": "IN_PLAY",
       "homeScore": 0,
       "awayScore": 1,
       "utcDate": "2026-06-15T19:00:00Z"

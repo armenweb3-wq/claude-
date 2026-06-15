@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-15T08:10:40.585Z",
+  "updatedAt": "2026-06-15T08:15:35.225Z",
   "matches": [
     {
       "home": "Haiti",
@@ -36,7 +36,7 @@
     {
       "home": "Ivory Coast",
       "away": "Ecuador",
-      "status": "IN_PLAY",
+      "status": "FINISHED",
       "homeScore": 1,
       "awayScore": 0,
       "utcDate": "2026-06-14T23:00:00Z"

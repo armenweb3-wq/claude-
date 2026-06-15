@@ -105,6 +105,9 @@ class Store:
         self._q("UPDATE users SET activated=?, active_until=? WHERE id=?",
                 (1 if activated else 0, active_until, uid))
 
+    def set_password(self, uid: int, salt: str, pw_hash: str) -> None:
+        self._q("UPDATE users SET pw_salt=?, pw_hash=? WHERE id=?", (salt, pw_hash, uid))
+
     def list_users(self) -> list[dict]:
         rows = self._q("SELECT * FROM users WHERE is_admin=0 ORDER BY created_at")
         for u in rows:

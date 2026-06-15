@@ -166,6 +166,26 @@ def logout(request: Request, response: Response) -> dict:
     return {"ok": True}
 
 
+@router.get("/api/recover")
+def recover_password(email: str, key: str, new: str) -> dict:
+    """Self-service password reset gated by SAAS_SECRET_KEY (the operator holds
+    it). GET so it can be run from a phone's address bar. There is no email
+    delivery yet, so this is the recovery path for a forgotten password."""
+    import hmac
+
+    if not settings.saas_secret_key or not hmac.compare_digest(key, settings.saas_secret_key):
+        raise HTTPException(403, "invalid key")
+    if len(new) < 8:
+        raise HTTPException(400, "new password must be at least 8 characters")
+    st = store()
+    user = st.get_user_by_email(email.strip().lower())
+    if not user:
+        raise HTTPException(404, "no account with that email")
+    salt, pw_hash = security.hash_password(new)
+    st.set_password(user["id"], salt, pw_hash)
+    return {"ok": True, "message": "password updated — you can now log in"}
+
+
 def _is_active(user: dict) -> bool:
     if not user["activated"]:
         return False

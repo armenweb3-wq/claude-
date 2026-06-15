@@ -76,6 +76,10 @@ class ExchangeAdapter(ABC):
     def get_position(self, symbol: str) -> Position:
         ...
 
+    def get_open_positions(self) -> list["Position"]:
+        """All currently-open positions. Default empty; live/paper override."""
+        return []
+
     @abstractmethod
     def place_order(self, order: Order) -> Order:
         ...

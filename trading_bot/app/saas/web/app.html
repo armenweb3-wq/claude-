@@ -54,6 +54,41 @@
     border:1px solid var(--border);color:var(--muted)}
   .stepwrap .s.active{color:var(--text);border-color:var(--accent)}
   .stepwrap .s.done{color:#86efac}
+  /* live dashboard */
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 2px}
+  .stat{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:12px}
+  .stat .l{font-size:.64rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .stat .v{font-size:1.25rem;font-weight:800;margin-top:4px}
+  .stat .v.sm{font-size:1rem}
+  .pos{color:var(--green)}.neg{color:var(--red)}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .dot.on{background:var(--green);box-shadow:0 0 8px var(--green)}.dot.off{background:var(--muted)}.dot.pausing{background:#f59e0b}
+  .banner{padding:10px 12px;border-radius:12px;font-size:.8rem;margin-top:10px}
+  .banner.up{background:rgba(22,199,132,.12);color:#bbf7d0}
+  .banner.down{background:rgba(234,57,57,.12);color:#fecaca}
+  .banner.flat{background:var(--card2);color:var(--muted)}
+  .banner.test{background:rgba(245,158,11,.12);color:#fcd34d;border:1px solid #7a5a1f}
+  .cyphase{font-size:1.05rem;font-weight:800;margin:4px 0}
+  .track{height:8px;background:#241b3d;border-radius:999px;margin:9px 0 4px;overflow:hidden}
+  .track>i{display:block;height:100%;background:linear-gradient(90deg,var(--purple),var(--accent));border-radius:999px;transition:width .5s}
+  .trow{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:9px}
+  .trow .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .trow .sym{font-weight:800;font-size:1rem}
+  .spill{font-size:.64rem;font-weight:800;padding:4px 9px;border-radius:999px}
+  .spill.long{background:rgba(22,199,132,.18);color:#86efac}
+  .spill.short{background:rgba(234,57,57,.18);color:#fca5a5}
+  .spill.hold{background:var(--card2);color:var(--muted)}
+  .spill.blocked{background:rgba(245,158,11,.18);color:#fcd34d}
+  .spill.error{background:rgba(234,57,57,.18);color:#fca5a5}
+  .g2{display:flex;justify-content:space-between;font-size:.76rem;color:var(--muted);gap:8px}
+  .g2 b{color:var(--text);font-weight:700}
+  .bar{height:10px;border-radius:999px;background:#0b1120;overflow:hidden;border:1px solid var(--border);margin-top:8px}
+  .bar>i{display:block;height:100%;border-radius:999px;transition:width .5s}
+  .conf{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-top:6px}
+  select{width:100%;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:11px;font-size:.9rem}
+  .modal{display:none;position:fixed;inset:0;z-index:60;background:rgba(2,4,10,.85);align-items:center;justify-content:center;padding:16px}
+  .modal.show{display:flex}
+  .modalbox{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;max-width:540px;width:100%;max-height:82vh;overflow:auto;box-shadow:var(--shadow)}
 </style>
 </head>
 <body>
@@ -131,17 +166,54 @@
       <div id="payStatus" class="disc"></div>
     </div>
 
-    <!-- STEP 3: dashboard -->
+    <!-- STEP 3: LIVE DASHBOARD -->
+    <div class="card hide" id="statsCard">
+      <h2>Your bot <span id="actPill" class="pill off">—</span></h2>
+      <div class="banner test hide" id="testBanner">TEST MODE — simulating, no real orders are placed.</div>
+      <div class="stats">
+        <div class="stat"><div class="l">Equity</div><div class="v" id="d_equity">—</div></div>
+        <div class="stat"><div class="l">Open P&amp;L</div><div class="v" id="d_pnl">—</div></div>
+        <div class="stat"><div class="l">Status</div><div class="v sm" id="d_status">—</div></div>
+        <div class="stat"><div class="l">Open positions</div><div class="v" id="d_openpos">—</div></div>
+      </div>
+      <div class="banner flat hide" id="d_market"></div>
+      <div class="msg err" id="d_err"></div>
+    </div>
+
+    <div class="card hide" id="cycleCard">
+      <h2>📅 BTC cycle phase</h2>
+      <div class="cyphase" id="cy_phase">—</div>
+      <div class="track"><i id="cy_track" style="width:0%"></i></div>
+      <div class="disc" id="cy_meta"></div>
+      <div class="disc" id="cy_note"></div>
+    </div>
+
+    <div class="card hide" id="positionsCard">
+      <h2>Open trades <span class="disc" id="pos_count"></span></h2>
+      <div id="pos_list"></div>
+      <button class="ghost" onclick="openHistory()">📜 Trade history · wins &amp; losses</button>
+    </div>
+
+    <div class="card hide" id="signalsCard">
+      <h2>Coins <span class="disc" id="sig_count"></span></h2>
+      <div id="sig_list"></div>
+    </div>
+
+    <div class="card hide" id="chartCard">
+      <h2>Chart</h2>
+      <select id="chartSel" onchange="loadChart(this.value)"></select>
+      <div id="tv_chart" style="height:280px;border-radius:12px;overflow:hidden;margin-top:10px"></div>
+    </div>
+
+    <!-- STEP 3: settings -->
     <div class="card hide" id="dashCard">
-      <h2>Step 3 — Your bot <span id="actPill" class="pill off">—</span></h2>
-      <p style="font-size:.86rem" id="dashIntro"></p>
+      <h2>Settings</h2>
       <label>Risk per trade (%)</label><input id="riskPct" type="number" step="0.5" min="0.5" max="10"/>
       <label>Symbols (comma-separated)</label><input id="symbols"/>
       <label style="display:flex;align-items:center;gap:8px;margin-top:14px">
         <input id="enabled" type="checkbox" style="width:auto"/> Bot enabled (trade automatically)</label>
       <button class="primary" onclick="saveSettings()">Save settings</button>
       <div class="msg" id="dashMsg"></div>
-      <div id="botActivity" class="disc" style="margin-top:12px"></div>
     </div>
 
     <!-- ADMIN -->
@@ -161,6 +233,19 @@
   </div>
 </div>
 
+<div class="modal" id="historyModal">
+  <div class="modalbox">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 style="margin:0">Trade history</h2>
+      <span class="link" onclick="closeHistory()">Close</span>
+    </div>
+    <div id="histStats" style="margin-top:10px"></div>
+    <div id="histList" style="margin-top:6px"></div>
+    <div class="disc">Realised PnL from Bybit · last ~7 days.</div>
+  </div>
+</div>
+
+<script src="https://s3.tradingview.com/tv.js"></script>
 <script>
 // brand gem (small)
 (function(){const c=document.getElementById('gem'),x=c.getContext('2d');const S=58,cx=34,cy=34;
@@ -232,6 +317,8 @@ async function loadAdmin(){
 async function adminAct(id){ await api('/admin/activate','POST',{user_id:id,days:30}); loadAdmin(); }
 async function adminDe(id){ await api('/admin/deactivate','POST',{user_id:id}); loadAdmin(); }
 
+let dashTimer=null;
+const LIVE_CARDS=['statsCard','cycleCard','positionsCard','signalsCard','chartCard','dashCard'];
 function render(){
   show('authView',false); show('mainView',true);
   $('whoami').textContent=ME.email;
@@ -242,38 +329,144 @@ function render(){
   $('s3').className='s '+(active?'active':'');
   show('keysCard',!hasKeys);
   show('payCard',hasKeys&&!active);
-  show('dashCard',active);
+  LIVE_CARDS.forEach(id=>show(id,active));
   // payment info
   $('payPrice').textContent=ME.pay.price;
   $('payCoin').textContent=ME.pay.coin_network;
   $('payWallet').textContent=ME.pay.wallet||'(wallet address not set yet — contact admin)';
   if(ME.payment){ $('payStatus').textContent='Last submission: '+ME.payment.status+' · '+ME.payment.tx_hash.slice(0,16)+'…'; }
-  // dashboard
-  $('actPill').textContent=active?'ACTIVE':'NOT ACTIVE';
-  $('actPill').className='pill '+(active?'on':'off');
-  $('dashIntro').textContent=active
-    ? 'Your bot is activated and will trade on your connected Bybit account based on the settings below.'
-    : 'Activate your subscription to start automated trading.';
+  // settings form
   $('riskPct').value=ME.settings.risk_pct;
   $('symbols').value=ME.settings.symbols;
   $('enabled').checked=ME.settings.enabled;
-  if(active) loadBot();
+  // live polling (only while active)
+  if(dashTimer){ clearInterval(dashTimer); dashTimer=null; }
+  if(active){ loadDashboard(); dashTimer=setInterval(loadDashboard,15000); }
   if(ME.is_admin) loadAdmin();
 }
-async function loadBot(){
-  try{
-    const b=await api('/bot');
-    if(!b.running){ $('botActivity').textContent='Engine is not running yet (admin hasn’t enabled execution).'; return; }
-    const r=b.last_run;
-    if(!r){ $('botActivity').textContent=(b.dry_run?'TEST MODE — ':'')+'Waiting for the next run…'; return; }
-    if(r.error){ $('botActivity').innerHTML='<span class="err">'+r.error+'</span>'; return; }
-    const sigs=Object.entries(r.signals||{}).map(([k,v])=>`${k}: ${v}`).join('<br>');
-    $('botActivity').innerHTML=(b.dry_run?'<b>TEST MODE (no real orders)</b><br>':'')
-      +`equity $${r.equity??'—'} · open ${r.positions??0}`
-      +(r.market?`<br>market: ${r.market}`:'')
-      +(sigs?`<br>${sigs}`:'');
-  }catch(e){ $('botActivity').textContent=''; }
+
+// ── formatting helpers ──────────────────────────────────────
+function money(v){ return (v==null)?'—':'$'+Number(v).toLocaleString(undefined,{maximumFractionDigits:2}); }
+function signMoney(v){ v=v||0; return (v>=0?'+':'')+money(v); }
+function fmtDate(s){ if(!s) return '—'; const d=new Date(s);
+  return d.toLocaleDateString([], {month:'short',day:'numeric'})+' '+d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
+function barColor(c){ return c>=0.7?'linear-gradient(90deg,#16c784,#0f9d6b)':c>=0.5?'linear-gradient(90deg,#f59e0b,#d97706)':'linear-gradient(90deg,#475569,#334155)'; }
+function parseSignal(text){
+  const t=(text||'').toLowerCase();
+  if(t.startsWith('error')) return {action:'error',conf:0,text};
+  if(t.includes('blocked')) return {action:'blocked',conf:0,text};
+  const action=((text||'').split(':')[0]||'hold').trim().toLowerCase();
+  const m=(text||'').match(/([0-9]*\.?[0-9]+)/);
+  return {action, conf:m?parseFloat(m[1]):0, text};
 }
+
+// ── live dashboard ──────────────────────────────────────────
+async function loadDashboard(){
+  let s; try{ s=await api('/dashboard'); }catch(e){ return; }
+  $('actPill').textContent=s.active?'ACTIVE':'NOT ACTIVE';
+  $('actPill').className='pill '+(s.active?'on':'off');
+  show('testBanner', !!s.dry_run);
+  $('d_equity').textContent=money(s.equity);
+  const pnl=s.open_pnl||0, pe=$('d_pnl');
+  pe.textContent=signMoney(pnl); pe.className='v '+(pnl>0?'pos':pnl<0?'neg':'');
+  $('d_openpos').textContent=(s.open_positions!=null?s.open_positions:'—');
+  const stt=$('d_status');
+  if(!s.enabled) stt.innerHTML='<span class="dot off"></span>Paused';
+  else if(!s.running) stt.innerHTML='<span class="dot off"></span>Engine off';
+  else stt.innerHTML='<span class="dot on"></span>Running';
+  const mk=$('d_market');
+  if(s.market){ const t=s.market.toLowerCase();
+    mk.className='banner '+(t.includes('longs paused')?'down':t.includes('shorts paused')?'up':'flat');
+    mk.textContent='📈 '+s.market; show('d_market',true);
+  } else show('d_market',false);
+  $('d_err').textContent=s.error||'';
+  if(s.cycle){
+    $('cy_phase').textContent=s.cycle.phase;
+    const since=s.cycle.months_since_halving, total=since+s.cycle.months_to_next_halving;
+    $('cy_track').style.width=Math.min(100,(total?since/total*100:0))+'%';
+    $('cy_meta').textContent=since+' months since last halving · '+s.cycle.months_to_next_halving+' to next';
+    $('cy_note').textContent=s.cycle.note||'';
+  }
+  renderPositions(s.positions||[]);
+  renderSignals(s.symbols||[], s.signals||{});
+  fillChart(s.symbols||[]);
+}
+function renderPositions(pos){
+  $('pos_count').textContent=pos.length?'('+pos.length+')':'';
+  if(!pos.length){ $('pos_list').innerHTML='<div class="trow"><div class="disc" style="margin:0">No open trades right now.</div></div>'; return; }
+  $('pos_list').innerHTML=pos.map(p=>{
+    const side=(p.side||'').toLowerCase(), cls=(side==='buy'||side==='long')?'long':'short';
+    const label=cls==='long'?'LONG':'SHORT', up=p.unrealised_pnl||0, pct=p.pnl_pct||0, c=up>0?'pos':up<0?'neg':'';
+    const be=p.breakeven?' <span class="spill long">BE ✔</span>':'';
+    const tps=(p.take_profits||[]).map((t,i)=>'TP'+(i+1)+' '+money(t)).join(' · ');
+    return '<div class="trow"><div class="top"><span class="sym">'+p.symbol+be+'</span>'
+      +'<span class="spill '+cls+'">'+label+(p.leverage?' '+(+p.leverage)+'x':'')+'</span></div>'
+      +'<div class="g2"><span>entry <b>'+money(p.entry_price)+'</b></span><span>size <b>'+p.size+'</b></span>'
+      +'<span>uPnL <b class="'+c+'">'+signMoney(up)+' ('+(pct>=0?'+':'')+pct+'%)</b></span></div>'
+      +'<div class="g2" style="margin-top:5px"><span>SL <b class="'+(p.breakeven?'pos':'neg')+'">'+money(p.stop_loss)+'</b></span>'
+      +'<span style="text-align:right;color:var(--green)">'+tps+'</span></div></div>';
+  }).join('');
+}
+const TOPN=5; let sigExpanded=false, lastSig={syms:[],sig:{}};
+function toggleSig(){ sigExpanded=!sigExpanded; renderSignals(lastSig.syms,lastSig.sig); }
+function renderSignals(syms,sig){
+  lastSig={syms,sig};
+  $('sig_count').textContent=syms.length?'('+syms.length+')':'';
+  const ranked=syms.map(s=>({s,p:parseSignal(sig[s]||'no read yet')})).sort((a,b)=>b.p.conf-a.p.conf);
+  const top=ranked.slice(0,TOPN), rest=ranked.slice(TOPN);
+  const card=r=>{
+    const sp={error:'ERROR',blocked:'BLOCKED'}[r.p.action];
+    if(sp){ const cl=r.p.action==='blocked'?'blocked':'error';
+      return '<div class="trow"><div class="top"><span class="sym">'+r.s+'</span><span class="spill '+cl+'">'+sp+'</span></div>'
+        +'<div class="disc" style="margin:4px 0 0">'+(sig[r.s]||'').replace(/^error:\s*/i,'')+'</div></div>'; }
+    const pct=Math.min(100,Math.round(r.p.conf*100));
+    const cl=(r.p.action==='long'||r.p.action==='short')?r.p.action:'hold';
+    return '<div class="trow"><div class="top"><span class="sym">'+r.s+'</span><span class="spill '+cl+'">'+r.p.action.toUpperCase()+'</span></div>'
+      +'<div class="bar"><i style="width:'+pct+'%;background:'+barColor(r.p.conf)+'"></i></div>'
+      +'<div class="conf"><span>confidence '+pct+'%</span><span>target 70%</span></div></div>';
+  };
+  let html=top.map(card).join('');
+  if(rest.length){ if(sigExpanded) html+=rest.map(card).join('');
+    html+='<button class="ghost" onclick="toggleSig()">'+(sigExpanded?'▴ Show less':'▾ Show '+rest.length+' more')+'</button>'; }
+  $('sig_list').innerHTML=html;
+}
+// chart
+let chartSym=null;
+function fillChart(syms){
+  const sel=$('chartSel'); if(sel.options.length===syms.length && syms.length) return;
+  sel.innerHTML=syms.map(s=>'<option value="'+s+'">'+s+'</option>').join('');
+  if(syms.length){ sel.value=(chartSym&&syms.includes(chartSym))?chartSym:syms[0]; loadChart(sel.value); }
+}
+function loadChart(sym){
+  chartSym=sym; const el=$('tv_chart'); if(!el||!window.TradingView) return; el.innerHTML='';
+  try{ new TradingView.widget({container_id:'tv_chart',autosize:true,symbol:'BYBIT:'+sym+'.P',
+    interval:'D',timezone:'Etc/UTC',theme:'dark',style:'1',locale:'en',hide_top_toolbar:false,
+    allow_symbol_change:false,save_image:false}); }catch(e){}
+}
+// history modal
+async function openHistory(){
+  $('historyModal').classList.add('show');
+  $('histStats').innerHTML=''; $('histList').innerHTML='<div class="disc">Loading…</div>';
+  try{
+    const s=await api('/history'), st=s.stats||{};
+    $('histStats').innerHTML='<div class="stats" style="margin:4px 0">'
+      +'<div class="stat"><div class="l">Wins</div><div class="v pos">'+(st.wins||0)+'</div></div>'
+      +'<div class="stat"><div class="l">Losses</div><div class="v neg">'+(st.losses||0)+'</div></div>'
+      +'<div class="stat"><div class="l">Win rate</div><div class="v">'+(st.win_rate||0)+'%</div></div>'
+      +'<div class="stat"><div class="l">Realised P&L</div><div class="v '+((st.realized_pnl||0)>=0?'pos':'neg')+'">'+signMoney(st.realized_pnl)+'</div></div></div>';
+    const tr=s.trades||[];
+    if(!tr.length){ $('histList').innerHTML='<div class="trow"><div class="disc" style="margin:0">No closed trades yet.</div></div>'; return; }
+    $('histList').innerHTML=tr.map(t=>{
+      const win=(t.pnl||0)>0, side=(t.side||'').toLowerCase();
+      const cls=(side==='buy'||side==='long')?'long':'short', label=cls==='long'?'LONG':'SHORT';
+      const c=win?'pos':((t.pnl||0)<0?'neg':'');
+      return '<div class="trow"><div class="top"><span class="sym">'+t.symbol+' <span class="spill '+cls+'">'+label+'</span></span>'
+        +'<span class="'+c+'" style="font-weight:800">'+signMoney(t.pnl)+' ('+(t.pnl_pct>=0?'+':'')+t.pnl_pct+'%)</span></div>'
+        +'<div class="g2"><span>entry <b>'+money(t.entry_price)+'</b></span><span>exit <b>'+money(t.exit_price)+'</b></span><span>'+fmtDate(t.closed_at)+'</span></div></div>';
+    }).join('');
+  }catch(e){ $('histList').innerHTML='<div class="trow"><div class="disc" style="margin:0">Could not load history.</div></div>'; }
+}
+function closeHistory(){ $('historyModal').classList.remove('show'); }
 async function boot(){
   try{ ME=await api('/me'); render(); }
   catch(e){

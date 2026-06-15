@@ -213,6 +213,69 @@ def bot_status(request: Request) -> dict:
             "last_run": res}
 
 
+@router.get("/api/dashboard")
+def dashboard(request: Request) -> dict:
+    """Everything the user's live dashboard needs in one call: their equity,
+    open positions, latest signals/market, and BTC cycle context."""
+    user = current_user(request)
+    st = store()
+    uid = user["id"]
+    cfg = st.get_settings(uid)
+    keys = st.get_keys(uid)
+    runner = getattr(request.app.state, "saas_runner", None)
+    res = runner.results.get(uid) if runner else None
+
+    from . import live as live_mod
+
+    live_data = {"equity": 0.0, "open_pnl": 0.0, "open_positions": 0, "positions": []}
+    live_err = None
+    if keys:
+        try:
+            live_data = live_mod.positions_snapshot(uid, keys)
+        except Exception as exc:  # surface, never 500 the dashboard
+            live_err = f"live data unavailable: {exc}"
+
+    from ..strategy.cycle import assess_cycle
+
+    cyc = assess_cycle()
+    return {
+        "active": _is_active(user),
+        "enabled": bool(cfg["enabled"]),
+        "has_keys": bool(keys),
+        "running": runner is not None,
+        "dry_run": settings.saas_dry_run,
+        "equity": live_data["equity"],
+        "open_pnl": live_data["open_pnl"],
+        "open_positions": live_data["open_positions"],
+        "positions": live_data["positions"],
+        "signals": (res or {}).get("signals", {}),
+        "market": (res or {}).get("market"),
+        "error": live_err or (res or {}).get("error"),
+        "symbols": [s.strip() for s in cfg["symbols"].split(",") if s.strip()],
+        "cycle": {
+            "phase": cyc.phase,
+            "months_since_halving": round(cyc.months_since_halving, 1),
+            "months_to_next_halving": round(cyc.months_to_next_halving, 1),
+            "note": cyc.note,
+        },
+    }
+
+
+@router.get("/api/history")
+def user_history(request: Request) -> dict:
+    user = current_user(request)
+    keys = store().get_keys(user["id"])
+    empty = {"wins": 0, "losses": 0, "total": 0, "win_rate": 0.0, "realized_pnl": 0}
+    if not keys:
+        return {"trades": [], "stats": empty}
+    from . import live as live_mod
+
+    try:
+        return live_mod.history_snapshot(user["id"], keys)
+    except Exception as exc:
+        raise HTTPException(502, f"history unavailable: {exc}")
+
+
 @router.get("/api/me")
 def me(request: Request) -> dict:
     user = current_user(request)

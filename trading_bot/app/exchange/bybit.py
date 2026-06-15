@@ -81,6 +81,22 @@ class BybitExchange(ExchangeAdapter):
                 )
         return Position(symbol, None, 0.0, 0.0)
 
+    def get_open_positions(self) -> list[Position]:
+        """All open positions in one call (efficient for dashboards)."""
+        resp = self._client.get_positions(category=self._category, settleCoin="USDT")
+        out: list[Position] = []
+        for item in resp.get("result", {}).get("list", []):
+            size = float(item.get("size") or 0.0)
+            if size > 0:
+                out.append(Position(
+                    symbol=item.get("symbol"), side=item.get("side"), size=size,
+                    entry_price=float(item.get("avgPrice") or 0.0),
+                    unrealised_pnl=float(item.get("unrealisedPnl") or 0.0),
+                    stop_loss=float(item.get("stopLoss") or 0.0),
+                    leverage=float(item.get("leverage") or 0.0),
+                ))
+        return out
+
     def set_stop_loss(self, symbol: str, stop_price: float) -> None:
         log.warning("[LIVE] move stop %s -> %s", symbol, stop_price)
         try:

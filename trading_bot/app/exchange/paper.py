@@ -67,6 +67,9 @@ class PaperExchange(ExchangeAdapter):
     def get_position(self, symbol: str) -> Position:
         return self._positions.get(symbol, Position(symbol, None, 0.0, 0.0))
 
+    def get_open_positions(self) -> list[Position]:
+        return [p for p in self._positions.values() if p.side]
+
     def place_order(self, order: Order) -> Order:
         self._order_seq += 1
         order.order_id = f"paper-{self._order_seq}"

@@ -115,7 +115,7 @@ class Settings:
     saas_seat_limit: int = field(default_factory=lambda: _get_int("SAAS_SEAT_LIMIT", 25))
     saas_secret_key: str = field(default_factory=lambda: _get("SAAS_SECRET_KEY"))
     saas_db_path: str = field(default_factory=lambda: _get("SAAS_DB_PATH", "saas.db"))
-    saas_admin_email: str = field(default_factory=lambda: _get("SAAS_ADMIN_EMAIL").lower())
+    saas_admin_email: str = field(default_factory=lambda: _get("SAAS_ADMIN_EMAIL").strip().lower())
     pay_wallet_address: str = field(default_factory=lambda: _get("PAY_WALLET_ADDRESS"))
     pay_coin_network: str = field(default_factory=lambda: _get("PAY_COIN_NETWORK", "USDT (TRC-20)"))
     pay_price: str = field(default_factory=lambda: _get("PAY_PRICE", "30 USDT / month"))

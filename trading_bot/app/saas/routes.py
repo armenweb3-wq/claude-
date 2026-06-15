@@ -39,9 +39,21 @@ def current_user(request: Request) -> dict:
     return user
 
 
+def _is_admin_user(user: dict) -> bool:
+    """Admin if flagged in the DB OR the email matches SAAS_ADMIN_EMAIL.
+
+    The env match is evaluated live so the configured admin always has access,
+    even if they registered before the var was set (the stored flag is fixed
+    at registration time and can otherwise get stuck as non-admin)."""
+    if user.get("is_admin"):
+        return True
+    admin = settings.saas_admin_email
+    return bool(admin) and (user.get("email") or "").strip().lower() == admin
+
+
 def require_admin(request: Request) -> dict:
     user = current_user(request)
-    if not user.get("is_admin"):
+    if not _is_admin_user(user):
         raise HTTPException(status_code=403, detail="admin only")
     return user
 
@@ -142,7 +154,7 @@ def login(body: Creds, response: Response, request: Request) -> dict:
     token = security.new_token()
     st.create_session(token, user["id"])
     _set_cookie(response, token, request)
-    return {"ok": True, "token": token, "is_admin": bool(user["is_admin"])}
+    return {"ok": True, "token": token, "is_admin": _is_admin_user(user)}
 
 
 @router.post("/api/logout")
@@ -182,7 +194,7 @@ def me(request: Request) -> dict:
     pay = st.latest_payment(user["id"])
     return {
         "email": user["email"],
-        "is_admin": bool(user["is_admin"]),
+        "is_admin": _is_admin_user(user),
         "activated": _is_active(user),
         "active_until": user["active_until"],
         "has_keys": bool(st.get_keys(user["id"])),

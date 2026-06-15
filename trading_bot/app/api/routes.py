@@ -67,6 +67,32 @@ def klines(request: Request, symbol: str, limit: int = 200) -> dict:
     return {"symbol": symbol, "timeframe": settings.timeframe, "candles": candles}
 
 
+@router.get("/history")
+def history(request: Request, limit: int = 100) -> dict:
+    """Recent closed trades plus win/loss aggregates for the dashboard."""
+    bot = _bot(request)
+    try:
+        # Serialise with the bot loops — the exchange client isn't thread-safe.
+        with bot._ex_lock:
+            trades = bot.exchange.closed_pnl(limit=min(limit, 200))
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"history unavailable: {exc}")
+    wins = sum(1 for t in trades if (t.get("pnl") or 0) > 0)
+    losses = sum(1 for t in trades if (t.get("pnl") or 0) < 0)
+    decided = wins + losses
+    return {
+        "trades": trades,
+        "stats": {
+            "wins": wins,
+            "losses": losses,
+            "breakeven": len(trades) - decided,
+            "total": len(trades),
+            "win_rate": round(wins / decided * 100, 1) if decided else 0.0,
+            "realized_pnl": round(sum(t.get("pnl") or 0 for t in trades), 4),
+        },
+    }
+
+
 @router.get("/errors")
 def errors(request: Request, limit: int = 50) -> dict:
     return {"errors": _bot(request).storage.recent_errors(limit=limit)}

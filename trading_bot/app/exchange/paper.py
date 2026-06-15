@@ -33,6 +33,7 @@ class PaperExchange(ExchangeAdapter):
     def __init__(self, starting_equity: float = 10_000.0) -> None:
         self._equity = starting_equity
         self._positions: dict[str, Position] = {}
+        self._closed: list[dict] = []
         self._order_seq = 0
 
     def get_klines(self, symbol: str, interval: str, limit: int = 200) -> pd.DataFrame:
@@ -73,6 +74,8 @@ class PaperExchange(ExchangeAdapter):
         fill_price = order.price or self._last_price(order.symbol)
         existing = self._positions.get(order.symbol)
         if order.reduce_only or (existing and existing.side and existing.side != order.side):
+            if existing and existing.side:
+                self._record_close(existing, fill_price)
             self._positions.pop(order.symbol, None)
         else:
             self._positions[order.symbol] = Position(
@@ -80,6 +83,24 @@ class PaperExchange(ExchangeAdapter):
             )
         log.info("[PAPER] filled %s %s qty=%s @ %s", order.side, order.symbol, order.qty, fill_price)
         return order
+
+    def _record_close(self, pos: Position, exit_price: float) -> None:
+        from datetime import datetime, timezone
+
+        is_long = pos.side == "Buy"
+        sign = 1 if is_long else -1
+        pnl = (exit_price - pos.entry_price) * pos.size * sign
+        pct = ((exit_price - pos.entry_price) / pos.entry_price * 100 * sign) if pos.entry_price else 0.0
+        self._equity += pnl
+        self._closed.append({
+            "symbol": pos.symbol, "side": pos.side, "qty": pos.size,
+            "entry_price": pos.entry_price, "exit_price": exit_price,
+            "pnl": round(pnl, 4), "pnl_pct": round(pct, 2),
+            "closed_at": datetime.now(timezone.utc).isoformat(),
+        })
+
+    def closed_pnl(self, limit: int = 50) -> list[dict]:
+        return list(reversed(self._closed))[:limit]
 
     def close_position(self, symbol: str) -> Order | None:
         pos = self._positions.get(symbol)

@@ -124,6 +124,46 @@ class BybitExchange(ExchangeAdapter):
         resp = self._client.get_instruments_info(category=self._category, limit=1000)
         return {i["symbol"] for i in resp.get("result", {}).get("list", [])}
 
+    def closed_pnl(self, limit: int = 50) -> list[dict]:
+        from datetime import datetime, timezone
+
+        resp = self._client.get_closed_pnl(category=self._category, limit=min(limit, 100))
+        out: list[dict] = []
+        for item in resp.get("result", {}).get("list", []):
+            try:
+                entry = float(item.get("avgEntryPrice") or 0.0)
+                exit_ = float(item.get("avgExitPrice") or 0.0)
+                qty = float(item.get("qty") or item.get("closedSize") or 0.0)
+                pnl = float(item.get("closedPnl") or 0.0)
+                lev = float(item.get("leverage") or 0.0)
+                # Direction is unambiguous from price vs. realised PnL: a long
+                # profits when exit > entry. (The API 'side' field is the side
+                # of the *closing* order, which is easy to misread.)
+                if entry and exit_ and pnl:
+                    is_long = (exit_ > entry) == (pnl > 0)
+                else:
+                    is_long = (item.get("side") == "Sell")  # closing a long sells
+                margin = (entry * qty / lev) if (lev and entry and qty) else (entry * qty)
+                pnl_pct = round(pnl / margin * 100, 2) if margin else 0.0
+                ts = item.get("updatedTime") or item.get("createdTime")
+                closed_at = (
+                    datetime.fromtimestamp(int(ts) / 1000, tz=timezone.utc).isoformat()
+                    if ts else None
+                )
+                out.append({
+                    "symbol": item.get("symbol"),
+                    "side": "Buy" if is_long else "Sell",
+                    "qty": qty,
+                    "entry_price": entry,
+                    "exit_price": exit_,
+                    "pnl": round(pnl, 4),
+                    "pnl_pct": pnl_pct,
+                    "closed_at": closed_at,
+                })
+            except Exception as exc:  # one bad row must not drop the whole list
+                log.warning("closed_pnl parse failed: %s", exc)
+        return out
+
     # ── execution surface ───────────────────────────────────
     def instrument_rules(self, symbol: str) -> InstrumentRules:
         if symbol in self._rules_cache:

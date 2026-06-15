@@ -136,6 +136,7 @@
 
   <h2>Open Trades <span id="posCount" class="note"></span></h2>
   <div id="positions"></div>
+  <button class="morebtn" onclick="openHistory()">📜 Trade history · wins & losses</button>
 
   <h2>Chart</h2>
   <div class="chartcard">
@@ -175,6 +176,20 @@
     <button onclick="closeShare()" class="stop">Close</button>
   </div>
   <div class="note" style="margin-top:10px;text-align:center">On iPhone you can also long-press the image to save it.</div>
+</div>
+
+<div class="modal" id="historyModal">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;
+    max-width:560px;width:100%;max-height:82vh;overflow:auto;box-shadow:var(--shadow)">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 style="margin:0">Trade History</h2>
+      <button onclick="closeHistory()" style="flex:0;min-width:0;background:var(--card2);color:var(--text);
+        padding:8px 14px;border-radius:10px;font-size:.85rem">Close</button>
+    </div>
+    <div id="histStats" style="margin-top:10px"></div>
+    <div id="histList" style="margin-top:6px"></div>
+    <div class="note" style="margin-top:8px">Realised PnL from the exchange · last ~7 days.</div>
+  </div>
 </div>
 
 <div class="controls">
@@ -364,6 +379,43 @@ function renderCoins(s){
   }
   document.getElementById('coins').innerHTML=html;
 }
+
+// ── trade history (tap to show) ─────────────────────────────
+function fmtDate(s){ if(!s) return '—'; const d=new Date(s);
+  return d.toLocaleDateString([], {month:'short',day:'numeric'})+' '+d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
+function signMoney(v){ v=v||0; return (v>=0?'+':'')+money(v); }
+async function openHistory(){
+  document.getElementById('historyModal').classList.add('show');
+  document.getElementById('histStats').innerHTML='';
+  document.getElementById('histList').innerHTML='<div class="note">Loading…</div>';
+  try{
+    const s=await (await fetch('/history?limit=100',{cache:'no-store'})).json();
+    const st=s.stats||{};
+    document.getElementById('histStats').innerHTML=
+      `<div class="stats" style="margin:6px 0 2px">
+        <div class="stat"><div class="l">Wins</div><div class="v pos">${st.wins||0}</div></div>
+        <div class="stat"><div class="l">Losses</div><div class="v neg">${st.losses||0}</div></div>
+        <div class="stat"><div class="l">Win rate</div><div class="v">${st.win_rate||0}%</div></div>
+        <div class="stat"><div class="l">Realised P&L</div>
+          <div class="v ${(st.realized_pnl||0)>=0?'pos':'neg'}">${signMoney(st.realized_pnl)}</div></div>
+      </div>`;
+    const trades=s.trades||[];
+    if(!trades.length){ document.getElementById('histList').innerHTML='<div class="trade"><div class="note" style="margin:0">No closed trades yet.</div></div>'; return; }
+    document.getElementById('histList').innerHTML=trades.map(t=>{
+      const win=(t.pnl||0)>0, side=(t.side||'').toLowerCase();
+      const cls=(side==='buy'||side==='long')?'long':'short';
+      const label=cls==='long'?'LONG':'SHORT';
+      const pcls=win?'pos':((t.pnl||0)<0?'neg':'');
+      return `<div class="trade"><div class="top">
+        <span class="sym">${t.symbol} <span class="pill ${cls}" style="padding:3px 8px">${label}</span></span>
+        <span class="${pcls}" style="font-weight:800">${signMoney(t.pnl)} (${(t.pnl_pct>=0?'+':'')+t.pnl_pct}%)</span></div>
+        <div class="grid"><span>entry <b>${money(t.entry_price)}</b></span>
+          <span>exit <b>${money(t.exit_price)}</b></span>
+          <span>${fmtDate(t.closed_at)}</span></div></div>`;
+    }).join('');
+  }catch(e){ document.getElementById('histList').innerHTML='<div class="trade"><div class="note" style="margin:0">Could not load history.</div></div>'; }
+}
+function closeHistory(){ document.getElementById('historyModal').classList.remove('show'); }
 
 // ── shareable P&L card ──────────────────────────────────────
 const NAME=()=>localStorage.getItem('traderName')||'Prince Armen';

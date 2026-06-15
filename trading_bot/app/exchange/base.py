@@ -114,6 +114,15 @@ class ExchangeAdapter(ABC):
         """
         return set()
 
+    def closed_pnl(self, limit: int = 50) -> list[dict]:
+        """Recent *closed* trades with realised PnL, newest first.
+
+        Each item: ``{symbol, side, qty, entry_price, exit_price, pnl,
+        pnl_pct, closed_at}``. Default empty — adapters that can report
+        realised PnL (live exchange, paper sim) override this.
+        """
+        return []
+
     def last_price(self, symbol: str) -> float:
         df = self.get_klines(symbol, "60", limit=1)
         if df.empty:

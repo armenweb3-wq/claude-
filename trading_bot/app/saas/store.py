@@ -108,8 +108,9 @@ class Store:
     def set_password(self, uid: int, salt: str, pw_hash: str) -> None:
         self._q("UPDATE users SET pw_salt=?, pw_hash=? WHERE id=?", (salt, pw_hash, uid))
 
-    def list_users(self) -> list[dict]:
-        rows = self._q("SELECT * FROM users WHERE is_admin=0 ORDER BY created_at")
+    def list_users(self, include_admins: bool = False) -> list[dict]:
+        where = "" if include_admins else " WHERE is_admin=0"
+        rows = self._q(f"SELECT * FROM users{where} ORDER BY created_at")
         for u in rows:
             u["has_keys"] = bool(self.get_keys(u["id"]))
             u["latest_payment"] = self.latest_payment(u["id"])

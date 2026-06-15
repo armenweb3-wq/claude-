@@ -22,6 +22,10 @@ log = logging.getLogger(__name__)
 
 
 def _is_active(user: dict) -> bool:
+    # The operator (admin) is always active — they don't pay/activate themselves.
+    admin = settings.saas_admin_email
+    if user.get("is_admin") or (admin and (user.get("email") or "").strip().lower() == admin):
+        return True
     if not user.get("activated"):
         return False
     until = user.get("active_until")
@@ -61,7 +65,7 @@ class MultiUserRunner:
             self._stop.wait(max(30, settings.saas_loop_seconds))
 
     def run_cycle(self) -> None:
-        for user in self.store.list_users():
+        for user in self.store.list_users(include_admins=True):
             uid = user["id"]
             if not _is_active(user):
                 continue

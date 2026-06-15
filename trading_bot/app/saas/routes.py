@@ -97,9 +97,14 @@ class UserId(BaseModel):
 
 
 # ── static / shell ──────────────────────────────────────────
+# The shell carries the app's JS, which changes on deploy — never let a browser
+# serve a stale copy (that was hiding the admin panel after updates).
+_NO_CACHE = {"Cache-Control": "no-cache, no-store, must-revalidate"}
+
+
 @router.get("")
 def app_shell() -> FileResponse:
-    return FileResponse(_WEB / "app.html")
+    return FileResponse(_WEB / "app.html", headers=_NO_CACHE)
 
 
 @router.get("/manifest.webmanifest")
@@ -187,6 +192,8 @@ def recover_password(email: str, key: str, new: str) -> dict:
 
 
 def _is_active(user: dict) -> bool:
+    if _is_admin_user(user):  # the operator is always active
+        return True
     if not user["activated"]:
         return False
     if user["active_until"]:

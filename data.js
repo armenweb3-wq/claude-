@@ -97,7 +97,15 @@ window.BETTING_DATA = {
           selections: [
             { label: "Over 2.5 total goals", type: "over_goals", line: 2.5 },
           ],
-          stake: 725, odds: 1.45, // single market — placeable anywhere
+          stake: 725, odds: 1.45, // Germany 7-1 = 8 goals -> WON
+          result: "won", returnAmount: 1051.25,
+        },
+        {
+          leg: 3, date: "2026-06-15", match: "Belgium vs Egypt",
+          selections: [
+            { label: "Over 1.5 total goals", type: "over_goals", line: 1.5 },
+          ],
+          stake: 1051.25, odds: 1.40, // single market, kicks off 19:00 UTC
           result: "pending", returnAmount: 0,
         },
       ],
@@ -112,19 +120,19 @@ window.BETTING_DATA = {
       startingBankroll: 250,
       targetLegs: 6,
       targetMultiplierPerLeg: 2.0,
-      status: "active",
+      status: "busted", // Game 1 lost (cards 0, fouls 11 in the 7-1 blowout)
       bets: [
         {
           leg: 1, date: "2026-06-14", match: "Germany vs Curaçao",
           selections: [
-            { label: "Over 6.5 total corners", type: "corners", manual: true },
-            { label: "Over 1.5 total cards", type: "cards", manual: true },
-            { label: "Over 0.5 first-half goal", type: "other", manual: true },
-            { label: "Germany over 1.5 first-half corners", type: "corners", manual: true },
-            { label: "Over 15.5 total fouls", type: "other", manual: true },
+            { label: "Over 6.5 total corners (9 ✓)", type: "corners", manual: true },
+            { label: "Over 1.5 total cards (0 ✗)", type: "cards", manual: true },
+            { label: "Over 0.5 first-half goal (✓)", type: "other", manual: true },
+            { label: "Germany over 1.5 first-half corners (✓)", type: "corners", manual: true },
+            { label: "Over 15.5 total fouls (11 ✗)", type: "other", manual: true },
           ],
-          stake: 250, odds: 2.05, // Stoiximan Bet Builder
-          result: "pending", returnAmount: 0,
+          stake: 250, odds: 2.05, // Germany 7-1: corners hit, but cards & fouls missed -> LOST
+          result: "lost", returnAmount: 0,
         },
       ],
     },
@@ -135,28 +143,28 @@ window.BETTING_DATA = {
   //  Never two markets on the same game in a normal bet — that's what gets refused.
   picks: {
     today: {
-      date: "2026-06-14",
+      date: "2026-06-15",
       candidates: [
         {
-          match: "Germany vs Curaçao", risk: "low",
-          market: "SINGLE MARKET → Over 2.5 total goals  (~1.40)",
-          summary: "Clearest mismatch of the day (17:00 UTC). One market — combines with anything.",
-          why: "Germany should win comfortably vs the smallest nation ever at a WC; 3+ goals is the likeliest scoreline.",
-          whyRisk: "Low. A minnow can frustrate for ~60 mins, but Germany's quality usually tells. Single market = always placeable.",
+          match: "Belgium vs Egypt", risk: "medium",
+          market: "SINGLE MARKET → Over 1.5 total goals  (~1.35-1.45)",
+          summary: "19:00 UTC. The AI track is also on this one.",
+          why: "Belgium have the attacking quality to push this past one goal; Egypt also carry a threat through Salah.",
+          whyRisk: "Medium — Egypt are organised and can keep it tight; a 1-0 either way kills an over-1.5.",
         },
         {
-          match: "Netherlands vs Japan", risk: "medium",
-          market: "SINGLE MARKET → Over 1.5 total goals  (~1.30-1.45)",
-          summary: "20:00 UTC. Note: 'Over 1.5 + DNB' won't combine (same match) — pick just ONE market.",
-          why: "Netherlands should control and create chances; two-plus goals across the game is a fair lean.",
-          whyRisk: "Medium — Japan are organised and dangerous on the break; a 1-0 either way kills an over-1.5.",
+          match: "Saudi Arabia vs Uruguay", risk: "medium",
+          market: "SINGLE MARKET → Uruguay Double Chance (win or draw)  (~1.30-1.45)",
+          summary: "22:00 UTC. One market — combines freely.",
+          why: "Uruguay are the clearly stronger side and shouldn't lose to Saudi Arabia.",
+          whyRisk: "Medium — Saudi can be awkward and physical; a draw is fine for DC but a shock loss isn't.",
         },
         {
-          match: "Ivory Coast vs Ecuador", risk: "medium",
-          market: "SINGLE MARKET → Over 1.5 total goals  (or Double Chance on your favoured side)",
-          summary: "23:00 UTC. Even game — keep it to one simple market.",
-          why: "Two athletic sides; a single goals or double-chance market is the safest single pick here.",
-          whyRisk: "Medium — evenly matched, so the result is a coin-flip; that's why a single goals line is safer than a winner.",
+          match: "France vs Senegal", risk: "medium",
+          market: "SINGLE MARKET → Over 1.5 total goals  (16 Jun)",
+          summary: "Heads-up for tomorrow — two strong attacking sides.",
+          why: "France's firepower vs a quality Senegal side points to goals.",
+          whyRisk: "Medium — Senegal are well-drilled and could make it a cagey, low-scoring battle.",
         },
       ],
     },

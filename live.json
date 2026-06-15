@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-15T16:50:43.773Z",
+  "updatedAt": "2026-06-15T16:55:35.379Z",
   "matches": [
     {
       "home": "Haiti",
@@ -52,7 +52,7 @@
     {
       "home": "Spain",
       "away": "Cape Verde",
-      "status": "IN_PLAY",
+      "status": "PAUSED",
       "homeScore": 0,
       "awayScore": 0,
       "utcDate": "2026-06-15T16:00:00Z"

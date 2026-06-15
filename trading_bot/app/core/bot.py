@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import threading
 import traceback
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -54,7 +55,11 @@ class TradingBot:
         self.symbols: list[str] = list(settings.symbols)
         self._cycle = None
         self._task: asyncio.Task | None = None
+        self._refresh_task: asyncio.Task | None = None
         self._stop = asyncio.Event()
+        # Serialises exchange access between the slow strategy loop and the
+        # fast display-refresh loop (the pybit HTTP client is not thread-safe).
+        self._ex_lock = threading.Lock()
 
     def _validate_symbols(self) -> None:
         """Drop symbols Bybit doesn't list (e.g. wrong meme-coin names)."""
@@ -85,12 +90,14 @@ class TradingBot:
             f"Strategy: {self.strategy.name} | {len(self.symbols)} symbols"
         )
         self._task = asyncio.create_task(self._run_loop())
+        self._refresh_task = asyncio.create_task(self._refresh_loop())
 
     async def stop(self) -> None:
         self._stop.set()
         self.state.running = False
-        if self._task:
-            await asyncio.gather(self._task, return_exceptions=True)
+        tasks = [t for t in (self._task, self._refresh_task) if t]
+        if tasks:
+            await asyncio.gather(*tasks, return_exceptions=True)
         self.notifier.send("🛑 crypto-trading-bot stopped.")
 
     def pause(self) -> None:
@@ -113,6 +120,35 @@ class TradingBot:
             except asyncio.TimeoutError:
                 pass
 
+    async def _refresh_loop(self) -> None:
+        """Fast, read-only loop that keeps the dashboard's positions/equity in
+        step with the exchange between (slow) strategy ticks. Without this the
+        UI shows a snapshot up to a full strategy cycle old — e.g. a position
+        already closed on the exchange still appears open."""
+        while not self._stop.is_set():
+            if not self.state.paused:
+                try:
+                    await asyncio.to_thread(self._refresh_state)
+                except Exception as exc:  # never let a refresh blip kill the loop
+                    log.warning("position refresh failed: %s", exc)
+            try:
+                await asyncio.wait_for(
+                    self._stop.wait(), timeout=settings.position_refresh_seconds
+                )
+            except asyncio.TimeoutError:
+                pass
+
+    def _refresh_state(self) -> None:
+        """Snapshot equity + open positions for the dashboard (read-only)."""
+        with self._ex_lock:
+            equity = self.exchange.get_equity()
+            _, open_positions, open_details = self._snapshot_positions(manage=False)
+        self.state.equity = round(equity, 4)
+        if self.state.start_equity <= 0 and equity > 0:
+            self.state.start_equity = round(equity, 4)
+        self.state.open_positions = open_positions
+        self.state.positions = open_details
+
     def handle_error(self, source: str, exc: Exception) -> None:
         """Record an error to state, logs, the database, and notifiers."""
         self.state.error = str(exc)
@@ -128,7 +164,12 @@ class TradingBot:
     def _tick(self) -> None:
         self.state.last_run = datetime.now(timezone.utc).isoformat()
         self._roll_day()
+        # Hold the exchange lock for the whole strategy cycle so the fast
+        # refresh loop never hits the (non-thread-safe) client concurrently.
+        with self._ex_lock:
+            self._run_strategy()
 
+    def _run_strategy(self) -> None:
         equity = self.exchange.get_equity()
         self.risk.register_equity(equity)
         self.storage.record_equity(equity)
@@ -160,37 +201,8 @@ class TradingBot:
         market = self._assess_market()
         self.state.market = market.reason
 
-        # Snapshot open positions up front (resilient to per-symbol errors).
-        positions: dict[str, object] = {}
-        open_positions = 0
-        open_details: list[dict] = []
-        for symbol in self.symbols:
-            try:
-                pos = self.exchange.get_position(symbol)
-                positions[symbol] = pos
-                if pos.side is not None:
-                    open_positions += 1
-                    self._manage_breakeven(symbol, pos)  # may update pos.stop_loss
-                    tps, sl, is_long = self._trade_levels(pos)
-                    at_be = (sl >= pos.entry_price) if is_long else (0 < sl <= pos.entry_price)
-                    # ROI on margin (leveraged) — matches the % exchanges show.
-                    notional = pos.size * pos.entry_price
-                    margin = (notional / pos.leverage) if pos.leverage else notional
-                    pnl_pct = round(pos.unrealised_pnl / margin * 100, 2) if margin else 0.0
-                    open_details.append({
-                        "symbol": symbol,
-                        "side": pos.side,
-                        "size": pos.size,
-                        "entry_price": pos.entry_price,
-                        "unrealised_pnl": round(pos.unrealised_pnl, 4),
-                        "pnl_pct": pnl_pct,
-                        "leverage": pos.leverage,
-                        "stop_loss": sl,
-                        "take_profits": tps,
-                        "breakeven": at_be,
-                    })
-            except Exception as exc:  # one bad symbol must not break the rest
-                log.warning("position check failed for %s: %s", symbol, exc)
+        # Snapshot open positions up front (also runs break-even management).
+        positions, open_positions, open_details = self._snapshot_positions(manage=True)
         self.state.open_positions = open_positions
         self.state.positions = open_details
 
@@ -235,6 +247,46 @@ class TradingBot:
                 log.warning("symbol %s failed: %s", symbol, exc)
                 self.state.last_signals[symbol] = f"error: {exc}"
                 continue
+
+    def _snapshot_positions(self, *, manage: bool) -> tuple[dict, int, list]:
+        """Read open positions from the exchange and build the dashboard list.
+
+        The caller MUST hold ``self._ex_lock``. With ``manage=True`` it also
+        runs break-even stop management (strategy tick); the display-refresh
+        loop calls it with ``manage=False`` to stay read-only.
+        """
+        positions: dict[str, object] = {}
+        open_positions = 0
+        open_details: list[dict] = []
+        for symbol in self.symbols:
+            try:
+                pos = self.exchange.get_position(symbol)
+                positions[symbol] = pos
+                if pos.side is not None:
+                    open_positions += 1
+                    if manage:
+                        self._manage_breakeven(symbol, pos)  # may update pos.stop_loss
+                    tps, sl, is_long = self._trade_levels(pos)
+                    at_be = (sl >= pos.entry_price) if is_long else (0 < sl <= pos.entry_price)
+                    # ROI on margin (leveraged) — matches the % exchanges show.
+                    notional = pos.size * pos.entry_price
+                    margin = (notional / pos.leverage) if pos.leverage else notional
+                    pnl_pct = round(pos.unrealised_pnl / margin * 100, 2) if margin else 0.0
+                    open_details.append({
+                        "symbol": symbol,
+                        "side": pos.side,
+                        "size": pos.size,
+                        "entry_price": pos.entry_price,
+                        "unrealised_pnl": round(pos.unrealised_pnl, 4),
+                        "pnl_pct": pnl_pct,
+                        "leverage": pos.leverage,
+                        "stop_loss": sl,
+                        "take_profits": tps,
+                        "breakeven": at_be,
+                    })
+            except Exception as exc:  # one bad symbol must not break the rest
+                log.warning("position check failed for %s: %s", symbol, exc)
+        return positions, open_positions, open_details
 
     def _open_from_signal(self, symbol, signal, equity) -> bool:
         """Size, broadcast, and execute a single signal. Returns True if opened."""

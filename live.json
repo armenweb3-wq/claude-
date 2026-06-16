@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-16T22:05:29.572Z",
+  "updatedAt": "2026-06-16T22:10:29.587Z",
   "matches": [
     {
       "home": "Sweden",
@@ -52,9 +52,9 @@
     {
       "home": "Iraq",
       "away": "Norway",
-      "status": "TIMED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "IN_PLAY",
+      "homeScore": 0,
+      "awayScore": 0,
       "utcDate": "2026-06-16T22:00:00Z"
     },
     {

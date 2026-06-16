@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-16T20:50:46.325Z",
+  "updatedAt": "2026-06-16T20:55:23.585Z",
   "matches": [
     {
       "home": "Sweden",
@@ -45,7 +45,7 @@
       "home": "France",
       "away": "Senegal",
       "status": "IN_PLAY",
-      "homeScore": 1,
+      "homeScore": 2,
       "awayScore": 0,
       "utcDate": "2026-06-16T19:00:00Z"
     },

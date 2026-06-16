@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-16T00:05:28.493Z",
+  "updatedAt": "2026-06-16T00:10:27.807Z",
   "matches": [
     {
       "home": "Sweden",
@@ -28,7 +28,7 @@
     {
       "home": "Saudi Arabia",
       "away": "Uruguay",
-      "status": "IN_PLAY",
+      "status": "FINISHED",
       "homeScore": 1,
       "awayScore": 1,
       "utcDate": "2026-06-15T22:00:00Z"

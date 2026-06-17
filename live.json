@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-17T20:40:31.795Z",
+  "updatedAt": "2026-06-17T20:45:30.112Z",
   "matches": [
     {
       "home": "USA",
@@ -150,7 +150,7 @@
       "away": "Croatia",
       "status": "IN_PLAY",
       "homeScore": 1,
-      "awayScore": 0,
+      "awayScore": 1,
       "utcDate": "2026-06-17T20:00:00Z"
     },
     {

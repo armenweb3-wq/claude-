@@ -197,6 +197,12 @@
       <div id="payStatus" class="disc"></div>
     </div>
 
+    <!-- STEP 2 (free mode): pending approval -->
+    <div class="card hide" id="pendingCard">
+      <h2>Step 2 of 3 — Pending approval</h2>
+      <p class="lead">Your exchange is connected ✓. Your access is being approved — you'll be able to start trading as soon as the admin activates your account. No payment required.</p>
+    </div>
+
     <!-- STEP 3: LIVE DASHBOARD -->
     <div class="card hide" id="statsCard">
       <h2>Your bot <span id="actPill" class="pill off">—</span></h2>
@@ -372,8 +378,10 @@ function render(){
   $('s1').className='s '+(hasKeys?'done':'active');
   $('s2').className='s '+(active?'done':hasKeys?'active':'');
   $('s3').className='s '+(active?'active':'');
+  const needPay=ME.payment_required!==false;
   show('keysCard',!hasKeys);
-  show('payCard',hasKeys&&!active);
+  show('payCard',hasKeys&&!active&&needPay);
+  show('pendingCard',hasKeys&&!active&&!needPay);
   LIVE_CARDS.forEach(id=>show(id,active));
   $('payPrice').textContent=ME.pay.price;
   $('payCoin').textContent=ME.pay.coin_network;

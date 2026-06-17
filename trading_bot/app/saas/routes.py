@@ -285,6 +285,7 @@ def me(request: Request) -> dict:
     return {
         "email": user["email"],
         "is_admin": _is_admin_user(user),
+        "payment_required": settings.pay_required,
         "activated": _is_active(user),
         "active_until": user["active_until"],
         "has_keys": bool(st.get_keys(user["id"])),

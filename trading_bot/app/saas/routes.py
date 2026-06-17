@@ -419,6 +419,7 @@ def me(request: Request) -> dict:
         "is_admin": _is_admin_user(user),
         "payment_required": settings.pay_required,
         "access_code_enabled": bool(settings.saas_access_code),
+        "max_leverage": settings.max_leverage,
         "activated": _is_active(user),
         "active_until": user["active_until"],
         "has_keys": bool(st.get_keys(user["id"])),

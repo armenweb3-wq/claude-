@@ -69,6 +69,7 @@ def _set_cookie(resp: Response, token: str, request: Request) -> None:
 class Creds(BaseModel):
     email: str
     password: str
+    username: str | None = None
 
 
 class Keys(BaseModel):
@@ -142,8 +143,9 @@ def register(body: Creds, response: Response, request: Request) -> dict:
     if not is_admin and st.seats_left() <= 0:
         raise HTTPException(403, f"the beta is full ({settings.saas_seat_limit} seats). "
                                  "Ask for a spot to open up.")
+    username = (body.username or "").strip() or email.split("@")[0]
     salt, pw_hash = security.hash_password(body.password)
-    user = st.create_user(email, salt, pw_hash, is_admin)
+    user = st.create_user(email, salt, pw_hash, is_admin, username=username)
     token = security.new_token()
     st.create_session(token, user["id"])
     _set_cookie(response, token, request)
@@ -301,6 +303,7 @@ def me(request: Request) -> dict:
     pay = st.latest_payment(user["id"])
     return {
         "email": user["email"],
+        "username": (user.get("username") or user["email"].split("@")[0]),
         "is_admin": _is_admin_user(user),
         "payment_required": settings.pay_required,
         "access_code_enabled": bool(settings.saas_access_code),

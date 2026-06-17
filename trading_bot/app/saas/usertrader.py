@@ -90,6 +90,21 @@ class UserTrader:
                     manage_breakeven(self.ex, s, p)
             except Exception as exc:  # pragma: no cover
                 log.warning("position read %s: %s", s, exc)
+
+        # Regime flip: bank in-profit positions whose side is now blocked.
+        if settings.close_on_regime_flip:
+            for s, p in positions.items():
+                if p.side is None:
+                    continue
+                is_long = (p.side or "").lower() in ("buy", "long")
+                blocked = (is_long and not allow_long) or (not is_long and not allow_short)
+                if blocked and p.unrealised_pnl > 0:
+                    try:
+                        self.ex.close_position(s)
+                        p.side = None
+                        open_count -= 1
+                    except Exception as exc:  # pragma: no cover
+                        log.warning("regime-flip close %s: %s", s, exc)
         out["positions"] = open_count
 
         for s in self.symbols:

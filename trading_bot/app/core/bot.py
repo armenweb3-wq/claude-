@@ -203,6 +203,10 @@ class TradingBot:
 
         # Snapshot open positions up front (also runs break-even management).
         positions, open_positions, open_details = self._snapshot_positions(manage=True)
+        # Regime flip: if the market now blocks a side, bank any still-open
+        # position on that side that is currently in profit.
+        if settings.close_on_regime_flip:
+            open_positions -= self._close_blocked_in_profit(positions, market)
         self.state.open_positions = open_positions
         self.state.positions = open_details
 
@@ -287,6 +291,29 @@ class TradingBot:
             except Exception as exc:  # one bad symbol must not break the rest
                 log.warning("position check failed for %s: %s", symbol, exc)
         return positions, open_positions, open_details
+
+    def _close_blocked_in_profit(self, positions: dict, market) -> int:
+        """Close in-profit positions whose side the market filter now blocks.
+        Returns how many were closed."""
+        closed = 0
+        for symbol, pos in positions.items():
+            if pos is None or pos.side is None:
+                continue
+            is_long = (pos.side or "").lower() in ("buy", "long")
+            blocked = (is_long and not market.allow_long) or (not is_long and not market.allow_short)
+            if blocked and pos.unrealised_pnl > 0:
+                try:
+                    self.exchange.close_position(symbol)
+                    pos.side = None  # reflect locally so we don't re-trade it
+                    closed += 1
+                    self.notifier.send(
+                        f"🔄 {symbol} closed in profit (+{pos.unrealised_pnl:.4f}) — "
+                        f"{'long' if is_long else 'short'} blocked by market filter"
+                    )
+                    log.info("regime-flip close %s (+%.4f)", symbol, pos.unrealised_pnl)
+                except Exception as exc:  # pragma: no cover - best effort
+                    log.warning("regime-flip close failed for %s: %s", symbol, exc)
+        return closed
 
     def _open_from_signal(self, symbol, signal, equity) -> bool:
         """Size, broadcast, and execute a single signal. Returns True if opened."""

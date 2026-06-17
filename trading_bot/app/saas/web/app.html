@@ -136,6 +136,7 @@
     <div class="card">
       <h2 id="authTitle">Log in</h2>
       <p class="lead">Automated crypto trading on your own exchange account. Sign in or create an account to begin.</p>
+      <div id="userWrap" class="hide"><label>Username</label><input id="username" autocomplete="off" placeholder="shown on your shared cards"/></div>
       <label>Email</label><input id="email" type="email" autocomplete="email"/>
       <label>Password</label><input id="password" type="password" autocomplete="current-password"/>
       <label id="agreeWrap" class="hide" style="display:flex;align-items:flex-start;gap:8px;text-transform:none;letter-spacing:0">
@@ -303,12 +304,10 @@
   <div style="display:flex;flex-direction:column;align-items:center;max-width:540px;width:100%">
     <canvas id="shareCanvas" width="1000" height="1300"></canvas>
     <div class="srow">
-      <button class="green" onclick="saveCard()">Save</button>
-      <button class="ghost" onclick="editName()">Name</button>
-      <button class="ghost" onclick="editBrand()">Brand</button>
+      <button class="green" onclick="saveCard()">Save image</button>
       <button class="ghost" onclick="closeShare()">Close</button>
     </div>
-    <div class="disc" style="text-align:center">On iPhone you can also long-press the image to save it.</div>
+    <div class="disc" style="text-align:center">Tap Save image, then choose “Save to Photos” to add it to your gallery.</div>
   </div>
 </div>
 
@@ -330,13 +329,15 @@ function swapAuth(){ isRegister=!isRegister;
   $('authBtn').textContent=isRegister?'Create account':'Log in';
   $('authSwap').textContent=isRegister?'Have an account? Log in':'New here? Create an account';
   $('agreeWrap').classList.toggle('hide',!isRegister);
+  $('userWrap').classList.toggle('hide',!isRegister);
   $('authMsg').textContent=''; }
 async function doAuth(){
   const m=$('authMsg'); m.className='msg';
   if(isRegister && !$('agree').checked){ m.className='msg err'; m.textContent='Please agree to the Terms to continue.'; return; }
   m.textContent='…';
   try{
-    await api(isRegister?'/register':'/login','POST',{email:$('email').value,password:$('password').value});
+    await api(isRegister?'/register':'/login','POST',
+      {email:$('email').value,password:$('password').value,username:$('username').value});
     await boot();
   }catch(e){ m.className='msg err'; m.textContent=e.message; }
 }
@@ -556,97 +557,67 @@ async function openHistory(){
 }
 function closeHistory(){ $('historyModal').classList.remove('show'); }
 
-// ── shareable P&L card ──────────────────────────────────────
-const NAME=()=>localStorage.getItem('traderName')||((ME&&ME.email)?ME.email.split('@')[0]:'Trader');
-const BRAND=()=>localStorage.getItem('brandName')||'ZENITH';
-const TAGLINE=()=>localStorage.getItem('brandTagline')||'ALGORITHMIC TRADING';
+// ── shareable P&L card (minimal, matches app theme) ─────────
 function openShare(sym){
   const p=lastPositions.find(x=>x.symbol===sym); if(!p) return;
   const isLong=/buy|long/.test((p.side||'').toLowerCase());
   const pnl=p.unrealised_pnl||0, size=p.size||0, entry=p.entry_price||0;
   const last=size?(isLong?entry+pnl/size:entry-pnl/size):entry;
-  lastShare={sym, side:isLong?'Long':'Short', isLong, lev:+p.leverage||0,
+  lastShare={name:(ME&&ME.username)||'trader', sym, isLong, lev:+p.leverage||0,
             pnl, pct:p.pnl_pct||0, entry, last, live:!lastDry};
   drawCard(lastShare);
   $('shareModal').classList.add('show');
 }
 function closeShare(){ $('shareModal').classList.remove('show'); }
-function editName(){ const n=prompt('Name on share card:', NAME());
-  if(n!==null){ localStorage.setItem('traderName', n.trim()); if(lastShare) drawCard(lastShare); } }
-function editBrand(){ const b=prompt('Brand name:', BRAND());
-  if(b!==null){ localStorage.setItem('brandName', b.trim().toUpperCase());
-    const t=prompt('Tagline:', TAGLINE());
-    if(t!==null) localStorage.setItem('brandTagline', t.trim().toUpperCase());
-    if(lastShare) drawCard(lastShare); } }
-function fmtP(v){ return Number(v).toLocaleString(undefined,{maximumFractionDigits:2}); }
-function drawLogo(x,cx,cy,s){
-  const S=s, P=p=>[cx+p[0]*S, cy+p[1]*S];
-  const TL=[-0.30,-0.42],TR=[0.30,-0.42],L=[-0.50,-0.15],R=[0.50,-0.15],
-        Pl=[-0.30,-0.15],Pr=[0.30,-0.15],B=[0,0.62];
-  const path=pts=>{ x.beginPath();
-    pts.forEach((p,i)=>{const [ax,ay]=P(p); i?x.lineTo(ax,ay):x.moveTo(ax,ay);}); x.closePath(); };
-  x.save();
-  x.shadowColor='rgba(124,92,255,0.55)'; x.shadowBlur=S*0.5; x.shadowOffsetY=S*0.06;
-  x.fillStyle='#7c5cff'; path([TL,TR,R,B,L]); x.fill();
-  x.restore();
-  const facet=(pts,fill)=>{ x.fillStyle=fill; path(pts); x.fill();
-    x.strokeStyle='rgba(255,255,255,0.28)'; x.lineWidth=S*0.012; x.stroke(); };
-  facet([TL,Pl,L],'#8fb0ff'); facet([TL,TR,Pr,Pl],'#d4e3ff'); facet([TR,R,Pr],'#7f9cf2');
-  facet([L,Pl,B],'#6b57ef'); facet([Pl,Pr,B],'#9070ff'); facet([Pr,R,B],'#5b3fc9');
-  const [sx,sy]=P([-0.12,-0.32]), r=S*0.055;
-  x.fillStyle='rgba(255,255,255,0.92)'; x.beginPath();
-  for(let i=0;i<8;i++){ const a=i*Math.PI/4, rr2=i%2?r*0.38:r;
-    x.lineTo(sx+Math.cos(a)*rr2, sy+Math.sin(a)*rr2); }
-  x.closePath(); x.fill();
-}
+function fmtP(v){ return Number(v).toLocaleString(undefined,{maximumFractionDigits:4}); }
 function drawCard(d){
-  const c=$('shareCanvas'), x=c.getContext('2d');
-  const W=c.width, H=c.height, green='#16c784', red='#ea3943', muted='#7c8aa5';
-  const col=d.pnl>=0?green:red, F='-apple-system,Segoe UI,Roboto,sans-serif';
-  const g=x.createLinearGradient(0,0,W,H);
-  g.addColorStop(0,'#141d36'); g.addColorStop(0.5,'#0b1120'); g.addColorStop(1,'#05070e');
-  x.fillStyle=g; x.fillRect(0,0,W,H);
-  const blob=(cx,cy,r,c0)=>{ const rg=x.createRadialGradient(cx,cy,20,cx,cy,r);
-    rg.addColorStop(0,c0); rg.addColorStop(1,'rgba(0,0,0,0)'); x.fillStyle=rg; x.fillRect(0,0,W,H); };
-  blob(W*0.90,H*0.06,W*0.9,'rgba(91,140,255,0.22)');
-  blob(W*0.04,H*0.96,W*0.9,'rgba(168,85,247,0.18)');
-  blob(W*0.5,H*0.5,W*0.65, d.pnl>=0?'rgba(22,199,132,0.12)':'rgba(234,57,57,0.12)');
-  x.save(); x.globalAlpha=0.07; drawLogo(x, W*0.80, H*0.33, 560); x.restore();
-  const sp=x.createRadialGradient(W*0.34,H*0.48,40,W*0.34,H*0.48,W*0.62);
-  sp.addColorStop(0,'rgba(255,255,255,0.05)'); sp.addColorStop(1,'rgba(0,0,0,0)');
-  x.fillStyle=sp; x.fillRect(0,0,W,H);
-  const vg=x.createRadialGradient(W/2,H/2,H*0.30,W/2,H/2,H*0.80);
-  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.55)');
-  x.fillStyle=vg; x.fillRect(0,0,W,H);
-  x.textBaseline='alphabetic'; x.textAlign='left';
-  const initials=NAME().split(/\s+/).map(w=>w[0]||'').join('').slice(0,2).toUpperCase()||'ZT';
-  x.fillStyle='#1b2740'; x.beginPath(); x.arc(120,118,62,0,7); x.fill();
-  x.fillStyle='#9db4ff'; x.font='800 50px '+F; x.textAlign='center'; x.fillText(initials,120,136); x.textAlign='left';
-  x.fillStyle='#eef2fb'; x.font='800 56px '+F; x.fillText(NAME(), 210, 105);
-  x.fillStyle=muted; x.font='400 34px '+F;
-  x.fillText(new Date().toISOString().replace('T',' ').slice(0,19), 210, 158);
-  x.fillStyle='#eef2fb'; x.font='800 76px '+F; x.fillText(d.sym+' Perpetual', 70, 410);
-  x.fillStyle=d.isLong?green:red; x.font='700 46px '+F; x.fillText(d.side, 70, 482);
-  const sw=x.measureText(d.side).width;
-  x.fillStyle=muted; x.fillText('  |  '+(d.lev?d.lev+'x':'cross'), 70+sw, 482);
-  x.fillStyle=col; x.font='800 158px '+F; x.fillText((d.pct>=0?'+':'')+fmtP(d.pct)+'%', 66, 690);
-  x.font='700 58px '+F; x.fillText((d.pnl>=0?'+':'')+fmtP(d.pnl)+' USDT', 70, 778);
-  x.fillStyle=muted; x.font='400 40px '+F; x.fillText('Entry Price', 70, 940); x.fillText('Last Price', 540, 940);
-  x.fillStyle='#eef2fb'; x.font='700 56px '+F; x.fillText(fmtP(d.entry), 70, 1008); x.fillText(fmtP(d.last), 540, 1008);
-  x.strokeStyle='#212c44'; x.lineWidth=2; x.beginPath(); x.moveTo(70,1118); x.lineTo(W-70,1118); x.stroke();
-  drawLogo(x, 118, 1198, 96);
-  x.fillStyle='#eef2fb'; x.font='800 60px '+F; x.fillText(BRAND(), 192, 1192);
-  x.fillStyle=muted; x.font='600 30px '+F; x.fillText(TAGLINE(), 194, 1240);
-  x.textAlign='right'; x.fillStyle=col; x.font='700 32px '+F;
-  x.fillText((d.live?'● LIVE':'○ DRY-RUN'), W-70, 1215); x.textAlign='left';
+  const c=$('shareCanvas'), x=c.getContext('2d'), W=c.width, H=c.height;
+  const bg='#0d0e10', text='#eceef2', muted='#8b8f98', line='rgba(255,255,255,0.10)';
+  const green='#4cc08c', red='#e2707a', col=d.pnl>=0?green:red;
+  const SANS='-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+  const MONO='ui-monospace,Menlo,Consolas,monospace';
+  const ls=(v)=>{ if('letterSpacing' in x) x.letterSpacing=v; };
+  x.fillStyle=bg; x.fillRect(0,0,W,H);
+  x.strokeStyle=line; x.lineWidth=2; x.strokeRect(20,20,W-40,H-40);
+  x.textBaseline='alphabetic'; const M=72;
+  // header: wordmark + live badge
+  x.textAlign='left'; x.fillStyle=text; x.font='700 42px '+SANS; ls('10px');
+  x.fillText('ZENITH', M, 108); ls('0px');
+  x.textAlign='right'; x.fillStyle=col; x.font='600 30px '+MONO;
+  x.fillText(d.live?'● LIVE':'○ TEST', W-M, 104); x.textAlign='left';
+  x.strokeStyle=line; x.beginPath(); x.moveTo(M,146); x.lineTo(W-M,146); x.stroke();
+  // user + date
+  x.fillStyle=text; x.font='600 46px '+SANS; x.fillText('@'+d.name, M, 250);
+  x.fillStyle=muted; x.font='400 30px '+MONO;
+  x.fillText(new Date().toISOString().replace('T',' ').slice(0,16)+' UTC', M, 298);
+  // symbol + side
+  x.fillStyle=text; x.font='700 90px '+SANS; x.fillText(d.sym, M, 476);
+  x.fillStyle=d.isLong?green:red; x.font='600 48px '+SANS;
+  x.fillText((d.isLong?'Long':'Short')+(d.lev?'   ·   '+d.lev+'x':''), M, 540);
+  // big ROI + pnl
+  x.fillStyle=col; x.font='700 168px '+MONO; x.fillText((d.pct>=0?'+':'')+d.pct.toFixed(2)+'%', M-4, 768);
+  x.font='600 58px '+MONO; x.fillText((d.pnl>=0?'+':'')+d.pnl.toFixed(2)+' USDT', M, 846);
+  // entry / last
+  x.strokeStyle=line; x.beginPath(); x.moveTo(M,936); x.lineTo(W-M,936); x.stroke();
+  x.fillStyle=muted; x.font='400 36px '+SANS; x.fillText('Entry', M, 1006); x.fillText('Last', W/2+10, 1006);
+  x.fillStyle=text; x.font='600 50px '+MONO; x.fillText(fmtP(d.entry), M, 1070); x.fillText(fmtP(d.last), W/2+10, 1070);
+  // footer
+  x.strokeStyle=line; x.beginPath(); x.moveTo(M,1156); x.lineTo(W-M,1156); x.stroke();
+  x.fillStyle=muted; x.font='400 30px '+SANS; ls('4px');
+  x.fillText('ALGORITHMIC TRADING', M, 1218); ls('0px');
 }
 function saveCard(){
-  const c=$('shareCanvas');
-  try{ c.toBlob(b=>{ const url=URL.createObjectURL(b);
-    const a=document.createElement('a'); a.href=url; a.download='trade-pnl.png';
+  $('shareCanvas').toBlob(async b=>{
+    const file=new File([b],'zenith-trade.png',{type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file]}); return; }
+      catch(e){ if(e&&e.name==='AbortError') return; }
+    }
+    const url=URL.createObjectURL(b);
+    const a=document.createElement('a'); a.href=url; a.download='zenith-trade.png';
     document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),3000); },'image/png');
-  }catch(e){ alert('Could not save automatically — long-press the image to save.'); }
+    setTimeout(()=>URL.revokeObjectURL(url),3000);
+  },'image/png');
 }
 async function boot(){
   try{ ME=await api('/me'); render(); }

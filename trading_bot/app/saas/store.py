@@ -27,7 +27,7 @@ def _schema(d: str) -> list[str]:
           id {_PK[d]}, email TEXT UNIQUE NOT NULL, pw_salt TEXT NOT NULL,
           pw_hash TEXT NOT NULL, is_admin INTEGER NOT NULL DEFAULT 0,
           activated INTEGER NOT NULL DEFAULT 0, active_until TEXT,
-          created_at {_TS[d]} NOT NULL)""",
+          username TEXT, created_at {_TS[d]} NOT NULL)""",
         f"""CREATE TABLE IF NOT EXISTS sessions (
           token TEXT PRIMARY KEY, user_id INTEGER NOT NULL, created_at {_TS[d]} NOT NULL)""",
         f"""CREATE TABLE IF NOT EXISTS exchange_keys (
@@ -61,6 +61,20 @@ class Store:
             for stmt in _schema("sqlite"):
                 self._conn.execute(stmt)
             self._conn.commit()
+        self._migrate()
+
+    def _migrate(self) -> None:
+        """Add columns introduced after a DB was first created (idempotent)."""
+        for stmt in ("ALTER TABLE users ADD COLUMN username TEXT",):
+            try:
+                if self._pg:
+                    with self._conn.cursor() as cur:
+                        cur.execute(stmt)
+                else:
+                    self._conn.execute(stmt)
+                    self._conn.commit()
+            except Exception:
+                pass  # column already exists
 
     def _q(self, sql: str, args: tuple = ()) -> list[dict]:
         with self._lock:
@@ -90,11 +104,12 @@ class Store:
         rows = self._q("SELECT * FROM users WHERE id=?", (uid,))
         return rows[0] if rows else None
 
-    def create_user(self, email: str, salt: str, pw_hash: str, is_admin: bool) -> dict:
+    def create_user(self, email: str, salt: str, pw_hash: str, is_admin: bool,
+                    username: str | None = None) -> dict:
         self._q(
-            "INSERT INTO users (email, pw_salt, pw_hash, is_admin, created_at)"
-            " VALUES (?,?,?,?,?)",
-            (email.lower(), salt, pw_hash, 1 if is_admin else 0, time.time()),
+            "INSERT INTO users (email, pw_salt, pw_hash, is_admin, username, created_at)"
+            " VALUES (?,?,?,?,?,?)",
+            (email.lower(), salt, pw_hash, 1 if is_admin else 0, username, time.time()),
         )
         u = self.get_user_by_email(email)
         self._q("INSERT INTO settings (user_id, symbols) VALUES (?,?)"

@@ -66,6 +66,10 @@ class Settings:
     # BTC-led market filter: block longs when BTC is crashing/bearish and
     # shorts when BTC is pumping/bullish (alts follow BTC).
     btc_filter_enabled: bool = field(default_factory=lambda: _get_bool("BTC_FILTER_ENABLED", True))
+    # When the filter flips to block a side (e.g. BTC pumps -> shorts paused),
+    # close still-open positions on that side that are currently in profit, so
+    # the gain is banked before the new trend gives it back.
+    close_on_regime_flip: bool = field(default_factory=lambda: _get_bool("CLOSE_ON_REGIME_FLIP", True))
     btc_symbol: str = field(default_factory=lambda: _get("BTC_SYMBOL", "BTCUSDT"))
     btc_crash_pct: float = field(default_factory=lambda: _get_float("BTC_CRASH_PCT", 3.0))
 

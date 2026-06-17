@@ -580,15 +580,27 @@ function shareClosed(i){
 function closeShare(){ $('shareModal').classList.remove('show'); }
 function fmtP(v){ return Number(v).toLocaleString(undefined,{maximumFractionDigits:4}); }
 function drawSatoshi(x,cx,cy,s){
-  // Faceless bust silhouette — homage to the Satoshi Nakamoto statue.
-  x.save(); x.translate(cx,cy); x.scale(s,s); x.fillStyle='#ffffff';
+  // Homage to the Statue of Satoshi (Lugano): a faceless figure sitting
+  // cross-legged with a laptop, rendered in horizontal slats so it reads as a
+  // translucent "shade" like the sculpture.
+  x.save(); x.translate(cx,cy); x.scale(s,s);
   x.beginPath();
-  x.moveTo(-1.0,1.0);
-  x.bezierCurveTo(-1.0,0.18,-0.58,0.0,-0.34,-0.16);
-  x.lineTo(-0.20,-0.30); x.lineTo(0.20,-0.30); x.lineTo(0.34,-0.16);
-  x.bezierCurveTo(0.58,0.0,1.0,0.18,1.0,1.0);
-  x.closePath(); x.fill();
-  x.beginPath(); x.ellipse(0,-0.66,0.36,0.42,0,0,7); x.fill();
+  // crossed legs / lap (wide base)
+  x.moveTo(-1.0,0.95); x.quadraticCurveTo(0,0.60,1.0,0.95);
+  x.quadraticCurveTo(0.66,0.46,0.30,0.42); x.lineTo(-0.30,0.42);
+  x.quadraticCurveTo(-0.66,0.46,-1.0,0.95); x.closePath();
+  // hunched torso + bent head
+  x.moveTo(-0.40,0.45);
+  x.bezierCurveTo(-0.64,0.10,-0.60,-0.30,-0.32,-0.46);
+  x.bezierCurveTo(-0.30,-0.82,0.22,-0.86,0.24,-0.50);
+  x.bezierCurveTo(0.34,-0.27,0.18,-0.13,0.10,-0.03);
+  x.bezierCurveTo(0.34,0.07,0.44,0.26,0.40,0.45); x.closePath();
+  // laptop propped on the lap
+  x.moveTo(0.16,0.28); x.lineTo(0.88,0.10); x.lineTo(0.95,0.46); x.lineTo(0.26,0.57); x.closePath();
+  // slatted fill (horizontal bars with gaps = translucent statue look)
+  x.save(); x.clip(); x.fillStyle='#ffffff';
+  for(let yy=-0.95; yy<1.0; yy+=0.085){ x.fillRect(-1.2,yy,2.4,0.05); }
+  x.restore();
   x.restore();
 }
 function drawCard(d){
@@ -599,11 +611,8 @@ function drawCard(d){
   const MONO='ui-monospace,Menlo,Consolas,monospace';
   const ls=(v)=>{ if('letterSpacing' in x) x.letterSpacing=v; };
   x.fillStyle=bg; x.fillRect(0,0,W,H);
-  // faint Satoshi Nakamoto silhouette watermark
-  x.save(); x.globalAlpha=0.05; drawSatoshi(x, W*0.74, H*0.40, 360); x.restore();
-  x.save(); x.globalAlpha=0.18; x.fillStyle=muted; x.font='400 22px '+MONO;
-  x.textAlign='center'; ls('6px'); x.fillText('SATOSHI NAKAMOTO', W*0.74, H*0.40+250); ls('0px');
-  x.textAlign='left'; x.restore();
+  // faint Statue-of-Satoshi shade (slatted, translucent like the sculpture)
+  x.save(); x.globalAlpha=0.09; drawSatoshi(x, W*0.70, H*0.45, 360); x.restore();
   x.strokeStyle=line; x.lineWidth=2; x.strokeRect(20,20,W-40,H-40);
   x.textBaseline='alphabetic'; const M=72;
   // header: wordmark + live badge

@@ -62,6 +62,10 @@ class Settings:
     # Decoupled from the (slow) strategy loop so the UI matches the exchange
     # within a minute instead of lagging a whole strategy cycle.
     position_refresh_seconds: int = field(default_factory=lambda: _get_int("POSITION_REFRESH_SECONDS", 60))
+    # Shared cache for public market data (klines/instruments) to avoid hitting
+    # Bybit's rate limit when many users scan the same coins. Daily candles barely
+    # move within this window, so staleness is harmless.
+    market_cache_seconds: int = field(default_factory=lambda: _get_int("MARKET_CACHE_SECONDS", 120))
 
     # BTC-led market filter: block longs when BTC is crashing/bearish and
     # shorts when BTC is pumping/bullish (alts follow BTC).

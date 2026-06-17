@@ -349,26 +349,27 @@
     <label>Symbol</label>
     <select id="t_symbol" onchange="loadInstrument()"></select>
     <label>Direction</label>
-    <select id="t_side"><option value="long">Long (buy)</option><option value="short">Short (sell)</option></select>
+    <select id="t_side" onchange="updateEstimate()"><option value="long">Long (buy)</option><option value="short">Short (sell)</option></select>
     <label>Amount to deploy (USDT)</label><input id="t_notional" type="number" step="1" min="1"/>
-    <label>Leverage (x)</label><input id="t_lev" type="number" step="1" min="1" value="3"/>
+    <label>Leverage (x)</label><input id="t_lev" type="number" step="1" min="1" value="3" oninput="updateEstimate()"/>
     <div class="chips">
-      <button class="chip" onclick="$('t_lev').value=2">2x</button>
-      <button class="chip" onclick="$('t_lev').value=3">3x</button>
-      <button class="chip" onclick="$('t_lev').value=5">5x</button>
-      <button class="chip" onclick="$('t_lev').value=10">10x</button>
-      <button class="chip" onclick="$('t_lev').value=(tradeMaxLev||(ME&&ME.max_leverage)||10)">Max</button>
+      <button class="chip" onclick="$('t_lev').value=2;updateEstimate()">2x</button>
+      <button class="chip" onclick="$('t_lev').value=3;updateEstimate()">3x</button>
+      <button class="chip" onclick="$('t_lev').value=5;updateEstimate()">5x</button>
+      <button class="chip" onclick="$('t_lev').value=10;updateEstimate()">10x</button>
+      <button class="chip" onclick="$('t_lev').value=(tradeMaxLev||(ME&&ME.max_leverage)||10);updateEstimate()">Max</button>
     </div>
     <div class="disc" id="t_levmax" style="margin-top:4px"></div>
-    <label>Stop-loss (% from entry)</label><input id="t_stoppct" type="number" step="0.5" min="0.5" value="3"/>
+    <label>Stop-loss (% from entry)</label><input id="t_stoppct" type="number" step="0.5" min="0.5" value="3" oninput="updateEstimate()"/>
     <div class="chips">
-      <button class="chip" onclick="$('t_stoppct').value=2">2%</button>
-      <button class="chip" onclick="$('t_stoppct').value=3">3%</button>
-      <button class="chip" onclick="$('t_stoppct').value=5">5%</button>
-      <button class="chip" onclick="$('t_stoppct').value=10">10%</button>
+      <button class="chip" onclick="$('t_stoppct').value=2;updateEstimate()">2%</button>
+      <button class="chip" onclick="$('t_stoppct').value=3;updateEstimate()">3%</button>
+      <button class="chip" onclick="$('t_stoppct').value=5;updateEstimate()">5%</button>
+      <button class="chip" onclick="$('t_stoppct').value=10;updateEstimate()">10%</button>
     </div>
     <label>Take-profit targets (% gain) — optional</label>
     <input id="t_tps" autocomplete="off" placeholder="e.g. 6, 12, 20"/>
+    <div class="disc" id="t_est" style="margin-top:10px"></div>
     <label style="display:flex;align-items:flex-start;gap:9px;margin-top:16px;color:var(--text);font-size:.82rem">
       <input id="t_risk" type="checkbox" style="width:auto;margin-top:3px"/>
       <span>I understand trading is high-risk and I can <b>lose my entire deposit</b>.</span>
@@ -527,7 +528,20 @@ async function loadInstrument(){
   try{ const d=await api('/instrument?symbol='+encodeURIComponent(sym));
     tradeMaxLev=d.max_leverage||null; tradePrice=d.last_price||null;
     $('t_levmax').textContent=(tradeMaxLev?('max '+tradeMaxLev+'x for '+sym):'')+(tradePrice?(' · price '+money(tradePrice)):'');
-  }catch(e){ $('t_levmax').textContent=''; }
+  }catch(e){ $('t_levmax').textContent=''; tradePrice=null; }
+  updateEstimate();
+}
+function updateEstimate(){
+  const el=$('t_est'); if(!el) return;
+  const entry=tradePrice;
+  if(!entry){ el.textContent=''; return; }
+  const sign=$('t_side').value==='long'?1:-1;
+  const lev=Math.max(1,parseFloat($('t_lev').value)||1);
+  const sp=parseFloat($('t_stoppct').value)||0;
+  const stop=entry*(1-sign*sp/100);
+  const liq=entry*(1-sign/lev);   // approx isolated-margin liquidation
+  el.innerHTML='Entry ≈ '+money(entry)+' · Stop ≈ '+money(stop)
+    +' · <b style="color:var(--red)">Liq ≈ '+money(liq)+'</b>';
 }
 function closePanel(id){ $(id).classList.remove('show'); }
 function fillAvatar(id){

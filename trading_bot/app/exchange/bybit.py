@@ -6,11 +6,32 @@ is logged before it is sent.
 from __future__ import annotations
 
 import logging
+import threading
+import time
 
 import pandas as pd
 from pybit.unified_trading import HTTP
 
 from ..config import settings
+
+# Process-wide cache of public market data, shared across every user's adapter
+# instance — klines/instruments are identical for everyone, so one fetch serves
+# all. This is what keeps us under Bybit's rate limit at scale.
+_MARKET_CACHE: dict = {}
+_MARKET_LOCK = threading.Lock()
+
+
+def _cache_get(key, ttl: float):
+    with _MARKET_LOCK:
+        hit = _MARKET_CACHE.get(key)
+    if hit and (time.time() - hit[0]) < ttl:
+        return hit[1]
+    return None
+
+
+def _cache_put(key, value) -> None:
+    with _MARKET_LOCK:
+        _MARKET_CACHE[key] = (time.time(), value)
 from .base import (
     ExchangeAdapter,
     ExecutionResult,
@@ -43,6 +64,10 @@ class BybitExchange(ExchangeAdapter):
         self._rules_cache: dict[str, InstrumentRules] = {}
 
     def get_klines(self, symbol: str, interval: str, limit: int = 200) -> pd.DataFrame:
+        key = ("kline", self._category, symbol, interval, limit)
+        cached = _cache_get(key, settings.market_cache_seconds)
+        if cached is not None:
+            return cached.copy()
         resp = self._client.get_kline(
             category=self._category, symbol=symbol, interval=interval, limit=limit
         )
@@ -55,7 +80,9 @@ class BybitExchange(ExchangeAdapter):
         df["start"] = pd.to_datetime(df["start"].astype("int64"), unit="ms", utc=True)
         for col in ["open", "high", "low", "close", "volume"]:
             df[col] = df[col].astype(float)
-        return df.set_index("start")[["open", "high", "low", "close", "volume"]]
+        out = df.set_index("start")[["open", "high", "low", "close", "volume"]]
+        _cache_put(key, out)
+        return out.copy()
 
     def get_equity(self) -> float:
         resp = self._client.get_wallet_balance(accountType="UNIFIED")
@@ -196,9 +223,15 @@ class BybitExchange(ExchangeAdapter):
         return rules
 
     def max_leverage(self, symbol: str) -> float:
+        key = ("maxlev", self._category, symbol)
+        cached = _cache_get(key, 3600)  # instrument specs rarely change
+        if cached is not None:
+            return cached
         resp = self._client.get_instruments_info(category=self._category, symbol=symbol)
         item = resp["result"]["list"][0]
-        return float(item.get("leverageFilter", {}).get("maxLeverage") or 0.0)
+        val = float(item.get("leverageFilter", {}).get("maxLeverage") or 0.0)
+        _cache_put(key, val)
+        return val
 
     def set_leverage(self, symbol: str, leverage: float) -> None:
         lev = str(int(leverage))

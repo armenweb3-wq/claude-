@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-17T05:45:30.939Z",
+  "updatedAt": "2026-06-17T05:50:30.983Z",
   "matches": [
     {
       "home": "Iran",
@@ -37,7 +37,7 @@
       "home": "Austria",
       "away": "Jordan",
       "status": "IN_PLAY",
-      "homeScore": 2,
+      "homeScore": 3,
       "awayScore": 1,
       "utcDate": "2026-06-17T04:00:00Z"
     },

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-17T18:10:39.501Z",
+  "updatedAt": "2026-06-17T18:15:37.530Z",
   "matches": [
     {
       "home": "USA",
@@ -140,7 +140,7 @@
     {
       "home": "Portugal",
       "away": "Congo DR",
-      "status": "PAUSED",
+      "status": "IN_PLAY",
       "homeScore": 1,
       "awayScore": 1,
       "utcDate": "2026-06-17T17:00:00Z"

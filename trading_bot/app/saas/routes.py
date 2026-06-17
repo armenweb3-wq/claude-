@@ -337,11 +337,11 @@ class CloseIn(BaseModel):
 
 class OpenIn(BaseModel):
     symbol: str
-    side: str            # 'long' | 'short'
-    notional: float      # USDT to deploy at entry
+    side: str             # 'long' | 'short'
+    notional: float       # USDT to deploy at entry
     leverage: float = 3.0
-    stop_price: float    # required protective stop
-    take_profits: list[dict] | None = None  # [{price, fraction}]
+    stop_pct: float       # required stop-loss distance, % from entry
+    tp_pcts: list[float] | None = None  # optional take-profit targets, % gain
 
 
 def _user_exchange(request: Request):
@@ -376,6 +376,8 @@ def manual_open(body: OpenIn, request: Request) -> dict:
         raise HTTPException(400, "side must be long or short")
     if body.notional <= 0:
         raise HTTPException(400, "enter an amount (USDT) to deploy")
+    if body.stop_pct <= 0:
+        raise HTTPException(400, "enter a stop-loss % (e.g. 3)")
     lev = max(1.0, min(float(body.leverage or 1), float(settings.max_leverage)))
     try:
         price = ex.last_price(symbol)
@@ -383,20 +385,19 @@ def manual_open(body: OpenIn, request: Request) -> dict:
         raise HTTPException(400, f"no price for {symbol}: {exc}")
     if price <= 0:
         raise HTTPException(400, f"no price for {symbol}")
-    if side == "long" and not (0 < body.stop_price < price):
-        raise HTTPException(400, "stop-loss must be below the current price for a long")
-    if side == "short" and not (body.stop_price > price):
-        raise HTTPException(400, "stop-loss must be above the current price for a short")
+    sign = 1.0 if side == "long" else -1.0
+    # Stop/TP prices derived from the live entry and the user's percentages.
+    stop_price = round(price * (1 - sign * body.stop_pct / 100), 8)
     qty = body.notional / price
     bside = "Buy" if side == "long" else "Sell"
-    tp_list = body.take_profits or []
-    frac = (1.0 / len(tp_list)) if tp_list else 0.0
-    tps = [type("TP", (), {"price": float(t["price"]),
-                           "close_fraction": float(t.get("fraction", frac))})()
-           for t in tp_list if float(t.get("price", 0)) > 0]
+    valid_tps = [t for t in (body.tp_pcts or []) if t and t > 0]
+    frac = (1.0 / len(valid_tps)) if valid_tps else 0.0
+    tps = [type("TP", (), {"price": round(price * (1 + sign * t / 100), 8),
+                           "close_fraction": frac})()
+           for t in valid_tps]
     try:
         res = ex.open_position(symbol=symbol, side=bside, qty=qty, leverage=lev,
-                               stop_loss=body.stop_price, take_profits=tps)
+                               stop_loss=stop_price, take_profits=tps)
     except Exception as exc:
         raise HTTPException(502, f"order failed: {exc}")
     if not getattr(res, "ok", False):

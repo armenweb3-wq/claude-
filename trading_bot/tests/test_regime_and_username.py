@@ -68,7 +68,7 @@ def test_manual_trade_guards(tmp_path):
     # manual open blocked while engine is in test mode
     r = cl.post("/app/api/position/open",
                 json={"symbol": "SOLUSDT", "side": "long", "notional": 10,
-                      "leverage": 3, "stop_price": 100})
+                      "leverage": 3, "stop_pct": 3})
     assert r.status_code == 400 and "test mode" in r.json()["detail"]
     # manual close requires connected keys
     r2 = cl.post("/app/api/position/close", json={"symbol": "SOLUSDT"})

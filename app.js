@@ -13,10 +13,16 @@
   // ---- attempts: committed (shared via data.js) + local (this device only) ----
   const LS_KEY = "wc_local_attempts_v1";
   const DEL_KEY = "wc_deleted_ids_v1";
+  const SET_KEY = "wc_settle_cache_v1";
   const loadLocal = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; } };
   const saveLocal = (a) => localStorage.setItem(LS_KEY, JSON.stringify(a));
   const loadDeleted = () => { try { return JSON.parse(localStorage.getItem(DEL_KEY)) || []; } catch { return []; } };
   const saveDeleted = (a) => localStorage.setItem(DEL_KEY, JSON.stringify(a));
+  // sticky settlement cache: once a bet settles from a finished score, remember it
+  // so it never reverts when that match scrolls out of the live feed window.
+  const loadSettle = () => { try { return JSON.parse(localStorage.getItem(SET_KEY)) || {}; } catch { return {}; } };
+  const saveSettle = (o) => localStorage.setItem(SET_KEY, JSON.stringify(o));
+  const betKey = (b) => `${b.match}|${b.leg}|${b.stake}|${b.odds}`;
   function getAttempts() {
     const shared = (D.attempts || []).map((a) => ({ ...a, source: "shared" }));
     const local = loadLocal().map((a) => ({ ...a, source: "local" }));
@@ -74,8 +80,13 @@
   function effectiveResult(bet, matches) {
     if (bet.result === "won" || bet.result === "lost") return { result: bet.result, ret: bet.returnAmount, auto: false };
     const ev = evaluateBet(bet, matches);
-    if (ev.verdict === "won") return { result: "won", ret: bet.stake * bet.odds, auto: true, ev };
-    if (ev.verdict === "lost") return { result: "lost", ret: 0, auto: true, ev };
+    if (ev.verdict === "won" || ev.verdict === "lost") {
+      const ret = ev.verdict === "won" ? bet.stake * bet.odds : 0;
+      const c = loadSettle(); c[betKey(bet)] = { result: ev.verdict, ret }; saveSettle(c); // remember it
+      return { result: ev.verdict, ret, auto: true, ev };
+    }
+    const cached = loadSettle()[betKey(bet)]; // match left the feed but we already settled it
+    if (cached) return { result: cached.result, ret: cached.ret, auto: true, ev };
     return { result: "pending", ret: 0, auto: false, ev };
   }
 

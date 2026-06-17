@@ -19,7 +19,7 @@ const day = (offset) => {
   d.setUTCDate(d.getUTCDate() + offset);
   return d.toISOString().slice(0, 10);
 };
-const url = `https://api.football-data.org/v4/competitions/WC/matches?dateFrom=${day(-1)}&dateTo=${day(1)}`;
+const url = `https://api.football-data.org/v4/competitions/WC/matches?dateFrom=${day(-4)}&dateTo=${day(2)}`;
 
 async function main() {
   const res = await fetch(url, { headers: { "X-Auth-Token": TOKEN } });

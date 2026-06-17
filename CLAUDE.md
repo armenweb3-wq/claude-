@@ -4,14 +4,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-Two unrelated things share this repo:
+Three unrelated things share this repo:
 
-1. **The Mkhitaryan Developers website** (primary) — a Next.js App Router site:
-   a cinematic, scroll-driven landing page for a Paphos, Cyprus luxury property
-   developer. This is what `npm run dev/build` operates on.
-2. **A live-scores automation** (secondary) — `scripts/fetch-scores.mjs` plus
+1. **Catalyst — the startup ⇄ investor marketplace** (primary) — a Next.js App
+   Router app served at `/`. Accounts (Supabase auth), founder/investor listings,
+   a connection/matchmaking flow, an owner-only admin dashboard, and a `/guide`
+   roadmap. Full setup in `docs/SETUP.md`. This is what most work targets now.
+2. **The Mkhitaryan Developers website** — the original cinematic, scroll-driven
+   landing page for a Paphos, Cyprus luxury property developer. Still here, now
+   served at `/property` (relocated into `app/(property)/`).
+3. **A live-scores automation** — `scripts/fetch-scores.mjs` plus
    `.github/workflows/scores.yml`, a standalone GitHub Action unrelated to the
-   website. It is *not* part of the Next.js build (it's excluded in `tsconfig`).
+   websites. It is *not* part of the Next.js build (it's excluded in `tsconfig`).
+
+`npm run dev/build` operates on both web apps together.
+
+## Marketplace (Catalyst) — architecture
+
+- **Two root layouts.** There is no `app/layout.tsx`. Instead the repo uses
+  Next.js multiple-root-layouts: `app/(marketplace)/layout.tsx` (the marketplace,
+  at `/`) and `app/(property)/layout.tsx` (the property site, at `/property`).
+  Each renders its own `<html>`/`<body>`. Don't reintroduce a single root layout.
+- **Supabase** powers auth + Postgres. Clients live in `lib/supabase/`
+  (`client.ts` browser, `server.ts` server components/actions, `middleware.ts`
+  session refresh + route guards). `lib/supabase/config.ts` exposes
+  `isSupabaseConfigured` — every data path is guarded by it so the site renders
+  (with "connect Supabase" placeholders) before keys exist. Keep that guard.
+- **Schema + RLS** live in `supabase/schema.sql` (run it in the Supabase SQL
+  editor). One listing per user (unique `owner_id`); admin access flows through a
+  `SECURITY DEFINER` `is_admin()` function to avoid policy recursion.
+- **Brand/config** is centralized in `data/site.ts` (name, tagline, sectors,
+  stages) — the intended single edit point.
+- **Roles:** `founder | investor | admin`. `admin` is assigned by SQL, never
+  self-selected; the admin dashboard is `/admin`.
+- Project slash commands live in `.claude/commands/` (`/seed`, `/add-field`,
+  `/make-admin`, `/deploy`).
 
 ## Website — commands
 

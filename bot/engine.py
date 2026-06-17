@@ -27,10 +27,11 @@ TRADING_DAYS = 365  # crypto trades every day; use 252 for stock-only data
 @dataclass
 class BacktestResult:
     equity: pd.Series          # mark-to-market equity per bar
-    weights: pd.Series         # realized invested fraction per bar
+    weights: pd.Series         # realized exposure (×equity) per bar
     trades: int                # number of non-trivial rebalances
     price: pd.Series           # underlying close, for plotting/benchmark
     name: str
+    liquidations: int = 0      # margin-call wipeouts (leverage only)
 
     @property
     def returns(self) -> pd.Series:
@@ -41,41 +42,81 @@ def run_backtest(
     df: pd.DataFrame,
     strategy: Strategy,
     starting_cash: float = 10_000.0,
-    commission: float = 0.0005,   # 5 bps per side
-    slippage: float = 0.0005,     # 5 bps modeled market impact
+    commission: float = 0.0005,        # 5 bps per side
+    slippage: float = 0.0005,          # 5 bps modeled market impact
+    leverage: float = 1.0,             # exposure multiplier (1 = no leverage)
+    borrow_rate: float = 0.06,         # annual interest on the margin loan
+    maintenance_margin: float = 0.25,  # broker liquidates below this equity/exposure
+    periods_per_year: int = TRADING_DAYS,
 ) -> BacktestResult:
+    """Backtest a strategy, optionally with leverage.
+
+    With ``leverage > 1`` the strategy's signal in ``[0, 1]`` is scaled to
+    ``[0, leverage]`` exposure. The shortfall is a margin loan: it accrues
+    ``borrow_rate`` interest daily, and if an intraday move drives
+    equity/exposure below ``maintenance_margin`` the position is **liquidated**
+    at that low (a margin call) — the leveraged-account wipeout that long-only
+    backtests pretend can't happen.
+    """
     strategy.reset()
     opens = df["open"].to_numpy()
+    highs = df["high"].to_numpy()
+    lows = df["low"].to_numpy()
     closes = df["close"].to_numpy()
     n = len(df)
 
-    cash = starting_cash
+    cash = starting_cash               # negative cash = margin loan
     units = 0.0
-    pending_w = 0.0              # target weight to fill at next open
+    pending_w = 0.0                    # target *base* weight to fill at next open
     cost_rate = commission + slippage
+    daily_borrow = borrow_rate / periods_per_year
 
     equity = np.empty(n)
     realized_w = np.empty(n)
     trades = 0
+    liquidations = 0
+    dead = False                       # account blown — stays in cash at 0
 
     for i in range(n):
-        # 1) fill yesterday's decision at today's open
         price = opens[i]
-        equity_now = cash + units * price
-        target_units = (pending_w * equity_now) / price
-        delta = target_units - units
-        if abs(delta) * price > 1e-9:
-            cash -= delta * price + abs(delta) * price * cost_rate
-            units = target_units
-            if i > 0:
-                trades += 1
 
-        # 2) mark to market at today's close
+        # 1) accrue interest on any margin loan (negative cash) overnight
+        if cash < 0:
+            cash += cash * daily_borrow  # cash more negative
+
+        # 2) fill yesterday's decision at today's open (scaled by leverage)
+        if not dead:
+            equity_now = cash + units * price
+            target_units = (pending_w * leverage * equity_now) / price
+            delta = target_units - units
+            if abs(delta) * price > 1e-9:
+                cash -= delta * price + abs(delta) * price * cost_rate
+                units = target_units
+                if i > 0:
+                    trades += 1
+
+        # 3) margin call? check the worst intraday point (the bar's low)
+        if units > 0 and leverage > 1.0:
+            exposure_low = units * lows[i]
+            equity_low = cash + exposure_low
+            if equity_low <= maintenance_margin * exposure_low:
+                # forced liquidation at the low, pay costs, blow the account
+                cash = max(0.0, equity_low - units * lows[i] * cost_rate)
+                units = 0.0
+                liquidations += 1
+                dead = True
+
+        # 4) mark to market at today's close
         mkt = cash + units * closes[i]
+        if mkt <= 0:
+            mkt = 0.0
+            units = 0.0
+            cash = 0.0
+            dead = True
         equity[i] = mkt
         realized_w[i] = (units * closes[i]) / mkt if mkt > 0 else 0.0
 
-        # 3) decide target for next open using data through today's close
+        # 5) decide next target from data through today's close (no lookahead)
         pending_w = float(np.clip(strategy.decide(df.iloc[: i + 1]), 0.0, 1.0))
 
     idx = df.index
@@ -85,6 +126,7 @@ def run_backtest(
         trades=trades,
         price=df["close"],
         name=strategy.name,
+        liquidations=liquidations,
     )
 
 
@@ -116,6 +158,7 @@ def metrics(res: BacktestResult, periods_per_year: int = TRADING_DAYS) -> dict:
         "Volatility": vol,
         "Win Rate": win_rate,
         "Trades": res.trades,
+        "Liquidations": res.liquidations,
         "Final Equity": eq.iloc[-1],
     }
 

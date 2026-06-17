@@ -44,9 +44,19 @@ price it couldn't have known. Add your own by subclassing `Strategy`.
 - No strategy here is a money printer. The framework's job is to let you
   *measure* that, not to promise it.
 
+## Leverage (`leverage.py`)
+
+`run_backtest(..., leverage=2.0)` scales a strategy's exposure and models the
+parts that actually hurt: **borrowing interest** on the margin loan and
+**margin-call liquidation** (checked against each bar's low) that can wipe an
+account to zero. `python leverage.py` compares 1x/2x/3x across 200 random
+markets. The honest finding: because of volatility decay + borrowing cost +
+liquidation, higher leverage trades a slightly better median outcome for a
+**much fatter tail of total ruin** — it amplifies risk faster than return.
+
 ## Limitations / next steps
 
-- Long-only, single asset, no leverage or shorting.
+- Long-only, single asset (leverage supported; no shorting).
 - Network is blocked in this environment, so real history comes via CSV or the
   live feed. Run it where you have data access (or upload a CSV) for longer tests.
 - Next layers worth adding: walk-forward / out-of-sample splits, parameter

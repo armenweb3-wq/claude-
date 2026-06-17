@@ -105,7 +105,15 @@ window.BETTING_DATA = {
           selections: [
             { label: "Over 1.5 total goals", type: "over_goals", line: 1.5 },
           ],
-          stake: 1051.25, odds: 1.40, // single market, kicks off 19:00 UTC
+          stake: 1051.25, odds: 1.40, // Belgium 1-1 Egypt = 2 goals -> WON
+          result: "won", returnAmount: 1471.75,
+        },
+        {
+          leg: 4, date: "2026-06-17", match: "England vs Croatia",
+          selections: [
+            { label: "Over 1.5 total goals", type: "over_goals", line: 1.5 },
+          ],
+          stake: 1471.75, odds: 1.40, // single market, kicks off 20:00 UTC
           result: "pending", returnAmount: 0,
         },
       ],
@@ -143,28 +151,28 @@ window.BETTING_DATA = {
   //  Never two markets on the same game in a normal bet — that's what gets refused.
   picks: {
     today: {
-      date: "2026-06-15",
+      date: "2026-06-17",
       candidates: [
         {
-          match: "Belgium vs Egypt", risk: "medium",
-          market: "SINGLE MARKET → Over 1.5 total goals  (~1.35-1.45)",
-          summary: "19:00 UTC. The AI track is also on this one.",
-          why: "Belgium have the attacking quality to push this past one goal; Egypt also carry a threat through Salah.",
-          whyRisk: "Medium — Egypt are organised and can keep it tight; a 1-0 either way kills an over-1.5.",
+          match: "Portugal vs Congo DR", risk: "low",
+          market: "SINGLE MARKET → Over 1.5 total goals  (~1.30-1.40)",
+          summary: "17:00 UTC. Clearest mismatch on today's card.",
+          why: "Portugal have far more attacking quality; they should create enough to clear 1.5 goals comfortably.",
+          whyRisk: "Low — only a shock ultra-defensive 1-0 threatens it; quality usually tells vs a debutant-level side.",
         },
         {
-          match: "Saudi Arabia vs Uruguay", risk: "medium",
-          market: "SINGLE MARKET → Uruguay Double Chance (win or draw)  (~1.30-1.45)",
-          summary: "22:00 UTC. One market — combines freely.",
-          why: "Uruguay are the clearly stronger side and shouldn't lose to Saudi Arabia.",
-          whyRisk: "Medium — Saudi can be awkward and physical; a draw is fine for DC but a shock loss isn't.",
+          match: "England vs Croatia", risk: "medium",
+          market: "SINGLE MARKET → Over 1.5 total goals  (~1.40)  — the AI track is on this one",
+          summary: "20:00 UTC. Marquee tie — can be tight.",
+          why: "Two good sides with attacking talent; over 1.5 is a fair lean if it opens up.",
+          whyRisk: "Medium — both are well-organised; a cagey 1-0 is very possible in a big game.",
         },
         {
-          match: "France vs Senegal", risk: "medium",
-          market: "SINGLE MARKET → Over 1.5 total goals  (16 Jun)",
-          summary: "Heads-up for tomorrow — two strong attacking sides.",
-          why: "France's firepower vs a quality Senegal side points to goals.",
-          whyRisk: "Medium — Senegal are well-drilled and could make it a cagey, low-scoring battle.",
+          match: "Ghana vs Panama", risk: "medium",
+          market: "SINGLE MARKET → Over 1.5 total goals (or Ghana Double Chance)",
+          summary: "23:00 UTC. Ghana favoured but not a gimme.",
+          why: "Ghana carry the greater attacking threat; a single goals or DC market keeps it simple.",
+          whyRisk: "Medium — Panama are physical and can frustrate; tournament openers often run cautious.",
         },
       ],
     },

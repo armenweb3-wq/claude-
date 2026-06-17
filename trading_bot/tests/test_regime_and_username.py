@@ -59,6 +59,22 @@ def test_username_defaults_from_email(tmp_path):
     assert cl.get("/app/api/me").json()["username"] == "alice"
 
 
+def test_manual_trade_guards(tmp_path):
+    cl = _saas_client(tmp_path)
+    object.__setattr__(settings, "saas_dry_run", True)
+    # admin (auto-active) but no keys connected
+    cl.post("/app/api/register",
+            json={"email": "admin@z.com", "password": "pw123456", "username": "boss"})
+    # manual open blocked while engine is in test mode
+    r = cl.post("/app/api/position/open",
+                json={"symbol": "SOLUSDT", "side": "long", "notional": 10,
+                      "leverage": 3, "stop_price": 100})
+    assert r.status_code == 400 and "test mode" in r.json()["detail"]
+    # manual close requires connected keys
+    r2 = cl.post("/app/api/position/close", json={"symbol": "SOLUSDT"})
+    assert r2.status_code == 400 and "keys" in r2.json()["detail"]
+
+
 def test_profile_password_and_referral(tmp_path):
     cl = _saas_client(tmp_path)
     # referrer

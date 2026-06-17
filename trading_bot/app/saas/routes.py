@@ -330,6 +330,80 @@ def change_password(body: PasswordIn, request: Request) -> dict:
     return {"ok": True}
 
 
+# ── manual trading (acts on the user's own account) ─────────
+class CloseIn(BaseModel):
+    symbol: str
+
+
+class OpenIn(BaseModel):
+    symbol: str
+    side: str            # 'long' | 'short'
+    notional: float      # USDT to deploy at entry
+    leverage: float = 3.0
+    stop_price: float    # required protective stop
+    take_profits: list[dict] | None = None  # [{price, fraction}]
+
+
+def _user_exchange(request: Request):
+    user = current_user(request)
+    keys = store().get_keys(user["id"])
+    if not keys:
+        raise HTTPException(400, "connect your exchange keys first")
+    if not _is_active(user):
+        raise HTTPException(403, "your account isn't active yet")
+    from . import live as live_mod
+    return user, live_mod._exchange(keys)
+
+
+@router.post("/api/position/close")
+def manual_close(body: CloseIn, request: Request) -> dict:
+    _, ex = _user_exchange(request)
+    try:
+        order = ex.close_position(body.symbol.strip().upper())
+    except Exception as exc:
+        raise HTTPException(502, f"close failed: {exc}")
+    return {"ok": True, "closed": bool(order)}
+
+
+@router.post("/api/position/open")
+def manual_open(body: OpenIn, request: Request) -> dict:
+    if settings.saas_dry_run:
+        raise HTTPException(400, "manual trading is off while the engine is in test mode")
+    _, ex = _user_exchange(request)
+    symbol = body.symbol.strip().upper()
+    side = body.side.lower()
+    if side not in ("long", "short"):
+        raise HTTPException(400, "side must be long or short")
+    if body.notional <= 0:
+        raise HTTPException(400, "enter an amount (USDT) to deploy")
+    lev = max(1.0, min(float(body.leverage or 1), float(settings.max_leverage)))
+    try:
+        price = ex.last_price(symbol)
+    except Exception as exc:
+        raise HTTPException(400, f"no price for {symbol}: {exc}")
+    if price <= 0:
+        raise HTTPException(400, f"no price for {symbol}")
+    if side == "long" and not (0 < body.stop_price < price):
+        raise HTTPException(400, "stop-loss must be below the current price for a long")
+    if side == "short" and not (body.stop_price > price):
+        raise HTTPException(400, "stop-loss must be above the current price for a short")
+    qty = body.notional / price
+    bside = "Buy" if side == "long" else "Sell"
+    tp_list = body.take_profits or []
+    frac = (1.0 / len(tp_list)) if tp_list else 0.0
+    tps = [type("TP", (), {"price": float(t["price"]),
+                           "close_fraction": float(t.get("fraction", frac))})()
+           for t in tp_list if float(t.get("price", 0)) > 0]
+    try:
+        res = ex.open_position(symbol=symbol, side=bside, qty=qty, leverage=lev,
+                               stop_loss=body.stop_price, take_profits=tps)
+    except Exception as exc:
+        raise HTTPException(502, f"order failed: {exc}")
+    if not getattr(res, "ok", False):
+        raise HTTPException(400, getattr(res, "skipped_reason", "order rejected by exchange"))
+    return {"ok": True, "qty": getattr(res, "qty", 0), "leverage": lev}
+
+
 @router.get("/api/me")
 def me(request: Request) -> dict:
     user = current_user(request)

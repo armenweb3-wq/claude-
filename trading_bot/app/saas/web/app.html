@@ -254,6 +254,7 @@
     <div class="card hide" id="positionsCard">
       <h2>Open trades <span class="disc" id="pos_count" style="margin:0"></span></h2>
       <div id="pos_list"></div>
+      <button class="ghost" id="tradeBtn" onclick="openPanel('tradePanel')">＋ New trade</button>
       <button class="ghost" onclick="openHistory()">Trade history · wins &amp; losses</button>
     </div>
 
@@ -334,6 +335,23 @@
       <div class="stat"><div class="l">Rewards</div><div class="v sm">soon</div></div>
     </div>
     <div class="msg" id="refMsg"></div>
+  </div>
+</div>
+
+<!-- NEW TRADE panel -->
+<div class="modal" id="tradePanel">
+  <div class="modalbox">
+    <div class="panelhead"><h2 style="margin:0">New trade</h2><span class="link" onclick="closePanel('tradePanel')">Close</span></div>
+    <p class="lead">Open a position manually. A stop-loss is required so the trade is always protected.</p>
+    <label>Symbol</label><input id="t_symbol" autocomplete="off" placeholder="e.g. SOLUSDT"/>
+    <label>Direction</label>
+    <select id="t_side"><option value="long">Long (buy)</option><option value="short">Short (sell)</option></select>
+    <label>Amount to deploy (USDT)</label><input id="t_notional" type="number" step="1" min="1"/>
+    <label>Leverage (x)</label><input id="t_lev" type="number" step="1" min="1" value="3"/>
+    <label>Stop-loss price (required)</label><input id="t_stop" type="number" step="any"/>
+    <label>Take-profit prices (optional, comma-separated)</label><input id="t_tps" autocomplete="off" placeholder="e.g. 1.25, 1.40"/>
+    <button class="green" onclick="openTrade()">Open position</button>
+    <div class="msg" id="tradeMsg"></div>
   </div>
 </div>
 
@@ -587,6 +605,7 @@ async function loadDashboard(){
   $('actPill').className='pill '+(s.active?'on':'off');
   show('testBanner', !!s.dry_run);
   lastDry=!!s.dry_run;
+  if($('tradeBtn')) show('tradeBtn', !s.dry_run);  // manual open only when live
   botEnabled=!!s.enabled; updateToggleBtn();
   $('d_equity').textContent=money(s.equity);
   const pnl=s.open_pnl||0, pe=$('d_pnl');
@@ -628,7 +647,9 @@ function renderPositions(pos){
       +'<span>uPnL <b class="'+c+'">'+signMoney(up)+' ('+(pct>=0?'+':'')+pct+'%)</b></span></div>'
       +'<div class="g2" style="margin-top:5px"><span>SL <b class="'+(p.breakeven?'pos':'neg')+'">'+money(p.stop_loss)+'</b></span>'
       +'<span style="text-align:right;color:var(--green)">'+tps+'</span></div>'
-      +'<div style="text-align:right;margin-top:9px"><span class="link" onclick="openShare(\''+p.symbol+'\')">Share / download ↗</span></div></div>';
+      +'<div style="display:flex;justify-content:flex-end;gap:16px;margin-top:9px">'
+      +'<span class="link" onclick="openShare(\''+p.symbol+'\')">Share ↗</span>'
+      +'<span class="link" style="color:var(--red)" onclick="closePosition(\''+p.symbol+'\')">Close trade</span></div></div>';
   }).join('');
 }
 const TOPN=5; let sigExpanded=false, lastSig={syms:[],sig:{}};
@@ -692,6 +713,28 @@ async function openHistory(){
   }catch(e){ $('histList').innerHTML='<div class="trow"><div class="disc" style="margin:0">Could not load history.</div></div>'; }
 }
 function closeHistory(){ $('historyModal').classList.remove('show'); }
+
+// ── manual trading ──────────────────────────────────────────
+async function closePosition(sym){
+  if(!confirm('Close '+sym+' now at market?')) return;
+  try{ await api('/position/close','POST',{symbol:sym}); loadDashboard(); }
+  catch(e){ alert(e.message); }
+}
+async function openTrade(){
+  const m=$('tradeMsg'); m.className='msg'; m.textContent='…';
+  const tps=($('t_tps').value||'').split(',').map(s=>parseFloat(s.trim())).filter(v=>v>0);
+  const frac=tps.length?1/tps.length:0;
+  const payload={symbol:($('t_symbol').value||'').trim().toUpperCase(), side:$('t_side').value,
+    notional:parseFloat($('t_notional').value), leverage:parseFloat($('t_lev').value)||3,
+    stop_price:parseFloat($('t_stop').value), take_profits:tps.map(p=>({price:p,fraction:frac}))};
+  if(!payload.symbol){ m.className='msg err'; m.textContent='Enter a symbol.'; return; }
+  if(!(payload.notional>0)){ m.className='msg err'; m.textContent='Enter an amount in USDT.'; return; }
+  if(!(payload.stop_price>0)){ m.className='msg err'; m.textContent='Enter a stop-loss price.'; return; }
+  try{ const r=await api('/position/open','POST',payload);
+    m.className='msg ok'; m.textContent='Opened '+r.qty+' '+payload.symbol+' ✓';
+    setTimeout(()=>{ closePanel('tradePanel'); loadDashboard(); }, 900);
+  }catch(e){ m.className='msg err'; m.textContent=e.message; }
+}
 
 // ── shareable P&L card (minimal, matches app theme) ─────────
 function openShare(sym){

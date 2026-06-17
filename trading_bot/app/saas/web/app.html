@@ -41,6 +41,17 @@
   button:hover{opacity:.9}
   .green{background:var(--green);color:#06140d;border-color:var(--green)}
   .danger{background:var(--red);color:#fff;border-color:var(--red)}
+  /* on/off switch */
+  .switchrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;
+    background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+  .swlabel{font-size:.88rem;font-weight:600}
+  .swstate{font-size:.72rem;color:var(--muted);margin-top:2px}
+  .switch{width:56px;height:31px;border-radius:999px;background:#000;border:1px solid var(--line);
+    position:relative;padding:0;margin:0;flex:none;cursor:pointer;transition:background .2s,border-color .2s}
+  .switch .knob{position:absolute;top:50%;left:3px;transform:translateY(-50%);width:25px;height:25px;
+    border-radius:50%;background:#e8e8ea;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.5)}
+  .switch.on{background:var(--green);border-color:var(--green)}
+  .switch.on .knob{left:28px;background:#06140d}
   .ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500}
   .link{color:var(--text);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:.8rem}
   .msg{font-size:.78rem;margin-top:12px;min-height:1em}
@@ -197,7 +208,10 @@
         <div class="stat"><div class="l">Open positions</div><div class="v" id="d_openpos">—</div></div>
       </div>
       <div class="banner flat hide" id="d_market"></div>
-      <button id="botToggle" class="green" onclick="toggleBot()">Start trading</button>
+      <div class="switchrow">
+        <div><div class="swlabel">Automated trading</div><div class="swstate" id="swState">Off</div></div>
+        <button class="switch" id="botToggle" onclick="toggleBot()" aria-pressed="false"><span class="knob"></span></button>
+      </div>
       <div class="msg" id="toggleMsg"></div>
       <div class="msg err" id="d_err"></div>
     </div>
@@ -336,12 +350,13 @@ let dashTimer=null, botEnabled=false;
 const LIVE_CARDS=['statsCard','cycleCard','positionsCard','signalsCard','chartCard','dashCard'];
 function updateToggleBtn(){
   const b=$('botToggle'); if(!b) return;
-  if(botEnabled){ b.textContent='Stop trading'; b.className='danger'; }
-  else{ b.textContent='Start trading'; b.className='green'; }
+  b.classList.toggle('on',botEnabled);
+  b.setAttribute('aria-pressed',botEnabled?'true':'false');
+  const st=$('swState'); if(st) st.textContent=botEnabled?'On — bot is trading':'Off';
 }
 async function toggleBot(){
-  const desired=!botEnabled, b=$('botToggle'), m=$('toggleMsg');
-  m.className='msg'; m.textContent=''; b.textContent='…';
+  const desired=!botEnabled, m=$('toggleMsg');
+  m.className='msg'; m.textContent='…';
   try{
     await api('/settings','POST',{risk_pct:parseFloat($('riskPct').value)||2,
       symbols:$('symbols').value, enabled:desired});

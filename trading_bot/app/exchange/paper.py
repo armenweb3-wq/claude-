@@ -134,6 +134,9 @@ class PaperExchange(ExchangeAdapter):
         # Generous defaults for simulation; the live adapter reads the real ones.
         return InstrumentRules(min_qty=0.0, qty_step=0.0, min_notional=0.0)
 
+    def max_leverage(self, symbol: str) -> float:
+        return 100.0
+
     def set_leverage(self, symbol: str, leverage: float) -> None:
         log.info("[PAPER] set leverage %s = %sx", symbol, leverage)
 

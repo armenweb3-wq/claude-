@@ -355,6 +355,17 @@ def _user_exchange(request: Request):
     return user, live_mod._exchange(keys)
 
 
+@router.get("/api/instrument")
+def instrument(symbol: str, request: Request) -> dict:
+    """Live max leverage + price for a symbol, for the manual trade form."""
+    _, ex = _user_exchange(request)
+    sym = symbol.strip().upper()
+    try:
+        return {"symbol": sym, "max_leverage": ex.max_leverage(sym), "last_price": ex.last_price(sym)}
+    except Exception as exc:
+        raise HTTPException(502, f"lookup failed: {exc}")
+
+
 @router.post("/api/position/close")
 def manual_close(body: CloseIn, request: Request) -> dict:
     _, ex = _user_exchange(request)
@@ -378,7 +389,14 @@ def manual_open(body: OpenIn, request: Request) -> dict:
         raise HTTPException(400, "enter an amount (USDT) to deploy")
     if body.stop_pct <= 0:
         raise HTTPException(400, "enter a stop-loss % (e.g. 3)")
-    lev = max(1.0, min(float(body.leverage or 1), float(settings.max_leverage)))
+    # Manual trades may use up to the exchange's real max leverage for the symbol
+    # (the user has explicitly accepted the risk); fall back to the bot cap.
+    try:
+        sym_max = ex.max_leverage(symbol)
+    except Exception:
+        sym_max = 0.0
+    cap = sym_max if sym_max > 0 else float(settings.max_leverage)
+    lev = max(1.0, min(float(body.leverage or 1), cap))
     try:
         price = ex.last_price(symbol)
     except Exception as exc:

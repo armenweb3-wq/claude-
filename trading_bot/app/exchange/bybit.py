@@ -195,6 +195,11 @@ class BybitExchange(ExchangeAdapter):
         self._rules_cache[symbol] = rules
         return rules
 
+    def max_leverage(self, symbol: str) -> float:
+        resp = self._client.get_instruments_info(category=self._category, symbol=symbol)
+        item = resp["result"]["list"][0]
+        return float(item.get("leverageFilter", {}).get("maxLeverage") or 0.0)
+
     def set_leverage(self, symbol: str, leverage: float) -> None:
         lev = str(int(leverage))
         try:

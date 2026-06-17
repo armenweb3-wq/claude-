@@ -92,6 +92,10 @@ class ExchangeAdapter(ABC):
     def instrument_rules(self, symbol: str) -> InstrumentRules:
         """Min order qty, lot step, and min notional for a symbol."""
 
+    def max_leverage(self, symbol: str) -> float:
+        """Exchange-allowed max leverage for a symbol (0 = unknown)."""
+        return 0.0
+
     @abstractmethod
     def set_leverage(self, symbol: str, leverage: float) -> None:
         ...

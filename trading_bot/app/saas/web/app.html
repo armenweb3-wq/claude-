@@ -347,7 +347,7 @@
     <div class="panelhead"><h2 style="margin:0">New trade</h2><span class="link" onclick="closePanel('tradePanel')">Close</span></div>
     <p class="lead">Open a position manually. A stop-loss is required so the trade is always protected.</p>
     <label>Symbol</label>
-    <select id="t_symbol"></select>
+    <select id="t_symbol" onchange="loadInstrument()"></select>
     <label>Direction</label>
     <select id="t_side"><option value="long">Long (buy)</option><option value="short">Short (sell)</option></select>
     <label>Amount to deploy (USDT)</label><input id="t_notional" type="number" step="1" min="1"/>
@@ -357,8 +357,9 @@
       <button class="chip" onclick="$('t_lev').value=3">3x</button>
       <button class="chip" onclick="$('t_lev').value=5">5x</button>
       <button class="chip" onclick="$('t_lev').value=10">10x</button>
-      <button class="chip" onclick="$('t_lev').value=(ME&&ME.max_leverage)||10">Max</button>
+      <button class="chip" onclick="$('t_lev').value=(tradeMaxLev||(ME&&ME.max_leverage)||10)">Max</button>
     </div>
+    <div class="disc" id="t_levmax" style="margin-top:4px"></div>
     <label>Stop-loss (% from entry)</label><input id="t_stoppct" type="number" step="0.5" min="0.5" value="3"/>
     <div class="chips">
       <button class="chip" onclick="$('t_stoppct').value=2">2%</button>
@@ -511,11 +512,22 @@ function openPanel(id){
   if(id==='tradePanel') fillTradeForm();
   $(id).classList.add('show');
 }
+let tradeMaxLev=null, tradePrice=null;
 function fillTradeForm(){
   const syms=(((ME&&ME.settings&&ME.settings.symbols)||'').split(',').map(s=>s.trim()).filter(Boolean));
   $('t_symbol').innerHTML=syms.map(s=>'<option value="'+s+'">'+s+'</option>').join('')
     || '<option value="">(no assets configured)</option>';
   $('t_risk').checked=false; $('tradeMsg').textContent='';
+  $('t_levmax').textContent=''; tradeMaxLev=null; tradePrice=null;
+  loadInstrument();
+}
+async function loadInstrument(){
+  const sym=$('t_symbol').value; if(!sym) return;
+  $('t_levmax').textContent='checking…';
+  try{ const d=await api('/instrument?symbol='+encodeURIComponent(sym));
+    tradeMaxLev=d.max_leverage||null; tradePrice=d.last_price||null;
+    $('t_levmax').textContent=(tradeMaxLev?('max '+tradeMaxLev+'x for '+sym):'')+(tradePrice?(' · price '+money(tradePrice)):'');
+  }catch(e){ $('t_levmax').textContent=''; }
 }
 function closePanel(id){ $(id).classList.remove('show'); }
 function fillAvatar(id){

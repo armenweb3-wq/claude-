@@ -694,14 +694,17 @@ function renderPositions(pos){
   $('pos_list').innerHTML=pos.map(p=>{
     const side=(p.side||'').toLowerCase(), cls=(side==='buy'||side==='long')?'long':'short';
     const label=cls==='long'?'LONG':'SHORT', up=p.unrealised_pnl||0, pct=p.pnl_pct||0, c=up>0?'pos':up<0?'neg':'';
+    const isLong=cls==='long';
+    const mark=p.size?(isLong?p.entry_price+up/p.size:p.entry_price-up/p.size):p.entry_price;
     const be=p.breakeven?' <span class="spill long">BE</span>':'';
     const tps=(p.take_profits||[]).map((t,i)=>'TP'+(i+1)+' '+money(t)).join(' · ');
     return '<div class="trow"><div class="top"><span class="sym">'+p.symbol+be+'</span>'
       +'<span class="spill '+cls+'">'+label+(p.leverage?' '+(+p.leverage)+'x':'')+'</span></div>'
-      +'<div class="g2"><span>entry <b>'+money(p.entry_price)+'</b></span><span>size <b>'+p.size+'</b></span>'
+      +'<div class="g2"><span>entry <b>'+money(p.entry_price)+'</b></span><span>now <b>'+money(mark)+'</b></span>'
       +'<span>uPnL <b class="'+c+'">'+signMoney(up)+' ('+(pct>=0?'+':'')+pct+'%)</b></span></div>'
-      +'<div class="g2" style="margin-top:5px"><span>SL <b class="'+(p.breakeven?'pos':'neg')+'">'+money(p.stop_loss)+'</b></span>'
-      +'<span style="text-align:right;color:var(--green)">'+tps+'</span></div>'
+      +'<div class="g2" style="margin-top:5px"><span>size <b>'+p.size+'</b></span>'
+      +'<span>SL <b class="'+(p.breakeven?'pos':'neg')+'">'+money(p.stop_loss)+'</b></span></div>'
+      +(tps?'<div class="g2" style="margin-top:5px"><span></span><span style="color:var(--green)">'+tps+'</span></div>':'')
       +'<div style="display:flex;justify-content:flex-end;gap:16px;margin-top:9px">'
       +'<span class="link" onclick="openShare(\''+p.symbol+'\')">Share ↗</span>'
       +'<span class="link" style="color:var(--red)" onclick="closePosition(\''+p.symbol+'\')">Close trade</span></div></div>';

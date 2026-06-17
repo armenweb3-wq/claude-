@@ -384,7 +384,7 @@ async function loadAdmin(){
 async function adminAct(id){ await api('/admin/activate','POST',{user_id:id,days:30}); loadAdmin(); }
 async function adminDe(id){ await api('/admin/deactivate','POST',{user_id:id}); loadAdmin(); }
 
-let dashTimer=null, botEnabled=false, lastPositions=[], lastDry=false, lastShare=null;
+let dashTimer=null, botEnabled=false, lastPositions=[], lastDry=false, lastShare=null, lastHistoryTrades=[];
 const LIVE_CARDS=['statsCard','cycleCard','positionsCard','signalsCard','chartCard','dashCard'];
 function updateToggleBtn(){
   const b=$('botToggle'); if(!b) return;
@@ -543,15 +543,16 @@ async function openHistory(){
       +'<div class="stat"><div class="l">Losses</div><div class="v neg">'+(st.losses||0)+'</div></div>'
       +'<div class="stat"><div class="l">Win rate</div><div class="v">'+(st.win_rate||0)+'%</div></div>'
       +'<div class="stat"><div class="l">Realised P&L</div><div class="v '+((st.realized_pnl||0)>=0?'pos':'neg')+'">'+signMoney(st.realized_pnl)+'</div></div></div>';
-    const tr=s.trades||[];
+    const tr=s.trades||[]; lastHistoryTrades=tr;
     if(!tr.length){ $('histList').innerHTML='<div class="trow"><div class="disc" style="margin:0">No closed trades yet.</div></div>'; return; }
-    $('histList').innerHTML=tr.map(t=>{
+    $('histList').innerHTML=tr.map((t,i)=>{
       const win=(t.pnl||0)>0, side=(t.side||'').toLowerCase();
       const cls=(side==='buy'||side==='long')?'long':'short', label=cls==='long'?'LONG':'SHORT';
       const c=win?'pos':((t.pnl||0)<0?'neg':'');
       return '<div class="trow"><div class="top"><span class="sym">'+t.symbol+' <span class="spill '+cls+'">'+label+'</span></span>'
         +'<span class="'+c+'" style="font-weight:700">'+signMoney(t.pnl)+' ('+(t.pnl_pct>=0?'+':'')+t.pnl_pct+'%)</span></div>'
-        +'<div class="g2"><span>entry <b>'+money(t.entry_price)+'</b></span><span>exit <b>'+money(t.exit_price)+'</b></span><span>'+fmtDate(t.closed_at)+'</span></div></div>';
+        +'<div class="g2"><span>entry <b>'+money(t.entry_price)+'</b></span><span>exit <b>'+money(t.exit_price)+'</b></span><span>'+fmtDate(t.closed_at)+'</span></div>'
+        +'<div style="text-align:right;margin-top:8px"><span class="link" onclick="shareClosed('+i+')">Share / download ↗</span></div></div>';
     }).join('');
   }catch(e){ $('histList').innerHTML='<div class="trow"><div class="disc" style="margin:0">Could not load history.</div></div>'; }
 }
@@ -568,8 +569,28 @@ function openShare(sym){
   drawCard(lastShare);
   $('shareModal').classList.add('show');
 }
+function shareClosed(i){
+  const t=lastHistoryTrades[i]; if(!t) return;
+  const isLong=/buy|long/.test((t.side||'').toLowerCase());
+  lastShare={name:(ME&&ME.username)||'trader', sym:t.symbol, isLong, lev:0,
+            pnl:t.pnl||0, pct:t.pnl_pct||0, entry:t.entry_price||0, last:t.exit_price||0, live:!lastDry};
+  drawCard(lastShare);
+  closeHistory(); $('shareModal').classList.add('show');
+}
 function closeShare(){ $('shareModal').classList.remove('show'); }
 function fmtP(v){ return Number(v).toLocaleString(undefined,{maximumFractionDigits:4}); }
+function drawSatoshi(x,cx,cy,s){
+  // Faceless bust silhouette — homage to the Satoshi Nakamoto statue.
+  x.save(); x.translate(cx,cy); x.scale(s,s); x.fillStyle='#ffffff';
+  x.beginPath();
+  x.moveTo(-1.0,1.0);
+  x.bezierCurveTo(-1.0,0.18,-0.58,0.0,-0.34,-0.16);
+  x.lineTo(-0.20,-0.30); x.lineTo(0.20,-0.30); x.lineTo(0.34,-0.16);
+  x.bezierCurveTo(0.58,0.0,1.0,0.18,1.0,1.0);
+  x.closePath(); x.fill();
+  x.beginPath(); x.ellipse(0,-0.66,0.36,0.42,0,0,7); x.fill();
+  x.restore();
+}
 function drawCard(d){
   const c=$('shareCanvas'), x=c.getContext('2d'), W=c.width, H=c.height;
   const bg='#0d0e10', text='#eceef2', muted='#8b8f98', line='rgba(255,255,255,0.10)';
@@ -578,6 +599,11 @@ function drawCard(d){
   const MONO='ui-monospace,Menlo,Consolas,monospace';
   const ls=(v)=>{ if('letterSpacing' in x) x.letterSpacing=v; };
   x.fillStyle=bg; x.fillRect(0,0,W,H);
+  // faint Satoshi Nakamoto silhouette watermark
+  x.save(); x.globalAlpha=0.05; drawSatoshi(x, W*0.74, H*0.40, 360); x.restore();
+  x.save(); x.globalAlpha=0.18; x.fillStyle=muted; x.font='400 22px '+MONO;
+  x.textAlign='center'; ls('6px'); x.fillText('SATOSHI NAKAMOTO', W*0.74, H*0.40+250); ls('0px');
+  x.textAlign='left'; x.restore();
   x.strokeStyle=line; x.lineWidth=2; x.strokeRect(20,20,W-40,H-40);
   x.textBaseline='alphabetic'; const M=72;
   // header: wordmark + live badge

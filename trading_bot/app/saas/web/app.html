@@ -196,7 +196,11 @@
       <label>Wallet address</label>
       <div class="copy"><span id="payWallet"></span><span class="link" onclick="copyWallet()">copy</span></div>
       <label>Your transaction ID (TxID)</label><input id="txHash"/>
-      <button class="green" onclick="submitPayment()">I've paid — submit for activation</button>
+      <div id="payCodeWrap" class="hide">
+        <label>Or access code (activates free, skip payment)</label>
+        <input id="payCode" autocomplete="off" placeholder="enter your invite code"/>
+      </div>
+      <button class="green" onclick="submitPayment()">Submit</button>
       <div class="msg" id="payMsg"></div>
       <div id="payStatus" class="disc"></div>
     </div>
@@ -357,9 +361,20 @@ async function redeemCode(){
 }
 function copyWallet(){ navigator.clipboard&&navigator.clipboard.writeText(ME.pay.wallet); }
 async function submitPayment(){
-  const m=$('payMsg'); m.className='msg'; m.textContent='…';
-  try{ await api('/payment','POST',{tx_hash:$('txHash').value});
-    m.className='msg ok'; m.textContent='Submitted — pending manual activation.'; await boot();
+  const m=$('payMsg'); m.className='msg';
+  const code=(($('payCode')&&$('payCode').value)||'').trim();
+  const tx=(($('txHash')&&$('txHash').value)||'').trim();
+  if(code){  // access code activates instantly for free
+    m.textContent='…';
+    try{ await api('/redeem','POST',{code});
+      m.className='msg ok'; m.textContent='Activated ✓'; await boot();
+    }catch(e){ m.className='msg err'; m.textContent=e.message; }
+    return;
+  }
+  if(tx.length<6){ m.className='msg err'; m.textContent='Enter your transaction ID, or your access code.'; return; }
+  m.textContent='…';
+  try{ await api('/payment','POST',{tx_hash:tx});
+    m.className='msg ok'; m.textContent='Submitted — pending activation.'; await boot();
   }catch(e){ m.className='msg err'; m.textContent=e.message; }
 }
 async function saveSettings(){
@@ -410,13 +425,12 @@ function render(){
   $('s1').className='s '+(hasKeys?'done':'active');
   $('s2').className='s '+(active?'done':hasKeys?'active':'');
   $('s3').className='s '+(active?'active':'');
-  const needPay=ME.payment_required!==false;
-  const codeMode=ME.access_code_enabled===true;
   const pend=hasKeys&&!active;
   show('keysCard',!hasKeys);
-  show('codeCard',pend&&codeMode);
-  show('payCard',pend&&!codeMode&&needPay);
-  show('pendingCard',pend&&!codeMode&&!needPay);
+  show('payCard',pend);                                   // always show payment
+  show('payCodeWrap',pend && ME.access_code_enabled===true);  // code field on it
+  show('codeCard',false);
+  show('pendingCard',false);
   LIVE_CARDS.forEach(id=>show(id,active));
   $('payPrice').textContent=ME.pay.price;
   $('payCoin').textContent=ME.pay.coin_network;

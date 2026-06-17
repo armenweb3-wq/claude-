@@ -40,6 +40,7 @@
     width:100%;margin-top:16px;cursor:pointer;transition:opacity .15s}
   button:hover{opacity:.9}
   .green{background:var(--green);color:#06140d;border-color:var(--green)}
+  .danger{background:var(--red);color:#fff;border-color:var(--red)}
   .ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500}
   .link{color:var(--text);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:.8rem}
   .msg{font-size:.78rem;margin-top:12px;min-height:1em}
@@ -196,6 +197,8 @@
         <div class="stat"><div class="l">Open positions</div><div class="v" id="d_openpos">—</div></div>
       </div>
       <div class="banner flat hide" id="d_market"></div>
+      <button id="botToggle" class="green" onclick="toggleBot()">Start trading</button>
+      <div class="msg" id="toggleMsg"></div>
       <div class="msg err" id="d_err"></div>
     </div>
 
@@ -229,9 +232,8 @@
       <h2>Settings</h2>
       <label>Risk per trade (%)</label><input id="riskPct" type="number" step="0.5" min="0.5" max="10"/>
       <label>Symbols (comma-separated)</label><input id="symbols"/>
-      <label style="display:flex;align-items:center;gap:8px;margin-top:14px;text-transform:none;letter-spacing:0;font-size:.8rem;color:var(--text)">
-        <input id="enabled" type="checkbox" style="width:auto"/> Bot enabled (trade automatically)</label>
-      <button onclick="saveSettings()">Save settings</button>
+      <p class="disc" style="margin-top:12px">Use the <b>Start / Stop trading</b> button above to turn the bot on or off. These settings apply whenever it's running.</p>
+      <button class="ghost" onclick="saveSettings()">Save settings</button>
       <div class="msg" id="dashMsg"></div>
     </div>
 
@@ -311,7 +313,7 @@ async function submitPayment(){
 async function saveSettings(){
   const m=$('dashMsg'); m.className='msg'; m.textContent='…';
   try{ await api('/settings','POST',{risk_pct:parseFloat($('riskPct').value),
-        symbols:$('symbols').value, enabled:$('enabled').checked});
+        symbols:$('symbols').value, enabled:botEnabled});
     m.className='msg ok'; m.textContent='Saved ✓';
   }catch(e){ m.className='msg err'; m.textContent=e.message; }
 }
@@ -330,8 +332,24 @@ async function loadAdmin(){
 async function adminAct(id){ await api('/admin/activate','POST',{user_id:id,days:30}); loadAdmin(); }
 async function adminDe(id){ await api('/admin/deactivate','POST',{user_id:id}); loadAdmin(); }
 
-let dashTimer=null;
+let dashTimer=null, botEnabled=false;
 const LIVE_CARDS=['statsCard','cycleCard','positionsCard','signalsCard','chartCard','dashCard'];
+function updateToggleBtn(){
+  const b=$('botToggle'); if(!b) return;
+  if(botEnabled){ b.textContent='Stop trading'; b.className='danger'; }
+  else{ b.textContent='Start trading'; b.className='green'; }
+}
+async function toggleBot(){
+  const desired=!botEnabled, b=$('botToggle'), m=$('toggleMsg');
+  m.className='msg'; m.textContent=''; b.textContent='…';
+  try{
+    await api('/settings','POST',{risk_pct:parseFloat($('riskPct').value)||2,
+      symbols:$('symbols').value, enabled:desired});
+    botEnabled=desired; updateToggleBtn();
+    m.className='msg ok'; m.textContent=desired?'Bot started ✓':'Bot stopped ✓';
+    loadDashboard();
+  }catch(e){ updateToggleBtn(); m.className='msg err'; m.textContent=e.message; }
+}
 function render(){
   show('authView',false); show('mainView',true);
   $('whoami').textContent=ME.email;
@@ -348,7 +366,7 @@ function render(){
   if(ME.payment){ $('payStatus').textContent='Last submission: '+ME.payment.status+' · '+ME.payment.tx_hash.slice(0,16)+'…'; }
   $('riskPct').value=ME.settings.risk_pct;
   $('symbols').value=ME.settings.symbols;
-  $('enabled').checked=ME.settings.enabled;
+  botEnabled=!!ME.settings.enabled; updateToggleBtn();
   if(dashTimer){ clearInterval(dashTimer); dashTimer=null; }
   if(active){ loadDashboard(); dashTimer=setInterval(loadDashboard,15000); }
   if(ME.is_admin) loadAdmin();
@@ -375,6 +393,7 @@ async function loadDashboard(){
   $('actPill').textContent=s.active?'ACTIVE':'NOT ACTIVE';
   $('actPill').className='pill '+(s.active?'on':'off');
   show('testBanner', !!s.dry_run);
+  botEnabled=!!s.enabled; updateToggleBtn();
   $('d_equity').textContent=money(s.equity);
   const pnl=s.open_pnl||0, pe=$('d_pnl');
   pe.textContent=signMoney(pnl); pe.className='v '+(pnl>0?'pos':pnl<0?'neg':'');

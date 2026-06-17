@@ -3,7 +3,7 @@ import { Cormorant_Garamond, Inter } from "next/font/google";
 import SmoothScroll from "@/components/SmoothScroll";
 import Nav from "@/components/ui/Nav";
 import Footer from "@/components/ui/Footer";
-import "./globals.css";
+import "../globals.css";
 
 const serif = Cormorant_Garamond({
   subsets: ["latin"],
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default function PropertyLayout({
   children,
 }: {
   children: React.ReactNode;

@@ -3,92 +3,124 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<meta name="theme-color" content="#070a12"/>
+<meta name="theme-color" content="#07090f"/>
 <link rel="manifest" href="/app/manifest.webmanifest"/>
 <title>ZENITH — Automated Trading</title>
 <style>
-  :root{--bg:#070a12;--bg2:#0d1320;--card:#121a2b;--card2:#16203450;--border:#212c44;
-    --text:#eef2fb;--muted:#8893ab;--accent:#5b8cff;--green:#16c784;--red:#ea3943;--purple:#a855f7;
-    --shadow:0 8px 30px rgba(0,0,0,.35)}
+  :root{
+    --bg:#07090f; --bg2:#0c111c;
+    --card-top:#141a2b; --card-bot:#0e1422;
+    --chip:rgba(255,255,255,.04); --chip-bd:rgba(255,255,255,.08);
+    --border:rgba(255,255,255,.08);
+    --text:#f3f6fd; --muted:#9aa6be;
+    --accent:#6d8bff; --accent2:#a472ff;
+    --green:#1fd17e; --red:#ff5a6a; --purple:#a855f7; --gold:#e7c682;
+    --shadow:0 12px 36px rgba(0,0,0,.5); --glow:0 8px 26px rgba(109,139,255,.32);
+  }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  body{margin:0;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background:radial-gradient(1100px 500px at 85% -10%,rgba(91,140,255,.18),transparent 60%),
-      radial-gradient(900px 500px at -10% 10%,rgba(168,85,247,.14),transparent 55%),var(--bg);
-    padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 24px)}
-  .wrap{max-width:560px;margin:0 auto;padding:22px 16px}
-  .brand{display:flex;align-items:center;gap:10px;margin-bottom:6px}
-  .gem{width:34px;height:34px}
-  .brand h1{font-size:1.4rem;margin:0;font-weight:900;letter-spacing:.04em}
-  .tag{color:var(--muted);font-size:.74rem;letter-spacing:.18em;margin:0 0 18px 44px}
-  .card{background:linear-gradient(180deg,var(--card),#0f1626);border:1px solid var(--border);
-    border-radius:18px;padding:18px;box-shadow:var(--shadow);margin-bottom:14px}
-  h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;margin:2px 0 12px;color:var(--muted)}
-  label{display:block;font-size:.78rem;color:var(--muted);margin:10px 0 5px}
-  input{width:100%;background:var(--bg2);color:var(--text);border:1px solid var(--border);
-    border-radius:12px;padding:13px;font-size:.95rem}
-  button{border:none;border-radius:13px;padding:14px;font-size:.95rem;font-weight:800;color:#fff;
-    box-shadow:var(--shadow);width:100%;margin-top:14px}
-  .primary{background:linear-gradient(135deg,#5b8cff,#3b5bdb)}
-  .green{background:linear-gradient(135deg,#16c784,#0f9d6b)}
-  .ghost{background:var(--card2);color:var(--text);border:1px solid var(--border)}
-  .link{color:var(--accent);text-decoration:none;cursor:pointer;font-size:.85rem}
-  .msg{font-size:.82rem;margin-top:10px;min-height:1em}
-  .err{color:#fca5a5}.ok{color:#86efac}
-  .step{display:flex;gap:11px;margin:11px 0}
-  .num{flex:none;width:26px;height:26px;border-radius:50%;background:var(--card2);border:1px solid var(--border);
-    display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:800;color:var(--accent)}
-  .step div{font-size:.86rem;line-height:1.45}
-  .warn{background:rgba(234,57,57,.10);border:1px solid #7f2230;border-radius:12px;padding:11px 13px;
-    font-size:.8rem;color:#fecaca;margin-top:10px}
-  .pill{display:inline-block;font-size:.7rem;font-weight:800;padding:5px 11px;border-radius:999px}
-  .pill.on{background:rgba(22,199,132,.18);color:#86efac}
-  .pill.off{background:rgba(245,158,11,.18);color:#fcd34d}
-  .copy{display:flex;gap:8px;align-items:center;background:var(--bg2);border:1px solid var(--border);
-    border-radius:12px;padding:11px;word-break:break-all;font-size:.82rem;margin-top:6px}
-  .disc{font-size:.72rem;color:var(--muted);line-height:1.5;margin-top:10px}
+  body{margin:0;color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    background:
+      radial-gradient(820px 420px at 88% -8%,rgba(109,139,255,.16),transparent 60%),
+      radial-gradient(720px 420px at -8% 6%,rgba(164,114,255,.13),transparent 58%),
+      var(--bg);
+    padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 28px)}
+  .wrap{max-width:540px;margin:0 auto;padding:24px 16px}
+  /* brand */
+  .brand{display:flex;align-items:center;gap:12px}
+  .gem{width:36px;height:36px;filter:drop-shadow(0 4px 10px rgba(109,139,255,.4))}
+  .brand h1{font-size:1.5rem;margin:0;font-weight:800;letter-spacing:.16em;
+    background:linear-gradient(90deg,#ffffff,#b9c6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .tag{color:var(--muted);font-size:.66rem;letter-spacing:.34em;margin:7px 0 20px 48px;font-weight:600}
+  /* cards */
+  .card{background:linear-gradient(180deg,var(--card-top),var(--card-bot));
+    border:1px solid var(--border);border-radius:20px;padding:20px;box-shadow:var(--shadow);
+    margin-bottom:14px;position:relative;overflow:hidden}
+  .card::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent)}
+  h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;margin:0 0 14px;color:var(--muted);
+    font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .lead{font-size:.88rem;color:#cdd6e8;line-height:1.5;margin:0 0 6px}
+  label{display:block;font-size:.74rem;color:var(--muted);margin:13px 0 6px;font-weight:600;letter-spacing:.02em}
+  input{width:100%;background:var(--bg2);color:var(--text);border:1px solid var(--chip-bd);
+    border-radius:13px;padding:14px;font-size:.95rem;transition:border-color .15s,box-shadow .15s}
+  input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(109,139,255,.18)}
+  button{border:none;border-radius:14px;padding:15px;font-size:.95rem;font-weight:800;color:#fff;
+    width:100%;margin-top:16px;cursor:pointer;letter-spacing:.01em;
+    transition:transform .08s ease,filter .15s,box-shadow .2s}
+  button:active{transform:translateY(1px)}
+  .primary{background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:var(--glow)}
+  .primary:hover{filter:brightness(1.06)}
+  .green{background:linear-gradient(135deg,#1fd17e,#0f9d6b);box-shadow:0 8px 24px rgba(31,209,126,.28)}
+  .ghost{background:var(--chip);color:var(--text);border:1px solid var(--chip-bd);box-shadow:none;font-weight:700}
+  .link{color:var(--accent);text-decoration:none;cursor:pointer;font-size:.85rem;font-weight:600}
+  .msg{font-size:.82rem;margin-top:12px;min-height:1em}
+  .err{color:#ffb4bc}.ok{color:#9bf0c6}
+  /* numbered steps inside a card */
+  .step{display:flex;gap:12px;margin:12px 0;align-items:flex-start}
+  .num{flex:none;width:27px;height:27px;border-radius:50%;
+    background:linear-gradient(135deg,rgba(109,139,255,.25),rgba(164,114,255,.2));
+    border:1px solid rgba(109,139,255,.4);display:flex;align-items:center;justify-content:center;
+    font-size:.78rem;font-weight:800;color:#cdd6ff}
+  .step div{font-size:.85rem;line-height:1.5;color:#cdd6e8}
+  .warn{background:rgba(255,90,106,.09);border:1px solid rgba(255,90,106,.35);border-radius:13px;
+    padding:12px 14px;font-size:.8rem;color:#ffc4ca;margin-top:14px;line-height:1.5}
+  .pill{display:inline-block;font-size:.66rem;font-weight:800;padding:5px 11px;border-radius:999px;letter-spacing:.04em}
+  .pill.on{background:rgba(31,209,126,.16);color:#9bf0c6;border:1px solid rgba(31,209,126,.35)}
+  .pill.off{background:rgba(231,198,126,.14);color:#f0d9a4;border:1px solid rgba(231,198,126,.32)}
+  .copy{display:flex;gap:8px;align-items:center;justify-content:space-between;background:var(--bg2);
+    border:1px solid var(--chip-bd);border-radius:13px;padding:13px;word-break:break-all;font-size:.82rem;margin-top:6px}
+  .disc{font-size:.72rem;color:var(--muted);line-height:1.55;margin-top:10px}
   table{width:100%;border-collapse:collapse;font-size:.8rem}
-  td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+  td,th{text-align:left;padding:9px 6px;border-bottom:1px solid var(--border)}
+  th{color:var(--muted);font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:.05em}
   .hide{display:none}
-  .stepwrap{display:flex;gap:8px;margin-bottom:14px}
-  .stepwrap .s{flex:1;text-align:center;font-size:.7rem;padding:8px;border-radius:10px;background:var(--card2);
-    border:1px solid var(--border);color:var(--muted)}
-  .stepwrap .s.active{color:var(--text);border-color:var(--accent)}
-  .stepwrap .s.done{color:#86efac}
+  /* stepper */
+  .stepwrap{display:flex;gap:8px;margin:4px 0 18px}
+  .stepwrap .s{flex:1;text-align:center;font-size:.68rem;font-weight:700;padding:11px 6px;border-radius:13px;
+    background:var(--chip);border:1px solid var(--chip-bd);color:var(--muted);transition:.2s}
+  .stepwrap .s.active{color:var(--text);border-color:var(--accent);
+    box-shadow:0 0 0 1px var(--accent),0 8px 20px rgba(109,139,255,.2)}
+  .stepwrap .s.done{color:#bff0d6;border-color:rgba(31,209,126,.45);background:rgba(31,209,126,.08)}
   /* live dashboard */
-  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 2px}
-  .stat{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:12px}
-  .stat .l{font-size:.64rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
-  .stat .v{font-size:1.25rem;font-weight:800;margin-top:4px}
-  .stat .v.sm{font-size:1rem}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin:4px 0 2px}
+  .stat{background:var(--chip);border:1px solid var(--chip-bd);border-radius:16px;padding:14px}
+  .stat .l{font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+  .stat .v{font-size:1.35rem;font-weight:800;margin-top:6px;letter-spacing:-.01em}
+  .stat .v.sm{font-size:1.05rem}
   .pos{color:var(--green)}.neg{color:var(--red)}
   .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
-  .dot.on{background:var(--green);box-shadow:0 0 8px var(--green)}.dot.off{background:var(--muted)}.dot.pausing{background:#f59e0b}
-  .banner{padding:10px 12px;border-radius:12px;font-size:.8rem;margin-top:10px}
-  .banner.up{background:rgba(22,199,132,.12);color:#bbf7d0}
-  .banner.down{background:rgba(234,57,57,.12);color:#fecaca}
-  .banner.flat{background:var(--card2);color:var(--muted)}
-  .banner.test{background:rgba(245,158,11,.12);color:#fcd34d;border:1px solid #7a5a1f}
-  .cyphase{font-size:1.05rem;font-weight:800;margin:4px 0}
-  .track{height:8px;background:#241b3d;border-radius:999px;margin:9px 0 4px;overflow:hidden}
+  .dot.on{background:var(--green);box-shadow:0 0 9px var(--green)}.dot.off{background:var(--muted)}.dot.pausing{background:var(--gold)}
+  .banner{padding:11px 13px;border-radius:13px;font-size:.8rem;margin-top:12px;line-height:1.45}
+  .banner.up{background:rgba(31,209,126,.1);color:#bff0d6;border:1px solid rgba(31,209,126,.28)}
+  .banner.down{background:rgba(255,90,106,.1);color:#ffc4ca;border:1px solid rgba(255,90,106,.28)}
+  .banner.flat{background:var(--chip);color:var(--muted);border:1px solid var(--chip-bd)}
+  .banner.test{background:rgba(231,198,126,.1);color:#f0d9a4;border:1px solid rgba(231,198,126,.32)}
+  .cyphase{font-size:1.1rem;font-weight:800;margin:2px 0}
+  .track{height:8px;background:rgba(255,255,255,.06);border-radius:999px;margin:10px 0 4px;overflow:hidden}
   .track>i{display:block;height:100%;background:linear-gradient(90deg,var(--purple),var(--accent));border-radius:999px;transition:width .5s}
-  .trow{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:9px}
-  .trow .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .trow{background:var(--chip);border:1px solid var(--chip-bd);border-radius:16px;padding:13px 14px;margin-bottom:10px}
+  .trow .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
   .trow .sym{font-weight:800;font-size:1rem}
-  .spill{font-size:.64rem;font-weight:800;padding:4px 9px;border-radius:999px}
-  .spill.long{background:rgba(22,199,132,.18);color:#86efac}
-  .spill.short{background:rgba(234,57,57,.18);color:#fca5a5}
-  .spill.hold{background:var(--card2);color:var(--muted)}
-  .spill.blocked{background:rgba(245,158,11,.18);color:#fcd34d}
-  .spill.error{background:rgba(234,57,57,.18);color:#fca5a5}
+  .spill{font-size:.62rem;font-weight:800;padding:4px 10px;border-radius:999px;letter-spacing:.03em}
+  .spill.long{background:rgba(31,209,126,.16);color:#9bf0c6}
+  .spill.short{background:rgba(255,90,106,.16);color:#ffb4bc}
+  .spill.hold{background:var(--chip);color:var(--muted);border:1px solid var(--chip-bd)}
+  .spill.blocked{background:rgba(231,198,126,.16);color:#f0d9a4}
+  .spill.error{background:rgba(255,90,106,.16);color:#ffb4bc}
   .g2{display:flex;justify-content:space-between;font-size:.76rem;color:var(--muted);gap:8px}
   .g2 b{color:var(--text);font-weight:700}
-  .bar{height:10px;border-radius:999px;background:#0b1120;overflow:hidden;border:1px solid var(--border);margin-top:8px}
+  .bar{height:10px;border-radius:999px;background:rgba(0,0,0,.35);overflow:hidden;border:1px solid var(--chip-bd);margin-top:9px}
   .bar>i{display:block;height:100%;border-radius:999px;transition:width .5s}
-  .conf{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-top:6px}
-  select{width:100%;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:11px;font-size:.9rem}
-  .modal{display:none;position:fixed;inset:0;z-index:60;background:rgba(2,4,10,.85);align-items:center;justify-content:center;padding:16px}
+  .conf{display:flex;justify-content:space-between;font-size:.71rem;color:var(--muted);margin-top:7px}
+  select{width:100%;background:var(--bg2);color:var(--text);border:1px solid var(--chip-bd);border-radius:13px;padding:12px;font-size:.9rem}
+  .modal{display:none;position:fixed;inset:0;z-index:60;background:rgba(2,4,10,.86);backdrop-filter:blur(4px);
+    align-items:center;justify-content:center;padding:16px}
   .modal.show{display:flex}
-  .modalbox{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px;max-width:540px;width:100%;max-height:82vh;overflow:auto;box-shadow:var(--shadow)}
+  .modalbox{background:linear-gradient(180deg,var(--card-top),var(--card-bot));border:1px solid var(--border);
+    border-radius:20px;padding:20px;max-width:540px;width:100%;max-height:82vh;overflow:auto;box-shadow:var(--shadow)}
+  .foot{text-align:center;color:var(--muted);font-size:.7rem;margin-top:6px;opacity:.8}
 </style>
 </head>
 <body>
@@ -103,6 +135,7 @@
   <div id="authView" class="hide">
     <div class="card">
       <h2 id="authTitle">Log in</h2>
+      <p class="lead">Welcome to ZENITH — sign in or create an account to start automated trading on your own exchange.</p>
       <label>Email</label><input id="email" type="email" autocomplete="email"/>
       <label>Password</label><input id="password" type="password" autocomplete="current-password"/>
       <label id="agreeWrap" class="hide" style="display:flex;align-items:flex-start;gap:8px;margin-top:14px">
@@ -135,7 +168,8 @@
 
     <!-- STEP 1: connect keys -->
     <div class="card" id="keysCard">
-      <h2>Step 1 — Connect your Bybit API key</h2>
+      <h2>Step 1 of 3 — Connect exchange</h2>
+      <p class="lead">Link your Bybit account so the bot can trade for you. Your funds stay in your account — the key we use <b>can't withdraw</b>. Takes about 2 minutes.</p>
       <div class="step"><div class="num">1</div><div>Log in to <b>Bybit</b> → top-right profile → <b>API</b>.</div></div>
       <div class="step"><div class="num">2</div><div>Tap <b>Create New Key</b> → choose <b>System-generated API Keys</b>.</div></div>
       <div class="step"><div class="num">3</div><div>Name it <b>ZenithBot</b>. API key type: <b>Unified Trading</b>.</div></div>
@@ -153,9 +187,9 @@
 
     <!-- STEP 2: payment -->
     <div class="card hide" id="payCard">
-      <h2>Step 2 — Activate with crypto</h2>
-      <p style="font-size:.86rem">Send <b id="payPrice"></b> to the wallet below, then paste your
-      transaction hash. Activation is confirmed manually (usually within a few hours).</p>
+      <h2>Step 2 of 3 — Activate</h2>
+      <p class="lead">Send <b id="payPrice"></b> to the wallet below, then paste your
+      transaction ID. We confirm it manually (usually within a few hours) and your bot goes live.</p>
       <label>Pay with</label>
       <div class="copy" id="payCoin"></div>
       <label>Wallet address</label>

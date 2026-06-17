@@ -51,6 +51,30 @@ def from_candlestick_json(payload: dict) -> pd.DataFrame:
     return _finalize(pd.DataFrame(payload["data"]))
 
 
+# regime presets: (drift_mult, vol_mult, probability)
+EQUITY_REGIMES = [
+    (2.5, 1.0, 0.45),   # bull (common)
+    (-3.0, 1.8, 0.20),  # bear crash (rarer, violent)
+    (0.3, 0.7, 0.20),   # calm sideways, slight upward grind
+    (0.0, 1.8, 0.15),   # choppy sideways (whipsaw)
+]
+# a broad index is calmer than a single name: gentler crashes, longer grinds up
+INDEX_REGIMES = [
+    (2.0, 0.8, 0.50),   # steady bull
+    (-2.5, 1.5, 0.12),  # correction / bear (rarer)
+    (0.6, 0.6, 0.28),   # low-vol grind higher
+    (0.0, 1.3, 0.10),   # choppy consolidation
+]
+
+
+def index_market(days: int = 2500, seed: int = 42) -> pd.DataFrame:
+    """An equity-index-like series: ~10%/yr drift, ~15% vol, gentle crashes."""
+    return synthetic(
+        days=days, seed=seed, annual_drift=0.10, annual_vol=0.15,
+        regimes=INDEX_REGIMES,
+    )
+
+
 def synthetic(
     days: int = 1500,
     start: float = 100.0,
@@ -58,6 +82,7 @@ def synthetic(
     annual_drift: float = 0.09,
     annual_vol: float = 0.20,
     freq: str = "D",
+    regimes: list | None = None,
 ) -> pd.DataFrame:
     """Generate a regime-switching OHLC series.
 
@@ -71,16 +96,11 @@ def synthetic(
     per_year = 365 if freq == "D" else 252
     dt = 1.0 / per_year
 
-    # regime menu: (drift_mult, vol_mult, probability). Calibrated so the series
-    # has a mild *net-positive* long-run drift like real equity/crypto markets
-    # (bull regimes dominate, punctuated by sharper, rarer bear crashes). This
-    # is what makes Buy & Hold a genuine benchmark rather than a strawman.
-    regimes = [
-        (2.5, 1.0, 0.45),   # bull (common)
-        (-3.0, 1.8, 0.20),  # bear crash (rarer, violent)
-        (0.3, 0.7, 0.20),   # calm sideways, slight upward grind
-        (0.0, 1.8, 0.15),   # choppy sideways (whipsaw)
-    ]
+    # Regimes are calibrated so the series has a mild *net-positive* long-run
+    # drift like real equity markets (bull regimes dominate, punctuated by
+    # sharper, rarer bear crashes). This makes Buy & Hold a genuine benchmark
+    # rather than a strawman. Pass ``regimes`` to override (see INDEX_REGIMES).
+    regimes = regimes if regimes is not None else EQUITY_REGIMES
     choices = np.array([r[:2] for r in regimes])
     probs = np.array([r[2] for r in regimes])
     drift_path = np.empty(days)

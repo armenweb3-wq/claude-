@@ -52,3 +52,7 @@ price it couldn't have known. Add your own by subclassing `Strategy`.
 - Next layers worth adding: walk-forward / out-of-sample splits, parameter
   sweeps (with overfitting guards), portfolio of assets, and only then an ML
   layer — and only if the rules show a real edge first.
+
+## Honest optimization (`optimize.py`)
+
+`python optimize.py` tunes parameters on a TRAIN slice, then judges them on an unseen TEST slice and across 8 walk-forward folds. "Profitable" only counts out-of-sample. Finding: on an up-trending index every strategy is profitable (indices rise), but the trend filter's edge is **downside protection** — it beats Buy & Hold specifically in the crash folds and trails it in calm bull runs.

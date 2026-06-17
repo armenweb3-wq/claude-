@@ -176,6 +176,56 @@ class Engulfing(Strategy):
         return self._w
 
 
+# --------------------------------------------------------------------------- #
+# Trend filter — the classic that genuinely improves index risk-adjusted return
+# (Meb Faber, "A Quantitative Approach to Tactical Asset Allocation")
+# --------------------------------------------------------------------------- #
+@dataclass
+class TrendFilter(Strategy):
+    """Hold the index while it's above its long-term average; step aside below.
+
+    The point isn't to boost return — it's to *dodge the deep bear markets*
+    (2008, 2022). Sitting out the worst drawdowns lifts risk-adjusted return
+    (Sharpe) and slashes max drawdown versus Buy & Hold, while capturing most of
+    the upside. The best-documented long-only timing rule there is.
+    """
+
+    name: str = "Trend Filter (SMA200)"
+    sma: int = 200
+
+    def decide(self, history: pd.DataFrame) -> float:
+        if len(history) < self.sma:
+            return 1.0  # not enough history yet: default invested
+        close = history["close"]
+        avg = close.rolling(self.sma).mean().iloc[-1]
+        return 1.0 if close.iloc[-1] > avg else 0.0
+
+
+@dataclass
+class TrendDipBuyer(Strategy):
+    """Trend filter + buy-the-dip: only act long while above the SMA, and lean in
+    harder after a short-term pullback. Combines "don't fight the trend" with
+    "buy weakness" — the synthesis of the two book camps."""
+
+    name: str = "Trend + Dip Buyer"
+    sma: int = 200
+    dip_period: int = 14
+    dip_rsi: float = 40.0
+    base_weight: float = 0.6
+
+    def decide(self, history: pd.DataFrame) -> float:
+        if len(history) < self.sma:
+            return 1.0
+        close = history["close"]
+        if close.iloc[-1] <= close.rolling(self.sma).mean().iloc[-1]:
+            return 0.0  # below trend: stay out of trouble
+        r = rsi(close, self.dip_period).iloc[-1]
+        return 1.0 if r < self.dip_rsi else self.base_weight
+
+
 def default_suite() -> list[Strategy]:
     """The standard line-up compared in the demo backtest."""
-    return [BuyAndHold(), Grid(), RSIReversion(), MACrossover(), Engulfing()]
+    return [
+        BuyAndHold(), Grid(), RSIReversion(), MACrossover(),
+        Engulfing(), TrendFilter(), TrendDipBuyer(),
+    ]

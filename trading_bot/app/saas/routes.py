@@ -276,6 +276,23 @@ def user_history(request: Request) -> dict:
         raise HTTPException(502, f"history unavailable: {exc}")
 
 
+class RedeemIn(BaseModel):
+    code: str
+
+
+@router.post("/api/redeem")
+def redeem(body: RedeemIn, request: Request) -> dict:
+    """Activate the current user for free by entering the shared access code."""
+    import hmac
+
+    user = current_user(request)
+    code = (body.code or "").strip()
+    if not settings.saas_access_code or not hmac.compare_digest(code, settings.saas_access_code):
+        raise HTTPException(400, "invalid access code")
+    store().set_activation(user["id"], True, None)  # no expiry
+    return {"ok": True}
+
+
 @router.get("/api/me")
 def me(request: Request) -> dict:
     user = current_user(request)
@@ -286,6 +303,7 @@ def me(request: Request) -> dict:
         "email": user["email"],
         "is_admin": _is_admin_user(user),
         "payment_required": settings.pay_required,
+        "access_code_enabled": bool(settings.saas_access_code),
         "activated": _is_active(user),
         "active_until": user["active_until"],
         "has_keys": bool(st.get_keys(user["id"])),

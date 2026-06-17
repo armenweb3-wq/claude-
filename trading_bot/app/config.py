@@ -122,6 +122,9 @@ class Settings:
     # When false, friends skip the payment step entirely (free mode) — they just
     # connect keys and wait for the admin to activate them manually.
     pay_required: bool = field(default_factory=lambda: _get_bool("SAAS_PAYMENT_REQUIRED", True))
+    # If set, friends activate instantly for free by typing this access code
+    # (no payment, no manual approval needed). Leave empty to disable.
+    saas_access_code: str = field(default_factory=lambda: _get("SAAS_ACCESS_CODE", "").strip())
     # Phase 2 — per-user execution engine (off by default for safety).
     saas_exec_enabled: bool = field(default_factory=lambda: _get_bool("SAAS_EXEC_ENABLED", False))
     saas_dry_run: bool = field(default_factory=lambda: _get_bool("SAAS_DRY_RUN", True))

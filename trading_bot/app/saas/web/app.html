@@ -197,6 +197,15 @@
       <div id="payStatus" class="disc"></div>
     </div>
 
+    <!-- STEP 2 (access code): join free -->
+    <div class="card hide" id="codeCard">
+      <h2>Step 2 of 3 — Join</h2>
+      <p class="lead">Enter your access code to activate your bot for free.</p>
+      <label>Access code</label><input id="accessCode" autocomplete="off"/>
+      <button class="green" onclick="redeemCode()">Join</button>
+      <div class="msg" id="codeMsg"></div>
+    </div>
+
     <!-- STEP 2 (free mode): pending approval -->
     <div class="card hide" id="pendingCard">
       <h2>Step 2 of 3 — Pending approval</h2>
@@ -323,6 +332,12 @@ async function connectKeys(){
     m.className='msg ok'; m.textContent='Key verified and connected ✓'; await boot();
   }catch(e){ m.className='msg err'; m.textContent=e.message; }
 }
+async function redeemCode(){
+  const m=$('codeMsg'); m.className='msg'; m.textContent='…';
+  try{ await api('/redeem','POST',{code:$('accessCode').value});
+    m.className='msg ok'; m.textContent='Activated ✓'; await boot();
+  }catch(e){ m.className='msg err'; m.textContent=e.message; }
+}
 function copyWallet(){ navigator.clipboard&&navigator.clipboard.writeText(ME.pay.wallet); }
 async function submitPayment(){
   const m=$('payMsg'); m.className='msg'; m.textContent='…';
@@ -379,9 +394,12 @@ function render(){
   $('s2').className='s '+(active?'done':hasKeys?'active':'');
   $('s3').className='s '+(active?'active':'');
   const needPay=ME.payment_required!==false;
+  const codeMode=ME.access_code_enabled===true;
+  const pend=hasKeys&&!active;
   show('keysCard',!hasKeys);
-  show('payCard',hasKeys&&!active&&needPay);
-  show('pendingCard',hasKeys&&!active&&!needPay);
+  show('codeCard',pend&&codeMode);
+  show('payCard',pend&&!codeMode&&needPay);
+  show('pendingCard',pend&&!codeMode&&!needPay);
   LIVE_CARDS.forEach(id=>show(id,active));
   $('payPrice').textContent=ME.pay.price;
   $('payCoin').textContent=ME.pay.coin_network;

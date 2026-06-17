@@ -122,12 +122,31 @@
   .srow{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap;justify-content:center}
   .srow button{flex:0;width:auto;min-width:90px;margin-top:0;padding:11px 15px;font-size:.82rem}
   .foot{text-align:center;color:var(--faint);font-size:.66rem;margin-top:6px;letter-spacing:.04em}
+  /* menu / drawer / profile */
+  .iconbtn{width:42px;height:42px;padding:0;margin:0;background:transparent;border:1px solid var(--line);
+    color:var(--text);border-radius:11px;font-size:1.15rem;flex:none;line-height:1}
+  .drawer{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.6);display:none}
+  .drawer.show{display:block}
+  .drawerpanel{position:absolute;top:0;left:0;bottom:0;width:82%;max-width:330px;background:var(--panel);
+    border-right:1px solid var(--line);padding:20px;overflow:auto;
+    transform:translateX(-100%);transition:transform .22s ease}
+  .drawer.show .drawerpanel{transform:translateX(0)}
+  .drawerhead{display:flex;align-items:center;gap:12px;padding:4px 0 16px;border-bottom:1px solid var(--line);margin-bottom:6px}
+  .avatar{width:48px;height:48px;border-radius:50%;background:var(--bg);border:1px solid var(--line);
+    object-fit:cover;flex:none;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--muted);font-size:1.1rem}
+  .menuitem{width:100%;text-align:left;background:transparent;border:none;border-bottom:1px solid var(--line2);
+    color:var(--text);padding:16px 2px;font-size:.95rem;font-weight:600;margin:0;border-radius:0;letter-spacing:0}
+  .menuitem:hover{opacity:1;color:var(--green)}
+  .panelhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .avup{display:flex;align-items:center;gap:14px;margin-top:6px}
+  .avup .avatar{width:64px;height:64px;font-size:1.4rem}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="brand">
-    <h1>ZENITH</h1>
+  <div class="brand" style="align-items:center">
+    <button id="menuBtn" class="iconbtn hide" onclick="toggleMenu(true)" aria-label="Menu">☰</button>
+    <h1 style="flex:1">ZENITH</h1>
     <span class="tag">TERMINAL</span>
   </div>
 
@@ -205,21 +224,6 @@
       <div id="payStatus" class="disc"></div>
     </div>
 
-    <!-- STEP 2 (access code): join free -->
-    <div class="card hide" id="codeCard">
-      <h2>Step 2 of 3 — Join</h2>
-      <p class="lead">Enter your access code to activate your bot for free.</p>
-      <label>Access code</label><input id="accessCode" autocomplete="off"/>
-      <button class="green" onclick="redeemCode()">Join</button>
-      <div class="msg" id="codeMsg"></div>
-    </div>
-
-    <!-- STEP 2 (free mode): pending approval -->
-    <div class="card hide" id="pendingCard">
-      <h2>Step 2 of 3 — Pending approval</h2>
-      <p class="lead">Your exchange is connected ✓. Your access is being approved — you'll be able to start trading as soon as the admin activates your account. No payment required.</p>
-    </div>
-
     <!-- STEP 3: LIVE DASHBOARD -->
     <div class="card hide" id="statsCard">
       <h2>Your bot <span id="actPill" class="pill off">—</span></h2>
@@ -264,31 +268,86 @@
       <div id="tv_chart" style="height:280px;border-radius:6px;overflow:hidden;margin-top:10px"></div>
     </div>
 
-    <!-- STEP 3: settings -->
-    <div class="card hide" id="dashCard">
-      <h2>Settings</h2>
-      <label>Risk per trade (%)</label><input id="riskPct" type="number" step="0.5" min="0.5" max="10"/>
-      <label>Symbols (comma-separated)</label><input id="symbols"/>
-      <p class="disc" style="margin-top:12px">Use the <b>Start / Stop trading</b> button above to turn the bot on or off. These settings apply whenever it's running.</p>
-      <button class="ghost" onclick="saveSettings()">Save settings</button>
-      <div class="msg" id="dashMsg"></div>
-    </div>
-
-    <!-- ADMIN -->
-    <div class="card hide" id="adminCard">
-      <h2>Admin — beta seats (<span id="seatInfo"></span>)</h2>
-      <div id="adminUsers"></div>
-    </div>
-
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span class="disc" id="whoami" style="margin:0"></span>
-        <span class="link" onclick="logout()">Log out</span>
-      </div>
-      <p class="disc">Backtested, not guaranteed. High-risk. Not financial advice. You keep full
+      <p class="disc" style="margin:0">Backtested, not guaranteed. High-risk. Not financial advice. You keep full
       custody of your funds; withdrawal-disabled keys only.</p>
     </div>
     <div class="foot">ZENITH · ALGORITHMIC TRADING</div>
+  </div>
+</div>
+
+<!-- slide-out menu -->
+<div class="drawer" id="drawer" onclick="if(event.target===this)toggleMenu(false)">
+  <div class="drawerpanel">
+    <div class="drawerhead">
+      <div class="avatar" id="menuAvatar">·</div>
+      <div><div style="font-weight:700" id="menuName">—</div><div class="disc" id="menuEmail" style="margin:0"></div></div>
+    </div>
+    <button class="menuitem" onclick="openPanel('profilePanel')">Profile</button>
+    <button class="menuitem" onclick="openPanel('botPanel')">Manage bot</button>
+    <button class="menuitem" onclick="openPanel('referralPanel')">Referral</button>
+    <button class="menuitem hide" id="menuAdmin" onclick="openPanel('adminPanel')">Admin · subscribers</button>
+    <button class="menuitem" style="color:var(--red)" onclick="logout()">Log out</button>
+  </div>
+</div>
+
+<!-- PROFILE panel -->
+<div class="modal" id="profilePanel">
+  <div class="modalbox">
+    <div class="panelhead"><h2 style="margin:0">Profile</h2><span class="link" onclick="closePanel('profilePanel')">Close</span></div>
+    <div class="avup">
+      <div class="avatar" id="profAvatar">·</div>
+      <div><button class="ghost" style="margin:0;width:auto;padding:10px 14px" onclick="$('avatarFile').click()">Upload picture</button>
+        <div class="disc" style="margin-top:6px">Shown on your shared cards.</div></div>
+    </div>
+    <input id="avatarFile" type="file" accept="image/*" class="hide"/>
+    <label>Username</label><input id="profUsername"/>
+    <button onclick="saveProfile()">Save profile</button>
+    <div class="msg" id="profMsg"></div>
+    <label style="margin-top:20px">New password</label><input id="newPass" type="password" autocomplete="new-password"/>
+    <button class="ghost" onclick="changePass()">Change password</button>
+    <div class="msg" id="passMsg"></div>
+  </div>
+</div>
+
+<!-- MANAGE BOT panel -->
+<div class="modal" id="botPanel">
+  <div class="modalbox">
+    <div class="panelhead"><h2 style="margin:0">Manage bot</h2><span class="link" onclick="closePanel('botPanel')">Close</span></div>
+    <p class="lead">Turn the bot on/off from the main screen. These settings apply while it runs.</p>
+    <label>Risk per trade (%)</label><input id="riskPct" type="number" step="0.5" min="0.5" max="10"/>
+    <label>Assets to trade (comma-separated)</label><input id="symbols"/>
+    <button onclick="saveSettings()">Save settings</button>
+    <div class="msg" id="dashMsg"></div>
+  </div>
+</div>
+
+<!-- REFERRAL panel -->
+<div class="modal" id="referralPanel">
+  <div class="modalbox">
+    <div class="panelhead"><h2 style="margin:0">Referral</h2><span class="link" onclick="closePanel('referralPanel')">Close</span></div>
+    <p class="lead">Share your link. People who join through it are credited to you — rewards coming soon.</p>
+    <label>Your invite link</label>
+    <div class="copy"><span id="refLink"></span><span class="link" onclick="copyRef()">copy</span></div>
+    <div class="stats" style="margin-top:14px">
+      <div class="stat"><div class="l">Referred</div><div class="v" id="refCount">0</div></div>
+      <div class="stat"><div class="l">Rewards</div><div class="v sm">soon</div></div>
+    </div>
+    <div class="msg" id="refMsg"></div>
+  </div>
+</div>
+
+<!-- ADMIN panel -->
+<div class="modal" id="adminPanel">
+  <div class="modalbox">
+    <div class="panelhead"><h2 style="margin:0">Subscribers</h2><span class="link" onclick="closePanel('adminPanel')">Close</span></div>
+    <div class="stats">
+      <div class="stat"><div class="l">Total</div><div class="v" id="adTotal">0</div></div>
+      <div class="stat"><div class="l">Active</div><div class="v pos" id="adActive">0</div></div>
+      <div class="stat"><div class="l">Pending</div><div class="v" id="adPending">0</div></div>
+      <div class="stat"><div class="l">Seats</div><div class="v sm"><span id="seatInfo">—</span></div></div>
+    </div>
+    <div id="adminUsers" style="margin-top:12px"></div>
   </div>
 </div>
 
@@ -340,8 +399,9 @@ async function doAuth(){
   if(isRegister && !$('agree').checked){ m.className='msg err'; m.textContent='Please agree to the Terms to continue.'; return; }
   m.textContent='…';
   try{
+    const ref=new URLSearchParams(location.search).get('ref')||'';
     await api(isRegister?'/register':'/login','POST',
-      {email:$('email').value,password:$('password').value,username:$('username').value});
+      {email:$('email').value,password:$('password').value,username:$('username').value,ref});
     await boot();
   }catch(e){ m.className='msg err'; m.textContent=e.message; }
 }
@@ -351,12 +411,6 @@ async function connectKeys(){
   const m=$('keysMsg'); m.className='msg'; m.textContent='Verifying with Bybit…';
   try{ await api('/keys','POST',{api_key:$('apiKey').value,api_secret:$('apiSecret').value});
     m.className='msg ok'; m.textContent='Key verified and connected ✓'; await boot();
-  }catch(e){ m.className='msg err'; m.textContent=e.message; }
-}
-async function redeemCode(){
-  const m=$('codeMsg'); m.className='msg'; m.textContent='…';
-  try{ await api('/redeem','POST',{code:$('accessCode').value});
-    m.className='msg ok'; m.textContent='Activated ✓'; await boot();
   }catch(e){ m.className='msg err'; m.textContent=e.message; }
 }
 function copyWallet(){ navigator.clipboard&&navigator.clipboard.writeText(ME.pay.wallet); }
@@ -386,21 +440,86 @@ async function saveSettings(){
 }
 
 async function loadAdmin(){
-  try{ const d=await api('/admin/users');
-    $('seatInfo').textContent=(d.seat_limit-d.seats_left)+' / '+d.seat_limit+' used';
-    $('adminUsers').innerHTML='<table><tr><th>Email</th><th>Keys</th><th>Tx</th><th></th></tr>'+
-      d.users.map(u=>`<tr><td>${u.email}<br><span class="disc">${u.active?'active':'inactive'}</span></td>
+  try{ const d=await api('/admin/users'); const us=d.users||[];
+    $('seatInfo').textContent=(d.seat_limit-d.seats_left)+' / '+d.seat_limit;
+    $('adTotal').textContent=us.length;
+    $('adActive').textContent=us.filter(u=>u.active).length;
+    $('adPending').textContent=us.filter(u=>u.latest_payment&&u.latest_payment.status==='pending').length;
+    $('adminUsers').innerHTML = us.length ?
+      '<table><tr><th>User</th><th>Keys</th><th>Tx</th><th></th></tr>'+
+      us.map(u=>`<tr><td>${u.username||u.email}<br><span class="disc">${u.active?'active':'inactive'}</span></td>
         <td>${u.has_keys?'✓':'—'}</td>
         <td>${u.latest_payment?('<span class="disc">'+(u.latest_payment.status)+'</span><br>'+u.latest_payment.tx_hash.slice(0,12)+'…'):'—'}</td>
-        <td>${u.active?`<span class="link" onclick="adminDe(${u.id})">deactivate</span>`:`<span class="link" onclick="adminAct(${u.id})">activate</span>`}</td></tr>`).join('')+'</table>';
-    show('adminCard',true);
-  }catch(e){ show('adminCard',false); }
+        <td>${u.active?`<span class="link" onclick="adminDe(${u.id})">deactivate</span>`:`<span class="link" onclick="adminAct(${u.id})">activate</span>`}</td></tr>`).join('')+'</table>'
+      : '<div class="disc">No subscribers yet.</div>';
+  }catch(e){}
 }
 async function adminAct(id){ await api('/admin/activate','POST',{user_id:id,days:30}); loadAdmin(); }
 async function adminDe(id){ await api('/admin/deactivate','POST',{user_id:id}); loadAdmin(); }
 
 let dashTimer=null, botEnabled=false, lastPositions=[], lastDry=false, lastShare=null, lastHistoryTrades=[];
-const LIVE_CARDS=['statsCard','cycleCard','positionsCard','signalsCard','chartCard','dashCard'];
+let avatarImg=null, pendingAvatar=undefined;
+const LIVE_CARDS=['statsCard','cycleCard','positionsCard','signalsCard','chartCard'];
+
+// ── menu / drawer / profile ─────────────────────────────────
+function toggleMenu(on){ $('drawer').classList.toggle('show',on); }
+function openPanel(id){
+  toggleMenu(false);
+  if(id==='adminPanel') loadAdmin();
+  if(id==='profilePanel') fillProfile();
+  if(id==='referralPanel') fillReferral();
+  $(id).classList.add('show');
+}
+function closePanel(id){ $(id).classList.remove('show'); }
+function fillAvatar(id){
+  const el=$(id); if(!el) return;
+  const src=(pendingAvatar!==undefined?pendingAvatar:ME&&ME.avatar);
+  if(src){ el.style.backgroundImage='url('+src+')'; el.style.backgroundSize='cover'; el.style.backgroundPosition='center'; el.textContent=''; }
+  else { el.style.backgroundImage=''; el.textContent=((ME&&ME.username)||'?').slice(0,1).toUpperCase(); }
+}
+function setCardAvatar(){
+  avatarImg=null;
+  if(ME&&ME.avatar){ const im=new Image(); im.onload=()=>{avatarImg=im;}; im.src=ME.avatar; }
+}
+function fillProfile(){
+  pendingAvatar=undefined;
+  $('profUsername').value=(ME&&ME.username)||'';
+  fillAvatar('profAvatar'); $('profMsg').textContent=''; $('passMsg').textContent='';
+}
+function fillReferral(){
+  const link=location.origin+'/app?ref='+encodeURIComponent((ME&&ME.username)||'');
+  $('refLink').textContent=link; $('refCount').textContent=(ME&&ME.referral_count)||0;
+}
+function copyRef(){ navigator.clipboard&&navigator.clipboard.writeText($('refLink').textContent);
+  $('refMsg').className='msg ok'; $('refMsg').textContent='Link copied ✓'; }
+async function saveProfile(){
+  const m=$('profMsg'); m.className='msg'; m.textContent='…';
+  const payload={username:$('profUsername').value};
+  if(pendingAvatar!==undefined) payload.avatar=pendingAvatar;
+  try{ await api('/profile','POST',payload); ME=await api('/me');
+    pendingAvatar=undefined; setCardAvatar(); fillAvatar('menuAvatar'); $('menuName').textContent='@'+(ME.username||'');
+    m.className='msg ok'; m.textContent='Saved ✓';
+  }catch(e){ m.className='msg err'; m.textContent=e.message; }
+}
+async function changePass(){
+  const m=$('passMsg'); m.className='msg'; m.textContent='…';
+  try{ await api('/password','POST',{new_password:$('newPass').value});
+    m.className='msg ok'; m.textContent='Password changed ✓'; $('newPass').value='';
+  }catch(e){ m.className='msg err'; m.textContent=e.message; }
+}
+function onAvatarFile(e){
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ const im=new Image(); im.onload=()=>{
+    const S=180, cv=document.createElement('canvas'); cv.width=S; cv.height=S;
+    const ctx=cv.getContext('2d'), sc=Math.max(S/im.width,S/im.height);
+    const w=im.width*sc, h=im.height*sc;
+    ctx.drawImage(im,(S-w)/2,(S-h)/2,w,h);
+    pendingAvatar=cv.toDataURL('image/jpeg',0.82);
+    fillAvatar('profAvatar');
+  }; im.src=r.result; };
+  r.readAsDataURL(f);
+}
 function updateToggleBtn(){
   const b=$('botToggle'); if(!b) return;
   b.classList.toggle('on',botEnabled);
@@ -420,8 +539,13 @@ async function toggleBot(){
 }
 function render(){
   show('authView',false); show('mainView',true);
-  $('whoami').textContent=ME.email;
   const hasKeys=ME.has_keys, active=ME.activated;
+  // menu header
+  show('menuBtn',true);
+  show('menuAdmin',!!ME.is_admin);
+  $('menuName').textContent='@'+(ME.username||'');
+  $('menuEmail').textContent=ME.email;
+  setCardAvatar(); fillAvatar('menuAvatar');
   $('s1').className='s '+(hasKeys?'done':'active');
   $('s2').className='s '+(active?'done':hasKeys?'active':'');
   $('s3').className='s '+(active?'active':'');
@@ -429,8 +553,6 @@ function render(){
   show('keysCard',!hasKeys);
   show('payCard',pend);                                   // always show payment
   show('payCodeWrap',pend && ME.access_code_enabled===true);  // code field on it
-  show('codeCard',false);
-  show('pendingCard',false);
   LIVE_CARDS.forEach(id=>show(id,active));
   $('payPrice').textContent=ME.pay.price;
   $('payCoin').textContent=ME.pay.coin_network;
@@ -441,7 +563,6 @@ function render(){
   botEnabled=!!ME.settings.enabled; updateToggleBtn();
   if(dashTimer){ clearInterval(dashTimer); dashTimer=null; }
   if(active){ loadDashboard(); dashTimer=setInterval(loadDashboard,15000); }
-  if(ME.is_admin) loadAdmin();
 }
 
 // ── formatting helpers ──────────────────────────────────────
@@ -593,30 +714,6 @@ function shareClosed(i){
 }
 function closeShare(){ $('shareModal').classList.remove('show'); }
 function fmtP(v){ return Number(v).toLocaleString(undefined,{maximumFractionDigits:4}); }
-function drawSatoshi(x,cx,cy,s){
-  // Homage to the Statue of Satoshi (Lugano): a faceless figure sitting
-  // cross-legged with a laptop, rendered in horizontal slats so it reads as a
-  // translucent "shade" like the sculpture.
-  x.save(); x.translate(cx,cy); x.scale(s,s);
-  x.beginPath();
-  // crossed legs / lap (wide base)
-  x.moveTo(-1.0,0.95); x.quadraticCurveTo(0,0.60,1.0,0.95);
-  x.quadraticCurveTo(0.66,0.46,0.30,0.42); x.lineTo(-0.30,0.42);
-  x.quadraticCurveTo(-0.66,0.46,-1.0,0.95); x.closePath();
-  // hunched torso + bent head
-  x.moveTo(-0.40,0.45);
-  x.bezierCurveTo(-0.64,0.10,-0.60,-0.30,-0.32,-0.46);
-  x.bezierCurveTo(-0.30,-0.82,0.22,-0.86,0.24,-0.50);
-  x.bezierCurveTo(0.34,-0.27,0.18,-0.13,0.10,-0.03);
-  x.bezierCurveTo(0.34,0.07,0.44,0.26,0.40,0.45); x.closePath();
-  // laptop propped on the lap
-  x.moveTo(0.16,0.28); x.lineTo(0.88,0.10); x.lineTo(0.95,0.46); x.lineTo(0.26,0.57); x.closePath();
-  // slatted fill (horizontal bars with gaps = translucent statue look)
-  x.save(); x.clip(); x.fillStyle='#ffffff';
-  for(let yy=-0.95; yy<1.0; yy+=0.085){ x.fillRect(-1.2,yy,2.4,0.05); }
-  x.restore();
-  x.restore();
-}
 function drawCard(d){
   const c=$('shareCanvas'), x=c.getContext('2d'), W=c.width, H=c.height;
   const bg='#0d0e10', text='#eceef2', muted='#8b8f98', line='rgba(255,255,255,0.10)';
@@ -625,20 +722,31 @@ function drawCard(d){
   const MONO='ui-monospace,Menlo,Consolas,monospace';
   const ls=(v)=>{ if('letterSpacing' in x) x.letterSpacing=v; };
   x.fillStyle=bg; x.fillRect(0,0,W,H);
-  // faint Statue-of-Satoshi shade (slatted, translucent like the sculpture)
-  x.save(); x.globalAlpha=0.09; drawSatoshi(x, W*0.70, H*0.45, 360); x.restore();
+  // faint Bitcoin monogram watermark
+  x.save(); x.globalAlpha=0.05; x.fillStyle='#ffffff';
+  x.font='900 780px '+SANS; x.textAlign='center'; x.textBaseline='middle';
+  x.fillText('₿', W*0.72, H*0.52); x.restore();
+  x.textAlign='left'; x.textBaseline='alphabetic';
   x.strokeStyle=line; x.lineWidth=2; x.strokeRect(20,20,W-40,H-40);
-  x.textBaseline='alphabetic'; const M=72;
+  const M=72;
   // header: wordmark + live badge
   x.textAlign='left'; x.fillStyle=text; x.font='700 42px '+SANS; ls('10px');
   x.fillText('ZENITH', M, 108); ls('0px');
   x.textAlign='right'; x.fillStyle=col; x.font='600 30px '+MONO;
   x.fillText(d.live?'● LIVE':'○ TEST', W-M, 104); x.textAlign='left';
   x.strokeStyle=line; x.beginPath(); x.moveTo(M,146); x.lineTo(W-M,146); x.stroke();
-  // user + date
-  x.fillStyle=text; x.font='600 46px '+SANS; x.fillText('@'+d.name, M, 250);
+  // user (avatar circle + @name) + date
+  let nameX=M;
+  if(avatarImg){
+    const r=34, ax=M+r, ay=222;
+    x.save(); x.beginPath(); x.arc(ax,ay,r,0,7); x.closePath(); x.clip();
+    x.drawImage(avatarImg, ax-r, ay-r, 2*r, 2*r); x.restore();
+    x.strokeStyle=line; x.lineWidth=2; x.beginPath(); x.arc(ax,ay,r,0,7); x.stroke();
+    nameX=M+2*r+18;
+  }
+  x.fillStyle=text; x.font='600 46px '+SANS; x.fillText('@'+d.name, nameX, 238);
   x.fillStyle=muted; x.font='400 30px '+MONO;
-  x.fillText(new Date().toISOString().replace('T',' ').slice(0,16)+' UTC', M, 298);
+  x.fillText(new Date().toISOString().replace('T',' ').slice(0,16)+' UTC', nameX, 284);
   // symbol + side
   x.fillStyle=text; x.font='700 90px '+SANS; x.fillText(d.sym, M, 476);
   x.fillStyle=d.isLong?green:red; x.font='600 48px '+SANS;
@@ -676,6 +784,7 @@ async function boot(){
   show('authView',true);
   try{ const r=await fetch('/app/api/me'); if(r.ok){ ME=await r.json(); render(); return; } }catch(e){}
 })();
+if($('avatarFile')) $('avatarFile').addEventListener('change',onAvatarFile);
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('/app/sw.js').catch(()=>{}); }
 </script>
 </body>

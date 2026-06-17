@@ -57,3 +57,25 @@ def test_username_defaults_from_email(tmp_path):
     cl = _saas_client(tmp_path)
     cl.post("/app/api/register", json={"email": "alice@t.com", "password": "pw123456"})
     assert cl.get("/app/api/me").json()["username"] == "alice"
+
+
+def test_profile_password_and_referral(tmp_path):
+    cl = _saas_client(tmp_path)
+    # referrer
+    cl.post("/app/api/register",
+            json={"email": "ref@t.com", "password": "pw123456", "username": "alpha"})
+    cl.post("/app/api/logout")
+    # referred user joins via ref, updates profile + password
+    cl.post("/app/api/register",
+            json={"email": "f@t.com", "password": "pw123456", "username": "bob", "ref": "alpha"})
+    assert cl.post("/app/api/profile",
+                   json={"username": "bobby", "avatar": "data:image/png;base64,AAA"}).status_code == 200
+    assert cl.post("/app/api/password", json={"new_password": "newpass12"}).status_code == 200
+    me = cl.get("/app/api/me").json()
+    assert me["username"] == "bobby" and me["avatar"]
+    # too-short password rejected
+    assert cl.post("/app/api/password", json={"new_password": "short"}).status_code == 400
+    cl.post("/app/api/logout")
+    # referrer sees the referral counted, and can log in with... referred user's new pw
+    cl.post("/app/api/login", json={"email": "ref@t.com", "password": "pw123456"})
+    assert cl.get("/app/api/me").json()["referral_count"] == 1

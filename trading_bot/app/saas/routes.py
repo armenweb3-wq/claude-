@@ -70,6 +70,16 @@ class Creds(BaseModel):
     email: str
     password: str
     username: str | None = None
+    ref: str | None = None
+
+
+class ProfileIn(BaseModel):
+    username: str | None = None
+    avatar: str | None = None  # data URL, or "" to clear
+
+
+class PasswordIn(BaseModel):
+    new_password: str
 
 
 class Keys(BaseModel):
@@ -144,8 +154,9 @@ def register(body: Creds, response: Response, request: Request) -> dict:
         raise HTTPException(403, f"the beta is full ({settings.saas_seat_limit} seats). "
                                  "Ask for a spot to open up.")
     username = (body.username or "").strip() or email.split("@")[0]
+    ref = (body.ref or "").strip().lower() or None
     salt, pw_hash = security.hash_password(body.password)
-    user = st.create_user(email, salt, pw_hash, is_admin, username=username)
+    user = st.create_user(email, salt, pw_hash, is_admin, username=username, referred_by=ref)
     token = security.new_token()
     st.create_session(token, user["id"])
     _set_cookie(response, token, request)
@@ -295,6 +306,30 @@ def redeem(body: RedeemIn, request: Request) -> dict:
     return {"ok": True}
 
 
+@router.post("/api/profile")
+def update_profile(body: ProfileIn, request: Request) -> dict:
+    user = current_user(request)
+    st = store()
+    if body.username is not None and body.username.strip():
+        st.set_username(user["id"], body.username.strip())
+    if body.avatar is not None:
+        av = body.avatar.strip()
+        if av and len(av) > 400_000:
+            raise HTTPException(400, "image too large — please pick a smaller one")
+        st.set_avatar(user["id"], av or None)
+    return {"ok": True}
+
+
+@router.post("/api/password")
+def change_password(body: PasswordIn, request: Request) -> dict:
+    user = current_user(request)
+    if len(body.new_password) < 8:
+        raise HTTPException(400, "password must be at least 8 characters")
+    salt, pw_hash = security.hash_password(body.new_password)
+    store().set_password(user["id"], salt, pw_hash)
+    return {"ok": True}
+
+
 @router.get("/api/me")
 def me(request: Request) -> dict:
     user = current_user(request)
@@ -304,6 +339,8 @@ def me(request: Request) -> dict:
     return {
         "email": user["email"],
         "username": (user.get("username") or user["email"].split("@")[0]),
+        "avatar": user.get("avatar"),
+        "referral_count": st.referral_count(user.get("username") or ""),
         "is_admin": _is_admin_user(user),
         "payment_required": settings.pay_required,
         "access_code_enabled": bool(settings.saas_access_code),

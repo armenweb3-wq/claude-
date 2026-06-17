@@ -65,7 +65,11 @@ class Store:
 
     def _migrate(self) -> None:
         """Add columns introduced after a DB was first created (idempotent)."""
-        for stmt in ("ALTER TABLE users ADD COLUMN username TEXT",):
+        for stmt in (
+            "ALTER TABLE users ADD COLUMN username TEXT",
+            "ALTER TABLE users ADD COLUMN avatar TEXT",
+            "ALTER TABLE users ADD COLUMN referred_by TEXT",
+        ):
             try:
                 if self._pg:
                     with self._conn.cursor() as cur:
@@ -105,11 +109,11 @@ class Store:
         return rows[0] if rows else None
 
     def create_user(self, email: str, salt: str, pw_hash: str, is_admin: bool,
-                    username: str | None = None) -> dict:
+                    username: str | None = None, referred_by: str | None = None) -> dict:
         self._q(
-            "INSERT INTO users (email, pw_salt, pw_hash, is_admin, username, created_at)"
-            " VALUES (?,?,?,?,?,?)",
-            (email.lower(), salt, pw_hash, 1 if is_admin else 0, username, time.time()),
+            "INSERT INTO users (email, pw_salt, pw_hash, is_admin, username, referred_by, created_at)"
+            " VALUES (?,?,?,?,?,?,?)",
+            (email.lower(), salt, pw_hash, 1 if is_admin else 0, username, referred_by, time.time()),
         )
         u = self.get_user_by_email(email)
         self._q("INSERT INTO settings (user_id, symbols) VALUES (?,?)"
@@ -122,6 +126,18 @@ class Store:
 
     def set_password(self, uid: int, salt: str, pw_hash: str) -> None:
         self._q("UPDATE users SET pw_salt=?, pw_hash=? WHERE id=?", (salt, pw_hash, uid))
+
+    def set_username(self, uid: int, username: str) -> None:
+        self._q("UPDATE users SET username=? WHERE id=?", (username, uid))
+
+    def set_avatar(self, uid: int, avatar: str | None) -> None:
+        self._q("UPDATE users SET avatar=? WHERE id=?", (avatar, uid))
+
+    def referral_count(self, username: str) -> int:
+        if not username:
+            return 0
+        return int(self._q(
+            "SELECT COUNT(*) AS c FROM users WHERE referred_by=?", (username,))[0]["c"])
 
     def list_users(self, include_admins: bool = False) -> list[dict]:
         where = "" if include_admins else " WHERE is_admin=0"

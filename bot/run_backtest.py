@@ -23,7 +23,11 @@ pd.set_option("display.float_format", lambda v: f"{v:,.4f}")
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--csv", help="OHLC CSV to backtest (default: synthetic data)")
-    ap.add_argument("--days", type=int, default=1500, help="synthetic series length")
+    ap.add_argument("--market", choices=["index", "equity"], default="index",
+                    help="synthetic market type (index = calmer, upward-drifting)")
+    ap.add_argument("--seed", type=int, default=2,
+                    help="random market to draw (try different values!)")
+    ap.add_argument("--days", type=int, default=3650, help="synthetic series length")
     ap.add_argument("--periods", type=int, default=365, help="periods/year for annualizing")
     ap.add_argument("--title", default=None)
     ap.add_argument("--out", default="equity.png")
@@ -32,9 +36,12 @@ def main() -> None:
     if args.csv:
         df = datamod.load_csv(args.csv)
         source = args.csv
+    elif args.market == "index":
+        df = datamod.index_market(days=args.days, seed=args.seed)
+        source = f"synthetic index (seed {args.seed}, {args.days} bars)"
     else:
-        df = datamod.synthetic(days=args.days)
-        source = f"synthetic ({args.days} bars, regime-switching)"
+        df = datamod.synthetic(days=args.days, seed=args.seed)
+        source = f"synthetic equity (seed {args.seed}, {args.days} bars)"
 
     title = args.title or f"Strategy comparison — {source}"
     results = [run_backtest(df, s) for s in default_suite()]

@@ -147,6 +147,16 @@
     background:var(--panel);border:1px solid var(--green);color:var(--text);
     padding:12px 18px;border-radius:12px;box-shadow:var(--shadow);font-size:.85rem;font-weight:600}
   .toast.show{display:block}
+  /* subtle motion */
+  .modalbox{animation:pop .18s ease}
+  @keyframes pop{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .card{animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .bar>i,.track>i{transition:width .5s ease}
+  .switch,.chip,button,.menuitem{transition:all .15s ease}
+  #installBar{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--panel);border:1px solid var(--accent2,#a472ff);border-radius:13px;
+    padding:11px 14px;margin-bottom:12px;font-size:.82rem}
 </style>
 </head>
 <body>
@@ -187,6 +197,10 @@
 
   <!-- MAIN (logged in) -->
   <div id="mainView" class="hide">
+    <div id="installBar" class="hide">
+      <span id="installTxt">Add ZENITH to your home screen for a faster, app-like experience.</span>
+      <span><span class="link" id="installBtn">Install</span> &nbsp; <span class="link" onclick="dismissInstall()">✕</span></span>
+    </div>
     <div class="stepwrap">
       <div class="s" id="s1">01 · Connect</div>
       <div class="s" id="s2">02 · Activate</div>
@@ -242,6 +256,7 @@
         <div class="stat"><div class="l">Open positions</div><div class="v" id="d_openpos">—</div></div>
       </div>
       <div class="disc" id="d_realtoday" style="margin-top:8px"></div>
+      <div class="disc" id="d_insight" style="margin-top:2px;color:var(--green)"></div>
       <div class="banner flat hide" id="d_market"></div>
       <div class="switchrow">
         <div><div class="swlabel">Automated trading</div><div class="swstate" id="swState">Off</div></div>
@@ -755,6 +770,12 @@ async function loadDashboard(){
   $('d_openpos').textContent=(s.open_positions!=null?s.open_positions:'—');
   const rt=s.realized_today||0;
   $('d_realtoday').innerHTML = rt? ('Realised today: <b class="'+(rt>=0?'pos':'neg')+'">'+signMoney(rt)+'</b> (banked)') : '';
+  // smart insight line
+  let ins=''; const ps=s.positions||[];
+  if(ps.length){ const best=ps.reduce((a,b)=>((b.pnl_pct||0)>(a.pnl_pct||0)?b:a));
+    if((best.pnl_pct||0)>0) ins='Leading: '+best.symbol+' +'+best.pnl_pct+'%'; }
+  if((s.open_positions||0)===0 && rt===0) ins='Bot is watching the market for setups…';
+  $('d_insight').textContent=ins;
   const stt=$('d_status');
   if(!s.enabled) stt.innerHTML='<span class="dot off"></span>Paused';
   else if(!s.running) stt.innerHTML='<span class="dot off"></span>Engine off';
@@ -1026,6 +1047,29 @@ async function boot(){
   try{ const r=await fetch('/app/api/me'); if(r.ok){ ME=await r.json(); render(); return; } }catch(e){}
 })();
 if($('avatarFile')) $('avatarFile').addEventListener('change',onAvatarFile);
+
+// ── install prompt (Add to Home Screen) ─────────────────────
+let deferredPrompt=null;
+addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e;
+  if(!localStorage.getItem('noinstall')) show('installBar',true); });
+if($('installBtn')) $('installBtn').onclick=async()=>{
+  if(deferredPrompt){ deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; show('installBar',false); } };
+function dismissInstall(){ localStorage.setItem('noinstall','1'); show('installBar',false); }
+(function(){ const iOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone=navigator.standalone||matchMedia('(display-mode: standalone)').matches;
+  if(iOS && !standalone && !localStorage.getItem('noinstall')){
+    if($('installTxt')) $('installTxt').textContent='Add ZENITH to your home screen: tap Share, then “Add to Home Screen”.';
+    if($('installBtn')) $('installBtn').style.display='none';
+    show('installBar',true);
+  }
+})();
+
+// ── pull-to-refresh ─────────────────────────────────────────
+let _pY=0,_pull=false;
+addEventListener('touchstart',e=>{ _pull=(window.scrollY<=0); _pY=e.changedTouches[0].clientY; },{passive:true});
+addEventListener('touchend',e=>{ if(_pull && window.scrollY<=0){ const d=e.changedTouches[0].clientY-_pY;
+  if(d>90 && ME && ME.activated && typeof loadDashboard==='function'){ loadDashboard(); toast('Refreshed'); } } _pull=false; },{passive:true});
+
 // swipe right to open the menu, swipe left to close it
 let _sx=0,_sy=0,_st=0;
 addEventListener('touchstart',e=>{const t=e.changedTouches[0];_sx=t.clientX;_sy=t.clientY;_st=Date.now();},{passive:true});

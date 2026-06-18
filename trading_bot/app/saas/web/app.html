@@ -798,6 +798,16 @@ function renderPositions(pos){
           +'<div class="bar"><i style="width:'+prog+'%;background:var(--green)"></i></div>';
       }
     }
+    // stop-loss cushion bar: how much room before the stop (empties + reddens as price nears SL)
+    let slBlock='';
+    if(p.stop_loss>0){
+      const lo=p.stop_loss, hi=(hit<tparr.length&&tparr[hit]!==undefined)?tparr[hit]:(isLong?p.entry_price*1.06:p.entry_price*0.94);
+      let frac=isLong?(mark-lo)/(hi-lo):(lo-mark)/(lo-hi); frac=Math.max(0,Math.min(1,frac||0));
+      const away=Math.abs(mark-lo)/(mark||1)*100;
+      const col=frac<0.25?'var(--red)':(frac<0.5?'#e0a030':'var(--green)');
+      slBlock='<div class="g2" style="margin-top:8px"><span>stop-loss cushion</span><span><b>'+away.toFixed(1)+'% away</b></span></div>'
+        +'<div class="bar"><i style="width:'+(frac*100)+'%;background:'+col+'"></i></div>';
+    }
     return '<div class="trow"><div class="top"><span class="sym">'+p.symbol+be+'</span>'
       +'<span class="spill '+cls+'">'+label+(p.leverage?' '+(+p.leverage)+'x':'')+'</span></div>'
       +'<div class="g2"><span>entry <b>'+money(p.entry_price)+'</b></span><span>now <b>'+money(mark)+'</b></span>'
@@ -806,6 +816,7 @@ function renderPositions(pos){
       +'<span>SL <b class="'+(p.breakeven?'pos':'neg')+'">'+money(p.stop_loss)+'</b></span></div>'
       +(tpsHtml?'<div class="g2" style="margin-top:5px"><span></span><span style="color:var(--muted)">'+tpsHtml+'</span></div>':'')
       +progBlock
+      +slBlock
       +'<div style="display:flex;justify-content:flex-end;gap:16px;margin-top:9px">'
       +'<span class="link" onclick="openShare(\''+p.symbol+'\')">Share ↗</span>'
       +'<span class="link" style="color:var(--red)" onclick="closePosition(\''+p.symbol+'\')">Close trade</span></div></div>';

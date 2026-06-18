@@ -18,25 +18,29 @@ log = logging.getLogger(__name__)
 _TP_LADDER_PCTS = (6.0, 12.0, 20.0)
 
 
-def manage_breakeven(exchange, symbol, pos, tp_pcts=_TP_LADDER_PCTS) -> None:
+def manage_breakeven(exchange, symbol, pos, hit=None, tp_pcts=_TP_LADDER_PCTS) -> None:
     """Trail the stop up the TP ladder: TP1 -> break-even, TP2 -> TP1, and once
-    the final TP is reached close the remainder. Stop only moves forward."""
+    the final TP is reached close the remainder. Stop only moves forward.
+
+    ``hit`` is the authoritative number of TPs filled (from closed orders); if
+    not given, fall back to comparing the current price to the levels."""
     if pos.entry_price <= 0:
         return
     is_long = (pos.side or "").lower() in ("buy", "long")
     sign = 1.0 if is_long else -1.0
-    try:
-        price = exchange.last_price(symbol)
-    except Exception:
-        return
     entry = pos.entry_price
     tps = [entry * (1 + sign * p / 100) for p in tp_pcts]
-    hit = 0
-    for t in tps:
-        if sign * (price - t) >= 0:
-            hit += 1
-        else:
-            break
+    if hit is None:
+        try:
+            price = exchange.last_price(symbol)
+        except Exception:
+            return
+        hit = 0
+        for t in tps:
+            if sign * (price - t) >= 0:
+                hit += 1
+            else:
+                break
     if hit <= 0:
         return
     if hit >= len(tps):  # final TP reached — close the remainder
@@ -100,6 +104,11 @@ class UserTrader:
             except Exception as exc:  # pragma: no cover
                 log.warning("market filter failed: %s", exc)
 
+        # closing orders per symbol — to trail the stop on real fills
+        try:
+            closed = self.ex.closed_pnl(limit=100)
+        except Exception:
+            closed = []
         # snapshot positions + manage break-even
         positions: dict = {}
         open_count = 0
@@ -109,7 +118,10 @@ class UserTrader:
                 positions[s] = p
                 if p.side is not None:
                     open_count += 1
-                    manage_breakeven(self.ex, s, p)
+                    ot = getattr(p, "created_at", "") or ""
+                    hit = (sum(1 for r in closed if r.get("symbol") == s
+                               and (r.get("closed_at") or "") >= ot) if ot else None)
+                    manage_breakeven(self.ex, s, p, hit)
             except Exception as exc:  # pragma: no cover
                 log.warning("position read %s: %s", s, exc)
 

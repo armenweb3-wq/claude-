@@ -139,10 +139,12 @@ class TradingBot:
                 pass
 
     def _refresh_state(self) -> None:
-        """Snapshot equity + open positions for the dashboard (read-only)."""
+        """Fast loop: refresh the dashboard snapshot AND trail stops up the TP
+        ladder promptly (manage=True), so SL->TP1 happens within ~30s of TP2
+        filling rather than waiting for the slow strategy cycle."""
         with self._ex_lock:
             equity = self.exchange.get_equity()
-            _, open_positions, open_details = self._snapshot_positions(manage=False)
+            _, open_positions, open_details = self._snapshot_positions(manage=True)
         self.state.equity = round(equity, 4)
         if self.state.start_equity <= 0 and equity > 0:
             self.state.start_equity = round(equity, 4)
@@ -262,6 +264,14 @@ class TradingBot:
         positions: dict[str, object] = {}
         open_positions = 0
         open_details: list[dict] = []
+        # Authoritative TP-fill counts: closing orders recorded per symbol
+        # (used to trail the stop reliably even if price wicked the TP briefly).
+        closed = []
+        if manage:
+            try:
+                closed = self.exchange.closed_pnl(limit=100)
+            except Exception:
+                closed = []
         for symbol in self.symbols:
             try:
                 pos = self.exchange.get_position(symbol)
@@ -269,7 +279,10 @@ class TradingBot:
                 if pos.side is not None:
                     open_positions += 1
                     if manage:
-                        self._manage_breakeven(symbol, pos)  # may update pos.stop_loss
+                        ot = getattr(pos, "created_at", "") or ""
+                        hit = (sum(1 for r in closed if r.get("symbol") == symbol
+                                   and (r.get("closed_at") or "") >= ot) if ot else None)
+                        self._manage_breakeven(symbol, pos, hit)  # may update pos.stop_loss
                     tps, sl, is_long = self._trade_levels(pos)
                     at_be = (sl >= pos.entry_price) if is_long else (0 < sl <= pos.entry_price)
                     # ROI on margin (leveraged) — matches the % exchanges show.
@@ -368,10 +381,13 @@ class TradingBot:
         sl = pos.stop_loss if pos.stop_loss else round(entry * (1 - sign * stop_pct / 100), 6)
         return tps, sl, is_long
 
-    def _manage_breakeven(self, symbol, pos) -> None:
+    def _manage_breakeven(self, symbol, pos, hit=None) -> None:
         """Trail the stop up the TP ladder: TP1 hit -> stop to break-even,
         TP2 hit -> stop to TP1, and once the final TP is reached close whatever
-        remains. The stop only ever moves forward, never looser."""
+        remains. The stop only ever moves forward, never looser.
+
+        ``hit`` is the authoritative number of TPs filled (from closed orders);
+        if not given we fall back to comparing the current price to the levels."""
         if pos.entry_price <= 0:
             return
         is_long = (pos.side or "").lower() in ("buy", "long")
@@ -379,18 +395,19 @@ class TradingBot:
         cfg = getattr(self.strategy, "cfg", None)
         ladder = getattr(cfg, "tp_ladder", None) or [(6.0, 0.30), (12.0, 0.40), (20.0, 0.30)]
         tp_pcts = [p for p, _ in ladder]
-        try:
-            price = self.exchange.last_price(symbol)
-        except Exception:
-            return
         entry = pos.entry_price
         tps = [entry * (1 + sign * p / 100) for p in tp_pcts]
-        hit = 0
-        for t in tps:
-            if sign * (price - t) >= 0:
-                hit += 1
-            else:
-                break
+        if hit is None:
+            try:
+                price = self.exchange.last_price(symbol)
+            except Exception:
+                return
+            hit = 0
+            for t in tps:
+                if sign * (price - t) >= 0:
+                    hit += 1
+                else:
+                    break
         if hit <= 0:
             return
         if hit >= len(tps):  # final TP reached — close the remainder

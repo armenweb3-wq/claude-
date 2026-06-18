@@ -92,11 +92,16 @@ class BybitExchange(ExchangeAdapter):
         return float(accounts[0].get("totalEquity") or 0.0)
 
     def get_position(self, symbol: str) -> Position:
+        from datetime import datetime, timezone
+
         resp = self._client.get_positions(category=self._category, symbol=symbol)
         items = resp.get("result", {}).get("list", [])
         for item in items:
             size = float(item.get("size") or 0.0)
             if size > 0:
+                ct = item.get("createdTime")
+                created = (datetime.fromtimestamp(int(ct) / 1000, tz=timezone.utc).isoformat()
+                           if ct else "")
                 return Position(
                     symbol=symbol,
                     side=item.get("side"),
@@ -105,6 +110,7 @@ class BybitExchange(ExchangeAdapter):
                     unrealised_pnl=float(item.get("unrealisedPnl") or 0.0),
                     stop_loss=float(item.get("stopLoss") or 0.0),
                     leverage=float(item.get("leverage") or 0.0),
+                    created_at=created,
                 )
         return Position(symbol, None, 0.0, 0.0)
 

@@ -138,6 +138,26 @@ def legal() -> FileResponse:
     return FileResponse(_WEB / "legal.html")
 
 
+@router.get("/stats")
+def stats_page() -> FileResponse:
+    return FileResponse(_WEB / "stats.html", headers=_NO_CACHE)
+
+
+@router.get("/api/public-stats")
+def public_stats() -> dict:
+    """Aggregate, anonymised performance for the public marketing page —
+    no per-user or dollar detail, just totals and monthly % returns."""
+    s = store().platform_stats()
+    return {
+        "users": s["users"],
+        "trades": s["trades"],
+        "win_rate": s["win_rate"],
+        "since": s["since"],
+        "monthly": [{"month": m["month"], "roi_pct": m["roi_pct"],
+                     "trades": m["trades"], "win_rate": m["win_rate"]} for m in s["monthly"]],
+    }
+
+
 # ── auth ────────────────────────────────────────────────────
 @router.post("/api/register")
 def register(body: Creds, response: Response, request: Request) -> dict:

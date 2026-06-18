@@ -47,6 +47,7 @@ def _detail(pos) -> dict:
         "entry_price": entry, "unrealised_pnl": round(pos.unrealised_pnl, 4),
         "pnl_pct": pnl_pct, "leverage": pos.leverage, "stop_loss": sl,
         "take_profits": tps, "breakeven": at_be,
+        "opened_at": getattr(pos, "created_at", "") or "",
     }
 
 

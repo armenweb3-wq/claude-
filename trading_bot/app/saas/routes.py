@@ -248,13 +248,21 @@ def dashboard(request: Request) -> dict:
             live_data = live_mod.positions_snapshot(uid, keys)
         except Exception as exc:  # surface, never 500 the dashboard
             live_err = f"live data unavailable: {exc}"
-        try:  # banked (realised) profit from trades closed today
+        try:  # banked (realised) profit from trades closed today + TP-fill counts
             hist = live_mod.history_snapshot(uid, keys)  # cached ~60s
-            st.add_closed_trades(uid, hist.get("raw", []))
+            raw = hist.get("raw", [])
+            st.add_closed_trades(uid, raw)
             today = dt.datetime.now(dt.timezone.utc).date().isoformat()
             realized_today = round(sum(
                 (t.get("pnl") or 0) for t in hist.get("trades", [])
                 if (t.get("closed_at") or "").startswith(today)), 4)
+            # how many TPs each open position has actually hit = closing orders
+            # for that symbol recorded since the position opened (authoritative,
+            # unlike inferring from current price which misses brief touches).
+            for p in live_data.get("positions", []):
+                ot = p.get("opened_at") or ""
+                p["tps_hit"] = (sum(1 for r in raw if r.get("symbol") == p["symbol"]
+                                    and (r.get("closed_at") or "") >= ot) if ot else 0)
         except Exception:
             pass
 

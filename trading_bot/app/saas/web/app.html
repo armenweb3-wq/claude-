@@ -772,16 +772,17 @@ function renderPositions(pos){
     const mark=p.size?(isLong?p.entry_price+up/p.size:p.entry_price-up/p.size):p.entry_price;
     const be=p.breakeven?' <span class="spill long">BE</span>':'';
     const tparr=(p.take_profits||[]);
-    // Count TPs the current price has reached…
+    // Authoritative: TPs actually filled on the exchange (closing orders since
+    // the position opened). Fall back to a price estimate if not available.
     let computed=0; for(let i=0;i<tparr.length;i++){ if(dir*(mark-tparr[i])>=0) computed++; else break; }
-    // …then make it sticky: a hit TP never reverts for the same position
-    // (keyed to entry with tolerance), so it can't flicker on a pullback.
-    let hit=computed; const fk='tph_'+p.symbol;
-    try{ const s0=JSON.parse(localStorage.getItem(fk)||'{}');
+    const serverHit=(typeof p.tps_hit==='number')?p.tps_hit:0;
+    let hit=Math.max(computed, serverHit); const fk='tph_'+p.symbol;
+    try{ const s0=JSON.parse(localStorage.getItem(fk)||'{}');  // sticky: never revert
       const sameEntry=s0 && Math.abs((s0.entry||0)-p.entry_price) <= Math.abs(p.entry_price)*1e-5+1e-9;
-      if(sameEntry && typeof s0.hit==='number') hit=Math.max(computed, s0.hit);
+      if(sameEntry && typeof s0.hit==='number') hit=Math.max(hit, s0.hit);
       localStorage.setItem(fk, JSON.stringify({entry:p.entry_price, hit:hit}));
     }catch(e){}
+    if(hit>tparr.length) hit=tparr.length;
     newHits[p.symbol]=hit;
     const tpsHtml=tparr.map((t,i)=> i<hit
       ? '<span class="pos">TP'+(i+1)+' ✓</span>'

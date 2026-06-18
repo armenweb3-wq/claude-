@@ -329,6 +329,7 @@
     <button class="menuitem" onclick="openPanel('botPanel')">Manage bot</button>
     <button class="menuitem" onclick="openPanel('monthlyPanel')">Performance</button>
     <button class="menuitem" onclick="openPanel('referralPanel')">Referral</button>
+    <button class="menuitem" onclick="showInstall()">Add to home screen</button>
     <button class="menuitem hide" id="menuAdmin" onclick="openPanel('adminPanel')">Admin · subscribers</button>
     <button class="menuitem" style="color:var(--red)" onclick="logout()">Log out</button>
   </div>
@@ -1077,6 +1078,16 @@ addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e
 if($('installBtn')) $('installBtn').onclick=async()=>{
   if(deferredPrompt){ deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; show('installBar',false); } };
 function dismissInstall(){ localStorage.setItem('noinstall','1'); show('installBar',false); }
+function showInstall(){  // always-available install option from the menu
+  toggleMenu(false);
+  const standalone=navigator.standalone||matchMedia('(display-mode: standalone)').matches;
+  if(standalone){ toast('App already added to your home screen'); return; }
+  if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.finally(()=>{deferredPrompt=null;}); return; }
+  if(/iphone|ipad|ipod/i.test(navigator.userAgent))
+    alert('To install: tap the Share button in Safari, then “Add to Home Screen”.');
+  else
+    alert('Tap your browser menu, then “Install app” / “Add to Home Screen”. (Use Chrome on Android for one-tap install.)');
+}
 (function(){ const iOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
   const standalone=navigator.standalone||matchMedia('(display-mode: standalone)').matches;
   if(iOS && !standalone && !localStorage.getItem('noinstall')){

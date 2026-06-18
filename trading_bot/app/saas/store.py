@@ -47,6 +47,49 @@ def _schema(d: str) -> list[str]:
     ]
 
 
+def group_closed(trades: list[dict], gap_seconds: float = 86400.0) -> list[dict]:
+    """Merge partial closes of one position (TP-ladder fills) into a single
+    logical trade: consecutive closes of the same symbol+side within gap_seconds
+    are summed. Lets stats count *positions*, not partial exits."""
+    import datetime as _dt
+
+    def _ts(s):
+        try:
+            return _dt.datetime.fromisoformat(s).timestamp()
+        except Exception:
+            return 0.0
+
+    rows = sorted(trades, key=lambda t: _ts(t.get("closed_at") or ""))
+    open_g: dict = {}
+    out: list[dict] = []
+    for t in rows:
+        key = (t.get("symbol"), (t.get("side") or "").lower())
+        tt = _ts(t.get("closed_at") or "")
+        g = open_g.get(key)
+        if g and (tt - g["_last"]) <= gap_seconds:
+            g["pnl"] += float(t.get("pnl") or 0)
+            g["pnl_pct"] += float(t.get("pnl_pct") or 0)
+            g["fee"] += float(t.get("fee") or 0)
+            g["exit_price"] = t.get("exit_price")
+            g["closed_at"] = t.get("closed_at")
+            g["parts"] += 1
+            g["_last"] = tt
+        else:
+            g = {"symbol": t.get("symbol"), "side": t.get("side"),
+                 "pnl": float(t.get("pnl") or 0), "pnl_pct": float(t.get("pnl_pct") or 0),
+                 "fee": float(t.get("fee") or 0), "entry_price": t.get("entry_price"),
+                 "exit_price": t.get("exit_price"), "closed_at": t.get("closed_at"),
+                 "parts": 1, "_last": tt}
+            open_g[key] = g
+            out.append(g)
+    for g in out:
+        g.pop("_last", None)
+        g["pnl"] = round(g["pnl"], 4)
+        g["pnl_pct"] = round(g["pnl_pct"], 2)
+        g["fee"] = round(g["fee"], 4)
+    return out
+
+
 class Store:
     def __init__(self, path: str | None = None) -> None:
         self._lock = threading.Lock()
@@ -151,31 +194,40 @@ class Store:
                  float(t.get("pnl_pct") or 0), float(t.get("fee") or 0), ca),
             )
 
-    def monthly_summary(self, uid: int) -> list[dict]:
+    def logical_trades(self, uid: int) -> list[dict]:
+        """Closed trades grouped into positions (partial TP fills merged)."""
         rows = self._q(
-            "SELECT substr(closed_at,1,7) AS month, COUNT(*) AS trades,"
-            " SUM(CASE WHEN pnl>0 THEN 1 ELSE 0 END) AS wins,"
-            " SUM(CASE WHEN pnl<0 THEN 1 ELSE 0 END) AS losses,"
-            " SUM(pnl) AS pnl, SUM(pnl_pct) AS roi"
-            " FROM closed_trades WHERE user_id=? GROUP BY month ORDER BY month DESC", (uid,))
+            "SELECT symbol, side, pnl, pnl_pct, fee, closed_at FROM closed_trades"
+            " WHERE user_id=? ORDER BY closed_at ASC", (uid,))
+        return group_closed(rows)
+
+    def monthly_summary(self, uid: int) -> list[dict]:
+        buckets: dict[str, dict] = {}
+        for g in self.logical_trades(uid):
+            mo = (g.get("closed_at") or "")[:7]
+            if not mo:
+                continue
+            b = buckets.setdefault(mo, {"trades": 0, "wins": 0, "losses": 0, "pnl": 0.0, "roi": 0.0})
+            b["trades"] += 1
+            if g["pnl"] > 0:
+                b["wins"] += 1
+            elif g["pnl"] < 0:
+                b["losses"] += 1
+            b["pnl"] += g["pnl"]
+            b["roi"] += g["pnl_pct"]
         out = []
-        for r in rows:
-            wins = int(r["wins"] or 0)
-            losses = int(r["losses"] or 0)
-            decided = wins + losses
+        for mo in sorted(buckets, reverse=True):
+            b = buckets[mo]
+            decided = b["wins"] + b["losses"]
             out.append({
-                "month": r["month"], "trades": int(r["trades"] or 0),
-                "wins": wins, "losses": losses,
-                "win_rate": round(wins / decided * 100, 1) if decided else 0.0,
-                "pnl": round(float(r["pnl"] or 0), 4),
-                "roi_pct": round(float(r["roi"] or 0), 2),
+                "month": mo, "trades": b["trades"], "wins": b["wins"], "losses": b["losses"],
+                "win_rate": round(b["wins"] / decided * 100, 1) if decided else 0.0,
+                "pnl": round(b["pnl"], 4), "roi_pct": round(b["roi"], 2),
             })
         return out
 
     def closed_by_month(self, uid: int, month: str) -> list[dict]:
-        return self._q(
-            "SELECT symbol, side, pnl, pnl_pct, fee, closed_at FROM closed_trades"
-            " WHERE user_id=? AND substr(closed_at,1,7)=? ORDER BY closed_at DESC", (uid, month))
+        return [g for g in self.logical_trades(uid) if (g.get("closed_at") or "")[:7] == month]
 
     def referral_count(self, username: str) -> int:
         if not username:

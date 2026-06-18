@@ -78,11 +78,14 @@ def history_snapshot(uid: int, keys: dict, limit: int = 100) -> dict:
         c = _hist_cache.get(uid)
         if c and now - c[0] < _HIST_TTL:
             return c[1]
-    trades = _exchange(keys).closed_pnl(limit=limit)
+    from .store import group_closed
+
+    raw = _exchange(keys).closed_pnl(limit=limit)
+    trades = group_closed(raw)  # merge partial TP fills into one trade per position
     wins = sum(1 for t in trades if (t.get("pnl") or 0) > 0)
     losses = sum(1 for t in trades if (t.get("pnl") or 0) < 0)
     decided = wins + losses
-    data = {"trades": trades, "stats": {
+    data = {"trades": trades, "raw": raw, "stats": {
         "wins": wins, "losses": losses, "total": len(trades),
         "win_rate": round(wins / decided * 100, 1) if decided else 0.0,
         "realized_pnl": round(sum(t.get("pnl") or 0 for t in trades), 4),

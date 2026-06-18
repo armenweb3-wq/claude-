@@ -80,6 +80,26 @@ def test_monthly_summary_groups_and_dedups(tmp_path):
     assert len(cl.get("/app/api/monthly_trades?month=2026-06").json()["trades"]) == 2
 
 
+def test_partial_tp_fills_count_as_one_trade(tmp_path):
+    cl = _saas_client(tmp_path)
+    cl.post("/app/api/register", json={"email": "g@t.com", "password": "pw123456", "username": "g"})
+    from app.saas.routes import store
+    st = store()
+    uid = st.get_user_by_email("g@t.com")["id"]
+    # one SOL long taken off in 3 TP fills (same day) + a separate OP loss
+    st.add_closed_trades(uid, [
+        {"id": "a", "symbol": "SOLUSDT", "side": "Buy", "pnl": 1.8, "pnl_pct": 6, "closed_at": "2026-06-10T10:00:00+00:00"},
+        {"id": "b", "symbol": "SOLUSDT", "side": "Buy", "pnl": 4.8, "pnl_pct": 12, "closed_at": "2026-06-10T12:00:00+00:00"},
+        {"id": "c", "symbol": "SOLUSDT", "side": "Buy", "pnl": 6.0, "pnl_pct": 20, "closed_at": "2026-06-10T14:00:00+00:00"},
+        {"id": "d", "symbol": "OPUSDT", "side": "Sell", "pnl": -2.0, "pnl_pct": -3, "closed_at": "2026-06-12T09:00:00+00:00"},
+    ])
+    jun = next(m for m in cl.get("/app/api/monthly").json()["months"] if m["month"] == "2026-06")
+    assert jun["trades"] == 2  # not 4 — the 3 SOL fills count as one position
+    assert jun["wins"] == 1 and jun["losses"] == 1
+    sol = [t for t in cl.get("/app/api/monthly_trades?month=2026-06").json()["trades"] if t["symbol"] == "SOLUSDT"]
+    assert len(sol) == 1 and abs(sol[0]["pnl"] - 12.6) < 1e-6
+
+
 def test_manual_trade_guards(tmp_path):
     cl = _saas_client(tmp_path)
     object.__setattr__(settings, "saas_dry_run", True)

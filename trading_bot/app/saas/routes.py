@@ -285,7 +285,7 @@ def user_history(request: Request) -> dict:
 
     try:
         data = live_mod.history_snapshot(user["id"], keys)
-        store().add_closed_trades(user["id"], data.get("trades", []))  # accrue for monthly
+        store().add_closed_trades(user["id"], data.pop("raw", []))  # accrue raw fills
         return data
     except Exception as exc:
         raise HTTPException(502, f"history unavailable: {exc}")
@@ -301,7 +301,7 @@ def monthly(request: Request) -> dict:
         from . import live as live_mod
         try:
             data = live_mod.history_snapshot(user["id"], keys)
-            st.add_closed_trades(user["id"], data.get("trades", []))
+            st.add_closed_trades(user["id"], data.get("raw", []))
         except Exception:
             pass
     return {"months": st.monthly_summary(user["id"])}

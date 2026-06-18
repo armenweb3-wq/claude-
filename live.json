@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-18T20:35:26.225Z",
+  "updatedAt": "2026-06-18T20:40:29.860Z",
   "matches": [
     {
       "home": "Haiti",
@@ -157,8 +157,8 @@
       "home": "Switzerland",
       "away": "Bosnia-H.",
       "status": "IN_PLAY",
-      "homeScore": null,
-      "awayScore": null,
+      "homeScore": 1,
+      "awayScore": 0,
       "utcDate": "2026-06-18T19:00:00Z"
     },
     {

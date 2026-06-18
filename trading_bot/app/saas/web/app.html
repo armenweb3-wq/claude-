@@ -241,6 +241,7 @@
         <div class="stat"><div class="l">Status</div><div class="v sm" id="d_status">—</div></div>
         <div class="stat"><div class="l">Open positions</div><div class="v" id="d_openpos">—</div></div>
       </div>
+      <div class="disc" id="d_realtoday" style="margin-top:8px"></div>
       <div class="banner flat hide" id="d_market"></div>
       <div class="switchrow">
         <div><div class="swlabel">Automated trading</div><div class="swstate" id="swState">Off</div></div>
@@ -705,7 +706,7 @@ function render(){
   $('symbols').value=ME.settings.symbols;
   botEnabled=!!ME.settings.enabled; updateToggleBtn();
   if(dashTimer){ clearInterval(dashTimer); dashTimer=null; }
-  if(active){ loadDashboard(); dashTimer=setInterval(loadDashboard,15000); }
+  if(active){ loadDashboard(); dashTimer=setInterval(loadDashboard,10000); }
 }
 
 // ── formatting helpers ──────────────────────────────────────
@@ -736,6 +737,8 @@ async function loadDashboard(){
   const pnl=s.open_pnl||0, pe=$('d_pnl');
   pe.textContent=signMoney(pnl); pe.className='v '+(pnl>0?'pos':pnl<0?'neg':'');
   $('d_openpos').textContent=(s.open_positions!=null?s.open_positions:'—');
+  const rt=s.realized_today||0;
+  $('d_realtoday').innerHTML = rt? ('Realised today: <b class="'+(rt>=0?'pos':'neg')+'">'+signMoney(rt)+'</b> (banked)') : '';
   const stt=$('d_status');
   if(!s.enabled) stt.innerHTML='<span class="dot off"></span>Paused';
   else if(!s.running) stt.innerHTML='<span class="dot off"></span>Engine off';
@@ -769,14 +772,16 @@ function renderPositions(pos){
     const mark=p.size?(isLong?p.entry_price+up/p.size:p.entry_price-up/p.size):p.entry_price;
     const be=p.breakeven?' <span class="spill long">BE</span>':'';
     const tparr=(p.take_profits||[]);
-    // Best price reached for this position (persisted), so a hit TP stays hit
-    // even if price pulls back — avoids the on/off flicker around a TP level.
-    const fk='fav_'+p.symbol; let fav=mark;
+    // Count TPs the current price has reached…
+    let computed=0; for(let i=0;i<tparr.length;i++){ if(dir*(mark-tparr[i])>=0) computed++; else break; }
+    // …then make it sticky: a hit TP never reverts for the same position
+    // (keyed to entry with tolerance), so it can't flicker on a pullback.
+    let hit=computed; const fk='tph_'+p.symbol;
     try{ const s0=JSON.parse(localStorage.getItem(fk)||'{}');
-      if(s0 && s0.entry===p.entry_price && typeof s0.fav==='number') fav=isLong?Math.max(s0.fav,mark):Math.min(s0.fav,mark);
-      localStorage.setItem(fk, JSON.stringify({entry:p.entry_price, fav:fav}));
+      const sameEntry=s0 && Math.abs((s0.entry||0)-p.entry_price) <= Math.abs(p.entry_price)*1e-5+1e-9;
+      if(sameEntry && typeof s0.hit==='number') hit=Math.max(computed, s0.hit);
+      localStorage.setItem(fk, JSON.stringify({entry:p.entry_price, hit:hit}));
     }catch(e){}
-    let hit=0; for(let i=0;i<tparr.length;i++){ if(dir*(fav-tparr[i])>=0) hit++; else break; }
     newHits[p.symbol]=hit;
     const tpsHtml=tparr.map((t,i)=> i<hit
       ? '<span class="pos">TP'+(i+1)+' ✓</span>'

@@ -10,7 +10,7 @@ import time
 
 from . import security
 
-_POS_TTL = 20.0   # seconds — open positions / equity
+_POS_TTL = 8.0    # seconds — open positions / equity (kept low so it tracks Bybit)
 _HIST_TTL = 60.0  # seconds — closed-trade history
 
 _lock = threading.Lock()

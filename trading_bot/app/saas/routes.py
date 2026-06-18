@@ -242,11 +242,21 @@ def dashboard(request: Request) -> dict:
 
     live_data = {"equity": 0.0, "open_pnl": 0.0, "open_positions": 0, "positions": []}
     live_err = None
+    realized_today = 0.0
     if keys:
         try:
             live_data = live_mod.positions_snapshot(uid, keys)
         except Exception as exc:  # surface, never 500 the dashboard
             live_err = f"live data unavailable: {exc}"
+        try:  # banked (realised) profit from trades closed today
+            hist = live_mod.history_snapshot(uid, keys)  # cached ~60s
+            st.add_closed_trades(uid, hist.get("raw", []))
+            today = dt.datetime.now(dt.timezone.utc).date().isoformat()
+            realized_today = round(sum(
+                (t.get("pnl") or 0) for t in hist.get("trades", [])
+                if (t.get("closed_at") or "").startswith(today)), 4)
+        except Exception:
+            pass
 
     from ..strategy.cycle import assess_cycle
 
@@ -259,6 +269,7 @@ def dashboard(request: Request) -> dict:
         "dry_run": settings.saas_dry_run,
         "equity": live_data["equity"],
         "open_pnl": live_data["open_pnl"],
+        "realized_today": realized_today,
         "open_positions": live_data["open_positions"],
         "positions": live_data["positions"],
         "signals": (res or {}).get("signals", {}),

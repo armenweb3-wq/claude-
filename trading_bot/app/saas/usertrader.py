@@ -15,34 +15,48 @@ from ..strategy.market_filter import assess_market
 log = logging.getLogger(__name__)
 
 
-def manage_breakeven(exchange, symbol, pos) -> None:
-    """Move the stop to break-even (+fee buffer) once price clears TP1."""
-    pct = settings.breakeven_after_pct
-    if pct <= 0 or pos.entry_price <= 0:
+_TP_LADDER_PCTS = (6.0, 12.0, 20.0)
+
+
+def manage_breakeven(exchange, symbol, pos, tp_pcts=_TP_LADDER_PCTS) -> None:
+    """Trail the stop up the TP ladder: TP1 -> break-even, TP2 -> TP1, and once
+    the final TP is reached close the remainder. Stop only moves forward."""
+    if pos.entry_price <= 0:
         return
     is_long = (pos.side or "").lower() in ("buy", "long")
-    buf = 0.0012
+    sign = 1.0 if is_long else -1.0
     try:
         price = exchange.last_price(symbol)
     except Exception:
         return
-    if is_long:
-        if price < pos.entry_price * (1 + pct / 100):
-            return
-        be = round(pos.entry_price * (1 + buf), 6)
-        if pos.stop_loss and pos.stop_loss >= be:
-            return
-    else:
-        if price > pos.entry_price * (1 - pct / 100):
-            return
-        be = round(pos.entry_price * (1 - buf), 6)
-        if pos.stop_loss and 0 < pos.stop_loss <= be:
-            return
+    entry = pos.entry_price
+    tps = [entry * (1 + sign * p / 100) for p in tp_pcts]
+    hit = 0
+    for t in tps:
+        if sign * (price - t) >= 0:
+            hit += 1
+        else:
+            break
+    if hit <= 0:
+        return
+    if hit >= len(tps):  # final TP reached — close the remainder
+        try:
+            exchange.close_position(symbol)
+            pos.side = None
+        except Exception as exc:  # pragma: no cover
+            log.warning("final close failed %s: %s", symbol, exc)
+        return
+    buf = 0.0012
+    target = round(entry * (1 + sign * buf), 6) if hit == 1 else round(tps[hit - 2], 6)
+    cur = pos.stop_loss or 0.0
+    forward = (target > cur) if is_long else (cur == 0 or target < cur)
+    if not forward:
+        return
     try:
-        exchange.set_stop_loss(symbol, be)
-        pos.stop_loss = be
+        exchange.set_stop_loss(symbol, target)
+        pos.stop_loss = target
     except Exception as exc:  # pragma: no cover
-        log.warning("breakeven move failed %s: %s", symbol, exc)
+        log.warning("stop update failed %s: %s", symbol, exc)
 
 
 class UserTrader:

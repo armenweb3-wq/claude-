@@ -369,36 +369,57 @@ class TradingBot:
         return tps, sl, is_long
 
     def _manage_breakeven(self, symbol, pos) -> None:
-        """Once price has run past TP1, move the stop to break-even (plus a
-        small buffer for fees) so the trade can no longer become a loss."""
-        pct = settings.breakeven_after_pct
-        if pct <= 0 or pos.entry_price <= 0:
+        """Trail the stop up the TP ladder: TP1 hit -> stop to break-even,
+        TP2 hit -> stop to TP1, and once the final TP is reached close whatever
+        remains. The stop only ever moves forward, never looser."""
+        if pos.entry_price <= 0:
             return
         is_long = (pos.side or "").lower() in ("buy", "long")
-        buf = 0.0012  # ~0.12% past entry to cover round-trip taker fees
+        sign = 1.0 if is_long else -1.0
+        cfg = getattr(self.strategy, "cfg", None)
+        ladder = getattr(cfg, "tp_ladder", None) or [(6.0, 0.30), (12.0, 0.40), (20.0, 0.30)]
+        tp_pcts = [p for p, _ in ladder]
         try:
             price = self.exchange.last_price(symbol)
         except Exception:
             return
-        if is_long:
-            if price < pos.entry_price * (1 + pct / 100):
-                return
-            be = round(pos.entry_price * (1 + buf), 6)
-            if pos.stop_loss and pos.stop_loss >= be:
-                return
+        entry = pos.entry_price
+        tps = [entry * (1 + sign * p / 100) for p in tp_pcts]
+        hit = 0
+        for t in tps:
+            if sign * (price - t) >= 0:
+                hit += 1
+            else:
+                break
+        if hit <= 0:
+            return
+        if hit >= len(tps):  # final TP reached — close the remainder
+            try:
+                self.exchange.close_position(symbol)
+                pos.side = None
+                self.notifier.send(f"✅ {symbol} final take-profit hit — position closed")
+                log.info("final TP close for %s", symbol)
+            except Exception as exc:
+                log.warning("final close failed for %s: %s", symbol, exc)
+            return
+        buf = 0.0012  # ~0.12% past entry to cover round-trip taker fees
+        if hit == 1:
+            target = round(entry * (1 + sign * buf), 6)
+            label = "break-even"
         else:
-            if price > pos.entry_price * (1 - pct / 100):
-                return
-            be = round(pos.entry_price * (1 - buf), 6)
-            if pos.stop_loss and 0 < pos.stop_loss <= be:
-                return
+            target = round(tps[hit - 2], 6)  # TP2 hit -> TP1, etc.
+            label = f"TP{hit - 1}"
+        cur = pos.stop_loss or 0.0
+        forward = (target > cur) if is_long else (cur == 0 or target < cur)
+        if not forward:
+            return
         try:
-            self.exchange.set_stop_loss(symbol, be)
-            pos.stop_loss = be  # reflect immediately for display
-            self.notifier.send(f"🛡️ {symbol} stop moved to break-even @ {be}")
-            log.info("break-even stop set for %s @ %s", symbol, be)
+            self.exchange.set_stop_loss(symbol, target)
+            pos.stop_loss = target  # reflect immediately for display
+            self.notifier.send(f"🛡️ {symbol} stop moved to {label} @ {target}")
+            log.info("trailing stop %s -> %s (%s)", symbol, target, label)
         except Exception as exc:
-            log.warning("break-even update failed for %s: %s", symbol, exc)
+            log.warning("stop update failed for %s: %s", symbol, exc)
 
     def _assess_market(self):
         """Read BTC and decide what the market allows (long/short)."""

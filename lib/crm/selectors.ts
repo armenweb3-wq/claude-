@@ -99,6 +99,53 @@ export function recentActivity(clients: Client[], limit = 8) {
     .slice(0, limit);
 }
 
+export interface DaySummary {
+  date: string;
+  callsMade: number;
+  reached: number; // calls where someone actually picked up
+  notesAdded: number;
+  byOutcome: { outcome: LeadStatus; count: number }[];
+  callbacksBooked: number;
+  deals: { client: Client; amount: number; method: string; at: string }[];
+  depositsTotal: number;
+  calls: { client: Client; outcome: LeadStatus | undefined; body: string; at: string }[];
+}
+
+/** Everything an agent did on a given day — the end-of-day report. */
+export function daySummary(clients: Client[], agentId: string, day = new Date()): DaySummary {
+  const start = new Date(day); start.setHours(0, 0, 0, 0);
+  const end = new Date(start); end.setDate(start.getDate() + 1);
+  const within = (iso: string) => { const t = new Date(iso).getTime(); return t >= start.getTime() && t < end.getTime(); };
+
+  const acts = clients.flatMap((c) =>
+    c.activity.filter((a) => a.agentId === agentId && within(a.at)).map((a) => ({ c, a })),
+  );
+  const callActs = acts.filter(({ a }) => a.kind === "call");
+  const notesAdded = acts.filter(({ a }) => a.kind === "note").length;
+
+  const counts = new Map<LeadStatus, number>();
+  for (const { a } of callActs) if (a.outcome) counts.set(a.outcome, (counts.get(a.outcome) ?? 0) + 1);
+
+  const deals = clients
+    .filter((c) => c.ownerId === agentId)
+    .flatMap((c) => c.depositHistory.filter((d) => within(d.date)).map((d) => ({ client: c, amount: d.amount, method: d.method, at: d.date })))
+    .sort((a, b) => +new Date(b.at) - +new Date(a.at));
+
+  return {
+    date: start.toISOString(),
+    callsMade: callActs.length,
+    reached: callActs.filter(({ a }) => a.outcome && a.outcome !== "no_answer").length,
+    notesAdded,
+    byOutcome: Array.from(counts, ([outcome, count]) => ({ outcome, count })).sort((a, b) => b.count - a.count),
+    callbacksBooked: counts.get("callback") ?? 0,
+    deals,
+    depositsTotal: deals.reduce((s, d) => s + d.amount, 0),
+    calls: callActs
+      .map(({ c, a }) => ({ client: c, outcome: a.outcome, body: a.body, at: a.at }))
+      .sort((x, y) => +new Date(y.at) - +new Date(x.at)),
+  };
+}
+
 export function statusCounts(clients: Client[], agentId?: string): { status: LeadStatus; count: number }[] {
   const mine = agentId ? clients.filter((c) => c.ownerId === agentId) : clients;
   const order: LeadStatus[] = ["new", "no_answer", "callback", "qualified", "deposited", "active", "dormant", "not_interested"];

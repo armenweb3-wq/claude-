@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { addNote } from "@/lib/crm/store";
+import { useSession } from "@/lib/crm/session";
 import { clock, pct, relative, usd } from "@/lib/crm/format";
 import { STATUS_META, type Client } from "@/lib/crm/types";
 import { AGENTS } from "@/lib/crm/seed";
@@ -11,7 +13,15 @@ type Tab = "overview" | "trading" | "activity";
 
 export default function ClientDrawer({ client, onClose }: { client: Client; onClose: () => void }) {
   const [tab, setTab] = useState<Tab>("overview");
+  const [draft, setDraft] = useState("");
+  const agent = useSession();
   const owner = AGENTS.find((a) => a.id === client.ownerId);
+
+  const submitNote = () => {
+    if (!draft.trim() || !agent) return;
+    addNote(client.id, draft, agent.id);
+    setDraft("");
+  };
 
   return (
     <div className="fixed inset-0 z-[60] flex justify-end bg-slate-950/70 backdrop-blur-sm" onClick={onClose}>
@@ -114,6 +124,21 @@ export default function ClientDrawer({ client, onClose }: { client: Client; onCl
           )}
 
           {tab === "activity" && (
+            <>
+            <div className="mb-4 rounded-xl border border-white/5 bg-white/[0.03] p-3">
+              <textarea
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                rows={2}
+                placeholder="Add a note — it updates the working note and the hit list…"
+                className="w-full resize-none rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-600 focus:border-emerald-500/50"
+              />
+              <div className="mt-2 flex justify-end">
+                <button onClick={submitNote} disabled={!draft.trim()} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-slate-950 transition-colors hover:bg-emerald-400 disabled:opacity-50">
+                  <Icon.plus className="h-3.5 w-3.5" /> Add note
+                </button>
+              </div>
+            </div>
             <ul className="space-y-3">
               {client.activity.map((a) => (
                 <li key={a.id} className="flex gap-3">
@@ -128,6 +153,7 @@ export default function ClientDrawer({ client, onClose }: { client: Client; onCl
               ))}
               {client.activity.length === 0 && <li className="text-sm text-slate-500">No activity logged.</li>}
             </ul>
+            </>
           )}
         </div>
 

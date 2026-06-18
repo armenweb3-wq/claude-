@@ -6,6 +6,7 @@ import { useSession } from "@/lib/crm/session";
 import {
   byStage,
   callQueue,
+  daySummary,
   isOverdue,
   metrics,
   recentActivity,
@@ -21,6 +22,7 @@ export default function Dashboard() {
   if (clients.length === 0 || !agent) return <Loading />;
 
   const m = metrics(clients, agent.id);
+  const day = daySummary(clients, agent.id);
   const queue = callQueue(clients, agent.id);
   const upNext = queue.slice(0, 6);
   const stages = byStage(clients, agent.id);
@@ -59,11 +61,26 @@ export default function Dashboard() {
         <Kpi label="Conversion" value={pct(m.conversion, false)} sub={`avg P/L ${pct(m.avgPnl)}`} accent={m.avgPnl >= 0 ? "text-emerald-300" : "text-rose-300"} icon={<Icon.shield className="h-4 w-4" />} />
       </div>
 
+      {/* Today so far → end-of-day report */}
+      <Link href="/crm/summary" className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-slate-900/30 px-5 py-3.5 transition-colors hover:bg-white/[0.04]">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1">
+          <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Today so far</span>
+          <DayStat n={day.callsMade} label="calls" />
+          <DayStat n={day.reached} label="reached" />
+          <DayStat n={day.deals.length} label="deals" accent="text-emerald-300" />
+          <span className="text-sm"><span className="font-semibold tabular-nums text-emerald-300">{usd(day.depositsTotal)}</span> <span className="text-slate-500">deposited</span></span>
+        </div>
+        <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-emerald-300">End-of-day report <Icon.arrow className="h-3.5 w-3.5" /></span>
+      </Link>
+
       <div className="grid gap-5 lg:grid-cols-3">
-        {/* Up next */}
+        {/* Today's hit list */}
         <div className="rounded-xl border border-white/[0.06] bg-slate-900/30 lg:col-span-2">
           <div className="flex items-center justify-between border-b border-white/5 px-5 py-3.5">
-            <h2 className="text-sm font-semibold text-slate-200">Your call queue</h2>
+            <div>
+              <h2 className="text-sm font-semibold text-slate-200">Today&apos;s hit list</h2>
+              <p className="mt-0.5 text-[11px] text-slate-500">Re-ranks automatically as you log calls</p>
+            </div>
             <Link href="/crm/call" className="inline-flex items-center gap-1 text-xs font-medium text-emerald-300 hover:text-emerald-200">
               Call Station <Icon.arrow className="h-3.5 w-3.5" />
             </Link>
@@ -163,6 +180,14 @@ export default function Dashboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+function DayStat({ n, label, accent = "text-slate-100" }: { n: number; label: string; accent?: string }) {
+  return (
+    <span className="text-sm">
+      <span className={`font-semibold tabular-nums ${accent}`}>{n}</span> <span className="text-slate-500">{label}</span>
+    </span>
   );
 }
 

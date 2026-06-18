@@ -13,6 +13,7 @@ const NAV = [
   { href: "/crm/call", label: "Call Station", icon: Icon.phone },
   { href: "/crm/clients", label: "Clients", icon: Icon.users },
   { href: "/crm/pipeline", label: "Pipeline", icon: Icon.board },
+  { href: "/crm/summary", label: "Day Summary", icon: Icon.report },
 ];
 
 export default function AppFrame({ children }: { children: React.ReactNode }) {

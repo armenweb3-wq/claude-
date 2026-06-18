@@ -8,7 +8,7 @@ import { useSyncExternalStore } from "react";
 import type { Activity, Client, LeadStatus, Priority } from "./types";
 import { seedClients } from "./seed";
 
-const KEY = "vantage-crm:clients:v2";
+const KEY = "vantage-crm:clients:v3";
 
 let cache: Client[] | null = null;
 const EMPTY: Client[] = [];
@@ -109,4 +109,26 @@ export function logCall(id: string, r: CallResult) {
 
 export function resetDemo() {
   commit(seedClients());
+}
+
+/** Add a standalone note (no call) — appends to the timeline and updates the
+ * working note that drives the hit list. */
+export function addNote(id: string, body: string, agentId: string) {
+  const text = body.trim();
+  if (!text) return;
+  const now = new Date().toISOString();
+  commit(
+    current().map((c) =>
+      c.id === id
+        ? {
+            ...c,
+            note: text,
+            activity: [
+              { id: `act_${Date.now()}`, at: now, kind: "note", body: text, agentId },
+              ...c.activity,
+            ],
+          }
+        : c,
+    ),
+  );
 }

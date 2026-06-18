@@ -274,5 +274,34 @@ export function seedClients(): Client[] {
     if (i % 2 === 0) c.ownerId = PRIMARY_AGENT.id;
   });
 
-  return [...hot, ...rest];
+  const all = [...hot, ...rest];
+
+  // Simulate work already done earlier today by the signed-in agent, so the
+  // end-of-day report and recent activity are populated on first load.
+  const todayAt = (hoursAgo: number) => new Date(Date.now() - hoursAgo * HOUR).toISOString();
+  const pool = all.filter((c) => c.ownerId === PRIMARY_AGENT.id);
+  const script: { outcome: LeadStatus; body: string; h: number; deposit?: number; method?: string }[] = [
+    { outcome: "no_answer", body: "No answer, left a voicemail.", h: 5.5 },
+    { outcome: "qualified", body: "Strong call — sending the platform walkthrough, following up tomorrow.", h: 4.5 },
+    { outcome: "callback", body: "Asked to be called back after lunch.", h: 3.5 },
+    { outcome: "deposited", body: "Closed — funded the account on the call.", h: 2.5, deposit: 3000, method: "Visa" },
+    { outcome: "no_answer", body: "Rang out, will retry.", h: 2 },
+    { outcome: "deposited", body: "Top-up secured over the phone.", h: 1.25, deposit: 5000, method: "Bank Wire" },
+    { outcome: "qualified", body: "Warm — wants the VIP terms before committing.", h: 0.5 },
+  ];
+  script.forEach((s, i) => {
+    const c = pool[pool.length - 1 - i]; // use accounts further down the queue, not the hot leads
+    if (!c) return;
+    c.lastContact = todayAt(s.h);
+    c.activity.unshift({ id: aid(), at: todayAt(s.h), kind: "call", outcome: s.outcome, body: s.body, agentId: PRIMARY_AGENT.id });
+    if (s.deposit) {
+      c.status = "deposited";
+      c.deposits += s.deposit;
+      c.balance += s.deposit;
+      c.equity += s.deposit;
+      c.depositHistory.push({ date: todayAt(s.h), amount: s.deposit, method: s.method ?? "Visa" });
+    }
+  });
+
+  return all;
 }

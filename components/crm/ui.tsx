@@ -119,4 +119,6 @@ export const Icon = {
   trend: (p: I) => <svg {...base(p)}><path d="M3 17l5-5 3 3 7-7" /><path d="M15 8h4v4" /></svg>,
   bolt: (p: I) => <svg {...base(p)}><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" /></svg>,
   shield: (p: I) => <svg {...base(p)}><path d="M12 3 5 6v5c0 5 3.5 8 7 10 3.5-2 7-5 7-10V6l-7-3Z" /></svg>,
+  report: (p: I) => <svg {...base(p)}><path d="M7 3h7l5 5v13a0 0 0 0 1 0 0H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d="M14 3v5h5" /><path d="M9 13h6M9 17h4" /></svg>,
+  plus: (p: I) => <svg {...base(p)}><path d="M12 5v14M5 12h14" /></svg>,
 };

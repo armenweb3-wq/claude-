@@ -769,7 +769,14 @@ function renderPositions(pos){
     const mark=p.size?(isLong?p.entry_price+up/p.size:p.entry_price-up/p.size):p.entry_price;
     const be=p.breakeven?' <span class="spill long">BE</span>':'';
     const tparr=(p.take_profits||[]);
-    let hit=0; for(let i=0;i<tparr.length;i++){ if(dir*(mark-tparr[i])>=0) hit++; else break; }
+    // Best price reached for this position (persisted), so a hit TP stays hit
+    // even if price pulls back — avoids the on/off flicker around a TP level.
+    const fk='fav_'+p.symbol; let fav=mark;
+    try{ const s0=JSON.parse(localStorage.getItem(fk)||'{}');
+      if(s0 && s0.entry===p.entry_price && typeof s0.fav==='number') fav=isLong?Math.max(s0.fav,mark):Math.min(s0.fav,mark);
+      localStorage.setItem(fk, JSON.stringify({entry:p.entry_price, fav:fav}));
+    }catch(e){}
+    let hit=0; for(let i=0;i<tparr.length;i++){ if(dir*(fav-tparr[i])>=0) hit++; else break; }
     newHits[p.symbol]=hit;
     const tpsHtml=tparr.map((t,i)=> i<hit
       ? '<span class="pos">TP'+(i+1)+' ✓</span>'

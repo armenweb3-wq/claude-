@@ -615,6 +615,30 @@ def admin_stats(admin: dict = Depends(require_admin)) -> dict:
     return data
 
 
+class BroadcastIn(BaseModel):
+    text: str
+    include_broker: bool = False
+
+
+@router.post("/api/admin/broadcast")
+def admin_broadcast(body: BroadcastIn, admin: dict = Depends(require_admin)) -> dict:
+    """Send a Telegram message to every user who connected Telegram. Optionally
+    attach the broker upgrade button."""
+    from . import alerts
+    text = (body.text or "").strip()
+    if not text:
+        raise HTTPException(400, "message is empty")
+    button = None
+    if body.include_broker and settings.broker_link:
+        button = {"text": f"Upgrade with {settings.broker_name} →", "url": settings.broker_link}
+    sent = 0
+    for u in store().list_users(include_admins=True):
+        chat = u.get("telegram_chat_id")
+        if chat and alerts.notify(chat, text, button):
+            sent += 1
+    return {"ok": True, "sent": sent}
+
+
 @router.post("/api/admin/activate")
 def admin_activate(body: ActivateIn, admin: dict = Depends(require_admin)) -> dict:
     st = store()

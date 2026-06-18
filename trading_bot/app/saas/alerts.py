@@ -12,16 +12,22 @@ from ..config import settings
 log = logging.getLogger(__name__)
 
 
-def notify(chat_id: str | None, text: str) -> None:
+def notify(chat_id: str | None, text: str, button: dict | None = None) -> bool:
+    """Send a Telegram message; optional inline button {text,url}. Returns ok."""
     if not chat_id or not settings.telegram_bot_token:
-        return
+        return False
+    payload = {"chat_id": chat_id, "text": text, "parse_mode": "HTML",
+               "disable_web_page_preview": True}
+    if button and button.get("url"):
+        payload["reply_markup"] = {"inline_keyboard": [[{"text": button.get("text", "Open"),
+                                                         "url": button["url"]}]]}
     try:
         import requests
 
-        requests.post(
+        r = requests.post(
             f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendMessage",
-            json={"chat_id": chat_id, "text": text, "parse_mode": "HTML"},
-            timeout=8,
-        )
+            json=payload, timeout=8)
+        return r.status_code == 200
     except Exception as exc:  # pragma: no cover - best effort
         log.warning("telegram alert failed: %s", exc)
+        return False

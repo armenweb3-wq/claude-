@@ -103,6 +103,9 @@ class Settings:
     # optional secret to validate Telegram webhook calls.
     telegram_bot_username: str = field(default_factory=lambda: _get("TELEGRAM_BOT_USERNAME", "").lstrip("@"))
     telegram_webhook_secret: str = field(default_factory=lambda: _get("TELEGRAM_WEBHOOK_SECRET", ""))
+    # Affiliate / broker referral (rev-share) shown as an upgrade button.
+    broker_name: str = field(default_factory=lambda: _get("BROKER_NAME", "our partner broker"))
+    broker_link: str = field(default_factory=lambda: _get("BROKER_LINK", ""))
     # Two-way command control (/status, /start, /stop, /pause, /resume).
     telegram_commands_enabled: bool = field(
         default_factory=lambda: _get_bool("TELEGRAM_COMMANDS_ENABLED", False)

@@ -329,7 +329,6 @@
     <button class="menuitem" onclick="openPanel('botPanel')">Manage bot</button>
     <button class="menuitem" onclick="openPanel('monthlyPanel')">Performance</button>
     <button class="menuitem" onclick="openPanel('referralPanel')">Referral</button>
-    <button class="menuitem" onclick="showInstall()">Add to home screen</button>
     <button class="menuitem hide" id="menuAdmin" onclick="openPanel('adminPanel')">Admin · subscribers</button>
     <button class="menuitem" style="color:var(--red)" onclick="logout()">Log out</button>
   </div>
@@ -446,6 +445,14 @@
       <div class="stat"><div class="l">Seats</div><div class="v sm"><span id="seatInfo">—</span></div></div>
     </div>
     <div id="adminPerf" style="margin-top:14px"></div>
+    <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
+      <h2 style="margin:0 0 8px">Broadcast to Telegram</h2>
+      <textarea id="bcText" rows="3" placeholder="Message to all connected users…" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:11px;padding:12px;font-family:var(--sans);font-size:.9rem"></textarea>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:.82rem;color:var(--text)">
+        <input id="bcBroker" type="checkbox" style="width:auto"/> Include broker upgrade button</label>
+      <button class="ghost" onclick="sendBroadcast()">Send broadcast</button>
+      <div class="msg" id="bcMsg"></div>
+    </div>
     <div id="adminUsers" style="margin-top:14px"></div>
   </div>
 </div>
@@ -568,6 +575,12 @@ async function loadAdminStats(){
           +'<span class="'+(m.pnl>=0?'pos':'neg')+'">'+(m.roi_pct>=0?'+':'')+m.roi_pct+'% · '+signMoney(m.pnl)+'</span>'
           +'<span class="disc" style="margin:0">'+m.trades+'t · '+m.win_rate+'%</span></div>').join('')):'');
   }catch(e){ $('adminPerf').innerHTML=''; }
+}
+async function sendBroadcast(){
+  const m=$('bcMsg'); m.className='msg'; m.textContent='Sending…';
+  try{ const r=await api('/admin/broadcast','POST',{text:$('bcText').value,include_broker:$('bcBroker').checked});
+    m.className='msg ok'; m.textContent='Sent to '+r.sent+' user(s) ✓'; $('bcText').value='';
+  }catch(e){ m.className='msg err'; m.textContent=e.message; }
 }
 async function adminAct(id){ await api('/admin/activate','POST',{user_id:id,days:30}); loadAdmin(); }
 async function adminDe(id){ await api('/admin/deactivate','POST',{user_id:id}); loadAdmin(); }
@@ -761,6 +774,7 @@ function render(){
   botEnabled=!!ME.settings.enabled; updateToggleBtn();
   if(dashTimer){ clearInterval(dashTimer); dashTimer=null; }
   if(active){ loadDashboard(); dashTimer=setInterval(loadDashboard,10000); }
+  if(typeof maybeShowInstall==='function') maybeShowInstall();
 }
 
 // ── formatting helpers ──────────────────────────────────────
@@ -1071,31 +1085,25 @@ async function boot(){
 })();
 if($('avatarFile')) $('avatarFile').addEventListener('change',onAvatarFile);
 
-// ── install prompt (Add to Home Screen) ─────────────────────
+// ── install banner — once per day, only if not already installed ─────
 let deferredPrompt=null;
-addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e;
-  if(!localStorage.getItem('noinstall')) show('installBar',true); });
+function maybeShowInstall(){
+  if(!ME || $('mainView').classList.contains('hide')) return;
+  const standalone=navigator.standalone||matchMedia('(display-mode: standalone)').matches;
+  if(standalone) return;                                   // already installed
+  const today=new Date().toISOString().slice(0,10);
+  if(localStorage.getItem('install_day')===today) return;  // already shown today
+  const iOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  if(iOS){ $('installTxt').textContent='Add ZENITH to your home screen: tap Share, then “Add to Home Screen”.'; $('installBtn').style.display='none'; }
+  else if(deferredPrompt){ $('installTxt').textContent='Add ZENITH to your home screen for an app-like experience.'; $('installBtn').style.display=''; }
+  else { return; }                                         // Android: wait for prompt event
+  show('installBar',true);
+  localStorage.setItem('install_day',today);
+}
+addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); deferredPrompt=e; maybeShowInstall(); });
 if($('installBtn')) $('installBtn').onclick=async()=>{
   if(deferredPrompt){ deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; show('installBar',false); } };
-function dismissInstall(){ localStorage.setItem('noinstall','1'); show('installBar',false); }
-function showInstall(){  // always-available install option from the menu
-  toggleMenu(false);
-  const standalone=navigator.standalone||matchMedia('(display-mode: standalone)').matches;
-  if(standalone){ toast('App already added to your home screen'); return; }
-  if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.finally(()=>{deferredPrompt=null;}); return; }
-  if(/iphone|ipad|ipod/i.test(navigator.userAgent))
-    alert('To install: tap the Share button in Safari, then “Add to Home Screen”.');
-  else
-    alert('Tap your browser menu, then “Install app” / “Add to Home Screen”. (Use Chrome on Android for one-tap install.)');
-}
-(function(){ const iOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
-  const standalone=navigator.standalone||matchMedia('(display-mode: standalone)').matches;
-  if(iOS && !standalone && !localStorage.getItem('noinstall')){
-    if($('installTxt')) $('installTxt').textContent='Add ZENITH to your home screen: tap Share, then “Add to Home Screen”.';
-    if($('installBtn')) $('installBtn').style.display='none';
-    show('installBar',true);
-  }
-})();
+function dismissInstall(){ show('installBar',false); }     // day already marked — won't reshow today
 
 // ── pull-to-refresh ─────────────────────────────────────────
 let _pY=0,_pull=false;

@@ -344,6 +344,9 @@
     </div>
     <input id="avatarFile" type="file" accept="image/*" class="hide"/>
     <label>Username</label><input id="profUsername"/>
+    <label>Telegram alerts — chat ID (optional)</label>
+    <input id="profTg" autocomplete="off" placeholder="e.g. 123456789"/>
+    <div class="disc" style="margin-top:4px">Get trade alerts on Telegram: message the bot, then paste your chat ID (from @userinfobot). Leave blank to turn off.</div>
     <button onclick="saveProfile()">Save profile</button>
     <div class="msg" id="profMsg"></div>
     <label style="margin-top:20px">New password</label><input id="newPass" type="password" autocomplete="new-password"/>
@@ -659,6 +662,7 @@ function setCardAvatar(){
 function fillProfile(){
   pendingAvatar=undefined;
   $('profUsername').value=(ME&&ME.username)||'';
+  $('profTg').value=(ME&&ME.telegram)||'';
   fillAvatar('profAvatar'); $('profMsg').textContent=''; $('passMsg').textContent='';
 }
 function fillReferral(){
@@ -669,7 +673,7 @@ function copyRef(){ navigator.clipboard&&navigator.clipboard.writeText($('refLin
   $('refMsg').className='msg ok'; $('refMsg').textContent='Link copied ✓'; }
 async function saveProfile(){
   const m=$('profMsg'); m.className='msg'; m.textContent='…';
-  const payload={username:$('profUsername').value};
+  const payload={username:$('profUsername').value, telegram:$('profTg').value};
   if(pendingAvatar!==undefined) payload.avatar=pendingAvatar;
   try{ await api('/profile','POST',payload); ME=await api('/me');
     pendingAvatar=undefined; setCardAvatar(); fillAvatar('menuAvatar'); $('menuName').textContent='@'+(ME.username||'');

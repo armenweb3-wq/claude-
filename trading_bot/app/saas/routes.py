@@ -76,6 +76,7 @@ class Creds(BaseModel):
 class ProfileIn(BaseModel):
     username: str | None = None
     avatar: str | None = None  # data URL, or "" to clear
+    telegram: str | None = None  # Telegram chat ID for alerts, or "" to clear
 
 
 class PasswordIn(BaseModel):
@@ -390,6 +391,8 @@ def update_profile(body: ProfileIn, request: Request) -> dict:
         if av and len(av) > 400_000:
             raise HTTPException(400, "image too large — please pick a smaller one")
         st.set_avatar(user["id"], av or None)
+    if body.telegram is not None:
+        st.set_telegram(user["id"], body.telegram.strip() or None)
     return {"ok": True}
 
 
@@ -506,6 +509,7 @@ def me(request: Request) -> dict:
         "email": user["email"],
         "username": (user.get("username") or user["email"].split("@")[0]),
         "avatar": user.get("avatar"),
+        "telegram": user.get("telegram_chat_id") or "",
         "referral_count": st.referral_count(user.get("username") or ""),
         "is_admin": _is_admin_user(user),
         "payment_required": settings.pay_required,

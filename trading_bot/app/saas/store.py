@@ -116,6 +116,7 @@ class Store:
             "ALTER TABLE users ADD COLUMN username TEXT",
             "ALTER TABLE users ADD COLUMN avatar TEXT",
             "ALTER TABLE users ADD COLUMN referred_by TEXT",
+            "ALTER TABLE users ADD COLUMN telegram_chat_id TEXT",
         ):
             try:
                 if self._pg:
@@ -180,19 +181,29 @@ class Store:
     def set_avatar(self, uid: int, avatar: str | None) -> None:
         self._q("UPDATE users SET avatar=? WHERE id=?", (avatar, uid))
 
+    def set_telegram(self, uid: int, chat_id: str | None) -> None:
+        self._q("UPDATE users SET telegram_chat_id=? WHERE id=?", (chat_id, uid))
+
     # ── closed-trade history (for monthly performance) ──────
-    def add_closed_trades(self, uid: int, trades: list[dict]) -> None:
+    def add_closed_trades(self, uid: int, trades: list[dict]) -> list[dict]:
+        """Insert new closed trades; return the ones that were newly added
+        (so callers can fire alerts only for genuinely new closes)."""
+        new: list[dict] = []
         for t in trades:
             ca = t.get("closed_at")
             if not ca:
                 continue
             ext = str(t.get("id") or (str(t.get("symbol")) + "|" + str(ca)))
+            if self._q("SELECT 1 FROM closed_trades WHERE user_id=? AND ext_id=?", (uid, ext)):
+                continue
             self._q(
                 "INSERT INTO closed_trades (user_id, ext_id, symbol, side, pnl, pnl_pct, fee, closed_at)"
                 " VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(user_id, ext_id) DO NOTHING",
                 (uid, ext, t.get("symbol"), t.get("side"), float(t.get("pnl") or 0),
                  float(t.get("pnl_pct") or 0), float(t.get("fee") or 0), ca),
             )
+            new.append(t)
+        return new
 
     def logical_trades(self, uid: int) -> list[dict]:
         """Closed trades grouped into positions (partial TP fills merged)."""

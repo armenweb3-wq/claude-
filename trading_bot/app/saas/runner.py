@@ -64,6 +64,23 @@ class MultiUserRunner:
                 log.exception("runner cycle failed")
             self._stop.wait(max(30, settings.saas_loop_seconds))
 
+    def _alert(self, user: dict, opened: list, new_closed: list) -> None:
+        """Telegram alerts for this user's opens and recent closes."""
+        chat = user.get("telegram_chat_id")
+        if not chat:
+            return
+        from . import alerts
+        import datetime as _dt
+        for o in opened:
+            alerts.notify(chat, f"🟢 Opened {o.get('side')} {o.get('symbol')} (qty {o.get('qty')})")
+        cutoff = (_dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(minutes=20)).isoformat()
+        for t in new_closed:
+            if (t.get("closed_at") or "") < cutoff:
+                continue  # skip historical backfill, only alert fresh closes
+            pnl = t.get("pnl") or 0
+            emoji = "✅" if pnl > 0 else "🔻"
+            alerts.notify(chat, f"{emoji} Closed {t.get('symbol')} — PnL {pnl:+.4f} USDT")
+
     def run_cycle(self) -> None:
         for user in self.store.list_users(include_admins=True):
             uid = user["id"]
@@ -90,7 +107,8 @@ class MultiUserRunner:
                 # Persist closed trades every cycle so performance data accrues
                 # over time even if the user never opens the dashboard.
                 try:
-                    self.store.add_closed_trades(uid, res.get("closed", []))
+                    new_closed = self.store.add_closed_trades(uid, res.get("closed", []))
+                    self._alert(user, res.get("opened", []), new_closed)
                 except Exception:  # pragma: no cover
                     pass
             except Exception as exc:  # one user must not break the rest

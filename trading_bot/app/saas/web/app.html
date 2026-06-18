@@ -805,7 +805,8 @@ function renderPositions(pos){
       let frac=isLong?(mark-lo)/(hi-lo):(lo-mark)/(lo-hi); frac=Math.max(0,Math.min(1,frac||0));
       const away=Math.abs(mark-lo)/(mark||1)*100;
       const col=frac<0.25?'var(--red)':(frac<0.5?'#e0a030':'var(--green)');
-      slBlock='<div class="g2" style="margin-top:8px"><span>stop-loss cushion</span><span><b>'+away.toFixed(1)+'% away</b></span></div>'
+      slBlock='<div class="g2" style="margin-top:8px"><span style="color:var(--red)">stop-loss cushion</span>'
+        +'<span><b class="'+(frac<0.25?'neg':'')+'">'+away.toFixed(1)+'% away</b></span></div>'
         +'<div class="bar"><i style="width:'+(frac*100)+'%;background:'+col+'"></i></div>';
     }
     return '<div class="trow"><div class="top"><span class="sym">'+p.symbol+be+'</span>'

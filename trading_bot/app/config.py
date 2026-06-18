@@ -99,6 +99,10 @@ class Settings:
     # telegram
     telegram_bot_token: str = field(default_factory=lambda: _get("TELEGRAM_BOT_TOKEN"))
     telegram_chat_id: str = field(default_factory=lambda: _get("TELEGRAM_CHAT_ID"))
+    # SaaS one-tap connect: bot @username (no @) for the t.me link, and an
+    # optional secret to validate Telegram webhook calls.
+    telegram_bot_username: str = field(default_factory=lambda: _get("TELEGRAM_BOT_USERNAME", "").lstrip("@"))
+    telegram_webhook_secret: str = field(default_factory=lambda: _get("TELEGRAM_WEBHOOK_SECRET", ""))
     # Two-way command control (/status, /start, /stop, /pause, /resume).
     telegram_commands_enabled: bool = field(
         default_factory=lambda: _get_bool("TELEGRAM_COMMANDS_ENABLED", False)

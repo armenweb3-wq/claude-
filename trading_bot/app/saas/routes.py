@@ -380,6 +380,30 @@ def redeem(body: RedeemIn, request: Request) -> dict:
     return {"ok": True}
 
 
+@router.post("/api/tg-webhook")
+async def tg_webhook(request: Request) -> dict:
+    """Telegram webhook: when a user taps Start on the deep link (/start u<id>),
+    capture their chat ID automatically. Optionally validated by a secret."""
+    secret = settings.telegram_webhook_secret
+    if secret and request.headers.get("X-Telegram-Bot-Api-Secret-Token") != secret:
+        raise HTTPException(403, "bad secret")
+    try:
+        body = await request.json()
+    except Exception:
+        return {"ok": True}
+    msg = body.get("message") or body.get("edited_message") or {}
+    text = (msg.get("text") or "").strip()
+    chat = (msg.get("chat") or {}).get("id")
+    if chat and text.startswith("/start"):
+        parts = text.split(maxsplit=1)
+        payload = parts[1].strip() if len(parts) > 1 else ""
+        if payload.startswith("u") and payload[1:].isdigit():
+            store().set_telegram(int(payload[1:]), str(chat))
+            from . import alerts
+            alerts.notify(str(chat), "✅ Telegram connected — you'll get trade alerts here.")
+    return {"ok": True}
+
+
 @router.post("/api/profile")
 def update_profile(body: ProfileIn, request: Request) -> dict:
     user = current_user(request)
@@ -510,6 +534,8 @@ def me(request: Request) -> dict:
         "username": (user.get("username") or user["email"].split("@")[0]),
         "avatar": user.get("avatar"),
         "telegram": user.get("telegram_chat_id") or "",
+        "tg_link": (f"https://t.me/{settings.telegram_bot_username}?start=u{user['id']}"
+                    if settings.telegram_bot_username else ""),
         "referral_count": st.referral_count(user.get("username") or ""),
         "is_admin": _is_admin_user(user),
         "payment_required": settings.pay_required,

@@ -73,7 +73,8 @@
   table{width:100%;border-collapse:collapse;font-size:.78rem}
   td,th{text-align:left;padding:9px 6px;border-bottom:1px solid var(--line2)}
   th{color:var(--muted);font-weight:600;font-size:.66rem}
-  .hide{display:none}
+  .hide{display:none!important}
+  body.noscroll{overflow:hidden}
   /* stepper */
   .stepwrap{display:flex;margin:0 0 18px;border:1px solid var(--line);border-radius:11px;overflow:hidden}
   .stepwrap .s{flex:1;text-align:center;font-size:.74rem;padding:11px 4px;color:var(--faint);
@@ -117,7 +118,7 @@
     align-items:center;justify-content:center;padding:16px}
   .modal.show{display:flex}
   .modalbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;
-    max-width:540px;width:100%;max-height:82vh;overflow:auto}
+    max-width:540px;width:100%;max-height:82vh;overflow:auto;overscroll-behavior:contain}
   #shareCanvas{max-width:100%;max-height:66vh;border-radius:14px}
   .srow{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap;justify-content:center}
   .srow button{flex:0;width:auto;min-width:90px;margin-top:0;padding:11px 15px;font-size:.82rem}
@@ -128,8 +129,8 @@
   .drawer{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.6);display:none}
   .drawer.show{display:block}
   .drawerpanel{position:absolute;top:0;left:0;bottom:0;width:82%;max-width:330px;background:var(--panel);
-    border-right:1px solid var(--line);padding:20px;overflow:auto;
-    transform:translateX(-100%);transition:transform .22s ease}
+    border-right:1px solid var(--line);padding:20px;overflow:auto;overscroll-behavior:contain;
+    transform:translateX(-100%);transition:transform .3s cubic-bezier(.22,.61,.36,1)}
   .drawer.show .drawerpanel{transform:translateX(0)}
   .drawerhead{display:flex;align-items:center;gap:12px;padding:4px 0 16px;border-bottom:1px solid var(--line);margin-bottom:6px}
   .avatar{width:48px;height:48px;border-radius:50%;background:var(--bg);border:1px solid var(--line);
@@ -344,9 +345,13 @@
     </div>
     <input id="avatarFile" type="file" accept="image/*" class="hide"/>
     <label>Username</label><input id="profUsername"/>
-    <label>Telegram alerts — chat ID (optional)</label>
-    <input id="profTg" autocomplete="off" placeholder="e.g. 123456789"/>
-    <div class="disc" style="margin-top:4px">Get trade alerts on Telegram: message the bot, then paste your chat ID (from @userinfobot). Leave blank to turn off.</div>
+    <label>Telegram alerts</label>
+    <div id="tgConnectWrap" class="hide" style="margin-bottom:8px">
+      <a class="link" id="tgConnect" target="_blank" rel="noopener" style="display:inline-block;border:1px solid var(--line);border-radius:10px;padding:10px 14px">▶ Connect Telegram — 1 tap</a>
+      <div class="disc" style="margin-top:4px">Tap, then press <b>Start</b> in Telegram — you're connected automatically.</div>
+    </div>
+    <input id="profTg" autocomplete="off" placeholder="…or paste your chat ID (from @userinfobot)"/>
+    <div class="disc" style="margin-top:4px">Leave blank to turn alerts off.</div>
     <button onclick="saveProfile()">Save profile</button>
     <div class="msg" id="profMsg"></div>
     <label style="margin-top:20px">New password</label><input id="newPass" type="password" autocomplete="new-password"/>
@@ -497,7 +502,7 @@ async function doAuth(){
     await api(isRegister?'/register':'/login','POST',
       {email:$('email').value,password:$('password').value,username:$('username').value,ref});
     await boot();
-    if(wasRegister) $('welcomeModal').classList.add('show');
+    if(wasRegister){ $('welcomeModal').classList.add('show'); lockScroll(); }
   }catch(e){ m.className='msg err'; m.textContent=e.message; }
 }
 async function logout(){ try{await api('/logout','POST')}catch(e){} location.reload(); }
@@ -576,7 +581,12 @@ function toast(msg){
 const LIVE_CARDS=['statsCard','cycleCard','positionsCard','signalsCard','chartCard'];
 
 // ── menu / drawer / profile ─────────────────────────────────
-function toggleMenu(on){ $('drawer').classList.toggle('show',on); }
+const MENU_PANELS=['profilePanel','botPanel','monthlyPanel','referralPanel','adminPanel'];
+function lockScroll(){
+  const open=document.querySelector('.modal.show')||$('drawer').classList.contains('show');
+  document.body.classList.toggle('noscroll', !!open);
+}
+function toggleMenu(on){ $('drawer').classList.toggle('show',on); lockScroll(); }
 function openPanel(id){
   toggleMenu(false);
   if(id==='adminPanel'){ loadAdmin(); loadAdminStats(); }
@@ -584,7 +594,7 @@ function openPanel(id){
   if(id==='referralPanel') fillReferral();
   if(id==='tradePanel') fillTradeForm();
   if(id==='monthlyPanel') fillMonthly();
-  $(id).classList.add('show');
+  $(id).classList.add('show'); lockScroll();
 }
 async function fillMonthly(){
   $('monthlyList').innerHTML='<div class="disc">Loading…</div>';
@@ -647,8 +657,15 @@ function updateEstimate(){
   el.innerHTML='Entry ≈ '+money(entry)+' · Stop ≈ '+money(stop)
     +' · <b style="color:var(--red)">Liq ≈ '+money(liq)+'</b>';
 }
-function closePanel(id){ $(id).classList.remove('show'); }
+function closePanel(id){ $(id).classList.remove('show'); lockScroll(); }
 function backToMenu(id){ $(id).classList.remove('show'); toggleMenu(true); }  // close panel -> reopen menu
+// tap the dark backdrop (outside the box) to close — menu panels return to the menu
+document.addEventListener('click',e=>{
+  if(e.target.classList && e.target.classList.contains('modal')){
+    const id=e.target.id;
+    if(MENU_PANELS.indexOf(id)>=0) backToMenu(id); else closePanel(id);
+  }
+});
 function fillAvatar(id){
   const el=$(id); if(!el) return;
   const src=(pendingAvatar!==undefined?pendingAvatar:ME&&ME.avatar);
@@ -663,6 +680,7 @@ function fillProfile(){
   pendingAvatar=undefined;
   $('profUsername').value=(ME&&ME.username)||'';
   $('profTg').value=(ME&&ME.telegram)||'';
+  if(ME && ME.tg_link){ $('tgConnect').href=ME.tg_link; show('tgConnectWrap',true); } else show('tgConnectWrap',false);
   fillAvatar('profAvatar'); $('profMsg').textContent=''; $('passMsg').textContent='';
 }
 function fillReferral(){
@@ -913,7 +931,7 @@ function loadChart(sym){
 }
 // history modal
 async function openHistory(){
-  $('historyModal').classList.add('show');
+  $('historyModal').classList.add('show'); lockScroll();
   $('histStats').innerHTML=''; $('histList').innerHTML='<div class="disc">Loading…</div>';
   try{
     const s=await api('/history'), st=s.stats||{};
@@ -935,7 +953,7 @@ async function openHistory(){
     }).join('');
   }catch(e){ $('histList').innerHTML='<div class="trow"><div class="disc" style="margin:0">Could not load history.</div></div>'; }
 }
-function closeHistory(){ $('historyModal').classList.remove('show'); }
+function closeHistory(){ $('historyModal').classList.remove('show'); lockScroll(); }
 
 // ── manual trading ──────────────────────────────────────────
 async function closePosition(sym){
@@ -968,7 +986,7 @@ function openShare(sym){
   lastShare={name:(ME&&ME.username)||'trader', sym, isLong, lev:+p.leverage||0,
             pnl, pct:p.pnl_pct||0, entry, last, live:!lastDry};
   drawCard(lastShare);
-  $('shareModal').classList.add('show');
+  $('shareModal').classList.add('show'); lockScroll();
 }
 function shareClosed(i){
   const t=lastHistoryTrades[i]; if(!t) return;
@@ -976,9 +994,9 @@ function shareClosed(i){
   lastShare={name:(ME&&ME.username)||'trader', sym:t.symbol, isLong, lev:0,
             pnl:t.pnl||0, pct:t.pnl_pct||0, entry:t.entry_price||0, last:t.exit_price||0, live:!lastDry};
   drawCard(lastShare);
-  closeHistory(); $('shareModal').classList.add('show');
+  closeHistory(); $('shareModal').classList.add('show'); lockScroll();
 }
-function closeShare(){ $('shareModal').classList.remove('show'); }
+function closeShare(){ $('shareModal').classList.remove('show'); lockScroll(); }
 function fmtP(v){ return Number(v).toLocaleString(undefined,{maximumFractionDigits:4}); }
 function drawCard(d){
   const c=$('shareCanvas'), x=c.getContext('2d'), W=c.width, H=c.height;

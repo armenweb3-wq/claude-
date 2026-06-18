@@ -278,7 +278,7 @@ def dashboard(request: Request) -> dict:
 def user_history(request: Request) -> dict:
     user = current_user(request)
     keys = store().get_keys(user["id"])
-    empty = {"wins": 0, "losses": 0, "total": 0, "win_rate": 0.0, "realized_pnl": 0}
+    empty = {"wins": 0, "losses": 0, "total": 0, "win_rate": 0.0, "realized_pnl": 0, "fees": 0}
     if not keys:
         return {"trades": [], "stats": empty}
     from . import live as live_mod

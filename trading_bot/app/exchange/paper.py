@@ -98,7 +98,7 @@ class PaperExchange(ExchangeAdapter):
         self._closed.append({
             "symbol": pos.symbol, "side": pos.side, "qty": pos.size,
             "entry_price": pos.entry_price, "exit_price": exit_price,
-            "pnl": round(pnl, 4), "pnl_pct": round(pct, 2),
+            "pnl": round(pnl, 4), "pnl_pct": round(pct, 2), "fee": 0.0,
             "closed_at": datetime.now(timezone.utc).isoformat(),
         })
 

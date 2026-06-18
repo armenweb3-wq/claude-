@@ -12,6 +12,12 @@ from ..config import settings
 log = logging.getLogger(__name__)
 
 
+def community_button() -> dict | None:
+    if settings.community_link:
+        return {"text": "Join the free community →", "url": settings.community_link}
+    return None
+
+
 def notify(chat_id: str | None, text: str, button: dict | None = None) -> bool:
     """Send a Telegram message; optional inline button {text,url}. Returns ok."""
     if not chat_id or not settings.telegram_bot_token:

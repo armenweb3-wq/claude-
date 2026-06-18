@@ -106,6 +106,9 @@ class Settings:
     # Affiliate / broker referral (rev-share) shown as an upgrade button.
     broker_name: str = field(default_factory=lambda: _get("BROKER_NAME", "our partner broker"))
     broker_link: str = field(default_factory=lambda: _get("BROKER_LINK", ""))
+    # Public community channel link + the hour (UTC) to send the daily summary.
+    community_link: str = field(default_factory=lambda: _get("COMMUNITY_LINK", ""))
+    summary_hour_utc: int = field(default_factory=lambda: _get_int("SUMMARY_HOUR_UTC", 19))
     # Two-way command control (/status, /start, /stop, /pause, /resume).
     telegram_commands_enabled: bool = field(
         default_factory=lambda: _get_bool("TELEGRAM_COMMANDS_ENABLED", False)

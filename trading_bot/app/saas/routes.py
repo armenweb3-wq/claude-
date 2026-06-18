@@ -398,9 +398,20 @@ async def tg_webhook(request: Request) -> dict:
         parts = text.split(maxsplit=1)
         payload = parts[1].strip() if len(parts) > 1 else ""
         if payload.startswith("u") and payload[1:].isdigit():
-            store().set_telegram(int(payload[1:]), str(chat))
+            st = store()
+            st.set_telegram(int(payload[1:]), str(chat))
             from . import alerts
-            alerts.notify(str(chat), "✅ Telegram connected — you'll get trade alerts here.")
+            s = st.platform_stats()
+            track = (f"\n\nSo far: <b>{s['trades']}</b> trades · <b>{s['win_rate']}%</b> win rate"
+                     f" across <b>{s['users']}</b> traders." if s["trades"] else "")
+            alerts.notify(str(chat),
+                "✅ <b>Welcome to ZENITH</b>\n\n"
+                "I trade crypto automatically on your own exchange account — you keep full custody."
+                + track +
+                "\n\nFrom now you'll get:\n• every trade opened / closed / take-profit\n"
+                "• a daily summary at 7pm\n• tips, offers and community updates\n\n"
+                "⚠️ High-risk — you can lose money. Past results don't guarantee future ones. Not financial advice.",
+                alerts.community_button())
     return {"ok": True}
 
 

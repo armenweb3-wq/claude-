@@ -43,6 +43,7 @@ class MultiUserRunner:
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self.results: dict[int, dict] = {}  # user_id -> last run summary
+        self._last_summary_day: str | None = None  # daily-summary dedupe
 
     def start(self) -> None:
         if self._thread and self._thread.is_alive():
@@ -60,9 +61,39 @@ class MultiUserRunner:
         while not self._stop.is_set():
             try:
                 self.run_cycle()
+                self._maybe_daily_summary()
             except Exception:  # pragma: no cover
                 log.exception("runner cycle failed")
             self._stop.wait(max(30, settings.saas_loop_seconds))
+
+    def _maybe_daily_summary(self) -> None:
+        """Once a day at SUMMARY_HOUR_UTC, DM each connected user their day."""
+        import datetime as _dt
+        now = _dt.datetime.now(_dt.timezone.utc)
+        if now.hour != settings.summary_hour_utc:
+            return
+        today = now.date().isoformat()
+        if self._last_summary_day == today:
+            return
+        self._last_summary_day = today
+        from . import alerts
+        for u in self.store.list_users(include_admins=True):
+            chat = u.get("telegram_chat_id")
+            if not chat:
+                continue
+            trades = [t for t in self.store.logical_trades(u["id"])
+                      if (t.get("closed_at") or "").startswith(today)]
+            if not trades:
+                alerts.notify(chat, "📊 <b>Daily summary</b>\nNo trades closed today — bot is watching for setups.",
+                              alerts.community_button())
+                continue
+            wins = sum(1 for t in trades if t["pnl"] > 0)
+            losses = sum(1 for t in trades if t["pnl"] < 0)
+            net = sum(t["pnl"] for t in trades)
+            alerts.notify(chat,
+                f"📊 <b>Daily summary</b>\nTrades closed: <b>{len(trades)}</b>\n"
+                f"Wins: <b>{wins}</b> · Losses: <b>{losses}</b>\nNet: <b>{net:+.2f} USDT</b>",
+                alerts.community_button())
 
     def _alert(self, user: dict, opened: list, new_closed: list) -> None:
         """Telegram alerts for this user's opens and recent closes."""

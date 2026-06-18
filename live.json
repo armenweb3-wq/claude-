@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-18T00:10:30.227Z",
+  "updatedAt": "2026-06-18T00:15:26.362Z",
   "matches": [
     {
       "home": "Haiti",
@@ -132,7 +132,7 @@
     {
       "home": "Ghana",
       "away": "Panama",
-      "status": "PAUSED",
+      "status": "IN_PLAY",
       "homeScore": 0,
       "awayScore": 0,
       "utcDate": "2026-06-17T23:00:00Z"

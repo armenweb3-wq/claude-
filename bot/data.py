@@ -42,8 +42,15 @@ def _finalize(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def load_csv(path: str) -> pd.DataFrame:
-    """Load an OHLC CSV into the canonical frame (UTC index, lower-case cols)."""
-    return _finalize(pd.read_csv(path))
+    """Load an OHLC CSV into the canonical frame (UTC index, lower-case cols).
+
+    Auto-detects the delimiter (comma or tab) so data from different providers
+    loads the same way.
+    """
+    with open(path) as fh:
+        head = fh.readline()
+    sep = "\t" if head.count("\t") > head.count(",") else ","
+    return _finalize(pd.read_csv(path, sep=sep))
 
 
 def from_candlestick_json(payload: dict) -> pd.DataFrame:

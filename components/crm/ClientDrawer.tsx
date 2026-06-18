@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { addNote } from "@/lib/crm/store";
+import { addNote, updateClient } from "@/lib/crm/store";
 import { useSession } from "@/lib/crm/session";
 import { clock, pct, relative, usd } from "@/lib/crm/format";
 import { STATUS_META, type Client } from "@/lib/crm/types";
@@ -15,7 +15,6 @@ export default function ClientDrawer({ client, onClose }: { client: Client; onCl
   const [tab, setTab] = useState<Tab>("overview");
   const [draft, setDraft] = useState("");
   const agent = useSession();
-  const owner = AGENTS.find((a) => a.id === client.ownerId);
 
   const submitNote = () => {
     if (!draft.trim() || !agent) return;
@@ -78,7 +77,16 @@ export default function ClientDrawer({ client, onClose }: { client: Client; onCl
               </div>
               <div className="grid grid-cols-2 gap-2.5">
                 <Cell label="Lead score" value={`${client.score}/100`} />
-                <Cell label="Owner" value={owner?.name ?? "—"} />
+                <div className="rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wider text-slate-500">Owner</p>
+                  <select
+                    value={client.ownerId}
+                    onChange={(e) => updateClient(client.id, { ownerId: e.target.value })}
+                    className="mt-0.5 w-full bg-transparent text-sm text-slate-200 outline-none"
+                  >
+                    {AGENTS.map((a) => <option key={a.id} value={a.id} className="bg-slate-900">{a.name}</option>)}
+                  </select>
+                </div>
                 <Cell label="Source" value={client.source} />
                 <Cell label="Email" value={client.email} mono />
                 <Cell label="Next call" value={clock(client.nextFollowUp)} />
@@ -106,6 +114,30 @@ export default function ClientDrawer({ client, onClose }: { client: Client; onCl
                 <Cell label="Lifetime deposits" value={usd(client.deposits)} />
                 <Cell label="Withdrawals" value={usd(client.withdrawals)} />
                 <Cell label="Net" value={usd(client.deposits - client.withdrawals)} />
+              </div>
+              <div>
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Open positions</p>
+                {client.positions.length === 0 ? (
+                  <p className="text-sm text-slate-500">No open trades.</p>
+                ) : (
+                  <div className="overflow-hidden rounded-lg border border-white/5">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-white/[0.03] text-[10px] uppercase tracking-wider text-slate-500">
+                        <tr><th className="px-3 py-1.5 font-medium">Symbol</th><th className="px-3 py-1.5 font-medium">Side</th><th className="px-3 py-1.5 font-medium">Size</th><th className="px-3 py-1.5 text-right font-medium">P/L</th></tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {client.positions.map((p) => (
+                          <tr key={p.id}>
+                            <td className="px-3 py-1.5 font-medium text-slate-200">{p.symbol}</td>
+                            <td className={`px-3 py-1.5 font-medium uppercase ${p.side === "buy" ? "text-emerald-300" : "text-rose-300"}`}>{p.side}</td>
+                            <td className="px-3 py-1.5 tabular-nums text-slate-400">{p.size}</td>
+                            <td className={`px-3 py-1.5 text-right tabular-nums ${p.pnl >= 0 ? "text-emerald-300" : "text-rose-300"}`}>{usd(p.pnl, { sign: true })}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
               <div>
                 <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Deposit history</p>

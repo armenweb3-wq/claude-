@@ -10,6 +10,7 @@ import { Avatar, CountryTag, Icon, KycBadge, Sparkline, StatusBadge, TierBadge }
 import ClientDrawer from "./ClientDrawer";
 
 type Filter = "all" | "mine" | "queue" | "funded" | LeadStatus;
+type SortKey = "name" | "equity" | "pnl" | "next";
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "All" },
@@ -28,25 +29,36 @@ export default function ClientsView() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [selected, setSelected] = useState<string | null>(null);
+  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "equity", dir: -1 });
+
+  const toggleSort = (key: SortKey) =>
+    setSort((s) => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: key === "name" ? 1 : -1 }));
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return clients
-      .filter((c) => {
-        if (filter === "mine" && c.ownerId !== agent?.id) return false;
-        if (filter === "queue" && !["new", "no_answer", "callback", "qualified", "dormant"].includes(c.status)) return false;
-        if (filter === "funded" && !["active", "deposited", "dormant"].includes(c.status)) return false;
-        if (["new", "qualified", "deposited", "not_interested"].includes(filter) && c.status !== filter) return false;
-        if (!q) return true;
-        return (
-          c.name.toLowerCase().includes(q) ||
-          c.email.toLowerCase().includes(q) ||
-          c.country.name.toLowerCase().includes(q) ||
-          c.phone.includes(q)
-        );
-      })
-      .sort((a, b) => b.equity - a.equity || b.score - a.score);
-  }, [clients, query, filter, agent?.id]);
+    const rows = clients.filter((c) => {
+      if (filter === "mine" && c.ownerId !== agent?.id) return false;
+      if (filter === "queue" && !["new", "no_answer", "callback", "qualified", "dormant"].includes(c.status)) return false;
+      if (filter === "funded" && !["active", "deposited", "dormant"].includes(c.status)) return false;
+      if (["new", "qualified", "deposited", "not_interested"].includes(filter) && c.status !== filter) return false;
+      if (!q) return true;
+      return (
+        c.name.toLowerCase().includes(q) ||
+        c.email.toLowerCase().includes(q) ||
+        c.country.name.toLowerCase().includes(q) ||
+        c.phone.includes(q)
+      );
+    });
+    const cmp = (a: typeof rows[number], b: typeof rows[number]) => {
+      switch (sort.key) {
+        case "name": return a.name.localeCompare(b.name) * sort.dir;
+        case "equity": return (a.equity - b.equity) * sort.dir;
+        case "pnl": return (a.pnlPct - b.pnlPct) * sort.dir;
+        case "next": return ((a.nextFollowUp ? +new Date(a.nextFollowUp) : Infinity) - (b.nextFollowUp ? +new Date(b.nextFollowUp) : Infinity)) * sort.dir;
+      }
+    };
+    return rows.sort(cmp);
+  }, [clients, query, filter, agent?.id, sort]);
 
   const active = selected ? clients.find((c) => c.id === selected) ?? null : null;
 
@@ -100,12 +112,12 @@ export default function ClientsView() {
         <table className="w-full text-left text-sm">
           <thead className="border-b border-white/5 bg-white/[0.02] text-[11px] uppercase tracking-wider text-slate-500">
             <tr>
-              <th className="px-4 py-2.5 font-medium">Client</th>
+              <Th label="Client" k="name" sort={sort} onSort={toggleSort} />
               <th className="px-4 py-2.5 font-medium">Status</th>
-              <th className="px-4 py-2.5 font-medium">Equity</th>
-              <th className="px-4 py-2.5 font-medium">P/L</th>
+              <Th label="Equity" k="equity" sort={sort} onSort={toggleSort} />
+              <Th label="P/L" k="pnl" sort={sort} onSort={toggleSort} />
               <th className="px-4 py-2.5 font-medium">KYC</th>
-              <th className="px-4 py-2.5 font-medium">Next call</th>
+              <Th label="Next call" k="next" sort={sort} onSort={toggleSort} />
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
@@ -168,5 +180,17 @@ export default function ClientsView() {
 
       {active && <ClientDrawer client={active} onClose={() => setSelected(null)} />}
     </div>
+  );
+}
+
+function Th({ label, k, sort, onSort }: { label: string; k: SortKey; sort: { key: SortKey; dir: 1 | -1 }; onSort: (k: SortKey) => void }) {
+  const on = sort.key === k;
+  return (
+    <th className="px-4 py-2.5 font-medium">
+      <button onClick={() => onSort(k)} className={`inline-flex items-center gap-1 transition-colors hover:text-slate-300 ${on ? "text-slate-300" : ""}`}>
+        {label}
+        <span className={`text-[9px] ${on ? "opacity-100" : "opacity-30"}`}>{on && sort.dir === 1 ? "▲" : "▼"}</span>
+      </button>
+    </th>
   );
 }

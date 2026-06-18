@@ -2,6 +2,7 @@
 // grouping, and the "who do I call next" logic behind the reminder.
 
 import { OPEN_STATUSES, STATUS_META, type Client, type LeadStatus, type Stage } from "./types";
+import { AGENTS } from "./seed";
 
 const HOUR = 3_600_000;
 
@@ -144,6 +145,36 @@ export function daySummary(clients: Client[], agentId: string, day = new Date())
       .map(({ c, a }) => ({ client: c, outcome: a.outcome, body: a.body, at: a.at }))
       .sort((x, y) => +new Date(y.at) - +new Date(x.at)),
   };
+}
+
+/** Sum of deposits booked this calendar month for an agent's clients. */
+export function monthToDateDeposits(clients: Client[], agentId: string): number {
+  const start = new Date(); start.setDate(1); start.setHours(0, 0, 0, 0);
+  return clients
+    .filter((c) => c.ownerId === agentId)
+    .reduce((s, c) => s + c.depositHistory.filter((d) => new Date(d.date).getTime() >= start.getTime()).reduce((a, d) => a + d.amount, 0), 0);
+}
+
+export interface LeaderRow {
+  agentId: string;
+  name: string;
+  desk: string;
+  mtd: number; // month-to-date deposits
+  target: number;
+  ftdToday: number;
+}
+
+/** Desk leaderboard, ranked by month-to-date deposits. */
+export function leaderboard(clients: Client[]): LeaderRow[] {
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+  return AGENTS.map((a) => ({
+    agentId: a.id,
+    name: a.name,
+    desk: a.desk,
+    target: a.monthlyTarget,
+    mtd: monthToDateDeposits(clients, a.id),
+    ftdToday: clients.filter((c) => c.ownerId === a.id && c.depositHistory.some((d) => new Date(d.date).getTime() >= todayStart.getTime())).length,
+  })).sort((x, y) => y.mtd - x.mtd);
 }
 
 export function statusCounts(clients: Client[], agentId?: string): { status: LeadStatus; count: number }[] {

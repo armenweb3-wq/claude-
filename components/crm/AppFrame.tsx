@@ -7,6 +7,7 @@ import { useSession, signOut } from "@/lib/crm/session";
 import { Avatar, Icon } from "./ui";
 import Notifications from "./Notifications";
 import CallReminder from "./CallReminder";
+import CommandPalette from "./CommandPalette";
 
 const NAV = [
   { href: "/crm", label: "Dashboard", icon: Icon.dashboard },
@@ -95,6 +96,13 @@ export default function AppFrame({ children }: { children: React.ReactNode }) {
             Markets open · {new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} local
           </div>
           <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => window.dispatchEvent(new Event("crm:command"))}
+              className="hidden items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] py-1.5 pl-3 pr-2 text-xs text-slate-400 transition-colors hover:bg-white/5 hover:text-slate-200 sm:flex"
+            >
+              <Icon.search className="h-3.5 w-3.5" /> Search
+              <kbd className="rounded border border-white/15 bg-white/5 px-1 py-0.5 font-mono text-[10px] text-slate-500">⌘K</kbd>
+            </button>
             <Notifications />
             <div className="hidden items-center gap-2 rounded-lg px-2 py-1 sm:flex">
               <Avatar name={agent.name} size="sm" />
@@ -125,6 +133,7 @@ export default function AppFrame({ children }: { children: React.ReactNode }) {
       </nav>
 
       <CallReminder />
+      <CommandPalette />
     </div>
   );
 }

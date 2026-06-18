@@ -39,6 +39,15 @@ export interface Activity {
   agentId: string;
 }
 
+export interface Position {
+  id: string;
+  symbol: string; // e.g. EUR/USD, XAU/USD, BTC/USD, US500
+  side: "buy" | "sell";
+  size: number; // lots / units
+  entry: number;
+  pnl: number; // open P/L in USD
+}
+
 export interface Client {
   id: string;
   name: string;
@@ -61,6 +70,7 @@ export interface Client {
   withdrawals: number; // lifetime withdrawn
   depositHistory: DepositRecord[];
   equityCurve: number[]; // last ~24 points, for sparkline
+  positions: Position[]; // open trades
 
   // workflow
   ownerId: string; // assigned agent
@@ -79,6 +89,7 @@ export interface Agent {
   password: string; // demo-only; never do this with a real backend
   role: "agent" | "manager";
   desk: string;
+  monthlyTarget: number; // deposit target, USD
 }
 
 // ---- presentation metadata -------------------------------------------------

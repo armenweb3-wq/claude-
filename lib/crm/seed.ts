@@ -16,9 +16,9 @@ const DAY = 24 * HOUR;
 const iso = (offset: number) => new Date(Date.now() + offset).toISOString();
 
 export const AGENTS: Agent[] = [
-  { id: "ag_alex", name: "Alex Morgan", email: "alex.morgan@vantage.io", password: "vantage", role: "agent", desk: "Acquisition Desk" },
-  { id: "ag_nadia", name: "Nadia Rahman", email: "nadia.rahman@vantage.io", password: "vantage", role: "manager", desk: "Acquisition Desk" },
-  { id: "ag_marco", name: "Marco Bianchi", email: "marco.bianchi@vantage.io", password: "vantage", role: "agent", desk: "Retention Desk" },
+  { id: "ag_alex", name: "Alex Morgan", email: "alex.morgan@vantage.io", password: "vantage", role: "agent", desk: "Acquisition Desk", monthlyTarget: 150000 },
+  { id: "ag_nadia", name: "Nadia Rahman", email: "nadia.rahman@vantage.io", password: "vantage", role: "manager", desk: "Acquisition Desk", monthlyTarget: 250000 },
+  { id: "ag_marco", name: "Marco Bianchi", email: "marco.bianchi@vantage.io", password: "vantage", role: "agent", desk: "Retention Desk", monthlyTarget: 120000 },
 ];
 
 export const PRIMARY_AGENT = AGENTS[0];
@@ -55,6 +55,16 @@ const C = {
 
 const SOURCES = ["Google Ads", "Meta Ads", "Webinar", "Referral", "Organic", "Affiliate", "Trading View"];
 const METHODS = ["Visa", "Mastercard", "Bank Wire", "Skrill", "Crypto (USDT)"];
+const INSTRUMENTS = [
+  { s: "EUR/USD", p: 1.0850 },
+  { s: "GBP/USD", p: 1.2720 },
+  { s: "XAU/USD", p: 2350 },
+  { s: "BTC/USD", p: 67500 },
+  { s: "ETH/USD", p: 3550 },
+  { s: "US500", p: 5450 },
+  { s: "US100", p: 19200 },
+  { s: "USOIL", p: 78.5 },
+];
 
 function curve(rng: () => number, start: number, drift: number): number[] {
   const out: number[] = [];
@@ -172,6 +182,22 @@ function genClient(rng: () => number): Client {
     void acc;
   }
 
+  const positions: Client["positions"] = [];
+  if (funded && status !== "dormant") {
+    const n = Math.floor(rng() * 4); // 0-3 open trades
+    for (let i = 0; i < n; i++) {
+      const sym = INSTRUMENTS[Math.floor(rng() * INSTRUMENTS.length)];
+      positions.push({
+        id: aid(),
+        symbol: sym.s,
+        side: rng() > 0.5 ? "buy" : "sell",
+        size: Math.round((0.1 + rng() * 4) * 100) / 100,
+        entry: Math.round(sym.p * (0.95 + rng() * 0.1) * 100) / 100,
+        pnl: Math.round((rng() * 2 - 0.8) * equity * 0.05),
+      });
+    }
+  }
+
   const activity: Activity[] = [];
   const owner = AGENTS[Math.floor(rng() * AGENTS.length)].id;
   if (lastContact) {
@@ -202,6 +228,7 @@ function genClient(rng: () => number): Client {
     withdrawals,
     depositHistory,
     equityCurve: curve(rng, funded ? deposits : 1000, funded ? 0.06 : 0.02),
+    positions,
     ownerId: owner,
     note: workingNote(status, name),
     nextFollowUp,
@@ -265,6 +292,9 @@ export function seedClients(): Client[] {
       priority: "high",
       score: Math.max(base.score, 80),
       email: `${h.name.toLowerCase().replace(/[^a-z]/g, ".")}@gmail.com`,
+      // pre-deposit leads: no money or trades yet
+      balance: 0, equity: 0, pnlPct: 0, deposits: 0, withdrawals: 0,
+      depositHistory: [], positions: [],
     };
   });
 

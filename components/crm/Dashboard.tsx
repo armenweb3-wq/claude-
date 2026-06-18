@@ -8,7 +8,9 @@ import {
   callQueue,
   daySummary,
   isOverdue,
+  leaderboard,
   metrics,
+  monthToDateDeposits,
   recentActivity,
 } from "@/lib/crm/selectors";
 import { clock, greeting, longDate, pct, relative, usd } from "@/lib/crm/format";
@@ -23,6 +25,9 @@ export default function Dashboard() {
 
   const m = metrics(clients, agent.id);
   const day = daySummary(clients, agent.id);
+  const board = leaderboard(clients);
+  const mtd = monthToDateDeposits(clients, agent.id);
+  const targetPct = Math.min(100, Math.round((mtd / agent.monthlyTarget) * 100));
   const queue = callQueue(clients, agent.id);
   const upNext = queue.slice(0, 6);
   const stages = byStage(clients, agent.id);
@@ -131,6 +136,45 @@ export default function Dashboard() {
               Open board <Icon.arrow className="h-3.5 w-3.5" />
             </Link>
           </div>
+        </div>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-3">
+        {/* Monthly target */}
+        <div className="rounded-xl border border-white/[0.06] bg-slate-900/30 p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-slate-200">Your target</h2>
+            <span className="text-[11px] text-slate-500">this month</span>
+          </div>
+          <p className="mt-4 text-3xl font-semibold tabular-nums tracking-tight text-slate-100">{usd(mtd, { compact: true })}</p>
+          <p className="mt-0.5 text-xs text-slate-500">of {usd(agent.monthlyTarget, { compact: true })} target</p>
+          <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-white/5">
+            <div className={`h-full rounded-full ${targetPct >= 100 ? "bg-emerald-400" : "bg-gradient-to-r from-emerald-400 to-teal-400"}`} style={{ width: `${targetPct}%` }} />
+          </div>
+          <p className="mt-2 text-xs"><span className={`font-semibold ${targetPct >= 75 ? "text-emerald-300" : "text-amber-300"}`}>{targetPct}%</span> <span className="text-slate-500">attained · {usd(Math.max(0, agent.monthlyTarget - mtd), { compact: true })} to go</span></p>
+        </div>
+
+        {/* Leaderboard */}
+        <div className="rounded-xl border border-white/[0.06] bg-slate-900/30 lg:col-span-2">
+          <div className="border-b border-white/5 px-5 py-3.5"><h2 className="text-sm font-semibold text-slate-200">Desk leaderboard · this month</h2></div>
+          <ul className="divide-y divide-white/5">
+            {board.map((r, i) => (
+              <li key={r.agentId} className={`flex items-center gap-3 px-5 py-3 ${r.agentId === agent.id ? "bg-emerald-500/[0.04]" : ""}`}>
+                <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold ${i === 0 ? "bg-amber-400/20 text-amber-300" : "bg-white/5 text-slate-400"}`}>{i + 1}</span>
+                <Avatar name={r.name} size="sm" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-slate-100">{r.name}{r.agentId === agent.id && <span className="ml-1.5 text-[10px] text-emerald-300">you</span>}</p>
+                  <p className="text-[11px] text-slate-500">{r.desk} · {r.ftdToday} FTD today</p>
+                </div>
+                <div className="w-28 shrink-0">
+                  <p className="text-right text-sm font-medium tabular-nums text-slate-100">{usd(r.mtd, { compact: true })}</p>
+                  <div className="mt-1 h-1 overflow-hidden rounded-full bg-white/5">
+                    <div className="h-full rounded-full bg-emerald-400/70" style={{ width: `${Math.min(100, (r.mtd / r.target) * 100)}%` }} />
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
 

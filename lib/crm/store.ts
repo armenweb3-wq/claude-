@@ -8,7 +8,7 @@ import { useSyncExternalStore } from "react";
 import type { Activity, Client, LeadStatus, Priority } from "./types";
 import { seedClients } from "./seed";
 
-const KEY = "vantage-crm:clients:v3";
+const KEY = "vantage-crm:clients:v4";
 
 let cache: Client[] | null = null;
 const EMPTY: Client[] = [];

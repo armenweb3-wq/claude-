@@ -89,7 +89,6 @@ def history(request: Request, limit: int = 100) -> dict:
             "total": len(trades),
             "win_rate": round(wins / decided * 100, 1) if decided else 0.0,
             "realized_pnl": round(sum(t.get("pnl") or 0 for t in trades), 4),
-            "fees": round(sum(t.get("fee") or 0 for t in trades), 4),
         },
     }
 

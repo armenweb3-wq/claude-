@@ -86,7 +86,6 @@ def history_snapshot(uid: int, keys: dict, limit: int = 100) -> dict:
         "wins": wins, "losses": losses, "total": len(trades),
         "win_rate": round(wins / decided * 100, 1) if decided else 0.0,
         "realized_pnl": round(sum(t.get("pnl") or 0 for t in trades), 4),
-        "fees": round(sum(t.get("fee") or 0 for t in trades), 4),
     }}
     with _lock:
         _hist_cache[uid] = (now, data)

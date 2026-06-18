@@ -756,8 +756,7 @@ async function openHistory(){
       +'<div class="stat"><div class="l">Wins</div><div class="v pos">'+(st.wins||0)+'</div></div>'
       +'<div class="stat"><div class="l">Losses</div><div class="v neg">'+(st.losses||0)+'</div></div>'
       +'<div class="stat"><div class="l">Win rate</div><div class="v">'+(st.win_rate||0)+'%</div></div>'
-      +'<div class="stat"><div class="l">Realised P&L</div><div class="v '+((st.realized_pnl||0)>=0?'pos':'neg')+'">'+signMoney(st.realized_pnl)+'</div></div>'
-      +'<div class="stat"><div class="l">Fees paid</div><div class="v sm neg">'+money(st.fees||0)+'</div></div></div>';
+      +'<div class="stat"><div class="l">Realised P&L</div><div class="v '+((st.realized_pnl||0)>=0?'pos':'neg')+'">'+signMoney(st.realized_pnl)+'</div></div></div>';
     const tr=s.trades||[]; lastHistoryTrades=tr;
     if(!tr.length){ $('histList').innerHTML='<div class="trow"><div class="disc" style="margin:0">No closed trades yet.</div></div>'; return; }
     $('histList').innerHTML=tr.map((t,i)=>{
@@ -766,9 +765,8 @@ async function openHistory(){
       const c=win?'pos':((t.pnl||0)<0?'neg':'');
       return '<div class="trow"><div class="top"><span class="sym">'+t.symbol+' <span class="spill '+cls+'">'+label+'</span></span>'
         +'<span class="'+c+'" style="font-weight:700">'+signMoney(t.pnl)+' ('+(t.pnl_pct>=0?'+':'')+t.pnl_pct+'%)</span></div>'
-        +'<div class="g2"><span>entry <b>'+money(t.entry_price)+'</b></span><span>exit <b>'+money(t.exit_price)+'</b></span><span>fee <b>'+money(t.fee||0)+'</b></span></div>'
-        +'<div class="g2" style="margin-top:6px"><span class="disc" style="margin:0">'+fmtDate(t.closed_at)+'</span>'
-        +'<span class="link" onclick="shareClosed('+i+')">Share ↗</span></div></div>';
+        +'<div class="g2"><span>entry <b>'+money(t.entry_price)+'</b></span><span>exit <b>'+money(t.exit_price)+'</b></span><span>'+fmtDate(t.closed_at)+'</span></div>'
+        +'<div style="text-align:right;margin-top:8px"><span class="link" onclick="shareClosed('+i+')">Share / download ↗</span></div></div>';
     }).join('');
   }catch(e){ $('histList').innerHTML='<div class="trow"><div class="disc" style="margin:0">Could not load history.</div></div>'; }
 }

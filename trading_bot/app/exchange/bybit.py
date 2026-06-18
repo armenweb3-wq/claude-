@@ -201,7 +201,6 @@ class BybitExchange(ExchangeAdapter):
                     "exit_price": exit_,
                     "pnl": round(pnl, 4),
                     "pnl_pct": pnl_pct,
-                    "fee": round(float(item.get("openFee") or 0.0) + float(item.get("closeFee") or 0.0), 4),
                     "closed_at": closed_at,
                 })
             except Exception as exc:  # one bad row must not drop the whole list

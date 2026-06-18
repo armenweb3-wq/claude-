@@ -287,6 +287,21 @@
 <!-- slide-out menu -->
 <div class="toast" id="toast"></div>
 
+<div class="modal" id="welcomeModal">
+  <div class="modalbox">
+    <h2 style="margin:0 0 10px">Welcome to ZENITH</h2>
+    <p class="lead">Your bot trades crypto automatically on <b>your own</b> Bybit account. You stay in full control — your funds never leave your account, and the key you connect <b>can't withdraw</b>.</p>
+    <p class="lead" style="margin-top:10px">Before you start, please understand:</p>
+    <div class="warn">
+      • Crypto trading with leverage is <b>high-risk — you can lose some or all of your funds</b>.<br>
+      • Results are <b>backtested and not a guarantee</b> of future performance.<br>
+      • This is <b>not financial advice</b>. Only use money you can afford to lose.
+    </div>
+    <p class="disc"><a class="link" href="/app/legal" target="_blank">Read the full Terms, Risk Disclosure &amp; Privacy Policy →</a></p>
+    <button class="green" onclick="closePanel('welcomeModal')">I understand — let's go</button>
+  </div>
+</div>
+
 <div class="drawer" id="drawer" onclick="if(event.target===this)toggleMenu(false)">
   <div class="drawerpanel">
     <div class="drawerhead">
@@ -458,9 +473,11 @@ async function doAuth(){
   m.textContent='…';
   try{
     const ref=new URLSearchParams(location.search).get('ref')||'';
+    const wasRegister=isRegister;
     await api(isRegister?'/register':'/login','POST',
       {email:$('email').value,password:$('password').value,username:$('username').value,ref});
     await boot();
+    if(wasRegister) $('welcomeModal').classList.add('show');
   }catch(e){ m.className='msg err'; m.textContent=e.message; }
 }
 async function logout(){ try{await api('/logout','POST')}catch(e){} location.reload(); }

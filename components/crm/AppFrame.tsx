@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useSession, useSessionReady, signOut } from "@/lib/crm/session";
+import { useSession, signOut } from "@/lib/crm/session";
 import { Avatar, Icon } from "./ui";
 import Notifications from "./Notifications";
 import CallReminder from "./CallReminder";
@@ -17,22 +17,26 @@ const NAV = [
 
 export default function AppFrame({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const ready = useSessionReady();
   const agent = useSession();
   const router = useRouter();
+
+  // Client-mount gate: localStorage (session) isn't available during SSR, so we
+  // render a loader until the first client commit, then route on the session.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const onLogin = pathname === "/crm/login";
 
   useEffect(() => {
-    if (!ready) return;
+    if (!mounted) return;
     if (!agent && !onLogin) router.replace("/crm/login");
     if (agent && onLogin) router.replace("/crm");
-  }, [ready, agent, onLogin, router]);
+  }, [mounted, agent, onLogin, router]);
 
   // Login screen renders bare (its own full-screen layout).
   if (onLogin) return <>{children}</>;
 
-  if (!ready || !agent) {
+  if (!mounted || !agent) {
     return (
       <div className="grid min-h-screen place-items-center">
         <div className="flex items-center gap-3 text-sm text-slate-500">

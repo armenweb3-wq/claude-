@@ -1,362 +1,278 @@
-// Demo client book for the Trading CRM.
-// Timestamps are generated relative to "now" at seed time so the dashboard
-// always looks live — a handful are overdue, several are due today, the rest
-// are scheduled out into the coming days.
+// Demo book for the Trading CRM. Generated relative to "now" so the desk always
+// looks live — a handful of calls overdue, several due today, the rest scheduled
+// out. Hand-crafted hot leads sit at the top to drive the next-call reminder.
 
-import { AGENT_NAME, type Client, type ClientStatus } from "./types";
+import type {
+  Activity,
+  Agent,
+  Client,
+  Country,
+  LeadStatus,
+  Tier,
+} from "./types";
 
-const HOUR = 60 * 60 * 1000;
+const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
+const iso = (offset: number) => new Date(Date.now() + offset).toISOString();
 
-function iso(offsetMs: number): string {
-  return new Date(Date.now() + offsetMs).toISOString();
+export const AGENTS: Agent[] = [
+  { id: "ag_alex", name: "Alex Morgan", email: "alex.morgan@vantage.io", password: "vantage", role: "agent", desk: "Acquisition Desk" },
+  { id: "ag_nadia", name: "Nadia Rahman", email: "nadia.rahman@vantage.io", password: "vantage", role: "manager", desk: "Acquisition Desk" },
+  { id: "ag_marco", name: "Marco Bianchi", email: "marco.bianchi@vantage.io", password: "vantage", role: "agent", desk: "Retention Desk" },
+];
+
+export const PRIMARY_AGENT = AGENTS[0];
+
+// Deterministic RNG so the book is stable per seed but realistically varied.
+function mulberry32(seed: number) {
+  return function () {
+    seed |= 0;
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
 
-let counter = 0;
-const id = () => `c${(++counter).toString().padStart(3, "0")}`;
+const C = {
+  GB: { name: "United Kingdom", code: "GB" },
+  DE: { name: "Germany", code: "DE" },
+  AE: { name: "United Arab Emirates", code: "AE" },
+  SG: { name: "Singapore", code: "SG" },
+  IT: { name: "Italy", code: "IT" },
+  ES: { name: "Spain", code: "ES" },
+  FR: { name: "France", code: "FR" },
+  SE: { name: "Sweden", code: "SE" },
+  CH: { name: "Switzerland", code: "CH" },
+  ZA: { name: "South Africa", code: "ZA" },
+  NG: { name: "Nigeria", code: "NG" },
+  IN: { name: "India", code: "IN" },
+  JP: { name: "Japan", code: "JP" },
+  BR: { name: "Brazil", code: "BR" },
+  AU: { name: "Australia", code: "AU" },
+  CA: { name: "Canada", code: "CA" },
+} satisfies Record<string, Country>;
 
-type Seed = Omit<Client, "id" | "createdAt" | "history"> & {
-  // history is generated from these prior outcomes
-  past?: { agoMs: number; outcome: ClientStatus; note: string }[];
-  createdAgoMs: number;
-};
+const SOURCES = ["Google Ads", "Meta Ads", "Webinar", "Referral", "Organic", "Affiliate", "Trading View"];
+const METHODS = ["Visa", "Mastercard", "Bank Wire", "Skrill", "Crypto (USDT)"];
 
-const seeds: Seed[] = [
+function curve(rng: () => number, start: number, drift: number): number[] {
+  const out: number[] = [];
+  let v = start;
+  for (let i = 0; i < 24; i++) {
+    v = Math.max(0, v * (1 + drift * (rng() - 0.45)));
+    out.push(Math.round(v));
+  }
+  return out;
+}
+
+let n = 0;
+const id = () => `cl_${(++n).toString().padStart(3, "0")}`;
+const aid = () => `ac_${Math.random().toString(36).slice(2, 8)}`;
+
+interface Hot {
+  name: string;
+  phone: string;
+  country: Country;
+  status: LeadStatus;
+  tier: Tier;
+  note: string;
+  followUp: number; // ms offset from now
+  source: string;
+}
+
+// Hand-crafted, time-sensitive leads — these are what the agent calls first.
+const HOT: Hot[] = [
   {
-    name: "Daniel Okafor",
-    email: "d.okafor@gmail.com",
-    phone: "+44 7700 900112",
-    country: "United Kingdom",
-    flag: "🇬🇧",
-    source: "Google Ads",
-    status: "interested",
-    priority: "high",
-    balance: 0,
-    deposits: 0,
-    assignedTo: AGENT_NAME,
-    note: "Hot lead. Said he'd fund $5k once his bonus clears on payday. Walk him through the platform demo and push for the starter deposit.",
-    nextFollowUp: iso(-2 * HOUR), // overdue
-    lastContact: iso(-1 * DAY),
-    createdAgoMs: 4 * DAY,
-    past: [
-      {
-        agoMs: 1 * DAY,
-        outcome: "interested",
-        note: "Great call. Very keen on gold + indices. Bonus lands this week.",
-      },
-      {
-        agoMs: 3 * DAY,
-        outcome: "no_answer",
-        note: "No answer, left voicemail.",
-      },
-    ],
+    name: "Daniel Okafor", phone: "+44 7700 900112", country: C.GB, status: "qualified", tier: "gold", source: "Google Ads",
+    note: "Bonus clears today — he committed to a $5k first deposit. Walk him through the platform, send the deposit link on the call, close it.",
+    followUp: -2 * HOUR,
   },
   {
-    name: "Sofia Marchetti",
-    email: "sofia.march@outlook.com",
-    phone: "+39 351 552 0198",
-    country: "Italy",
-    flag: "🇮🇹",
-    source: "Webinar",
-    status: "callback",
-    priority: "high",
-    balance: 0,
-    deposits: 0,
-    assignedTo: AGENT_NAME,
-    note: "Asked me to call back this morning after she speaks to her husband. Ready to start with €2k.",
-    nextFollowUp: iso(-30 * 60 * 1000), // overdue 30m
-    lastContact: iso(-1 * DAY),
-    createdAgoMs: 2 * DAY,
-    past: [
-      {
-        agoMs: 1 * DAY,
-        outcome: "callback",
-        note: "Wants to discuss with husband. Call back tomorrow AM.",
-      },
-    ],
+    name: "Sofia Marchetti", phone: "+39 351 552 0198", country: C.IT, status: "callback", tier: "standard", source: "Webinar",
+    note: "Asked for a callback this morning after speaking to her husband. Ready with €2k. Don't let it cool off.",
+    followUp: -35 * 60_000,
   },
   {
-    name: "Mohammed Al-Rashid",
-    email: "m.alrashid@gmail.com",
-    phone: "+971 50 123 4567",
-    country: "UAE",
-    flag: "🇦🇪",
-    source: "Referral",
-    status: "interested",
-    priority: "high",
-    balance: 0,
-    deposits: 0,
-    assignedTo: AGENT_NAME,
-    note: "High net worth referral. Wants a VIP account and 1-on-1 onboarding. Mentioned a $25k starting position.",
-    nextFollowUp: iso(1 * HOUR),
-    lastContact: iso(-2 * DAY),
-    createdAgoMs: 5 * DAY,
-    past: [
-      {
-        agoMs: 2 * DAY,
-        outcome: "interested",
-        note: "Serious money. Send him the VIP terms sheet before next call.",
-      },
-    ],
+    name: "Mohammed Al-Rashid", phone: "+971 50 123 4567", country: C.AE, status: "qualified", tier: "vip", source: "Referral",
+    note: "HNW referral, talking $25k+ for a VIP account. Send the VIP terms before the call. Offer the dedicated account manager.",
+    followUp: 45 * 60_000,
   },
   {
-    name: "Chen Wei",
-    email: "chen.wei.trades@gmail.com",
-    phone: "+65 8123 4567",
-    country: "Singapore",
-    flag: "🇸🇬",
-    source: "Facebook",
-    status: "new",
-    priority: "medium",
-    balance: 0,
-    deposits: 0,
-    assignedTo: AGENT_NAME,
-    note: "Fresh sign-up from this morning. Downloaded the crypto e-book. First contact — qualify budget & experience.",
-    nextFollowUp: iso(2 * HOUR),
-    lastContact: null,
-    createdAgoMs: 6 * HOUR,
+    name: "Fatima Zahra", phone: "+212 612 345678", country: { name: "Morocco", code: "MA" }, status: "new", tier: "standard", source: "Meta Ads",
+    note: "Hit 'request a call' 20 minutes ago. Speed-to-lead — call now while she's at her desk.",
+    followUp: -15 * 60_000,
   },
   {
-    name: "Emma Johansson",
-    email: "emma.joh@telia.se",
-    phone: "+46 70 123 45 67",
-    country: "Sweden",
-    flag: "🇸🇪",
-    source: "Organic",
-    status: "no_answer",
-    priority: "medium",
-    balance: 0,
-    deposits: 0,
-    assignedTo: AGENT_NAME,
-    note: "Tried twice, no answer. Try again early afternoon — she works mornings.",
-    nextFollowUp: iso(3 * HOUR),
-    lastContact: iso(-1 * DAY),
-    createdAgoMs: 3 * DAY,
-    past: [
-      { agoMs: 1 * DAY, outcome: "no_answer", note: "No answer." },
-      { agoMs: 2 * DAY, outcome: "no_answer", note: "No answer, ringtone foreign." },
-    ],
+    name: "Chen Wei", phone: "+65 8123 4567", country: C.SG, status: "new", tier: "platinum", source: "Trading View",
+    note: "Came off the TradingView funnel, downloaded the index strategy guide. Qualify budget and trading experience.",
+    followUp: 2 * HOUR,
   },
   {
-    name: "Lucas Pereira",
-    email: "lucas.pereira@gmail.com",
-    phone: "+55 11 91234 5678",
-    country: "Brazil",
-    flag: "🇧🇷",
-    source: "Google Ads",
-    status: "callback",
-    priority: "medium",
-    balance: 0,
-    deposits: 0,
-    assignedTo: AGENT_NAME,
-    note: "Busy at work, asked to be called this evening his time. Interested in forex majors.",
-    nextFollowUp: iso(5 * HOUR),
-    lastContact: iso(-4 * HOUR),
-    createdAgoMs: 1 * DAY,
-    past: [
-      { agoMs: 4 * HOUR, outcome: "callback", note: "At work, call tonight." },
-    ],
-  },
-  {
-    name: "Aisha Bello",
-    email: "aisha.bello@yahoo.com",
-    phone: "+234 803 123 4567",
-    country: "Nigeria",
-    flag: "🇳🇬",
-    source: "Instagram",
-    status: "interested",
-    priority: "medium",
-    balance: 0,
-    deposits: 0,
-    assignedTo: AGENT_NAME,
-    note: "Keen but cautious — wants to start small with $250 to test withdrawals. Reassure on the withdrawal process.",
-    nextFollowUp: iso(1 * DAY),
-    lastContact: iso(-1 * DAY),
-    createdAgoMs: 4 * DAY,
-    past: [
-      {
-        agoMs: 1 * DAY,
-        outcome: "interested",
-        note: "Wants to test small first. Explain withdrawal flow.",
-      },
-    ],
-  },
-  {
-    name: "Thomas Müller",
-    email: "t.mueller@web.de",
-    phone: "+49 151 2345 6789",
-    country: "Germany",
-    flag: "🇩🇪",
-    source: "Webinar",
-    status: "new",
-    priority: "low",
-    balance: 0,
-    deposits: 0,
-    assignedTo: AGENT_NAME,
-    note: "Attended the indices webinar. Hasn't engaged since. Soft intro call.",
-    nextFollowUp: iso(1 * DAY + 3 * HOUR),
-    lastContact: null,
-    createdAgoMs: 2 * DAY,
-  },
-  {
-    name: "Priya Nair",
-    email: "priya.nair@gmail.com",
-    phone: "+91 98765 43210",
-    country: "India",
-    flag: "🇮🇳",
-    source: "Referral",
-    status: "callback",
-    priority: "medium",
-    balance: 0,
-    deposits: 0,
-    assignedTo: AGENT_NAME,
-    note: "Referred by Mohammed. Wants info on commodities. Call back over the weekend.",
-    nextFollowUp: iso(2 * DAY),
-    lastContact: iso(-2 * DAY),
-    createdAgoMs: 3 * DAY,
-    past: [
-      { agoMs: 2 * DAY, outcome: "callback", note: "Send commodities one-pager." },
-    ],
-  },
-  {
-    name: "James Sullivan",
-    email: "jsullivan@gmail.com",
-    phone: "+1 415 555 0142",
-    country: "United States",
-    flag: "🇺🇸",
-    source: "Google Ads",
-    status: "no_answer",
-    priority: "low",
-    balance: 0,
-    deposits: 0,
-    assignedTo: AGENT_NAME,
-    note: "Three no-answers. Last attempt before moving to nurture email sequence.",
-    nextFollowUp: iso(3 * DAY),
-    lastContact: iso(-3 * DAY),
-    createdAgoMs: 8 * DAY,
-    past: [
-      { agoMs: 3 * DAY, outcome: "no_answer", note: "No answer #3." },
-      { agoMs: 5 * DAY, outcome: "no_answer", note: "No answer #2." },
-      { agoMs: 7 * DAY, outcome: "no_answer", note: "No answer #1." },
-    ],
-  },
-  // ---- Converted / funded accounts (show up in AUM, out of the call queue) ----
-  {
-    name: "Olga Petrova",
-    email: "olga.petrova@gmail.com",
-    phone: "+357 96 123456",
-    country: "Cyprus",
-    flag: "🇨🇾",
-    source: "Referral",
-    status: "deposited",
-    priority: "high",
-    balance: 14250,
-    deposits: 12000,
-    assignedTo: AGENT_NAME,
-    note: "Funded $12k, account up nicely. Upsell to managed account next month.",
-    nextFollowUp: iso(6 * DAY),
-    lastContact: iso(-1 * DAY),
-    createdAgoMs: 20 * DAY,
-    past: [
-      { agoMs: 5 * DAY, outcome: "deposited", note: "Deposited $12k. Onboarded to MT5." },
-      { agoMs: 8 * DAY, outcome: "interested", note: "Negotiating bonus %." },
-    ],
-  },
-  {
-    name: "Kwame Mensah",
-    email: "kwame.mensah@gmail.com",
-    phone: "+233 24 123 4567",
-    country: "Ghana",
-    flag: "🇬🇭",
-    source: "Instagram",
-    status: "deposited",
-    priority: "medium",
-    balance: 1820,
-    deposits: 2000,
-    assignedTo: AGENT_NAME,
-    note: "Started with $2k. Trading FX majors. Check in on his experience.",
-    nextFollowUp: iso(4 * DAY),
-    lastContact: iso(-2 * DAY),
-    createdAgoMs: 14 * DAY,
-    past: [
-      { agoMs: 6 * DAY, outcome: "deposited", note: "Deposited $2k." },
-    ],
-  },
-  {
-    name: "Yuki Tanaka",
-    email: "yuki.tanaka@gmail.com",
-    phone: "+81 90 1234 5678",
-    country: "Japan",
-    flag: "🇯🇵",
-    source: "Organic",
-    status: "deposited",
-    priority: "high",
-    balance: 38900,
-    deposits: 35000,
-    assignedTo: AGENT_NAME,
-    note: "VIP. $35k funded, very active on indices. White-glove service — quarterly review due.",
-    nextFollowUp: iso(9 * DAY),
-    lastContact: iso(-3 * DAY),
-    createdAgoMs: 30 * DAY,
-    past: [
-      { agoMs: 10 * DAY, outcome: "deposited", note: "Top-up to $35k." },
-    ],
-  },
-  {
-    name: "Carlos Ramirez",
-    email: "carlos.ramirez@gmail.com",
-    phone: "+34 612 345 678",
-    country: "Spain",
-    flag: "🇪🇸",
-    source: "Facebook",
-    status: "not_interested",
-    priority: "low",
-    balance: 0,
-    deposits: 0,
-    assignedTo: AGENT_NAME,
-    note: "Not interested — said he was just browsing. Do not call, email only.",
-    nextFollowUp: null,
-    lastContact: iso(-4 * DAY),
-    createdAgoMs: 9 * DAY,
-    past: [
-      { agoMs: 4 * DAY, outcome: "not_interested", note: "Just browsing. Closed." },
-    ],
-  },
-  {
-    name: "Fatima Zahra",
-    email: "fatima.zahra@gmail.com",
-    phone: "+212 6 12 34 56 78",
-    country: "Morocco",
-    flag: "🇲🇦",
-    source: "Google Ads",
-    status: "new",
-    priority: "high",
-    balance: 0,
-    deposits: 0,
-    assignedTo: AGENT_NAME,
-    note: "Just registered and clicked the 'request a call' button. Strike while hot — call ASAP.",
-    nextFollowUp: iso(-15 * 60 * 1000), // overdue 15m — should surface as 'next'
-    lastContact: null,
-    createdAgoMs: 1 * HOUR,
+    name: "Lucas Pereira", phone: "+55 11 91234 5678", country: C.BR, status: "callback", tier: "standard", source: "Google Ads",
+    note: "At work — call this evening his time. Interested in FX majors and gold.",
+    followUp: 5 * HOUR,
   },
 ];
 
+const FIRST = ["James", "Emma", "Liam", "Olivia", "Noah", "Ava", "Lucas", "Mia", "Ethan", "Isabella", "Mason", "Sophia", "Logan", "Amelia", "Henrik", "Yuki", "Priya", "Kwame", "Olga", "Carlos", "Aisha", "Thomas", "Ingrid", "Diego", "Hannah", "Omar"];
+const LAST = ["Sullivan", "Johansson", "Schmidt", "Nguyen", "Patel", "Rossi", "Andersson", "Müller", "Tanaka", "Mensah", "Petrova", "Ramirez", "Bello", "Dubois", "Novak", "Costa", "Haddad", "Larsen", "Walsh", "Romano"];
+const COUNTRIES = Object.values(C);
+
+function genClient(rng: () => number): Client {
+  const name = `${FIRST[Math.floor(rng() * FIRST.length)]} ${LAST[Math.floor(rng() * LAST.length)]}`;
+  const country = COUNTRIES[Math.floor(rng() * COUNTRIES.length)];
+  const roll = rng();
+  // distribution skewed toward funded/active accounts to make AUM realistic
+  let status: LeadStatus;
+  if (roll < 0.18) status = "active";
+  else if (roll < 0.34) status = "deposited";
+  else if (roll < 0.46) status = "dormant";
+  else if (roll < 0.6) status = "qualified";
+  else if (roll < 0.72) status = "no_answer";
+  else if (roll < 0.82) status = "callback";
+  else if (roll < 0.9) status = "new";
+  else status = "not_interested";
+
+  const funded = status === "active" || status === "deposited" || status === "dormant";
+  const tierRoll = rng();
+  const tier: Tier = tierRoll > 0.92 ? "vip" : tierRoll > 0.8 ? "platinum" : tierRoll > 0.55 ? "gold" : "standard";
+  const tierMult = tier === "vip" ? 18 : tier === "platinum" ? 7 : tier === "gold" ? 2.5 : 1;
+
+  const deposits = funded ? Math.round((1500 + rng() * 9000) * tierMult) : 0;
+  const pnlPct = funded ? Math.round((rng() * 40 - 14) * 10) / 10 : 0;
+  const equity = funded ? Math.max(0, Math.round(deposits * (1 + pnlPct / 100) - rng() * deposits * 0.2)) : 0;
+  const withdrawals = funded && rng() > 0.6 ? Math.round(equity * rng() * 0.3) : 0;
+  const balance = Math.round(equity * (0.7 + rng() * 0.3));
+
+  const kyc = funded ? (rng() > 0.15 ? "verified" : "pending") : rng() > 0.7 ? "pending" : "none";
+  const risk = pnlPct < -5 ? "high" : tier === "vip" || tier === "platinum" ? "medium" : rng() > 0.7 ? "medium" : "low";
+  const score = Math.round(funded ? 60 + rng() * 40 : 20 + rng() * 60);
+
+  // follow-up spread
+  const fuRoll = rng();
+  let nextFollowUp: string | null;
+  if (status === "not_interested") nextFollowUp = null;
+  else if (fuRoll < 0.15) nextFollowUp = iso(-Math.round(rng() * 6) * HOUR - HOUR); // overdue
+  else if (fuRoll < 0.45) nextFollowUp = iso(Math.round(rng() * 8) * HOUR); // today
+  else nextFollowUp = iso(Math.round(1 + rng() * 8) * DAY); // upcoming
+
+  const lastContact = status === "new" ? null : iso(-Math.round(1 + rng() * 9) * DAY);
+  const lastLogin = funded ? iso(-Math.round(rng() * 6) * DAY) : null;
+
+  const depositHistory = [] as Client["depositHistory"];
+  if (funded) {
+    let acc = 0;
+    const tranches = 1 + Math.floor(rng() * 3);
+    for (let i = 0; i < tranches; i++) {
+      const amt = Math.round((deposits / tranches) * (0.7 + rng() * 0.6));
+      acc += amt;
+      depositHistory.push({ date: iso(-Math.round((tranches - i) * (3 + rng() * 20)) * DAY), amount: amt, method: METHODS[Math.floor(rng() * METHODS.length)] });
+    }
+    void acc;
+  }
+
+  const activity: Activity[] = [];
+  const owner = AGENTS[Math.floor(rng() * AGENTS.length)].id;
+  if (lastContact) {
+    activity.push({ id: aid(), at: lastContact, kind: "call", outcome: status, body: outcomeNote(status, rng), agentId: owner });
+  }
+  if (funded && depositHistory.length) {
+    activity.push({ id: aid(), at: depositHistory[depositHistory.length - 1].date, kind: "deposit", body: `Deposited ${usdRaw(depositHistory[depositHistory.length - 1].amount)} via ${depositHistory[depositHistory.length - 1].method}`, agentId: owner });
+  }
+  activity.sort((a, b) => +new Date(b.at) - +new Date(a.at));
+
+  return {
+    id: id(),
+    name,
+    email: `${name.toLowerCase().replace(/[^a-z]/g, ".")}@${rng() > 0.5 ? "gmail.com" : "outlook.com"}`,
+    phone: `+${10 + Math.floor(rng() * 80)} ${100 + Math.floor(rng() * 899)} ${1000 + Math.floor(rng() * 8999)}`,
+    country,
+    source: SOURCES[Math.floor(rng() * SOURCES.length)],
+    status,
+    tier,
+    kyc,
+    risk,
+    priority: score > 75 ? "high" : score > 45 ? "medium" : "low",
+    score,
+    balance,
+    equity,
+    pnlPct,
+    deposits,
+    withdrawals,
+    depositHistory,
+    equityCurve: curve(rng, funded ? deposits : 1000, funded ? 0.06 : 0.02),
+    ownerId: owner,
+    note: workingNote(status, name),
+    nextFollowUp,
+    lastContact,
+    lastLogin,
+    createdAt: iso(-Math.round(2 + rng() * 40) * DAY),
+    activity,
+  };
+}
+
+function usdRaw(n: number) {
+  return `$${n.toLocaleString("en-US")}`;
+}
+
+function outcomeNote(s: LeadStatus, rng: () => number): string {
+  const pool: Record<string, string[]> = {
+    no_answer: ["No answer, left a voicemail.", "Rang out — try a different time.", "Went to voicemail again."],
+    callback: ["Asked to be called back later.", "Busy — scheduled a callback.", "Wants to talk after market close."],
+    qualified: ["Good call. Keen on indices and gold.", "Engaged — sending platform walkthrough.", "Warm. Discussing deposit size."],
+    deposited: ["First deposit landed. Onboarded to the platform.", "Funded the account on the call."],
+    active: ["Trading actively. Happy with fills.", "Checked in — all good, considering a top-up."],
+    dormant: ["Hasn't logged in for a while. Re-engage.", "Quiet lately — reactivation call needed."],
+    new: ["First touch pending."],
+    not_interested: ["Not interested. Just browsing.", "Asked not to be called again."],
+  };
+  const arr = pool[s] ?? ["Call logged."];
+  return arr[Math.floor(rng() * arr.length)];
+}
+
+function workingNote(s: LeadStatus, name: string): string {
+  const first = name.split(" ")[0];
+  switch (s) {
+    case "new": return "Fresh lead — qualify budget, experience and timeline on the first call.";
+    case "no_answer": return `Couldn't reach ${first}. Try a different time slot before moving to the nurture sequence.`;
+    case "callback": return `${first} asked for a callback. Pick up where we left off and push for the deposit.`;
+    case "qualified": return `${first} is warm. Recap the value, handle objections, get the first deposit in.`;
+    case "deposited": return `${first} just funded. Confirm onboarding and set expectations for week one.`;
+    case "active": return `${first} is trading. Review performance and explore a top-up or tier upgrade.`;
+    case "dormant": return `${first} has gone quiet. Reactivation call — find out what stalled.`;
+    case "not_interested": return "Closed. Email-only nurture.";
+  }
+}
+
 export function seedClients(): Client[] {
-  counter = 0;
-  return seeds.map((s) => {
-    const { past, createdAgoMs, ...rest } = s;
-    const history = (past ?? []).map((p) => ({
-      id: `${id()}-h`,
-      at: iso(-p.agoMs),
-      outcome: p.outcome,
-      note: p.note,
-      agent: AGENT_NAME,
-    }));
+  n = 0;
+  const rng = mulberry32(20260618);
+
+  const hot: Client[] = HOT.map((h) => {
+    const base = genClient(rng);
     return {
-      ...rest,
-      id: id(),
-      createdAt: iso(-createdAgoMs),
-      history,
-    } satisfies Client;
+      ...base,
+      name: h.name,
+      phone: h.phone,
+      country: h.country,
+      status: h.status,
+      tier: h.tier,
+      source: h.source,
+      note: h.note,
+      nextFollowUp: iso(h.followUp),
+      ownerId: PRIMARY_AGENT.id,
+      priority: "high",
+      score: Math.max(base.score, 80),
+      email: `${h.name.toLowerCase().replace(/[^a-z]/g, ".")}@gmail.com`,
+    };
   });
+
+  const rest = Array.from({ length: 22 }, () => genClient(rng));
+  // ensure a healthy slice is owned by the primary agent so the queue is full
+  rest.forEach((c, i) => {
+    if (i % 2 === 0) c.ownerId = PRIMARY_AGENT.id;
+  });
+
+  return [...hot, ...rest];
 }

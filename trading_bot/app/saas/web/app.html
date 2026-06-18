@@ -805,9 +805,18 @@ function renderPositions(pos){
       let frac=isLong?(mark-lo)/(hi-lo):(lo-mark)/(lo-hi); frac=Math.max(0,Math.min(1,frac||0));
       const away=Math.abs(mark-lo)/(mark||1)*100;
       const col=frac<0.25?'var(--red)':(frac<0.5?'#e0a030':'var(--green)');
+      // outcome on the remaining position if the stop triggers at its current level
+      const slPnl=p.size?((p.stop_loss-p.entry_price)*p.size*(isLong?1:-1)):0;
+      const tol=p.entry_price*0.003; let slLabel='if stopped now';
+      if(Math.abs(p.stop_loss-p.entry_price)<=tol){ slLabel='stop at break-even'; }
+      else { tparr.forEach((t,i)=>{ if(Math.abs(p.stop_loss-t)<=tol) slLabel='stop at TP'+(i+1); });
+        if(slLabel==='if stopped now' && slPnl>0) slLabel='stop locks in'; }
+      const slc=slPnl>0?'pos':(slPnl<0?'neg':'');
       slBlock='<div class="g2" style="margin-top:8px"><span style="color:var(--red)">stop-loss cushion</span>'
         +'<span><b class="'+(frac<0.25?'neg':'')+'">'+away.toFixed(1)+'% away</b></span></div>'
-        +'<div class="bar"><i style="width:'+(frac*100)+'%;background:'+col+'"></i></div>';
+        +'<div class="bar"><i style="width:'+(frac*100)+'%;background:'+col+'"></i></div>'
+        +'<div class="g2" style="margin-top:4px"><span>'+slLabel+'</span>'
+        +'<span><b class="'+slc+'">'+signMoney(slPnl)+'</b></span></div>';
     }
     return '<div class="trow"><div class="top"><span class="sym">'+p.symbol+be+'</span>'
       +'<span class="spill '+cls+'">'+label+(p.leverage?' '+(+p.leverage)+'x':'')+'</span></div>'

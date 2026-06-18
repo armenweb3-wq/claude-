@@ -284,9 +284,33 @@ def user_history(request: Request) -> dict:
     from . import live as live_mod
 
     try:
-        return live_mod.history_snapshot(user["id"], keys)
+        data = live_mod.history_snapshot(user["id"], keys)
+        store().add_closed_trades(user["id"], data.get("trades", []))  # accrue for monthly
+        return data
     except Exception as exc:
         raise HTTPException(502, f"history unavailable: {exc}")
+
+
+@router.get("/api/monthly")
+def monthly(request: Request) -> dict:
+    """Per-month performance, built from accrued closed trades in our DB."""
+    user = current_user(request)
+    st = store()
+    keys = st.get_keys(user["id"])
+    if keys:  # opportunistically sync the latest closes before summarising
+        from . import live as live_mod
+        try:
+            data = live_mod.history_snapshot(user["id"], keys)
+            st.add_closed_trades(user["id"], data.get("trades", []))
+        except Exception:
+            pass
+    return {"months": st.monthly_summary(user["id"])}
+
+
+@router.get("/api/monthly_trades")
+def monthly_trades(month: str, request: Request) -> dict:
+    user = current_user(request)
+    return {"trades": store().closed_by_month(user["id"], month)}
 
 
 class RedeemIn(BaseModel):

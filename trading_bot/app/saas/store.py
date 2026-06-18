@@ -40,6 +40,10 @@ def _schema(d: str) -> list[str]:
         f"""CREATE TABLE IF NOT EXISTS payments (
           id {_PK[d]}, user_id INTEGER NOT NULL, tx_hash TEXT NOT NULL,
           status TEXT NOT NULL DEFAULT 'pending', created_at {_TS[d]} NOT NULL)""",
+        f"""CREATE TABLE IF NOT EXISTS closed_trades (
+          id {_PK[d]}, user_id INTEGER NOT NULL, ext_id TEXT NOT NULL,
+          symbol TEXT, side TEXT, pnl {_TS[d]}, pnl_pct {_TS[d]}, fee {_TS[d]},
+          closed_at TEXT, UNIQUE(user_id, ext_id))""",
     ]
 
 
@@ -132,6 +136,46 @@ class Store:
 
     def set_avatar(self, uid: int, avatar: str | None) -> None:
         self._q("UPDATE users SET avatar=? WHERE id=?", (avatar, uid))
+
+    # ── closed-trade history (for monthly performance) ──────
+    def add_closed_trades(self, uid: int, trades: list[dict]) -> None:
+        for t in trades:
+            ca = t.get("closed_at")
+            if not ca:
+                continue
+            ext = str(t.get("id") or (str(t.get("symbol")) + "|" + str(ca)))
+            self._q(
+                "INSERT INTO closed_trades (user_id, ext_id, symbol, side, pnl, pnl_pct, fee, closed_at)"
+                " VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(user_id, ext_id) DO NOTHING",
+                (uid, ext, t.get("symbol"), t.get("side"), float(t.get("pnl") or 0),
+                 float(t.get("pnl_pct") or 0), float(t.get("fee") or 0), ca),
+            )
+
+    def monthly_summary(self, uid: int) -> list[dict]:
+        rows = self._q(
+            "SELECT substr(closed_at,1,7) AS month, COUNT(*) AS trades,"
+            " SUM(CASE WHEN pnl>0 THEN 1 ELSE 0 END) AS wins,"
+            " SUM(CASE WHEN pnl<0 THEN 1 ELSE 0 END) AS losses,"
+            " SUM(pnl) AS pnl, SUM(pnl_pct) AS roi"
+            " FROM closed_trades WHERE user_id=? GROUP BY month ORDER BY month DESC", (uid,))
+        out = []
+        for r in rows:
+            wins = int(r["wins"] or 0)
+            losses = int(r["losses"] or 0)
+            decided = wins + losses
+            out.append({
+                "month": r["month"], "trades": int(r["trades"] or 0),
+                "wins": wins, "losses": losses,
+                "win_rate": round(wins / decided * 100, 1) if decided else 0.0,
+                "pnl": round(float(r["pnl"] or 0), 4),
+                "roi_pct": round(float(r["roi"] or 0), 2),
+            })
+        return out
+
+    def closed_by_month(self, uid: int, month: str) -> list[dict]:
+        return self._q(
+            "SELECT symbol, side, pnl, pnl_pct, fee, closed_at FROM closed_trades"
+            " WHERE user_id=? AND substr(closed_at,1,7)=? ORDER BY closed_at DESC", (uid, month))
 
     def referral_count(self, username: str) -> int:
         if not username:

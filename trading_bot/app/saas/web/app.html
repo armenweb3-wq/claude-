@@ -295,6 +295,7 @@
     </div>
     <button class="menuitem" onclick="openPanel('profilePanel')">Profile</button>
     <button class="menuitem" onclick="openPanel('botPanel')">Manage bot</button>
+    <button class="menuitem" onclick="openPanel('monthlyPanel')">Performance</button>
     <button class="menuitem" onclick="openPanel('referralPanel')">Referral</button>
     <button class="menuitem hide" id="menuAdmin" onclick="openPanel('adminPanel')">Admin · subscribers</button>
     <button class="menuitem" style="color:var(--red)" onclick="logout()">Log out</button>
@@ -329,6 +330,15 @@
     <label>Assets to trade (comma-separated)</label><input id="symbols"/>
     <button onclick="saveSettings()">Save settings</button>
     <div class="msg" id="dashMsg"></div>
+  </div>
+</div>
+
+<!-- PERFORMANCE (monthly) panel -->
+<div class="modal" id="monthlyPanel">
+  <div class="modalbox">
+    <div class="panelhead"><h2 style="margin:0">Performance by month</h2><span class="link" onclick="closePanel('monthlyPanel')">Close</span></div>
+    <p class="lead">Tap a month for a breakdown of its trades.</p>
+    <div id="monthlyList"></div>
   </div>
 </div>
 
@@ -522,7 +532,39 @@ function openPanel(id){
   if(id==='profilePanel') fillProfile();
   if(id==='referralPanel') fillReferral();
   if(id==='tradePanel') fillTradeForm();
+  if(id==='monthlyPanel') fillMonthly();
   $(id).classList.add('show');
+}
+async function fillMonthly(){
+  $('monthlyList').innerHTML='<div class="disc">Loading…</div>';
+  try{
+    const d=await api('/monthly'); const ms=d.months||[];
+    if(!ms.length){ $('monthlyList').innerHTML='<div class="trow"><div class="disc" style="margin:0">No closed trades yet.</div></div>'; return; }
+    $('monthlyList').innerHTML=ms.map(m=>{
+      const name=new Date(m.month+'-01T00:00').toLocaleDateString([], {month:'long',year:'numeric'});
+      const c=m.pnl>=0?'pos':'neg';
+      return '<div class="trow">'
+        +'<div style="cursor:pointer" onclick="toggleMonth(\''+m.month+'\')">'
+        +'<div class="top"><span class="sym">'+name+'</span>'
+        +'<span class="'+c+'" style="font-weight:700">'+(m.roi_pct>=0?'+':'')+m.roi_pct+'% · '+signMoney(m.pnl)+'</span></div>'
+        +'<div class="g2"><span>'+m.trades+' trades</span><span class="pos">'+m.wins+'W</span>'
+        +'<span class="neg">'+m.losses+'L</span><span>win '+m.win_rate+'%</span></div></div>'
+        +'<div class="mdetail hide" id="md-'+m.month+'"></div></div>';
+    }).join('');
+  }catch(e){ $('monthlyList').innerHTML='<div class="trow"><div class="disc" style="margin:0">Could not load.</div></div>'; }
+}
+async function toggleMonth(month){
+  const d=$('md-'+month); if(!d) return;
+  if(!d.classList.contains('hide')){ d.classList.add('hide'); return; }
+  d.classList.remove('hide'); d.innerHTML='<div class="disc" style="margin-top:6px">Loading…</div>';
+  try{ const r=await api('/monthly_trades?month='+encodeURIComponent(month)); const ts=r.trades||[];
+    d.innerHTML = ts.length ? ts.map(t=>{
+      const c=(t.pnl||0)>0?'pos':((t.pnl||0)<0?'neg':'');
+      return '<div class="g2" style="margin-top:7px;border-top:1px solid var(--line2);padding-top:7px">'
+        +'<span>'+t.symbol+'</span><span class="'+c+'">'+signMoney(t.pnl)+' ('+(t.pnl_pct>=0?'+':'')+t.pnl_pct+'%)</span>'
+        +'<span class="disc" style="margin:0">'+fmtDate(t.closed_at)+'</span></div>';
+    }).join('') : '<div class="disc" style="margin-top:6px">No trades.</div>';
+  }catch(e){ d.innerHTML='<div class="disc" style="margin-top:6px">Could not load.</div>'; }
 }
 let tradeMaxLev=null, tradePrice=null;
 function fillTradeForm(){

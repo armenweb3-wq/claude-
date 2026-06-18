@@ -59,6 +59,27 @@ def test_username_defaults_from_email(tmp_path):
     assert cl.get("/app/api/me").json()["username"] == "alice"
 
 
+def test_monthly_summary_groups_and_dedups(tmp_path):
+    cl = _saas_client(tmp_path)
+    cl.post("/app/api/register", json={"email": "m@t.com", "password": "pw123456", "username": "mo"})
+    from app.saas.routes import store
+    st = store()
+    uid = st.get_user_by_email("m@t.com")["id"]
+    trades = [
+        {"id": "1", "symbol": "SOLUSDT", "pnl": 5.0, "pnl_pct": 6.0, "closed_at": "2026-06-03T10:00:00+00:00"},
+        {"id": "2", "symbol": "OPUSDT", "pnl": -2.0, "pnl_pct": -3.0, "closed_at": "2026-06-15T10:00:00+00:00"},
+        {"id": "3", "symbol": "XRPUSDT", "pnl": 3.0, "pnl_pct": 4.0, "closed_at": "2026-05-20T10:00:00+00:00"},
+    ]
+    st.add_closed_trades(uid, trades)
+    st.add_closed_trades(uid, trades)  # idempotent
+    months = cl.get("/app/api/monthly").json()["months"]
+    by = {m["month"]: m for m in months}
+    assert by["2026-06"]["trades"] == 2 and by["2026-06"]["wins"] == 1 and by["2026-06"]["losses"] == 1
+    assert by["2026-06"]["win_rate"] == 50.0 and by["2026-06"]["pnl"] == 3.0
+    assert by["2026-05"]["trades"] == 1
+    assert len(cl.get("/app/api/monthly_trades?month=2026-06").json()["trades"]) == 2
+
+
 def test_manual_trade_guards(tmp_path):
     cl = _saas_client(tmp_path)
     object.__setattr__(settings, "saas_dry_run", True)

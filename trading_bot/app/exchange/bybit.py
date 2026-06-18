@@ -195,6 +195,7 @@ class BybitExchange(ExchangeAdapter):
                 )
                 out.append({
                     "symbol": item.get("symbol"),
+                    "id": item.get("orderId"),
                     "side": "Buy" if is_long else "Sell",
                     "qty": qty,
                     "entry_price": entry,

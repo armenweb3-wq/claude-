@@ -450,8 +450,16 @@
       <textarea id="bcText" rows="3" placeholder="Message to all connected users…" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:11px;padding:12px;font-family:var(--sans);font-size:.9rem"></textarea>
       <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:.82rem;color:var(--text)">
         <input id="bcBroker" type="checkbox" style="width:auto"/> Include broker upgrade button</label>
-      <button class="ghost" onclick="sendBroadcast()">Send broadcast</button>
+      <button class="ghost" onclick="sendBroadcast()">Send to users (DM)</button>
       <div class="msg" id="bcMsg"></div>
+      <div style="margin-top:12px;border-top:1px solid var(--line2);padding-top:12px">
+        <h2 style="margin:0 0 8px">Post to channel</h2>
+        <textarea id="chText" rows="3" placeholder="Public channel post (tip / offer / bait)…" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:11px;padding:12px;font-family:var(--sans);font-size:.9rem"></textarea>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:.82rem;color:var(--text)"><input id="chBroker" type="checkbox" style="width:auto"/> Broker upgrade button</label>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:.82rem;color:var(--text)"><input id="chPin" type="checkbox" style="width:auto"/> Pin this post</label>
+        <button class="ghost" onclick="postChannel()">Post to channel</button>
+        <div class="msg" id="chMsg"></div>
+      </div>
     </div>
     <div id="adminUsers" style="margin-top:14px"></div>
   </div>
@@ -580,6 +588,12 @@ async function sendBroadcast(){
   const m=$('bcMsg'); m.className='msg'; m.textContent='Sending…';
   try{ const r=await api('/admin/broadcast','POST',{text:$('bcText').value,include_broker:$('bcBroker').checked});
     m.className='msg ok'; m.textContent='Sent to '+r.sent+' user(s) ✓'; $('bcText').value='';
+  }catch(e){ m.className='msg err'; m.textContent=e.message; }
+}
+async function postChannel(){
+  const m=$('chMsg'); m.className='msg'; m.textContent='Posting…';
+  try{ await api('/admin/post-channel','POST',{text:$('chText').value,include_broker:$('chBroker').checked,pin:$('chPin').checked});
+    m.className='msg ok'; m.textContent='Posted to channel ✓'; $('chText').value='';
   }catch(e){ m.className='msg err'; m.textContent=e.message; }
 }
 async function adminAct(id){ await api('/admin/activate','POST',{user_id:id,days:30}); loadAdmin(); }

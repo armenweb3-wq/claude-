@@ -650,6 +650,30 @@ def admin_broadcast(body: BroadcastIn, admin: dict = Depends(require_admin)) -> 
     return {"ok": True, "sent": sent}
 
 
+class ChannelPostIn(BaseModel):
+    text: str
+    include_broker: bool = False
+    pin: bool = False
+
+
+@router.post("/api/admin/post-channel")
+def admin_post_channel(body: ChannelPostIn, admin: dict = Depends(require_admin)) -> dict:
+    """Post a message to the public channel (offers, tips, bait, etc.)."""
+    from . import alerts
+    text = (body.text or "").strip()
+    if not text:
+        raise HTTPException(400, "message is empty")
+    if not settings.channel_chat_id:
+        raise HTTPException(400, "set TELEGRAM_CHANNEL_ID and make the bot a channel admin first")
+    button = None
+    if body.include_broker and settings.broker_link:
+        button = {"text": f"Upgrade with {settings.broker_name} →", "url": settings.broker_link}
+    mid = alerts.post_channel(text, button, body.pin)
+    if not mid:
+        raise HTTPException(502, "post failed — is the bot an admin of the channel?")
+    return {"ok": True, "message_id": mid}
+
+
 @router.post("/api/admin/activate")
 def admin_activate(body: ActivateIn, admin: dict = Depends(require_admin)) -> dict:
     st = store()

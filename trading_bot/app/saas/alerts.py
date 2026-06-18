@@ -18,6 +18,32 @@ def community_button() -> dict | None:
     return None
 
 
+def post_channel(text: str, button: dict | None = None, pin: bool = False) -> int | None:
+    """Post to the public channel (bot must be a channel admin). Returns the
+    message id; optionally pins it."""
+    if not settings.telegram_bot_token or not settings.channel_chat_id:
+        return None
+    payload = {"chat_id": settings.channel_chat_id, "text": text, "parse_mode": "HTML",
+               "disable_web_page_preview": True}
+    if button and button.get("url"):
+        payload["reply_markup"] = {"inline_keyboard": [[{"text": button.get("text", "Open"),
+                                                         "url": button["url"]}]]}
+    try:
+        import requests
+
+        base = f"https://api.telegram.org/bot{settings.telegram_bot_token}"
+        r = requests.post(base + "/sendMessage", json=payload, timeout=8).json()
+        mid = (r.get("result") or {}).get("message_id")
+        if pin and mid:
+            requests.post(base + "/pinChatMessage",
+                          json={"chat_id": settings.channel_chat_id, "message_id": mid,
+                                "disable_notification": True}, timeout=8)
+        return mid
+    except Exception as exc:  # pragma: no cover - best effort
+        log.warning("channel post failed: %s", exc)
+        return None
+
+
 def notify(chat_id: str | None, text: str, button: dict | None = None) -> bool:
     """Send a Telegram message; optional inline button {text,url}. Returns ok."""
     if not chat_id or not settings.telegram_bot_token:

@@ -109,6 +109,9 @@ class Settings:
     # Public community channel link + the hour (UTC) to send the daily summary.
     community_link: str = field(default_factory=lambda: _get("COMMUNITY_LINK", ""))
     summary_hour_utc: int = field(default_factory=lambda: _get_int("SUMMARY_HOUR_UTC", 19))
+    # Channel to post announcements to (e.g. @zenithsignals). The bot must be an
+    # admin of the channel.
+    channel_chat_id: str = field(default_factory=lambda: _get("TELEGRAM_CHANNEL_ID", ""))
     # Two-way command control (/status, /start, /stop, /pause, /resume).
     telegram_commands_enabled: bool = field(
         default_factory=lambda: _get_bool("TELEGRAM_COMMANDS_ENABLED", False)

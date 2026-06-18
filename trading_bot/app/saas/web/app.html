@@ -143,6 +143,10 @@
   .chips{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
   .chip{width:auto;margin:0;padding:8px 14px;font-size:.78rem;font-weight:600;background:transparent;
     color:var(--text);border:1px solid var(--line);border-radius:999px}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:80;display:none;
+    background:var(--panel);border:1px solid var(--green);color:var(--text);
+    padding:12px 18px;border-radius:12px;box-shadow:var(--shadow);font-size:.85rem;font-weight:600}
+  .toast.show{display:block}
 </style>
 </head>
 <body>
@@ -281,6 +285,8 @@
 </div>
 
 <!-- slide-out menu -->
+<div class="toast" id="toast"></div>
+
 <div class="drawer" id="drawer" onclick="if(event.target===this)toggleMenu(false)">
   <div class="drawerpanel">
     <div class="drawerhead">
@@ -500,7 +506,12 @@ async function adminAct(id){ await api('/admin/activate','POST',{user_id:id,days
 async function adminDe(id){ await api('/admin/deactivate','POST',{user_id:id}); loadAdmin(); }
 
 let dashTimer=null, botEnabled=false, lastPositions=[], lastDry=false, lastShare=null, lastHistoryTrades=[];
-let avatarImg=null, pendingAvatar=undefined;
+let avatarImg=null, pendingAvatar=undefined, tpHits={}, tpHitsInit=false, toastTimer=null;
+function toast(msg){
+  const t=$('toast'); if(!t) return;
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),4500);
+}
 const LIVE_CARDS=['statsCard','cycleCard','positionsCard','signalsCard','chartCard'];
 
 // ── menu / drawer / profile ─────────────────────────────────
@@ -690,25 +701,46 @@ async function loadDashboard(){
 function renderPositions(pos){
   lastPositions=pos;
   $('pos_count').textContent=pos.length?'('+pos.length+')':'';
-  if(!pos.length){ $('pos_list').innerHTML='<div class="trow"><div class="disc" style="margin:0">No open trades right now.</div></div>'; return; }
+  if(!pos.length){ $('pos_list').innerHTML='<div class="trow"><div class="disc" style="margin:0">No open trades right now.</div></div>'; tpHits={}; return; }
+  const newHits={};
   $('pos_list').innerHTML=pos.map(p=>{
     const side=(p.side||'').toLowerCase(), cls=(side==='buy'||side==='long')?'long':'short';
     const label=cls==='long'?'LONG':'SHORT', up=p.unrealised_pnl||0, pct=p.pnl_pct||0, c=up>0?'pos':up<0?'neg':'';
-    const isLong=cls==='long';
+    const isLong=cls==='long', dir=isLong?1:-1;
     const mark=p.size?(isLong?p.entry_price+up/p.size:p.entry_price-up/p.size):p.entry_price;
     const be=p.breakeven?' <span class="spill long">BE</span>':'';
-    const tps=(p.take_profits||[]).map((t,i)=>'TP'+(i+1)+' '+money(t)).join(' · ');
+    const tparr=(p.take_profits||[]);
+    let hit=0; for(let i=0;i<tparr.length;i++){ if(dir*(mark-tparr[i])>=0) hit++; else break; }
+    newHits[p.symbol]=hit;
+    const tpsHtml=tparr.map((t,i)=> i<hit
+      ? '<span class="pos">TP'+(i+1)+' ✓</span>'
+      : 'TP'+(i+1)+' '+money(t)).join(' · ');
+    let progBlock='';
+    if(tparr.length){
+      if(hit>=tparr.length){
+        progBlock='<div class="g2" style="margin-top:8px"><span class="pos">All take-profits hit</span></div>';
+      } else {
+        const prev=hit===0?p.entry_price:tparr[hit-1], tgt=tparr[hit];
+        let prog=dir*(mark-prev)/(dir*(tgt-prev))*100; prog=Math.max(0,Math.min(100,prog||0));
+        progBlock='<div class="g2" style="margin-top:8px"><span>progress to TP'+(hit+1)+'</span><span><b>'+prog.toFixed(0)+'%</b></span></div>'
+          +'<div class="bar"><i style="width:'+prog+'%;background:var(--green)"></i></div>';
+      }
+    }
     return '<div class="trow"><div class="top"><span class="sym">'+p.symbol+be+'</span>'
       +'<span class="spill '+cls+'">'+label+(p.leverage?' '+(+p.leverage)+'x':'')+'</span></div>'
       +'<div class="g2"><span>entry <b>'+money(p.entry_price)+'</b></span><span>now <b>'+money(mark)+'</b></span>'
       +'<span>uPnL <b class="'+c+'">'+signMoney(up)+' ('+(pct>=0?'+':'')+pct+'%)</b></span></div>'
       +'<div class="g2" style="margin-top:5px"><span>size <b>'+p.size+'</b></span>'
       +'<span>SL <b class="'+(p.breakeven?'pos':'neg')+'">'+money(p.stop_loss)+'</b></span></div>'
-      +(tps?'<div class="g2" style="margin-top:5px"><span></span><span style="color:var(--green)">'+tps+'</span></div>':'')
+      +(tpsHtml?'<div class="g2" style="margin-top:5px"><span></span><span style="color:var(--muted)">'+tpsHtml+'</span></div>':'')
+      +progBlock
       +'<div style="display:flex;justify-content:flex-end;gap:16px;margin-top:9px">'
       +'<span class="link" onclick="openShare(\''+p.symbol+'\')">Share ↗</span>'
       +'<span class="link" style="color:var(--red)" onclick="closePosition(\''+p.symbol+'\')">Close trade</span></div></div>';
   }).join('');
+  // notify when a take-profit is newly hit (compared to the previous refresh)
+  if(tpHitsInit){ for(const s in newHits){ if(newHits[s]>(tpHits[s]||0)) toast(s+' hit TP'+newHits[s]+' ✓'); } }
+  tpHits=newHits; tpHitsInit=true;
 }
 const TOPN=5; let sigExpanded=false, lastSig={syms:[],sig:{}};
 function toggleSig(){ sigExpanded=!sigExpanded; renderSignals(lastSig.syms,lastSig.sig); }

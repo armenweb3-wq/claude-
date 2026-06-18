@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-18T17:10:33.383Z",
+  "updatedAt": "2026-06-18T17:15:32.331Z",
   "matches": [
     {
       "home": "Haiti",
@@ -148,7 +148,7 @@
     {
       "home": "Czechia",
       "away": "South Africa",
-      "status": "PAUSED",
+      "status": "IN_PLAY",
       "homeScore": 1,
       "awayScore": 0,
       "utcDate": "2026-06-18T16:00:00Z"

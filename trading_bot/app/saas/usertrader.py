@@ -81,6 +81,14 @@ class UserTrader:
             return out
         out["equity"] = round(equity, 2)
 
+        # Drop symbols Bybit doesn't list (e.g. PEPEUSDT — really 1000PEPEUSDT),
+        # so they don't spam errors or waste API calls.
+        try:
+            avail = self.ex.available_symbols()
+        except Exception:
+            avail = set()
+        symbols = [s for s in self.symbols if (not avail or s in avail)]
+
         # BTC market filter (same gate as the single-user bot)
         allow_long = allow_short = True
         if settings.btc_filter_enabled:
@@ -95,7 +103,7 @@ class UserTrader:
         # snapshot positions + manage break-even
         positions: dict = {}
         open_count = 0
-        for s in self.symbols:
+        for s in symbols:
             try:
                 p = self.ex.get_position(s)
                 positions[s] = p
@@ -121,7 +129,7 @@ class UserTrader:
                         log.warning("regime-flip close %s: %s", s, exc)
         out["positions"] = open_count
 
-        for s in self.symbols:
+        for s in symbols:
             try:
                 df = self.ex.get_klines(s, settings.timeframe, limit=250)
                 sig = self.strategy.generate(df)

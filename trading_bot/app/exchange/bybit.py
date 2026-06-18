@@ -170,8 +170,14 @@ class BybitExchange(ExchangeAdapter):
         )
 
     def available_symbols(self) -> set[str]:
+        key = ("avail", self._category)
+        cached = _cache_get(key, 3600)  # the tradable list barely changes
+        if cached is not None:
+            return cached
         resp = self._client.get_instruments_info(category=self._category, limit=1000)
-        return {i["symbol"] for i in resp.get("result", {}).get("list", [])}
+        syms = {i["symbol"] for i in resp.get("result", {}).get("list", [])}
+        _cache_put(key, syms)
+        return syms
 
     def closed_pnl(self, limit: int = 50) -> list[dict]:
         from datetime import datetime, timezone

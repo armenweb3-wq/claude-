@@ -266,6 +266,16 @@ def dashboard(request: Request) -> dict:
         except Exception:
             pass
 
+    # Hide symbols Bybit doesn't list (e.g. PEPEUSDT -> 1000PEPEUSDT) from the UI.
+    symbols = [s.strip() for s in cfg["symbols"].split(",") if s.strip()]
+    if keys:
+        try:
+            avail = live_mod._exchange(keys).available_symbols()
+            if avail:
+                symbols = [s for s in symbols if s in avail]
+        except Exception:
+            pass
+
     from ..strategy.cycle import assess_cycle
 
     cyc = assess_cycle()
@@ -283,7 +293,7 @@ def dashboard(request: Request) -> dict:
         "signals": (res or {}).get("signals", {}),
         "market": (res or {}).get("market"),
         "error": live_err or (res or {}).get("error"),
-        "symbols": [s.strip() for s in cfg["symbols"].split(",") if s.strip()],
+        "symbols": symbols,
         "cycle": {
             "phase": cyc.phase,
             "months_since_halving": round(cyc.months_since_halving, 1),

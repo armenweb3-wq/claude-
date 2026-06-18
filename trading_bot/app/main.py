@@ -73,7 +73,15 @@ async def lifespan(app: FastAPI):
         await app.state.bot.stop()
 
 
-app = FastAPI(title="crypto-trading-bot", version="0.1.0", lifespan=lifespan)
+# Interactive API docs are hidden by default (don't expose the API surface
+# publicly); set ENABLE_DOCS=true to turn them on for debugging.
+_docs = settings.enable_docs
+app = FastAPI(
+    title="crypto-trading-bot", version="0.1.0", lifespan=lifespan,
+    docs_url="/docs" if _docs else None,
+    redoc_url="/redoc" if _docs else None,
+    openapi_url="/openapi.json" if _docs else None,
+)
 app.include_router(router)
 app.include_router(backtest_router)
 app.include_router(saas_router)

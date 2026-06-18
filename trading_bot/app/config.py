@@ -66,6 +66,8 @@ class Settings:
     # Bybit's rate limit when many users scan the same coins. Daily candles barely
     # move within this window, so staleness is harmless.
     market_cache_seconds: int = field(default_factory=lambda: _get_int("MARKET_CACHE_SECONDS", 120))
+    # Public FastAPI /docs are off by default in production; enable for debugging.
+    enable_docs: bool = field(default_factory=lambda: _get_bool("ENABLE_DOCS", False))
 
     # BTC-led market filter: block longs when BTC is crashing/bearish and
     # shorts when BTC is pumping/bullish (alts follow BTC).

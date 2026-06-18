@@ -554,6 +554,17 @@ def admin_users(admin: dict = Depends(require_admin)) -> dict:
             "seat_limit": settings.saas_seat_limit}
 
 
+@router.get("/api/admin/stats")
+def admin_stats(admin: dict = Depends(require_admin)) -> dict:
+    """Platform-wide performance + user counts (proof / marketing)."""
+    st = store()
+    users = st.list_users()
+    active = sum(1 for u in users if _is_active(u))
+    data = st.platform_stats()
+    data["active_users"] = active
+    return data
+
+
 @router.post("/api/admin/activate")
 def admin_activate(body: ActivateIn, admin: dict = Depends(require_admin)) -> dict:
     st = store()

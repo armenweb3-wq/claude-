@@ -100,6 +100,27 @@ def test_partial_tp_fills_count_as_one_trade(tmp_path):
     assert len(sol) == 1 and abs(sol[0]["pnl"] - 12.6) < 1e-6
 
 
+def test_platform_stats_aggregates_across_users(tmp_path):
+    cl = _saas_client(tmp_path)
+    cl.post("/app/api/register", json={"email": "admin@z.com", "password": "pw123456"})  # admin
+    from app.saas.routes import store
+    st = store()
+    # two friends with trades
+    cl.post("/app/api/logout")
+    cl.post("/app/api/register", json={"email": "u1@t.com", "password": "pw123456", "username": "u1"})
+    cl.post("/app/api/logout")
+    cl.post("/app/api/register", json={"email": "u2@t.com", "password": "pw123456", "username": "u2"})
+    u1 = st.get_user_by_email("u1@t.com")["id"]
+    u2 = st.get_user_by_email("u2@t.com")["id"]
+    st.add_closed_trades(u1, [{"id": "1", "symbol": "SOLUSDT", "pnl": 5.0, "pnl_pct": 6, "closed_at": "2026-06-03T10:00:00+00:00"}])
+    st.add_closed_trades(u2, [{"id": "2", "symbol": "OPUSDT", "pnl": -2.0, "pnl_pct": -3, "closed_at": "2026-06-04T10:00:00+00:00"}])
+    s = st.platform_stats()
+    assert s["users"] == 2 and s["trades"] == 2
+    assert s["wins"] == 1 and s["losses"] == 1 and s["win_rate"] == 50.0
+    assert abs(s["realized_pnl"] - 3.0) < 1e-6
+    assert s["monthly"] and s["monthly"][0]["month"] == "2026-06"
+
+
 def test_manual_trade_guards(tmp_path):
     cl = _saas_client(tmp_path)
     object.__setattr__(settings, "saas_dry_run", True)

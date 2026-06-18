@@ -321,7 +321,7 @@
 <!-- PROFILE panel -->
 <div class="modal" id="profilePanel">
   <div class="modalbox">
-    <div class="panelhead"><h2 style="margin:0">Profile</h2><span class="link" onclick="closePanel('profilePanel')">Close</span></div>
+    <div class="panelhead"><h2 style="margin:0">Profile</h2><span class="link" onclick="backToMenu('profilePanel')">Close</span></div>
     <div class="avup">
       <div class="avatar" id="profAvatar">·</div>
       <div><button class="ghost" style="margin:0;width:auto;padding:10px 14px" onclick="$('avatarFile').click()">Upload picture</button>
@@ -340,7 +340,7 @@
 <!-- MANAGE BOT panel -->
 <div class="modal" id="botPanel">
   <div class="modalbox">
-    <div class="panelhead"><h2 style="margin:0">Manage bot</h2><span class="link" onclick="closePanel('botPanel')">Close</span></div>
+    <div class="panelhead"><h2 style="margin:0">Manage bot</h2><span class="link" onclick="backToMenu('botPanel')">Close</span></div>
     <p class="lead">Turn the bot on/off from the main screen. These settings apply while it runs.</p>
     <label>Risk per trade (%)</label><input id="riskPct" type="number" step="0.5" min="0.5" max="10"/>
     <label>Assets to trade (comma-separated)</label><input id="symbols"/>
@@ -352,7 +352,7 @@
 <!-- PERFORMANCE (monthly) panel -->
 <div class="modal" id="monthlyPanel">
   <div class="modalbox">
-    <div class="panelhead"><h2 style="margin:0">Performance by month</h2><span class="link" onclick="closePanel('monthlyPanel')">Close</span></div>
+    <div class="panelhead"><h2 style="margin:0">Performance by month</h2><span class="link" onclick="backToMenu('monthlyPanel')">Close</span></div>
     <p class="lead">Tap a month for a breakdown of its trades.</p>
     <div id="monthlyList"></div>
   </div>
@@ -361,7 +361,7 @@
 <!-- REFERRAL panel -->
 <div class="modal" id="referralPanel">
   <div class="modalbox">
-    <div class="panelhead"><h2 style="margin:0">Referral</h2><span class="link" onclick="closePanel('referralPanel')">Close</span></div>
+    <div class="panelhead"><h2 style="margin:0">Referral</h2><span class="link" onclick="backToMenu('referralPanel')">Close</span></div>
     <p class="lead">Share your link. People who join through it are credited to you — rewards coming soon.</p>
     <label>Your invite link</label>
     <div class="copy"><span id="refLink"></span><span class="link" onclick="copyRef()">copy</span></div>
@@ -414,14 +414,15 @@
 <!-- ADMIN panel -->
 <div class="modal" id="adminPanel">
   <div class="modalbox">
-    <div class="panelhead"><h2 style="margin:0">Subscribers</h2><span class="link" onclick="closePanel('adminPanel')">Close</span></div>
+    <div class="panelhead"><h2 style="margin:0">Subscribers</h2><span class="link" onclick="backToMenu('adminPanel')">Close</span></div>
     <div class="stats">
       <div class="stat"><div class="l">Total</div><div class="v" id="adTotal">0</div></div>
       <div class="stat"><div class="l">Active</div><div class="v pos" id="adActive">0</div></div>
       <div class="stat"><div class="l">Pending</div><div class="v" id="adPending">0</div></div>
       <div class="stat"><div class="l">Seats</div><div class="v sm"><span id="seatInfo">—</span></div></div>
     </div>
-    <div id="adminUsers" style="margin-top:12px"></div>
+    <div id="adminPerf" style="margin-top:14px"></div>
+    <div id="adminUsers" style="margin-top:14px"></div>
   </div>
 </div>
 
@@ -530,6 +531,20 @@ async function loadAdmin(){
       : '<div class="disc">No subscribers yet.</div>';
   }catch(e){}
 }
+async function loadAdminStats(){
+  try{ const s=await api('/admin/stats');
+    $('adminPerf').innerHTML='<div class="disc" style="margin:0 0 6px">Platform performance'+(s.since?(' · since '+s.since):'')+'</div>'
+      +'<div class="stats" style="margin:0">'
+      +'<div class="stat"><div class="l">Users</div><div class="v">'+s.users+'</div></div>'
+      +'<div class="stat"><div class="l">Trades</div><div class="v">'+s.trades+'</div></div>'
+      +'<div class="stat"><div class="l">Win rate</div><div class="v">'+s.win_rate+'%</div></div>'
+      +'<div class="stat"><div class="l">Net P&L</div><div class="v '+(s.realized_pnl>=0?'pos':'neg')+'">'+signMoney(s.realized_pnl)+'</div></div></div>'
+      +((s.monthly&&s.monthly.length)?('<div class="disc" style="margin:10px 0 4px">By month</div>'
+        +s.monthly.map(m=>'<div class="g2" style="margin-top:5px"><span>'+m.month+'</span>'
+          +'<span class="'+(m.pnl>=0?'pos':'neg')+'">'+(m.roi_pct>=0?'+':'')+m.roi_pct+'% · '+signMoney(m.pnl)+'</span>'
+          +'<span class="disc" style="margin:0">'+m.trades+'t · '+m.win_rate+'%</span></div>').join('')):'');
+  }catch(e){ $('adminPerf').innerHTML=''; }
+}
 async function adminAct(id){ await api('/admin/activate','POST',{user_id:id,days:30}); loadAdmin(); }
 async function adminDe(id){ await api('/admin/deactivate','POST',{user_id:id}); loadAdmin(); }
 
@@ -546,7 +561,7 @@ const LIVE_CARDS=['statsCard','cycleCard','positionsCard','signalsCard','chartCa
 function toggleMenu(on){ $('drawer').classList.toggle('show',on); }
 function openPanel(id){
   toggleMenu(false);
-  if(id==='adminPanel') loadAdmin();
+  if(id==='adminPanel'){ loadAdmin(); loadAdminStats(); }
   if(id==='profilePanel') fillProfile();
   if(id==='referralPanel') fillReferral();
   if(id==='tradePanel') fillTradeForm();
@@ -615,6 +630,7 @@ function updateEstimate(){
     +' · <b style="color:var(--red)">Liq ≈ '+money(liq)+'</b>';
 }
 function closePanel(id){ $(id).classList.remove('show'); }
+function backToMenu(id){ $(id).classList.remove('show'); toggleMenu(true); }  // close panel -> reopen menu
 function fillAvatar(id){
   const el=$(id); if(!el) return;
   const src=(pendingAvatar!==undefined?pendingAvatar:ME&&ME.avatar);
@@ -1010,6 +1026,17 @@ async function boot(){
   try{ const r=await fetch('/app/api/me'); if(r.ok){ ME=await r.json(); render(); return; } }catch(e){}
 })();
 if($('avatarFile')) $('avatarFile').addEventListener('change',onAvatarFile);
+// swipe right to open the menu, swipe left to close it
+let _sx=0,_sy=0,_st=0;
+addEventListener('touchstart',e=>{const t=e.changedTouches[0];_sx=t.clientX;_sy=t.clientY;_st=Date.now();},{passive:true});
+addEventListener('touchend',e=>{const t=e.changedTouches[0],dx=t.clientX-_sx,dy=t.clientY-_sy;
+  if(Date.now()-_st>600||Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*1.6) return;
+  const drawerOpen=$('drawer').classList.contains('show');
+  const modalOpen=document.querySelector('.modal.show');
+  const loggedIn=ME && !$('mainView').classList.contains('hide');
+  if(dx>0 && !drawerOpen && !modalOpen && loggedIn) toggleMenu(true);
+  else if(dx<0 && drawerOpen) toggleMenu(false);
+},{passive:true});
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('/app/sw.js').catch(()=>{}); }
 </script>
 </body>

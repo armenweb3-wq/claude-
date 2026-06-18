@@ -109,6 +109,7 @@ class UserTrader:
             closed = self.ex.closed_pnl(limit=100)
         except Exception:
             closed = []
+        out["closed"] = closed  # surfaced so the runner can persist it
         # snapshot positions + manage break-even
         positions: dict = {}
         open_count = 0

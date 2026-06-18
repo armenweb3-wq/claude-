@@ -229,6 +229,48 @@ class Store:
     def closed_by_month(self, uid: int, month: str) -> list[dict]:
         return [g for g in self.logical_trades(uid) if (g.get("closed_at") or "")[:7] == month]
 
+    def platform_stats(self) -> dict:
+        """Aggregate performance across all users — for proof/marketing. Groups
+        each user's partial fills into positions, then totals them."""
+        uids = [r["id"] for r in self._q("SELECT id FROM users WHERE is_admin=0")]
+        trades = []
+        for uid in uids:
+            trades.extend(self.logical_trades(uid))
+        wins = sum(1 for t in trades if (t.get("pnl") or 0) > 0)
+        losses = sum(1 for t in trades if (t.get("pnl") or 0) < 0)
+        decided = wins + losses
+        months: dict[str, dict] = {}
+        for t in trades:
+            mo = (t.get("closed_at") or "")[:7]
+            if not mo:
+                continue
+            b = months.setdefault(mo, {"trades": 0, "wins": 0, "losses": 0, "pnl": 0.0, "roi": 0.0})
+            b["trades"] += 1
+            if t["pnl"] > 0:
+                b["wins"] += 1
+            elif t["pnl"] < 0:
+                b["losses"] += 1
+            b["pnl"] += t["pnl"]
+            b["roi"] += t["pnl_pct"]
+        monthly = []
+        for mo in sorted(months, reverse=True):
+            b = months[mo]
+            d = b["wins"] + b["losses"]
+            monthly.append({"month": mo, "trades": b["trades"], "wins": b["wins"],
+                            "losses": b["losses"],
+                            "win_rate": round(b["wins"] / d * 100, 1) if d else 0.0,
+                            "pnl": round(b["pnl"], 2), "roi_pct": round(b["roi"], 1)})
+        times = [t.get("closed_at") for t in trades if t.get("closed_at")]
+        return {
+            "users": len(uids),
+            "trades": len(trades),
+            "wins": wins, "losses": losses,
+            "win_rate": round(wins / decided * 100, 1) if decided else 0.0,
+            "realized_pnl": round(sum(t.get("pnl") or 0 for t in trades), 2),
+            "since": min(times)[:10] if times else None,
+            "monthly": monthly,
+        }
+
     def referral_count(self, username: str) -> int:
         if not username:
             return 0

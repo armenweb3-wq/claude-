@@ -87,8 +87,15 @@ class MultiUserRunner:
                     dry=settings.saas_dry_run,
                 )
                 res = trader.run_once()
+                # Persist closed trades every cycle so performance data accrues
+                # over time even if the user never opens the dashboard.
+                try:
+                    self.store.add_closed_trades(uid, res.get("closed", []))
+                except Exception:  # pragma: no cover
+                    pass
             except Exception as exc:  # one user must not break the rest
                 res = {"error": str(exc)}
                 log.warning("user %s run failed: %s", uid, exc)
+            res.pop("closed", None)
             res["ts"] = time.time()
             self.results[uid] = res

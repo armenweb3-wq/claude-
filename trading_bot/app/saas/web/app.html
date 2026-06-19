@@ -966,7 +966,8 @@ let chartSym=null;
 function fillChart(syms){
   const sel=$('chartSel'); if(sel.options.length===syms.length && syms.length) return;
   sel.innerHTML=syms.map(s=>'<option value="'+s+'">'+s+'</option>').join('');
-  if(syms.length){ sel.value=(chartSym&&syms.includes(chartSym))?chartSym:syms[0]; loadChart(sel.value); }
+  if(syms.length){ const def=syms.includes('BTCUSDT')?'BTCUSDT':syms[0];
+    sel.value=(chartSym&&syms.includes(chartSym))?chartSym:def; loadChart(sel.value); }
 }
 function loadChart(sym){
   chartSym=sym; const el=$('tv_chart'); if(!el||!window.TradingView) return; el.innerHTML='';

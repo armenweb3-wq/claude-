@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-19T00:05:24.197Z",
+  "updatedAt": "2026-06-19T00:10:28.236Z",
   "matches": [
     {
       "home": "Sweden",
@@ -124,7 +124,7 @@
     {
       "home": "Canada",
       "away": "Qatar",
-      "status": "IN_PLAY",
+      "status": "FINISHED",
       "homeScore": 6,
       "awayScore": 0,
       "utcDate": "2026-06-18T22:00:00Z"

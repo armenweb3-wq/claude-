@@ -12,6 +12,31 @@ from ..config import settings
 log = logging.getLogger(__name__)
 
 
+def send_photo(chat_id: str | None, image: bytes, caption: str | None = None,
+               button: dict | None = None) -> bool:
+    """Send a PNG photo (e.g. a P&L card) to a chat/channel."""
+    if not chat_id or not settings.telegram_bot_token:
+        return False
+    import json as _json
+    data = {"chat_id": chat_id}
+    if caption:
+        data["caption"] = caption
+        data["parse_mode"] = "HTML"
+    if button and str(button.get("url", "")).startswith(("http://", "https://")):
+        data["reply_markup"] = _json.dumps(
+            {"inline_keyboard": [[{"text": button.get("text", "Open"), "url": button["url"]}]]})
+    try:
+        import requests
+
+        r = requests.post(
+            f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendPhoto",
+            data=data, files={"photo": ("card.png", image, "image/png")}, timeout=15)
+        return r.status_code == 200
+    except Exception as exc:  # pragma: no cover - best effort
+        log.warning("telegram photo failed: %s", exc)
+        return False
+
+
 def community_button() -> dict | None:
     if settings.community_link:
         return {"text": "Join the free community →", "url": settings.community_link}

@@ -674,6 +674,61 @@ def admin_post_channel(body: ChannelPostIn, admin: dict = Depends(require_admin)
     return {"ok": True, "message_id": res.get("message_id")}
 
 
+@router.post("/api/admin/test-run")
+def admin_test_run(admin: dict = Depends(require_admin)) -> dict:
+    """Fire the FULL message sequence so the admin can preview it: channel posts
+    to the channel, and the individual (DM) messages to the admin's own chat."""
+    from . import alerts, card, content
+    import datetime as dt
+    now = dt.datetime.now(dt.timezone.utc)
+    nows = now.strftime("%Y-%m-%d %H:%M UTC")
+    chat = admin.get("telegram_chat_id")
+    broker = ({"text": f"Upgrade with {settings.broker_name} →", "url": settings.broker_link}
+              if settings.broker_link else None)
+    community = alerts.community_button()
+    sample = {"name": (admin.get("username") or "trader"), "sym": "ORDIUSDT", "isLong": False,
+              "lev": 3, "pnl": 4.04, "pct": 32.6, "entry": "3.384", "last": "2.978",
+              "date": nows, "live": True}
+    img = card.render_card(sample)
+    sent = {"channel": 0, "dm": 0}
+
+    # ── CHANNEL sequence ──
+    ch = []
+    ch.append(("📌 <b>Welcome to ZENITH</b>\nFully-automated crypto trading on your own account. "
+               "Live results, education and member offers here.", community, False))
+    ch.append((content.daily_tip(now) + "\n\n📊 Live: automated, hands-off.", None, False))
+    ch.append(("🎁 <b>Refer a friend → 1 month free</b>\nPlus a giveaway ticket for every referral this month. "
+               "Your link is in the app → Referral.", community, False))
+    if broker:
+        ch.append(("👤 <b>Want a dedicated account manager?</b> Upgrade below.", broker, False))
+    for text, btn, _ in ch:
+        if alerts.post_channel(text, btn).get("ok"):
+            sent["channel"] += 1
+    # bait card to channel
+    if alerts.send_photo(settings.channel_chat_id,
+                         img, "🚀 A member just banked TP1+TP2 on $ORDI — +32% locked, fully automated.",
+                         community):
+        sent["channel"] += 1
+
+    # ── INDIVIDUAL (DM) sequence to the admin ──
+    if chat:
+        dms = [
+            "✅ <b>Welcome to ZENITH</b>\nYou'll get every trade + a daily 7pm summary here.",
+            "🟢 Opened SHORT ORDIUSDT (qty 1.0)",
+            "🎯 ORDIUSDT — TP1 hit, stop moved to break-even",
+            "🎯 ORDIUSDT — TP2 hit, stop moved to TP1",
+            "✅ Closed ORDIUSDT — PnL +0.55 USDT",
+            "📊 <b>Daily summary</b>\nTrades: 2 · Wins: 2 · Losses: 0\nNet: +0.55 USDT",
+        ]
+        for m in dms:
+            if alerts.notify(chat, m):
+                sent["dm"] += 1
+        if alerts.send_photo(chat, img, "Your shareable result card 👆"):
+            sent["dm"] += 1
+
+    return {"ok": True, **sent}
+
+
 @router.post("/api/admin/activate")
 def admin_activate(body: ActivateIn, admin: dict = Depends(require_admin)) -> dict:
     st = store()

@@ -460,6 +460,11 @@
         <button class="ghost" onclick="postChannel()">Post to channel</button>
         <div class="msg" id="chMsg"></div>
       </div>
+      <div style="margin-top:12px;border-top:1px solid var(--line2);padding-top:12px">
+        <button class="ghost" onclick="runTest()">▶ Run full message test (channel + DM)</button>
+        <div class="disc" style="margin-top:4px">Sends the whole sequence so you can preview it. DMs go to your own Telegram.</div>
+        <div class="msg" id="testMsg2"></div>
+      </div>
     </div>
     <div id="adminUsers" style="margin-top:14px"></div>
   </div>
@@ -588,6 +593,12 @@ async function sendBroadcast(){
   const m=$('bcMsg'); m.className='msg'; m.textContent='Sending…';
   try{ const r=await api('/admin/broadcast','POST',{text:$('bcText').value,include_broker:$('bcBroker').checked});
     m.className='msg ok'; m.textContent='Sent to '+r.sent+' user(s) ✓'; $('bcText').value='';
+  }catch(e){ m.className='msg err'; m.textContent=e.message; }
+}
+async function runTest(){
+  const m=$('testMsg2'); m.className='msg'; m.textContent='Sending full test…';
+  try{ const r=await api('/admin/test-run','POST',{});
+    m.className='msg ok'; m.textContent='Sent — '+r.channel+' to channel, '+r.dm+' to your DM ✓';
   }catch(e){ m.className='msg err'; m.textContent=e.message; }
 }
 async function postChannel(){

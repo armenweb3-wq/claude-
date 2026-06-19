@@ -14,8 +14,14 @@ log = logging.getLogger(__name__)
 def parse_permissions(result: dict) -> dict:
     """Pure parser (unit-testable) for Bybit's query-api result."""
     perms = result.get("permissions", {}) or {}
-    flat = [str(p) for vals in perms.values() if isinstance(vals, list) for p in vals]
-    can_withdraw = any("withdraw" in p.lower() for p in flat)
+    # Scan BOTH the permission group names and their values — Bybit may express
+    # withdrawal as a group key ("Withdraw") or a value ("WithdrawOnly").
+    flat = []
+    for k, vals in perms.items():
+        flat.append(str(k))
+        if isinstance(vals, list):
+            flat += [str(p) for p in vals]
+    can_withdraw = any("withdraw" in s.lower() for s in flat)
     read_only = str(result.get("readOnly")) in {"1", "True", "true"}
     can_trade = (not read_only) and bool(perms.get("ContractTrade") or perms.get("Derivatives"))
     return {"can_trade": can_trade, "can_withdraw": can_withdraw, "read_only": read_only}

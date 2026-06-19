@@ -71,10 +71,15 @@ def new_token() -> str:
 def _fernet() -> Fernet:
     secret = settings.saas_secret_key
     if not secret:
-        # Ephemeral key: works for local testing but does NOT survive restart.
-        # Production MUST set SAAS_SECRET_KEY so stored keys remain decryptable.
+        # Fail CLOSED in production: if a real database is configured we must NOT
+        # silently encrypt users' API keys with a publicly-known dev key.
+        if settings.database_url:
+            raise RuntimeError(
+                "SAAS_SECRET_KEY is not set but DATABASE_URL is — refusing to "
+                "encrypt exchange keys with an insecure key. Set SAAS_SECRET_KEY.")
+        # Local/test only (SQLite, no DB URL): ephemeral dev key.
         secret = "DEV-ONLY-INSECURE-KEY"
-        log.warning("SAAS_SECRET_KEY not set — using an ephemeral dev key; "
+        log.warning("SAAS_SECRET_KEY not set — using an ephemeral dev key (local only); "
                     "stored exchange keys will not survive a restart.")
     # Derive a valid 32-byte urlsafe-base64 Fernet key from the secret.
     digest = hashlib.sha256(secret.encode()).digest()

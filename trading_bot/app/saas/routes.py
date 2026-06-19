@@ -179,6 +179,7 @@ def public_stats() -> dict:
 # ── auth ────────────────────────────────────────────────────
 @router.post("/api/register")
 def register(body: Creds, response: Response, request: Request) -> dict:
+    _rate_limit("register", request, limit=10, window=3600)
     email = body.email.strip().lower()
     if "@" not in email or "." not in email:
         raise HTTPException(400, "enter a valid email")
@@ -203,6 +204,7 @@ def register(body: Creds, response: Response, request: Request) -> dict:
 
 @router.post("/api/login")
 def login(body: Creds, response: Response, request: Request) -> dict:
+    _rate_limit("login", request, limit=10, window=300)
     st = store()
     user = st.get_user_by_email(body.email.strip().lower())
     if not user or not security.verify_password(body.password, user["pw_salt"], user["pw_hash"]):
@@ -223,6 +225,21 @@ def logout(request: Request, response: Response) -> dict:
 
 
 _recover_attempts: dict = {}  # ip -> (window_start, count), simple rate limit
+_rl_buckets: dict = {}        # (name, ip) -> (window_start, count)
+
+
+def _rate_limit(name: str, request: Request, limit: int, window: int) -> None:
+    """Simple in-memory per-IP rate limit. Best-effort (per-process); enough to
+    blunt brute force on login/register/redeem."""
+    ip = request.client.host if request.client else "?"
+    key = (name, ip)
+    now = time.time()
+    start, count = _rl_buckets.get(key, (now, 0))
+    if now - start > window:
+        start, count = now, 0
+    if count >= limit:
+        raise HTTPException(429, "too many attempts — please wait a minute and try again")
+    _rl_buckets[key] = (start, count + 1)
 
 
 def _recover_key() -> str:
@@ -433,6 +450,7 @@ def redeem(body: RedeemIn, request: Request) -> dict:
     import hmac
 
     user = current_user(request)
+    _rate_limit("redeem", request, limit=8, window=3600)  # blunt code brute force
     code = (body.code or "").strip()
     if not settings.saas_access_code or not hmac.compare_digest(code, settings.saas_access_code):
         raise HTTPException(400, "invalid access code")

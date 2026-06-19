@@ -804,6 +804,8 @@ def admin_config(admin: dict = Depends(require_admin)) -> dict:
         "your_telegram_connected": bool(admin.get("telegram_chat_id")),
         "your_closed_trades_recorded": store().count_closed(admin["id"]),
         "your_keys_connected": bool(store().get_keys(admin["id"])),
+        # Notification outbox health (durable alert delivery):
+        "events": store().event_counts(),
     }
 
 

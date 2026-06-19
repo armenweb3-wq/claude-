@@ -48,6 +48,10 @@ def _schema(d: str) -> list[str]:
           closed_at TEXT, UNIQUE(user_id, ext_id))""",
         """CREATE TABLE IF NOT EXISTS meta (
           k TEXT PRIMARY KEY, v TEXT)""",
+        f"""CREATE TABLE IF NOT EXISTS events (
+          id {_PK[d]}, user_id INTEGER, target TEXT, kind TEXT, payload TEXT,
+          status TEXT DEFAULT 'pending', attempts INTEGER DEFAULT 0, error TEXT,
+          created_at {_TS[d]}, sent_at {_TS[d]})""",
     ]
 
 
@@ -222,6 +226,29 @@ class Store:
 
     def set_telegram(self, uid: int, chat_id: str | None) -> None:
         self._q("UPDATE users SET telegram_chat_id=? WHERE id=?", (chat_id, uid))
+
+    # ── durable event log / notification outbox ─────────────
+    def add_event(self, target: str, kind: str, payload: dict,
+                  user_id: int | None = None) -> None:
+        """Append a notification/audit event. A separate dispatcher delivers it
+        with retries, so an alert is never lost in a fire-and-forget send."""
+        import json
+        self._q(
+            "INSERT INTO events (user_id, target, kind, payload, status, attempts, created_at)"
+            " VALUES (?,?,?,?, 'pending', 0, ?)",
+            (user_id, target, kind, json.dumps(payload), time.time()))
+
+    def pending_events(self, limit: int = 100) -> list[dict]:
+        return self._q("SELECT * FROM events WHERE status='pending' ORDER BY id ASC LIMIT ?",
+                       (limit,))
+
+    def mark_event(self, eid: int, status: str, error: str | None, attempts: int) -> None:
+        self._q("UPDATE events SET status=?, error=?, attempts=?, sent_at=? WHERE id=?",
+                (status, error, attempts, time.time() if status == "sent" else None, eid))
+
+    def event_counts(self) -> dict:
+        rows = self._q("SELECT status, COUNT(*) AS c FROM events GROUP BY status")
+        return {r["status"]: int(r["c"]) for r in rows}
 
     # ── closed-trade history (for monthly performance) ──────
     def add_closed_trades(self, uid: int, trades: list[dict]) -> list[dict]:

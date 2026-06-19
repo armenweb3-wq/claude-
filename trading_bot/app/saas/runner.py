@@ -82,6 +82,7 @@ class MultiUserRunner:
             self._maybe_daily_summary()
             self._maybe_channel_content()
             self._maybe_post_card()
+            self._dispatch_events()   # deliver the durable outbox (DM + channel)
         except Exception:  # pragma: no cover
             log.exception("runner broadcasts failed")
         finally:
@@ -106,11 +107,10 @@ class MultiUserRunner:
         tid = f"{t.get('symbol')}|{t.get('closed_at')}"
         if self.store.get_meta("last_card_id") == tid:
             return  # already posted this one
-        img, caption = card.build_member_card(t)
-        if alerts.send_photo(settings.channel_chat_id, img, caption,
-                             alerts.community_button()).get("ok"):
-            self.store.set_meta("last_card_at", str(now))
-            self.store.set_meta("last_card_id", tid)
+        # Enqueue — the dispatcher renders & sends (durable, retried).
+        self.store.add_event("channel", "card", {"trade": t, "button": alerts.community_button()})
+        self.store.set_meta("last_card_at", str(now))
+        self.store.set_meta("last_card_id", tid)
 
     def _maybe_daily_summary(self) -> None:
         """Once a day at SUMMARY_HOUR_UTC, DM each connected user their day."""
@@ -124,41 +124,43 @@ class MultiUserRunner:
         self._last_summary_day = today
         self.store.set_meta("last_summary_day", today)
         from . import alerts
+        btn = alerts.community_button()
         for u in self.store.list_users(include_admins=True):
-            chat = u.get("telegram_chat_id")
-            if not chat:
+            if not u.get("telegram_chat_id"):
                 continue
             trades = [t for t in self.store.logical_trades(u["id"])
                       if (t.get("closed_at") or "").startswith(today)]
             if not trades:
-                alerts.notify(chat, "📊 <b>Daily summary</b>\nNo trades closed today — bot is watching for setups.",
-                              alerts.community_button())
+                self.store.add_event("dm", "text", {
+                    "text": "📊 <b>Daily summary</b>\nNo trades closed today — bot is watching for setups.",
+                    "button": btn}, u["id"])
                 continue
             wins = sum(1 for t in trades if t["pnl"] > 0)
             losses = sum(1 for t in trades if t["pnl"] < 0)
             net = sum(t["pnl"] for t in trades)
-            alerts.notify(chat,
-                f"📊 <b>Daily summary</b>\nTrades closed: <b>{len(trades)}</b>\n"
-                f"Wins: <b>{wins}</b> · Losses: <b>{losses}</b>\nNet: <b>{net:+.2f} USDT</b>",
-                alerts.community_button())
+            self.store.add_event("dm", "text", {
+                "text": (f"📊 <b>Daily summary</b>\nTrades closed: <b>{len(trades)}</b>\n"
+                         f"Wins: <b>{wins}</b> · Losses: <b>{losses}</b>\nNet: <b>{net:+.2f} USDT</b>"),
+                "button": btn}, u["id"])
 
     def _alert(self, user: dict, opened: list, new_closed: list) -> None:
-        """Telegram alerts for this user's opens and recent closes."""
-        chat = user.get("telegram_chat_id")
-        if not chat:
+        """Enqueue durable Telegram events for this user's opens and recent
+        closes. The dispatcher delivers them with retries — nothing is lost."""
+        if not user.get("telegram_chat_id"):
             return
-        from . import alerts
+        uid = user["id"]
         import datetime as _dt
+        from html import escape as _esc
         # In dry-run no real position is opened, so a persistent signal would
         # re-announce "Opened" every cycle — suppress open alerts in dry mode.
         if not settings.saas_dry_run:
             for o in opened:
-                alerts.notify(chat, f"🟢 Opened {o.get('side')} {o.get('symbol')} (qty {o.get('qty')})")
+                self.store.add_event("dm", "text", {
+                    "text": f"🟢 Opened {o.get('side')} {o.get('symbol')} (qty {o.get('qty')})"}, uid)
                 if o.get("warning"):
-                    from html import escape as _esc
-                    alerts.notify(chat, f"⚠️ <b>{_esc(str(o.get('symbol')))}: "
-                                        f"{_esc(str(o['warning']))}</b>. "
-                                        f"Please check the position on Bybit.")
+                    self.store.add_event("dm", "text", {
+                        "text": (f"⚠️ <b>{_esc(str(o.get('symbol')))}: {_esc(str(o['warning']))}</b>. "
+                                 f"Please check the position on Bybit.")}, uid)
         # "Fresh close" window must comfortably exceed the loop interval, or a
         # close detected on the next (possibly late) cycle would be skipped.
         window_min = max(30, int(settings.saas_loop_seconds / 60 * 3) + 10)
@@ -168,7 +170,59 @@ class MultiUserRunner:
                 continue  # skip historical backfill, only alert fresh closes
             pnl = t.get("pnl") or 0
             emoji = "✅" if pnl > 0 else "🔻"
-            alerts.notify(chat, f"{emoji} Closed {t.get('symbol')} — PnL {pnl:+.4f} USDT")
+            self.store.add_event("dm", "text", {
+                "text": f"{emoji} Closed {t.get('symbol')} — PnL {pnl:+.4f} USDT"}, uid)
+
+    def _dispatch_events(self) -> None:
+        """Deliver pending events (the notification outbox). Retries on failure,
+        marks sent/failed/skipped — so an alert is durable, not fire-and-forget."""
+        import json
+        from . import alerts, card
+        MAX_ATTEMPTS = 5
+        for e in self.store.pending_events(limit=100):
+            eid = e["id"]
+            attempts = (e.get("attempts") or 0) + 1
+            try:
+                p = json.loads(e.get("payload") or "{}")
+            except Exception:
+                self.store.mark_event(eid, "failed", "bad payload", attempts)
+                continue
+            target, kind, btn = e.get("target"), e.get("kind"), p.get("button")
+            ok, err = False, None
+            try:
+                if target == "dm":
+                    u = self.store.get_user(e.get("user_id")) if e.get("user_id") else None
+                    chat = u.get("telegram_chat_id") if u else None
+                    if not chat:
+                        self.store.mark_event(eid, "skipped", "no chat id", attempts)
+                        continue
+                    if kind == "card":
+                        img, cap = card.build_member_card(p["trade"])
+                        ok = alerts.send_photo(chat, img, p.get("caption") or cap, btn).get("ok")
+                    else:
+                        ok = alerts.notify(chat, p["text"], btn)
+                elif target == "channel":
+                    if not settings.channel_chat_id:
+                        self.store.mark_event(eid, "skipped", "no channel", attempts)
+                        continue
+                    if kind == "card":
+                        img, cap = card.build_member_card(p["trade"])
+                        r = alerts.send_photo(settings.channel_chat_id, img, p.get("caption") or cap, btn)
+                        ok, err = r.get("ok"), r.get("error")
+                    else:
+                        r = alerts.post_channel(p["text"], btn)
+                        ok, err = r.get("ok"), r.get("error")
+                else:
+                    self.store.mark_event(eid, "skipped", "unknown target", attempts)
+                    continue
+            except Exception as exc:  # pragma: no cover
+                err = str(exc)
+            if ok:
+                self.store.mark_event(eid, "sent", None, attempts)
+            elif attempts >= MAX_ATTEMPTS:
+                self.store.mark_event(eid, "failed", err or "send failed", attempts)
+            else:
+                self.store.mark_event(eid, "pending", err, attempts)
 
     def _maybe_channel_content(self) -> None:
         """Once a day, auto-post an educational tip + live performance line to
@@ -190,22 +244,23 @@ class MultiUserRunner:
         broker = ({"text": f"Upgrade with {settings.broker_name} →", "url": settings.broker_link}
                   if settings.broker_link else None)
         # Rotate the daily post by day-of-year so the channel has variety, not
-        # just tips — all automatic.
+        # just tips — all automatic. Enqueue (the dispatcher delivers it).
         slot = now.timetuple().tm_yday % 4
-        if slot == 0:
-            alerts.post_channel(content.daily_tip(now) + ("\n\n" + perf if perf else ""))
-        elif slot == 1 and perf:
-            alerts.post_channel("📈 <b>Performance update</b>\n\n" + perf +
-                                "\n\nFully automated on each member's own account.", community)
+        if slot == 1 and perf:
+            self.store.add_event("channel", "text", {
+                "text": "📈 <b>Performance update</b>\n\n" + perf +
+                        "\n\nFully automated on each member's own account.", "button": community})
         elif slot == 2:
-            alerts.post_channel("🎁 <b>Refer a friend → 1 month free</b>\nPlus a giveaway "
-                                "ticket per referral this month. Your link is in the app → Referral.",
-                                community)
+            self.store.add_event("channel", "text", {
+                "text": "🎁 <b>Refer a friend → 1 month free</b>\nPlus a giveaway ticket per "
+                        "referral this month. Your link is in the app → Referral.", "button": community})
         elif slot == 3 and broker:
-            alerts.post_channel("👤 <b>Want a dedicated account manager?</b>\nUpgrade with our "
-                                "partner below.", broker)
+            self.store.add_event("channel", "text", {
+                "text": "👤 <b>Want a dedicated account manager?</b>\nUpgrade with our partner below.",
+                "button": broker})
         else:
-            alerts.post_channel(content.daily_tip(now) + ("\n\n" + perf if perf else ""))
+            self.store.add_event("channel", "text", {
+                "text": content.daily_tip(now) + ("\n\n" + perf if perf else "")})
 
     def run_cycle(self) -> None:
         for user in self.store.list_users(include_admins=True):

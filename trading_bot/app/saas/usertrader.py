@@ -6,6 +6,7 @@ fully parameterised by the user's exchange, strategy, and settings.
 """
 from __future__ import annotations
 
+import datetime as dt
 import logging
 
 from ..config import settings
@@ -18,19 +19,47 @@ log = logging.getLogger(__name__)
 _TP_LADDER_PCTS = (6.0, 12.0, 20.0)
 
 
-def manage_breakeven(exchange, symbol, pos, hit=None, tp_pcts=_TP_LADDER_PCTS) -> None:
-    """Trail the stop up the TP ladder: TP1 -> break-even, TP2 -> TP1, and once
-    the final TP is reached close the remainder. Stop only moves forward.
+def _tp_hits_from_fills(closed, symbol, opened_at, tps, tol=0.004) -> int:
+    """Count how many distinct TP *levels* have an actual closing fill at (≈) that
+    price since the position opened. Matching the exit price to a TP level avoids
+    counting stop-loss hits, manual closes, regime-flip closes, or earlier
+    round-trips of the same symbol — the root cause of premature force-closes."""
+    n = 0
+    for tp in tps:
+        for r in closed:
+            if r.get("symbol") != symbol:
+                continue
+            ca = r.get("closed_at") or ""
+            if opened_at and ca < opened_at:
+                continue
+            ep = r.get("exit_price") or 0
+            if ep and tp and abs(ep - tp) / tp <= tol:
+                n += 1
+                break
+    return n
 
-    ``hit`` is the authoritative number of TPs filled (from closed orders); if
-    not given, fall back to comparing the current price to the levels."""
+
+def manage_breakeven(exchange, symbol, pos, closed=None, opened_at="",
+                     tp_pcts=_TP_LADDER_PCTS) -> None:
+    """Trail the stop up the TP ladder: TP1 -> break-even, TP2 -> TP1. Stop only
+    moves forward, never back.
+
+    When ``closed`` (the list of real closing fills) is given, the number of TPs
+    hit is derived from fills whose price matches a TP level — and we do NOT
+    market-close on the final TP, because the reduce-only TP ladder on the
+    exchange closes the position itself. When ``closed`` is omitted we fall back
+    to comparing the live price to the levels (and may close on the final TP)."""
     if pos.entry_price <= 0:
         return
     is_long = (pos.side or "").lower() in ("buy", "long")
     sign = 1.0 if is_long else -1.0
     entry = pos.entry_price
     tps = [entry * (1 + sign * p / 100) for p in tp_pcts]
-    if hit is None:
+
+    close_on_final = False
+    if closed is not None:
+        hit = _tp_hits_from_fills(closed, symbol, opened_at, tps)
+    else:
         try:
             price = exchange.last_price(symbol)
         except Exception:
@@ -41,17 +70,23 @@ def manage_breakeven(exchange, symbol, pos, hit=None, tp_pcts=_TP_LADDER_PCTS) -
                 hit += 1
             else:
                 break
+        close_on_final = True
+
     if hit <= 0:
         return
-    if hit >= len(tps):  # final TP reached — close the remainder
-        try:
-            exchange.close_position(symbol)
-            pos.side = None
-        except Exception as exc:  # pragma: no cover
-            log.warning("final close failed %s: %s", symbol, exc)
-        return
+    if hit >= len(tps):
+        if close_on_final:  # price genuinely reached the final TP
+            try:
+                exchange.close_position(symbol)
+                pos.side = None
+            except Exception as exc:  # pragma: no cover
+                log.warning("final close failed %s: %s", symbol, exc)
+            return
+        hit = len(tps) - 1  # fills path: just trail, the exchange closes TP3
+        if hit <= 0:
+            return
     buf = 0.0012
-    target = round(entry * (1 + sign * buf), 6) if hit == 1 else round(tps[hit - 2], 6)
+    target = entry * (1 + sign * buf) if hit == 1 else tps[hit - 2]
     cur = pos.stop_loss or 0.0
     forward = (target > cur) if is_long else (cur == 0 or target < cur)
     if not forward:
@@ -120,9 +155,7 @@ class UserTrader:
                 if p.side is not None:
                     open_count += 1
                     ot = getattr(p, "created_at", "") or ""
-                    hit = (sum(1 for r in closed if r.get("symbol") == s
-                               and (r.get("closed_at") or "") >= ot) if ot else None)
-                    manage_breakeven(self.ex, s, p, hit)
+                    manage_breakeven(self.ex, s, p, closed=closed, opened_at=ot)
             except Exception as exc:  # pragma: no cover
                 log.warning("position read %s: %s", s, exc)
 
@@ -142,12 +175,26 @@ class UserTrader:
                         log.warning("regime-flip close %s: %s", s, exc)
         out["positions"] = open_count
 
+        # Daily-loss circuit breaker: once today's realised loss exceeds the
+        # configured % of equity, stop opening NEW positions for the rest of the
+        # day (existing positions keep their stops). Same safety rail the
+        # single-user bot has.
+        today = dt.datetime.now(dt.timezone.utc).date().isoformat()
+        realized_today = sum((r.get("pnl") or 0) for r in closed
+                             if (r.get("closed_at") or "").startswith(today))
+        daily_loss_breached = realized_today <= -(settings.daily_max_loss_pct / 100) * equity
+        if daily_loss_breached:
+            out["market"] = (out.get("market") or "") + " · daily loss limit hit — new trades paused"
+
         for s in symbols:
             try:
                 df = self.ex.get_klines(s, settings.timeframe, limit=250)
                 sig = self.strategy.generate(df)
                 out["signals"][s] = f"{sig.action}: {sig.reason}"
                 if sig.action not in {"long", "short"}:
+                    continue
+                if daily_loss_breached:
+                    out["signals"][s] = "paused — daily loss limit reached"
                     continue
                 if sig.action == "long" and not allow_long:
                     out["signals"][s] = "long blocked — market filter"

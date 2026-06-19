@@ -39,6 +39,7 @@ class InstrumentRules:
     min_qty: float
     qty_step: float
     min_notional: float = 0.0
+    tick_size: float = 0.0  # price increment; prices must be a multiple of this
 
 
 @dataclass
@@ -48,6 +49,7 @@ class ExecutionResult:
     entry_order_id: str | None = None
     qty: float = 0.0
     leverage: float = 1.0
+    warning: str = ""  # non-fatal issue (e.g. stop-loss could not be confirmed)
 
 
 def round_step(qty: float, step: float) -> float:
@@ -55,6 +57,13 @@ def round_step(qty: float, step: float) -> float:
     if step <= 0:
         return qty
     return (int(qty / step)) * step
+
+
+def round_price(price: float, tick: float) -> float:
+    """Round a price to the nearest valid tick. Falls back to 6 dp if unknown."""
+    if tick and tick > 0:
+        return round(round(price / tick) * tick, 10)
+    return round(price, 6)
 
 
 class ExchangeAdapter(ABC):

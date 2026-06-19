@@ -280,9 +280,7 @@ class TradingBot:
                     open_positions += 1
                     if manage:
                         ot = getattr(pos, "created_at", "") or ""
-                        hit = (sum(1 for r in closed if r.get("symbol") == symbol
-                                   and (r.get("closed_at") or "") >= ot) if ot else None)
-                        self._manage_breakeven(symbol, pos, hit)  # may update pos.stop_loss
+                        self._manage_breakeven(symbol, pos, closed=closed, opened_at=ot)
                     tps, sl, is_long = self._trade_levels(pos)
                     at_be = (sl >= pos.entry_price) if is_long else (0 < sl <= pos.entry_price)
                     # ROI on margin (leveraged) — matches the % exchanges show.
@@ -381,13 +379,14 @@ class TradingBot:
         sl = pos.stop_loss if pos.stop_loss else round(entry * (1 - sign * stop_pct / 100), 6)
         return tps, sl, is_long
 
-    def _manage_breakeven(self, symbol, pos, hit=None) -> None:
+    def _manage_breakeven(self, symbol, pos, closed=None, opened_at="") -> None:
         """Trail the stop up the TP ladder: TP1 hit -> stop to break-even,
-        TP2 hit -> stop to TP1, and once the final TP is reached close whatever
-        remains. The stop only ever moves forward, never looser.
+        TP2 hit -> stop to TP1. The stop only ever moves forward, never looser.
 
-        ``hit`` is the authoritative number of TPs filled (from closed orders);
-        if not given we fall back to comparing the current price to the levels."""
+        When ``closed`` (real closing fills) is given, TP hits are counted from
+        fills whose price matches a TP level, and we do NOT market-close on the
+        final TP (the reduce-only TP ladder closes it on the exchange). Without
+        ``closed`` we fall back to the live price (and may close on final TP)."""
         if pos.entry_price <= 0:
             return
         is_long = (pos.side or "").lower() in ("buy", "long")
@@ -397,7 +396,23 @@ class TradingBot:
         tp_pcts = [p for p, _ in ladder]
         entry = pos.entry_price
         tps = [entry * (1 + sign * p / 100) for p in tp_pcts]
-        if hit is None:
+
+        close_on_final = False
+        if closed is not None:
+            tol = 0.004
+            hit = 0
+            for tp in tps:
+                for r in closed:
+                    if r.get("symbol") != symbol:
+                        continue
+                    ca = r.get("closed_at") or ""
+                    if opened_at and ca < opened_at:
+                        continue
+                    ep = r.get("exit_price") or 0
+                    if ep and tp and abs(ep - tp) / tp <= tol:
+                        hit += 1
+                        break
+        else:
             try:
                 price = self.exchange.last_price(symbol)
             except Exception:
@@ -408,17 +423,22 @@ class TradingBot:
                     hit += 1
                 else:
                     break
+            close_on_final = True
         if hit <= 0:
             return
-        if hit >= len(tps):  # final TP reached — close the remainder
-            try:
-                self.exchange.close_position(symbol)
-                pos.side = None
-                self.notifier.send(f"✅ {symbol} final take-profit hit — position closed")
-                log.info("final TP close for %s", symbol)
-            except Exception as exc:
-                log.warning("final close failed for %s: %s", symbol, exc)
-            return
+        if hit >= len(tps):
+            if close_on_final:  # price genuinely reached the final TP
+                try:
+                    self.exchange.close_position(symbol)
+                    pos.side = None
+                    self.notifier.send(f"✅ {symbol} final take-profit hit — position closed")
+                    log.info("final TP close for %s", symbol)
+                except Exception as exc:
+                    log.warning("final close failed for %s: %s", symbol, exc)
+                return
+            hit = len(tps) - 1  # fills path: trail only, exchange closes TP3
+            if hit <= 0:
+                return
         buf = 0.0012  # ~0.12% past entry to cover round-trip taker fees
         if hit == 1:
             target = round(entry * (1 + sign * buf), 6)

@@ -521,6 +521,39 @@ def manual_open(body: OpenIn, request: Request) -> dict:
         raise HTTPException(400, f"no price for {symbol}: {exc}")
     if price <= 0:
         raise HTTPException(400, f"no price for {symbol}")
+
+    # ── risk gates (the manual path must not bypass safety) ──
+    # 1. Don't stack a manual trade on a symbol that already has a position —
+    #    it would fight the bot's management of that position.
+    try:
+        existing = ex.get_position(symbol)
+        if existing.side:
+            raise HTTPException(400, f"you already have an open position on {symbol}")
+    except HTTPException:
+        raise
+    except Exception:
+        pass  # if the read fails, fall through (open will still be validated)
+    # 2. Affordability: required margin must fit the account balance.
+    try:
+        equity = ex.get_equity()
+    except Exception:
+        equity = 0.0
+    margin = body.notional / lev
+    if equity > 0 and margin > equity * 0.95:
+        raise HTTPException(400, f"amount too large: needs ~{margin:.2f} USDT margin "
+                                 f"but balance is {equity:.2f} USDT")
+    # 3. Daily-loss circuit breaker (same rule as the automated engine).
+    try:
+        today = dt.datetime.now(dt.timezone.utc).date().isoformat()
+        realized_today = sum((r.get("pnl") or 0) for r in ex.closed_pnl(limit=100)
+                             if (r.get("closed_at") or "").startswith(today))
+        if equity > 0 and realized_today <= -(settings.daily_max_loss_pct / 100) * equity:
+            raise HTTPException(400, "daily loss limit reached — trading paused until tomorrow")
+    except HTTPException:
+        raise
+    except Exception:
+        pass
+
     sign = 1.0 if side == "long" else -1.0
     # Stop/TP prices derived from the live entry and the user's percentages.
     stop_price = round(price * (1 - sign * body.stop_pct / 100), 8)
@@ -538,7 +571,8 @@ def manual_open(body: OpenIn, request: Request) -> dict:
         raise HTTPException(502, f"order failed: {exc}")
     if not getattr(res, "ok", False):
         raise HTTPException(400, getattr(res, "skipped_reason", "order rejected by exchange"))
-    return {"ok": True, "qty": getattr(res, "qty", 0), "leverage": lev}
+    return {"ok": True, "qty": getattr(res, "qty", 0), "leverage": lev,
+            "warning": getattr(res, "warning", "")}
 
 
 @router.get("/api/me")

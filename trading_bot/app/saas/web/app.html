@@ -444,7 +444,7 @@
       <input id="t_risk" type="checkbox" style="width:auto;margin-top:3px"/>
       <span>I understand trading is high-risk and I can <b>lose my entire deposit</b>.</span>
     </label>
-    <button class="green" onclick="openTrade()">Open position</button>
+    <button class="green" id="t_submit" onclick="openTrade()">Open position</button>
     <div class="msg" id="tradeMsg"></div>
   </div>
 </div>
@@ -1021,7 +1021,9 @@ async function closePosition(sym){
   try{ await api('/position/close','POST',{symbol:sym}); loadDashboard(); }
   catch(e){ alert(e.message); }
 }
+let tradeSubmitting=false;
 async function openTrade(){
+  if(tradeSubmitting) return;                 // guard against double-tap = two orders
   const m=$('tradeMsg'); m.className='msg'; m.textContent='…';
   const tps=($('t_tps').value||'').split(',').map(s=>parseFloat(s.trim())).filter(v=>v>0);
   const payload={symbol:($('t_symbol').value||'').trim().toUpperCase(), side:$('t_side').value,
@@ -1031,10 +1033,13 @@ async function openTrade(){
   if(!(payload.notional>0)){ m.className='msg err'; m.textContent='Enter an amount in USDT.'; return; }
   if(!(payload.stop_pct>0)){ m.className='msg err'; m.textContent='Enter a stop-loss %.'; return; }
   if(!$('t_risk').checked){ m.className='msg err'; m.textContent='Please accept the risk to continue.'; return; }
+  tradeSubmitting=true; const btn=$('t_submit'); if(btn){ btn.disabled=true; btn.textContent='Opening…'; }
   try{ const r=await api('/position/open','POST',payload);
-    m.className='msg ok'; m.textContent='Opened '+r.qty+' '+payload.symbol+' ✓';
-    setTimeout(()=>{ closePanel('tradePanel'); loadDashboard(); }, 900);
+    m.className='msg ok';
+    m.textContent='Opened '+r.qty+' '+payload.symbol+' ✓'+(r.warning?(' — ⚠️ '+r.warning):'');
+    setTimeout(()=>{ closePanel('tradePanel'); loadDashboard(); }, r.warning?2500:900);
   }catch(e){ m.className='msg err'; m.textContent=e.message; }
+  finally{ tradeSubmitting=false; if(btn){ btn.disabled=false; btn.textContent='Open position'; } }
 }
 
 // ── shareable P&L card (minimal, matches app theme) ─────────

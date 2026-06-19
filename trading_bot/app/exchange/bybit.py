@@ -38,6 +38,7 @@ from .base import (
     InstrumentRules,
     Order,
     Position,
+    round_price,
     round_step,
 )
 
@@ -137,11 +138,13 @@ class BybitExchange(ExchangeAdapter):
         return out
 
     def set_stop_loss(self, symbol: str, stop_price: float) -> None:
+        tick = self.instrument_rules(symbol).tick_size
+        stop_price = round_price(stop_price, tick)
         log.warning("[LIVE] move stop %s -> %s", symbol, stop_price)
         try:
             self._client.set_trading_stop(
                 category=self._category, symbol=symbol,
-                stopLoss=str(round(stop_price, 6)), slTriggerBy="LastPrice",
+                stopLoss=str(stop_price), slTriggerBy="LastPrice",
                 positionIdx=0,
             )
         except Exception as exc:  # pragma: no cover - benign "not modified" codes
@@ -233,10 +236,12 @@ class BybitExchange(ExchangeAdapter):
         resp = self._client.get_instruments_info(category=self._category, symbol=symbol)
         item = resp["result"]["list"][0]
         lot = item["lotSizeFilter"]
+        price_f = item.get("priceFilter", {})
         rules = InstrumentRules(
             min_qty=float(lot.get("minOrderQty") or 0),
             qty_step=float(lot.get("qtyStep") or 0),
             min_notional=float(lot.get("minNotionalValue") or 0),
+            tick_size=float(price_f.get("tickSize") or 0),
         )
         self._rules_cache[symbol] = rules
         return rules
@@ -279,16 +284,33 @@ class BybitExchange(ExchangeAdapter):
 
         self.set_leverage(symbol, leverage)
 
-        # Market entry with the stop loss attached on the exchange.
-        log.warning("[LIVE] open %s %s qty=%s lev=%sx SL=%s", side, symbol, qty, leverage, stop_loss)
+        # Market entry with the stop loss attached on the exchange (rounded to tick).
+        sl_price = round_price(stop_loss, rules.tick_size)
+        log.warning("[LIVE] open %s %s qty=%s lev=%sx SL=%s", side, symbol, qty, leverage, sl_price)
         entry = self._client.place_order(
             category=self._category, symbol=symbol, side=side,
             orderType="Market", qty=str(qty),
-            stopLoss=str(round(stop_loss, 6)), slTriggerBy="LastPrice",
+            stopLoss=str(sl_price), slTriggerBy="LastPrice",
         )
         entry_id = entry.get("result", {}).get("orderId")
 
-        # Reduce-only TP ladder.
+        # CRITICAL: confirm a protective stop actually exists on the exchange.
+        # If the attached SL was rejected (e.g. price/tick issue) the position
+        # would be live and UNPROTECTED, so re-read and set it explicitly.
+        warning = ""
+        try:
+            pos = self.get_position(symbol)
+            if pos.side and pos.stop_loss <= 0:
+                self.set_stop_loss(symbol, stop_loss)
+                pos = self.get_position(symbol)
+                if pos.stop_loss <= 0:
+                    warning = "stop-loss could not be confirmed on the exchange"
+                    log.error("[LIVE] %s opened WITHOUT a confirmed stop-loss", symbol)
+        except Exception as exc:  # pragma: no cover
+            warning = f"stop-loss not verified: {exc}"
+            log.warning("SL verify failed for %s: %s", symbol, exc)
+
+        # Reduce-only TP ladder (prices rounded to tick).
         close_side = "Sell" if side == "Buy" else "Buy"
         for tp in take_profits:
             tp_qty = round_step(qty * tp.close_fraction, rules.qty_step)
@@ -297,10 +319,12 @@ class BybitExchange(ExchangeAdapter):
             try:
                 self._client.place_order(
                     category=self._category, symbol=symbol, side=close_side,
-                    orderType="Limit", qty=str(tp_qty), price=str(round(tp.price, 6)),
+                    orderType="Limit", qty=str(tp_qty),
+                    price=str(round_price(tp.price, rules.tick_size)),
                     reduceOnly=True, timeInForce="GTC",
                 )
             except Exception as exc:  # pragma: no cover - best effort per rung
                 log.warning("TP order failed for %s @ %s: %s", symbol, tp.price, exc)
 
-        return ExecutionResult(ok=True, entry_order_id=entry_id, qty=qty, leverage=leverage)
+        return ExecutionResult(ok=True, entry_order_id=entry_id, qty=qty,
+                               leverage=leverage, warning=warning)

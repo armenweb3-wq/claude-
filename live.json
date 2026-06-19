@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-19T01:15:28.609Z",
+  "updatedAt": "2026-06-19T01:20:30.647Z",
   "matches": [
     {
       "home": "Sweden",
@@ -132,9 +132,9 @@
     {
       "home": "Mexico",
       "away": "Korea Republic",
-      "status": "IN_PLAY",
-      "homeScore": 0,
-      "awayScore": 0,
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
       "utcDate": "2026-06-19T01:00:00Z"
     },
     {

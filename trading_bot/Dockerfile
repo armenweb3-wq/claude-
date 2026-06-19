@@ -18,5 +18,6 @@ COPY scripts ./scripts
 ENV PORT=8000
 EXPOSE 8000
 
-# Shell form so $PORT expands at runtime.
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT}
+# Shell form so $PORT expands at runtime. --proxy-headers so the app sees the
+# real https scheme/client behind Render's TLS proxy (Secure cookies, etc.).
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips="*"

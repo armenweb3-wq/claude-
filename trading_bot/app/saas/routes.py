@@ -809,27 +809,39 @@ def admin_config(admin: dict = Depends(require_admin)) -> dict:
     }
 
 
+# A LIGHTER scope than the full legacy run so it can't OOM/timeout a small
+# instance: the traded majors on daily + 4h (daily is where the edge would show).
+_BT_SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT"]
+_BT_WINDOWS = [("1d", 84), ("4h", 18)]
+
+
 @router.post("/api/admin/backtest")
 def admin_backtest_start(request: Request, admin: dict = Depends(require_admin)) -> dict:
-    """Run the strategy backtest on REAL Bybit history (majors × 1d/4h/1h), net of
-    fees/funding/slippage, vs buy-and-hold — the edge test. Runs in the
-    background; poll GET /api/admin/backtest for streaming results."""
-    import threading
-    from ..api.backtest_routes import _run, _state, DEFAULT_SYMBOLS, TF_WINDOWS
-    st = _state(request)
-    if st["status"] == "running":
-        return {"status": "running", "message": "a backtest is already in progress"}
-    st.update(status="running", results=[], error=None,
-              started=dt.datetime.now(dt.timezone.utc).isoformat(), finished=None)
-    threading.Thread(target=_run, args=(request.app.state, DEFAULT_SYMBOLS, TF_WINDOWS),
-                     daemon=True).start()
-    return {"status": "running", "message": "backtest started"}
+    """Run the strategy backtest on REAL Bybit history (majors × daily/4h), net of
+    fees/funding/slippage, vs buy-and-hold — the edge test. Background; poll GET."""
+    try:
+        import threading
+        from ..api.backtest_routes import _run, _state
+        st = _state(request)
+        if st["status"] == "running":
+            return {"status": "running", "message": "a backtest is already in progress"}
+        st.update(status="running", results=[], error=None,
+                  started=dt.datetime.now(dt.timezone.utc).isoformat(), finished=None)
+        threading.Thread(target=_run, args=(request.app.state, _BT_SYMBOLS, _BT_WINDOWS),
+                         daemon=True).start()
+        return {"status": "running", "message": "backtest started"}
+    except Exception as exc:  # surface the real error instead of a blank 500
+        raise HTTPException(500, f"could not start backtest: {exc}")
 
 
 @router.get("/api/admin/backtest")
 def admin_backtest_status(request: Request, admin: dict = Depends(require_admin)) -> dict:
     from ..api.backtest_routes import _state
-    return _state(request)
+    st = _state(request)
+    # Return a snapshot so JSON serialisation can't race the worker thread.
+    return {"status": st.get("status"), "error": st.get("error"),
+            "started": st.get("started"), "finished": st.get("finished"),
+            "results": list(st.get("results") or [])}
 
 
 @router.get("/api/admin/stats")

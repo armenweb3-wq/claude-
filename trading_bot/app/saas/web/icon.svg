@@ -1,11 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#070a12"/>
-  <g transform="translate(256,250) scale(300)">
-    <polygon points="-0.3,-0.42 -0.3,-0.15 -0.5,-0.15" fill="#8fb0ff"/>
-    <polygon points="-0.3,-0.42 0.3,-0.42 0.3,-0.15 -0.3,-0.15" fill="#d4e3ff"/>
-    <polygon points="0.3,-0.42 0.5,-0.15 0.3,-0.15" fill="#7f9cf2"/>
-    <polygon points="-0.5,-0.15 -0.3,-0.15 0,0.62" fill="#6b57ef"/>
-    <polygon points="-0.3,-0.15 0.3,-0.15 0,0.62" fill="#9070ff"/>
-    <polygon points="0.3,-0.15 0.5,-0.15 0,0.62" fill="#5b3fc9"/>
+  <rect width="512" height="512" fill="#0c0e0d"/>
+  <g fill="none" stroke="#43a173" stroke-linejoin="round" stroke-linecap="round">
+    <!-- outer diamond -->
+    <path d="M256 115 L368 265 L256 415 L144 265 Z" stroke-width="22"/>
+    <!-- chevron above top vertex (zenith = apex) -->
+    <path d="M218 96 L256 67 L294 96" stroke-width="22"/>
+    <!-- two internal slanted bars -->
+    <path d="M227 245.5 L285 212.5 L285 188.5 L227 221.5 Z" stroke-width="15"/>
+    <path d="M227 308.5 L285 275.5 L285 251.5 L227 284.5 Z" stroke-width="15"/>
   </g>
 </svg>

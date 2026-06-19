@@ -134,6 +134,13 @@ def icon() -> FileResponse:
     return FileResponse(_WEB / "icon.svg", media_type="image/svg+xml")
 
 
+@router.get("/icon-{size}.png")
+def icon_png(size: str) -> FileResponse:
+    if size not in ("180", "192", "512"):
+        raise HTTPException(404, "icon not found")
+    return FileResponse(_WEB / f"icon-{size}.png", media_type="image/png")
+
+
 @router.get("/legal")
 def legal() -> FileResponse:
     return FileResponse(_WEB / "legal.html")

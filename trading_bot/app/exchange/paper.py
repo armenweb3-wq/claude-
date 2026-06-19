@@ -102,8 +102,13 @@ class PaperExchange(ExchangeAdapter):
             "closed_at": datetime.now(timezone.utc).isoformat(),
         })
 
-    def closed_pnl(self, limit: int = 50) -> list[dict]:
-        return list(reversed(self._closed))[:limit]
+    def closed_pnl(self, limit: int = 50, start_ms: int | None = None) -> list[dict]:
+        rows = list(reversed(self._closed))
+        if start_ms is not None:
+            import datetime as _dt
+            cutoff = _dt.datetime.fromtimestamp(start_ms / 1000, tz=_dt.timezone.utc).isoformat()
+            rows = [r for r in rows if (r.get("closed_at") or "") >= cutoff]
+        return rows[:limit]
 
     def close_position(self, symbol: str) -> Order | None:
         pos = self._positions.get(symbol)

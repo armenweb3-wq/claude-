@@ -484,11 +484,18 @@ def update_profile(body: ProfileIn, request: Request) -> dict:
     user = current_user(request)
     st = store()
     if body.username is not None and body.username.strip():
-        st.set_username(user["id"], body.username.strip())
+        import re
+        uname = body.username.strip()[:30]
+        # Restrict to a safe charset (defence-in-depth against stored XSS).
+        if not re.fullmatch(r"[A-Za-z0-9 _.\-]+", uname):
+            raise HTTPException(400, "username may only use letters, numbers, spaces, _ . -")
+        st.set_username(user["id"], uname)
     if body.avatar is not None:
         av = body.avatar.strip()
         if av and len(av) > 400_000:
             raise HTTPException(400, "image too large — please pick a smaller one")
+        if av and not av.startswith("data:image/"):
+            raise HTTPException(400, "avatar must be an image")
         st.set_avatar(user["id"], av or None)
     if body.telegram is not None:
         st.set_telegram(user["id"], body.telegram.strip() or None)

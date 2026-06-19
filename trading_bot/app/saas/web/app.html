@@ -516,6 +516,9 @@
 <script src="https://s3.tradingview.com/tv.js"></script>
 <script>
 const $=id=>document.getElementById(id);
+// Escape user/exchange-controlled text before putting it in innerHTML (XSS guard).
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,
+  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 let isRegister=false, ME=null;
 async function api(path,method='GET',body){
   const o={method,headers:{'Content-Type':'application/json'}};
@@ -603,9 +606,9 @@ async function loadAdmin(){
     $('adPending').textContent=us.filter(u=>u.latest_payment&&u.latest_payment.status==='pending').length;
     $('adminUsers').innerHTML = us.length ?
       '<table><tr><th>User</th><th>Keys</th><th>Tx</th><th></th></tr>'+
-      us.map(u=>`<tr><td>${u.username||u.email}<br><span class="disc">${u.active?'active':'inactive'}</span></td>
+      us.map(u=>`<tr><td>${esc(u.username||u.email)}<br><span class="disc">${u.active?'active':'inactive'}</span></td>
         <td>${u.has_keys?'✓':'—'}</td>
-        <td>${u.latest_payment?('<span class="disc">'+(u.latest_payment.status)+'</span><br>'+u.latest_payment.tx_hash.slice(0,12)+'…'):'—'}</td>
+        <td>${u.latest_payment?('<span class="disc">'+esc(u.latest_payment.status)+'</span><br>'+esc(String(u.latest_payment.tx_hash).slice(0,12))+'…'):'—'}</td>
         <td>${u.active?`<span class="link" onclick="adminDe(${u.id})">deactivate</span>`:`<span class="link" onclick="adminAct(${u.id})">activate</span>`}</td></tr>`).join('')+'</table>'
       : '<div class="disc">No subscribers yet.</div>';
   }catch(e){}
@@ -961,7 +964,7 @@ function renderPositions(pos){
         +'<div class="bar"><i style="width:'+(frac*100)+'%;background:'+col+'"></i></div>'
         +'<div class="g2" style="margin-top:3px"><span class="disc" style="margin:0">'+slLabel+' · '+away.toFixed(1)+'% away</span></div>';
     }
-    return '<div class="trow"><div class="top"><span class="sym">'+p.symbol+be+'</span>'
+    return '<div class="trow"><div class="top"><span class="sym">'+esc(p.symbol)+be+'</span>'
       +'<span class="spill '+cls+'">'+label+(p.leverage?' '+(+p.leverage)+'x':'')+'</span></div>'
       +'<div class="g2"><span>entry <b>'+money(p.entry_price)+'</b></span><span>now <b>'+money(mark)+'</b></span>'
       +'<span>uPnL <b class="'+c+'">'+signMoney(up)+' ('+(pct>=0?'+':'')+pct+'%)</b></span></div>'
@@ -988,11 +991,11 @@ function renderSignals(syms,sig){
   const card=r=>{
     const sp={error:'ERROR',blocked:'BLOCKED'}[r.p.action];
     if(sp){ const cl=r.p.action==='blocked'?'blocked':'error';
-      return '<div class="trow"><div class="top"><span class="sym">'+r.s+'</span><span class="spill '+cl+'">'+sp+'</span></div>'
-        +'<div class="disc" style="margin:4px 0 0">'+(sig[r.s]||'').replace(/^error:\s*/i,'')+'</div></div>'; }
+      return '<div class="trow"><div class="top"><span class="sym">'+esc(r.s)+'</span><span class="spill '+cl+'">'+sp+'</span></div>'
+        +'<div class="disc" style="margin:4px 0 0">'+esc((sig[r.s]||'').replace(/^error:\s*/i,''))+'</div></div>'; }
     const pct=Math.min(100,Math.round(r.p.conf*100));
     const cl=(r.p.action==='long'||r.p.action==='short')?r.p.action:'hold';
-    return '<div class="trow"><div class="top"><span class="sym">'+r.s+'</span><span class="spill '+cl+'">'+r.p.action.toUpperCase()+'</span></div>'
+    return '<div class="trow"><div class="top"><span class="sym">'+esc(r.s)+'</span><span class="spill '+cl+'">'+r.p.action.toUpperCase()+'</span></div>'
       +'<div class="bar"><i style="width:'+pct+'%;background:'+barColor(r.p.conf)+'"></i></div>'
       +'<div class="conf"><span>confidence '+pct+'%</span><span>target 70%</span></div></div>';
   };
@@ -1035,7 +1038,7 @@ async function openHistory(){
       const win=(t.pnl||0)>0, side=(t.side||'').toLowerCase();
       const cls=(side==='buy'||side==='long')?'long':'short', label=cls==='long'?'LONG':'SHORT';
       const c=win?'pos':((t.pnl||0)<0?'neg':'');
-      return '<div class="trow"><div class="top"><span class="sym">'+t.symbol+' <span class="spill '+cls+'">'+label+'</span></span>'
+      return '<div class="trow"><div class="top"><span class="sym">'+esc(t.symbol)+' <span class="spill '+cls+'">'+label+'</span></span>'
         +'<span class="'+c+'" style="font-weight:700">'+signMoney(t.pnl)+' ('+(t.pnl_pct>=0?'+':'')+t.pnl_pct+'%)</span></div>'
         +'<div class="g2"><span>entry <b>'+money(t.entry_price)+'</b></span><span>exit <b>'+money(t.exit_price)+'</b></span><span>'+fmtDate(t.closed_at)+'</span></div>'
         +'<div style="text-align:right;margin-top:8px"><span class="link" onclick="shareClosed('+i+')">Share / download ↗</span></div></div>';

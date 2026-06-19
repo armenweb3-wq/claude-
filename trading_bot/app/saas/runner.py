@@ -43,8 +43,10 @@ class MultiUserRunner:
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self.results: dict[int, dict] = {}  # user_id -> last run summary
-        self._last_summary_day: str | None = None  # daily-summary dedupe
-        self._last_channel_day: str | None = None   # daily channel-post dedupe
+        # Persisted across restarts so a redeploy in the target hour doesn't
+        # re-send (or skip) the daily messages.
+        self._last_summary_day = store.get_meta("last_summary_day")
+        self._last_channel_day = store.get_meta("last_channel_day")
 
     def start(self) -> None:
         if self._thread and self._thread.is_alive():
@@ -72,12 +74,13 @@ class MultiUserRunner:
         """Once a day at SUMMARY_HOUR_UTC, DM each connected user their day."""
         import datetime as _dt
         now = _dt.datetime.now(_dt.timezone.utc)
-        if now.hour != settings.summary_hour_utc:
-            return
         today = now.date().isoformat()
-        if self._last_summary_day == today:
+        # Fire once per day at/after the target hour (>= so a slow cycle that
+        # skipped the exact hour still catches up the same day).
+        if self._last_summary_day == today or now.hour < settings.summary_hour_utc:
             return
         self._last_summary_day = today
+        self.store.set_meta("last_summary_day", today)
         from . import alerts
         for u in self.store.list_users(include_admins=True):
             chat = u.get("telegram_chat_id")
@@ -104,8 +107,11 @@ class MultiUserRunner:
             return
         from . import alerts
         import datetime as _dt
-        for o in opened:
-            alerts.notify(chat, f"🟢 Opened {o.get('side')} {o.get('symbol')} (qty {o.get('qty')})")
+        # In dry-run no real position is opened, so a persistent signal would
+        # re-announce "Opened" every cycle — suppress open alerts in dry mode.
+        if not settings.saas_dry_run:
+            for o in opened:
+                alerts.notify(chat, f"🟢 Opened {o.get('side')} {o.get('symbol')} (qty {o.get('qty')})")
         cutoff = (_dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(minutes=20)).isoformat()
         for t in new_closed:
             if (t.get("closed_at") or "") < cutoff:
@@ -121,12 +127,11 @@ class MultiUserRunner:
             return
         import datetime as _dt
         now = _dt.datetime.now(_dt.timezone.utc)
-        if now.hour != settings.channel_post_hour_utc:
-            return
         today = now.date().isoformat()
-        if self._last_channel_day == today:
+        if self._last_channel_day == today or now.hour < settings.channel_post_hour_utc:
             return
         self._last_channel_day = today
+        self.store.set_meta("last_channel_day", today)
         from . import alerts, content
         s = self.store.platform_stats()
         perf = (f"\n\n📊 So far: <b>{s['trades']}</b> trades · <b>{s['win_rate']}%</b> win"
@@ -157,10 +162,14 @@ class MultiUserRunner:
                 )
                 res = trader.run_once()
                 # Persist closed trades every cycle so performance data accrues
-                # over time even if the user never opens the dashboard.
+                # over time even if the user never opens the dashboard. On a
+                # user's FIRST cycle we seed their existing history silently —
+                # otherwise up to 100 past trades would be alerted as "closed".
                 try:
+                    had_history = self.store.count_closed(uid) > 0
                     new_closed = self.store.add_closed_trades(uid, res.get("closed", []))
-                    self._alert(user, res.get("opened", []), new_closed)
+                    self._alert(user, res.get("opened", []),
+                                new_closed if had_history else [])
                 except Exception:  # pragma: no cover
                     pass
             except Exception as exc:  # one user must not break the rest

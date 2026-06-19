@@ -43,14 +43,25 @@ def _schema(d: str) -> list[str]:
         f"""CREATE TABLE IF NOT EXISTS closed_trades (
           id {_PK[d]}, user_id INTEGER NOT NULL, ext_id TEXT NOT NULL,
           symbol TEXT, side TEXT, pnl {_TS[d]}, pnl_pct {_TS[d]}, fee {_TS[d]},
+          entry_price {_TS[d]}, exit_price {_TS[d]}, qty {_TS[d]},
           closed_at TEXT, UNIQUE(user_id, ext_id))""",
+        """CREATE TABLE IF NOT EXISTS meta (
+          k TEXT PRIMARY KEY, v TEXT)""",
     ]
 
 
 def group_closed(trades: list[dict], gap_seconds: float = 86400.0) -> list[dict]:
-    """Merge partial closes of one position (TP-ladder fills) into a single
-    logical trade: consecutive closes of the same symbol+side within gap_seconds
-    are summed. Lets stats count *positions*, not partial exits."""
+    """Merge the partial closes of ONE position (TP-ladder fills) into a single
+    logical trade.
+
+    Fills are grouped by position identity — same symbol, side AND entry price —
+    so the (possibly hours/days apart) TP-ladder fills of one position merge,
+    while two genuinely *separate* positions on the same symbol (different entry
+    prices) stay separate and a loss can never hide inside a win. For legacy
+    rows without an entry price we fall back to a same-symbol+side time window.
+
+    P&L ($) and fees are summed. The position ROI% is the qty-weighted average of
+    the fills' ROI% (NOT their sum — summing percentages overstates returns)."""
     import datetime as _dt
 
     def _ts(s):
@@ -63,30 +74,42 @@ def group_closed(trades: list[dict], gap_seconds: float = 86400.0) -> list[dict]
     open_g: dict = {}
     out: list[dict] = []
     for t in rows:
-        key = (t.get("symbol"), (t.get("side") or "").lower())
+        ep = t.get("entry_price")
+        epk = round(float(ep), 8) if ep else None
+        key = (t.get("symbol"), (t.get("side") or "").lower(), epk)
         tt = _ts(t.get("closed_at") or "")
+        qty = float(t.get("qty") or 0)
+        pct = float(t.get("pnl_pct") or 0)
         g = open_g.get(key)
-        if g and (tt - g["_last"]) <= gap_seconds:
+        # Merge into the open group when it's the same position: same entry price
+        # (any time gap), or — for legacy rows lacking an entry — within the
+        # time window.
+        mergeable = g is not None and (epk is not None or (tt - g["_last"]) <= gap_seconds)
+        if mergeable:
             g["pnl"] += float(t.get("pnl") or 0)
-            g["pnl_pct"] += float(t.get("pnl_pct") or 0)
             g["fee"] += float(t.get("fee") or 0)
+            g["_pct_wsum"] += pct * (qty or 1)
+            g["_w"] += (qty or 1)
+            g["qty"] += qty
             g["exit_price"] = t.get("exit_price")
             g["closed_at"] = t.get("closed_at")
             g["parts"] += 1
             g["_last"] = tt
         else:
             g = {"symbol": t.get("symbol"), "side": t.get("side"),
-                 "pnl": float(t.get("pnl") or 0), "pnl_pct": float(t.get("pnl_pct") or 0),
-                 "fee": float(t.get("fee") or 0), "entry_price": t.get("entry_price"),
-                 "exit_price": t.get("exit_price"), "closed_at": t.get("closed_at"),
-                 "parts": 1, "_last": tt}
+                 "pnl": float(t.get("pnl") or 0), "fee": float(t.get("fee") or 0),
+                 "entry_price": t.get("entry_price"), "exit_price": t.get("exit_price"),
+                 "qty": qty, "closed_at": t.get("closed_at"), "parts": 1,
+                 "_pct_wsum": pct * (qty or 1), "_w": (qty or 1), "_last": tt}
             open_g[key] = g
             out.append(g)
     for g in out:
         g.pop("_last", None)
+        w = g.pop("_w", 0) or 1
         g["pnl"] = round(g["pnl"], 4)
-        g["pnl_pct"] = round(g["pnl_pct"], 2)
+        g["pnl_pct"] = round(g.pop("_pct_wsum", 0) / w, 2)
         g["fee"] = round(g["fee"], 4)
+        g["qty"] = round(g["qty"], 8)
     return out
 
 
@@ -117,6 +140,9 @@ class Store:
             "ALTER TABLE users ADD COLUMN avatar TEXT",
             "ALTER TABLE users ADD COLUMN referred_by TEXT",
             "ALTER TABLE users ADD COLUMN telegram_chat_id TEXT",
+            "ALTER TABLE closed_trades ADD COLUMN entry_price REAL",
+            "ALTER TABLE closed_trades ADD COLUMN exit_price REAL",
+            "ALTER TABLE closed_trades ADD COLUMN qty REAL",
         ):
             try:
                 if self._pg:
@@ -197,19 +223,34 @@ class Store:
             if self._q("SELECT 1 FROM closed_trades WHERE user_id=? AND ext_id=?", (uid, ext)):
                 continue
             self._q(
-                "INSERT INTO closed_trades (user_id, ext_id, symbol, side, pnl, pnl_pct, fee, closed_at)"
-                " VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(user_id, ext_id) DO NOTHING",
+                "INSERT INTO closed_trades (user_id, ext_id, symbol, side, pnl, pnl_pct, fee,"
+                " entry_price, exit_price, qty, closed_at)"
+                " VALUES (?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(user_id, ext_id) DO NOTHING",
                 (uid, ext, t.get("symbol"), t.get("side"), float(t.get("pnl") or 0),
-                 float(t.get("pnl_pct") or 0), float(t.get("fee") or 0), ca),
+                 float(t.get("pnl_pct") or 0), float(t.get("fee") or 0),
+                 float(t.get("entry_price") or 0), float(t.get("exit_price") or 0),
+                 float(t.get("qty") or 0), ca),
             )
             new.append(t)
         return new
 
+    # ── small key/value store (scheduler state, etc.) ───────
+    def get_meta(self, key: str) -> str | None:
+        rows = self._q("SELECT v FROM meta WHERE k=?", (key,))
+        return rows[0]["v"] if rows else None
+
+    def set_meta(self, key: str, value: str) -> None:
+        self._q("INSERT INTO meta (k, v) VALUES (?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v",
+                (key, value))
+
+    def count_closed(self, uid: int) -> int:
+        return int(self._q("SELECT COUNT(*) AS c FROM closed_trades WHERE user_id=?", (uid,))[0]["c"])
+
     def logical_trades(self, uid: int) -> list[dict]:
         """Closed trades grouped into positions (partial TP fills merged)."""
         rows = self._q(
-            "SELECT symbol, side, pnl, pnl_pct, fee, closed_at FROM closed_trades"
-            " WHERE user_id=? ORDER BY closed_at ASC", (uid,))
+            "SELECT symbol, side, pnl, pnl_pct, fee, entry_price, exit_price, qty, closed_at"
+            " FROM closed_trades WHERE user_id=? ORDER BY closed_at ASC", (uid,))
         return group_closed(rows)
 
     def monthly_summary(self, uid: int) -> list[dict]:

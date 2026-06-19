@@ -200,13 +200,17 @@ class BybitExchange(ExchangeAdapter):
                 qty = float(item.get("qty") or item.get("closedSize") or 0.0)
                 pnl = float(item.get("closedPnl") or 0.0)
                 lev = float(item.get("leverage") or 0.0)
-                # Direction is unambiguous from price vs. realised PnL: a long
-                # profits when exit > entry. (The API 'side' field is the side
-                # of the *closing* order, which is easy to misread.)
-                if entry and exit_ and pnl:
+                # Direction from the explicit closing-order side (deterministic):
+                # a long is closed by a Sell, a short by a Buy. The price-vs-PnL
+                # heuristic flips on tiny fee-eaten winners, so only use it as a
+                # last resort when the side field is missing.
+                side_field = item.get("side")
+                if side_field in ("Buy", "Sell"):
+                    is_long = (side_field == "Sell")
+                elif entry and exit_ and pnl:
                     is_long = (exit_ > entry) == (pnl > 0)
                 else:
-                    is_long = (item.get("side") == "Sell")  # closing a long sells
+                    is_long = False
                 margin = (entry * qty / lev) if (lev and entry and qty) else (entry * qty)
                 pnl_pct = round(pnl / margin * 100, 2) if margin else 0.0
                 ts = item.get("updatedTime") or item.get("createdTime")

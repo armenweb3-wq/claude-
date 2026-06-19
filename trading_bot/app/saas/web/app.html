@@ -163,6 +163,14 @@
   #installBar{display:flex;align-items:center;justify-content:space-between;gap:10px;
     background:var(--panel);border:1px solid var(--accent2,#a472ff);border-radius:13px;
     padding:11px 14px;margin-bottom:12px;font-size:.82rem}
+  /* desktop layout — widens only on the live dashboard (.wrap.wide), so the
+     login/setup forms stay narrow and readable. Cards flow into two columns. */
+  @media(min-width:980px){
+    .wrap.wide{max-width:1160px}
+    .wrap.wide .stats{grid-template-columns:repeat(4,1fr)}
+    .wrap.wide .dashcols{column-count:2;column-gap:13px}
+    .wrap.wide .dashcols>.card{break-inside:avoid;display:inline-block;width:100%}
+  }
 </style>
 </head>
 <body>
@@ -272,6 +280,7 @@
       <div class="msg err" id="d_err"></div>
     </div>
 
+    <div class="dashcols">
     <div class="card hide" id="cycleCard">
       <h2>BTC cycle phase</h2>
       <div class="cyphase" id="cy_phase">—</div>
@@ -297,6 +306,7 @@
       <select id="chartSel" onchange="loadChart(this.value)"></select>
       <div id="tv_chart" style="height:280px;border-radius:6px;overflow:hidden;margin-top:10px"></div>
     </div>
+    </div><!-- /dashcols -->
 
     <div class="card">
       <p class="disc" style="margin:0">Backtested, not guaranteed. High-risk. Not financial advice. You keep full
@@ -795,6 +805,7 @@ function render(){
   show('payCard',pend);                                   // always show payment
   show('payCodeWrap',pend && ME.access_code_enabled===true);  // code field on it
   LIVE_CARDS.forEach(id=>show(id,active));
+  document.querySelector('.wrap').classList.toggle('wide', !!active); // desktop 2-col on dashboard
   $('payPrice').textContent=ME.pay.price;
   $('payCoin').textContent=ME.pay.coin_network;
   $('payWallet').textContent=ME.pay.wallet||'(wallet address not set yet — contact admin)';

@@ -102,16 +102,32 @@ def adx(df: pd.DataFrame, period: int = 14) -> pd.Series:
 
 
 def to_higher_tf(df: pd.DataFrame, factor: int = 4) -> pd.DataFrame:
-    """Aggregate every `factor` bars into one higher-timeframe candle.
+    """Aggregate `factor` bars into one higher-timeframe candle.
 
-    Works without knowing the exact bar frequency (e.g. 1h -> 4h with
-    factor=4), so it gives a bigger-picture trend from the same data.
+    Uses the timestamp index to resample to wall-clock HTF buckets and DROPS the
+    last (incomplete) bucket, so the most recent HTF candle is a true, complete
+    candle rather than a shifting partial aggregate. Falls back to positional
+    grouping (anchored to the END so the latest bucket is complete) if the index
+    isn't datetime.
     """
-    group = np.arange(len(df)) // factor
-    agg = df.groupby(group).agg(
+    if isinstance(df.index, pd.DatetimeIndex) and len(df) >= 2:
+        step = df.index.to_series().diff().dropna().median()
+        if pd.notna(step) and step > pd.Timedelta(0):
+            rule = step * factor
+            g = df.resample(rule, label="left", closed="left")
+            agg = g.agg({"open": "first", "high": "max", "low": "min",
+                         "close": "last", "volume": "sum"}).dropna()
+            counts = g.size()
+            if len(agg) and len(counts) and counts.iloc[-1] < factor:
+                agg = agg.iloc[:-1]  # drop the incomplete trailing bucket
+            if len(agg):
+                return agg
+    # Fallback: positional, anchored to the end so the newest bucket is complete.
+    n = len(df)
+    group = (np.arange(n)[::-1] // factor)[::-1]
+    return df.groupby(group).agg(
         {"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}
     )
-    return agg
 
 
 def volume_ratio(df: pd.DataFrame, window: int = 20) -> float:

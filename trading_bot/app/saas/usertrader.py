@@ -132,11 +132,16 @@ class UserTrader:
         allow_long = allow_short = True
         if settings.btc_filter_enabled:
             try:
-                btc = self.ex.get_klines(settings.btc_symbol, settings.timeframe, limit=250)
+                btc = self.ex.get_klines(settings.btc_symbol, settings.timeframe, limit=251)
+                btc = btc.iloc[:-1]  # drop the still-forming candle (no repaint)
                 bias = assess_market(btc, crash_pct=settings.btc_crash_pct)
                 allow_long, allow_short = bias.allow_long, bias.allow_short
                 out["market"] = bias.reason
             except Exception as exc:  # pragma: no cover
+                # Fail CLOSED: if we can't read BTC we don't know the regime, so
+                # block NEW entries rather than trade unguarded.
+                allow_long = allow_short = False
+                out["market"] = "BTC filter unavailable — new trades paused"
                 log.warning("market filter failed: %s", exc)
 
         # closing orders per symbol — to trail the stop on real fills
@@ -196,7 +201,8 @@ class UserTrader:
 
         for s in symbols:
             try:
-                df = self.ex.get_klines(s, settings.timeframe, limit=250)
+                df = self.ex.get_klines(s, settings.timeframe, limit=251)
+                df = df.iloc[:-1]  # act on the last CLOSED candle (no repaint)
                 sig = self.strategy.generate(df)
                 out["signals"][s] = f"{sig.action}: {sig.reason}"
                 if sig.action not in {"long", "short"}:

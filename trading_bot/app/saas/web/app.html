@@ -998,7 +998,7 @@ function renderSignals(syms,sig){
     const cl=(r.p.action==='long'||r.p.action==='short')?r.p.action:'hold';
     return '<div class="trow"><div class="top"><span class="sym">'+esc(r.s)+'</span><span class="spill '+cl+'">'+r.p.action.toUpperCase()+'</span></div>'
       +'<div class="bar"><i style="width:'+pct+'%;background:'+barColor(r.p.conf)+'"></i></div>'
-      +'<div class="conf"><span>confidence '+pct+'%</span><span>target 70%</span></div></div>';
+      +'<div class="conf"><span>confluence '+pct+'%</span><span>enter ≥70%</span></div></div>';
   };
   let html=top.map(card).join('');
   if(rest.length){ if(sigExpanded) html+=rest.map(card).join('');

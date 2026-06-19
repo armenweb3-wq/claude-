@@ -216,7 +216,8 @@ class TradingBot:
             # Each symbol is independent: a failure here is logged and skipped,
             # never aborts the whole cycle.
             try:
-                df = self.exchange.get_klines(symbol, settings.timeframe, limit=250)
+                df = self.exchange.get_klines(symbol, settings.timeframe, limit=251)
+                df = df.iloc[:-1]  # act on the last CLOSED candle (no repaint)
                 signal = self.strategy.generate(df)
                 self.state.last_signals[symbol] = f"{signal.action}: {signal.reason}"
                 price = float(df["close"].iloc[-1]) if not df.empty else 0.0
@@ -471,11 +472,13 @@ class TradingBot:
         if not settings.btc_filter_enabled:
             return MarketBias("neutral", True, True, 0.0, "BTC filter off")
         try:
-            df = self.exchange.get_klines(settings.btc_symbol, settings.timeframe, limit=250)
+            df = self.exchange.get_klines(settings.btc_symbol, settings.timeframe, limit=251)
+            df = df.iloc[:-1]  # drop the forming candle (no repaint)
             return assess_market(df, crash_pct=settings.btc_crash_pct)
         except Exception as exc:  # never let the filter break the cycle
+            # Fail CLOSED: unknown regime → block new entries, don't trade blind.
             log.warning("BTC market filter unavailable: %s", exc)
-            return MarketBias("neutral", True, True, 0.0, "BTC data unavailable")
+            return MarketBias("neutral", False, False, 0.0, "BTC data unavailable — new trades paused")
 
     def _roll_day(self) -> None:
         today = datetime.now(timezone.utc).date().isoformat()

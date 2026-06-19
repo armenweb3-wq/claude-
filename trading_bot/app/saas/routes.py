@@ -702,12 +702,24 @@ def submit_payment(body: PaymentIn, request: Request) -> dict:
 # ── admin ───────────────────────────────────────────────────
 @router.get("/api/admin/users")
 def admin_users(admin: dict = Depends(require_admin)) -> dict:
-    users = store().list_users()
+    st = store()
+    users = st.list_users()
     for u in users:
         u.pop("pw_hash", None)
         u.pop("pw_salt", None)
         u["active"] = _is_active(u)
-    return {"users": users, "seats_left": store().seats_left(),
+        # Diagnostic: whether keys are connected and the last 4 chars of the API
+        # key, so two accounts sharing the SAME exchange key are obvious (the
+        # cause of "two accounts show the same balance"). Secret is never shown.
+        k = st.get_keys(u["id"])
+        u["has_keys"] = bool(k)
+        u["key_tail"] = ""
+        if k:
+            try:
+                u["key_tail"] = "…" + security.decrypt(k["enc_key"])[-4:]
+            except Exception:
+                u["key_tail"] = "?"
+    return {"users": users, "seats_left": st.seats_left(),
             "seat_limit": settings.saas_seat_limit}
 
 

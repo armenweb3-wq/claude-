@@ -723,6 +723,26 @@ def admin_users(admin: dict = Depends(require_admin)) -> dict:
             "seat_limit": settings.saas_seat_limit}
 
 
+@router.get("/api/admin/config")
+def admin_config(admin: dict = Depends(require_admin)) -> dict:
+    """Show the (non-secret) Telegram/marketing config the LIVE server has
+    loaded, so the operator can verify env vars actually took effect. Also
+    reports whether the community button would render."""
+    from . import alerts
+    cb = alerts.community_button()
+    return {
+        "community_link": settings.community_link or "(empty)",
+        "community_button_will_show": bool(cb),
+        "telegram_channel_id": settings.channel_chat_id or "(empty)",
+        "telegram_bot_username": settings.telegram_bot_username or "(empty)",
+        "broker_link": settings.broker_link or "(empty)",
+        "summary_hour_utc": settings.summary_hour_utc,
+        "channel_post_hour_utc": settings.channel_post_hour_utc,
+        "channel_auto_post": settings.channel_auto_post,
+        "saas_dry_run": settings.saas_dry_run,
+    }
+
+
 @router.get("/api/admin/stats")
 def admin_stats(admin: dict = Depends(require_admin)) -> dict:
     """Platform-wide performance + user counts (proof / marketing)."""

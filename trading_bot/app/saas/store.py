@@ -356,15 +356,29 @@ class Store:
         self._q("INSERT INTO sessions (token, user_id, created_at) VALUES (?,?,?)",
                 (token, uid, time.time()))
 
+    _SESSION_TTL = 60 * 60 * 24 * 30  # 30 days
+
     def user_for_session(self, token: str) -> dict | None:
         rows = self._q(
-            "SELECT u.* FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token=?",
+            "SELECT u.*, s.created_at AS _sess_created FROM sessions s"
+            " JOIN users u ON u.id=s.user_id WHERE s.token=?",
             (token,),
         )
-        return rows[0] if rows else None
+        if not rows:
+            return None
+        u = rows[0]
+        created = u.pop("_sess_created", None)
+        if created is not None and (time.time() - float(created)) > self._SESSION_TTL:
+            self.delete_session(token)  # expired server-side
+            return None
+        return u
 
     def delete_session(self, token: str) -> None:
         self._q("DELETE FROM sessions WHERE token=?", (token,))
+
+    def delete_user_sessions(self, uid: int) -> None:
+        """Invalidate ALL of a user's sessions (e.g. after a password change)."""
+        self._q("DELETE FROM sessions WHERE user_id=?", (uid,))
 
     # ── exchange keys ───────────────────────────────────────
     def save_keys(self, uid: int, enc_key: str, enc_secret: str, testnet: bool) -> None:

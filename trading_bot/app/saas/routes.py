@@ -61,8 +61,10 @@ def require_admin(request: Request) -> dict:
 
 
 def _set_cookie(resp: Response, token: str, request: Request) -> None:
-    # secure only over https (so local/test http still works)
-    secure = request.url.scheme == "https"
+    # Secure over https, including behind a TLS-terminating proxy (Render sets
+    # X-Forwarded-Proto: https even though the app sees http internally).
+    fwd = request.headers.get("x-forwarded-proto", "")
+    secure = request.url.scheme == "https" or fwd == "https"
     resp.set_cookie("sid", token, httponly=True, samesite="lax",
                     secure=secure, max_age=60 * 60 * 24 * 30, path="/")
 
@@ -279,6 +281,7 @@ def recover_password(body: RecoverIn, request: Request) -> dict:
     if user:
         salt, pw_hash = security.hash_password(body.new_password)
         st.set_password(user["id"], salt, pw_hash)
+        st.delete_user_sessions(user["id"])  # lock out any existing sessions
     return {"ok": True, "message": "if that email exists, its password was updated — you can now log in"}
 
 
@@ -493,12 +496,19 @@ def update_profile(body: ProfileIn, request: Request) -> dict:
 
 
 @router.post("/api/password")
-def change_password(body: PasswordIn, request: Request) -> dict:
+def change_password(body: PasswordIn, request: Request, response: Response) -> dict:
     user = current_user(request)
     if len(body.new_password) < 8:
         raise HTTPException(400, "password must be at least 8 characters")
+    st = store()
     salt, pw_hash = security.hash_password(body.new_password)
-    store().set_password(user["id"], salt, pw_hash)
+    st.set_password(user["id"], salt, pw_hash)
+    # Invalidate every existing session (locks out anyone else), then re-issue a
+    # fresh session for this user so they stay logged in on this device.
+    st.delete_user_sessions(user["id"])
+    token = security.new_token()
+    st.create_session(token, user["id"])
+    _set_cookie(response, token, request)
     return {"ok": True}
 
 

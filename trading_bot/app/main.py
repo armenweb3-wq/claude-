@@ -82,6 +82,42 @@ app = FastAPI(
     redoc_url="/redoc" if _docs else None,
     openapi_url="/openapi.json" if _docs else None,
 )
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+
+@app.middleware("http")
+async def _security(request: Request, call_next):
+    # CSRF: reject cross-site state-changing requests to cookie-authed APIs.
+    # Same-origin fetch() always sends an Origin header that matches Host; an
+    # attacker page's request carries its own (mismatching) Origin. The Telegram
+    # webhook is exempt (it's authed by a secret token, not a cookie, and sends
+    # no Origin).
+    if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+        path = request.url.path
+        if path.startswith("/app/api") and path != "/app/api/tg-webhook":
+            origin = request.headers.get("origin") or request.headers.get("referer")
+            host = request.headers.get("host", "")
+            # Only block when an Origin/Referer is present AND mismatches the host
+            # (a real CSRF from a browser always carries a mismatching Origin).
+            if origin and host:
+                try:
+                    from urllib.parse import urlparse
+                    if urlparse(origin).netloc != host:
+                        return JSONResponse({"detail": "cross-site request blocked"},
+                                            status_code=403)
+                except Exception:
+                    return JSONResponse({"detail": "bad origin"}, status_code=403)
+    resp = await call_next(request)
+    # Security headers on every response.
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    resp.headers["X-Frame-Options"] = "DENY"
+    resp.headers["Referrer-Policy"] = "no-referrer"
+    resp.headers["Content-Security-Policy"] = "frame-ancestors 'none'"
+    resp.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains"
+    return resp
+
+
 app.include_router(router)
 app.include_router(backtest_router)
 app.include_router(saas_router)

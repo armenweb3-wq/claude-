@@ -902,10 +902,6 @@ async function loadDashboard(){
     if((best.pnl_pct||0)>0) ins='Leading: '+best.symbol+' +'+best.pnl_pct+'%'; }
   if((s.open_positions||0)===0 && rt===0) ins='Bot is watching the market for setups…';
   $('d_insight').textContent=ins;
-  const stt=$('d_status');
-  if(!s.enabled) stt.innerHTML='<span class="dot off"></span>Paused';
-  else if(!s.running) stt.innerHTML='<span class="dot off"></span>Engine off';
-  else stt.innerHTML='<span class="dot on"></span>Running';
   const mk=$('d_market');
   if(s.market){ const t=s.market.toLowerCase();
     mk.className='banner '+(t.includes('longs paused')?'down':t.includes('shorts paused')?'up':'flat');

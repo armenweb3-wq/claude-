@@ -517,7 +517,7 @@ async function api(path,method='GET',body){
   if(body) o.body=JSON.stringify(body);
   const r=await fetch('/app/api'+path,o);
   let j={}; try{j=await r.json()}catch(e){}
-  if(!r.ok) throw new Error(j.detail||('error '+r.status));
+  if(!r.ok){ const e=new Error(j.detail||('error '+r.status)); e.status=r.status; throw e; }
   return j;
 }
 function show(id,on){ $(id).classList.toggle('hide',!on); }
@@ -541,7 +541,14 @@ async function doAuth(){
     if(wasRegister){ $('welcomeModal').classList.add('show'); lockScroll(); }
   }catch(e){ m.className='msg err'; m.textContent=e.message; }
 }
-async function logout(){ try{await api('/logout','POST')}catch(e){} location.reload(); }
+function resetState(){
+  ME=null; lastPositions=[]; lastHistoryTrades=[]; lastShare=null;
+  chartSym=null; tpHits={}; tpHitsInit=false;
+  if(dashTimer){ clearInterval(dashTimer); dashTimer=null; }
+  try{ for(let i=localStorage.length-1;i>=0;i--){ const k=localStorage.key(i);
+    if(k && k.indexOf('tph_')===0) localStorage.removeItem(k); } }catch(e){}
+}
+async function logout(){ try{await api('/logout','POST')}catch(e){} resetState(); location.reload(); }
 
 async function connectKeys(){
   const m=$('keysMsg'); m.className='msg'; m.textContent='Verifying with Bybit…';
@@ -819,7 +826,9 @@ function render(){
 }
 
 // ── formatting helpers ──────────────────────────────────────
-function money(v){ return (v==null)?'—':'$'+Number(v).toLocaleString(undefined,{maximumFractionDigits:2}); }
+function money(v){ if(v==null) return '—'; v=Number(v);
+  const a=Math.abs(v); const d = a>=1?2 : (a>=0.01?4 : (a>0?8:2));  // adaptive: sub-cent coins keep precision
+  return '$'+v.toLocaleString(undefined,{maximumFractionDigits:d}); }
 function signMoney(v){ v=v||0; return (v>=0?'+':'')+money(v); }
 function fmtDate(s){ if(!s) return '—'; const d=new Date(s);
   return d.toLocaleDateString([], {month:'short',day:'numeric'})+' '+d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
@@ -835,7 +844,13 @@ function parseSignal(text){
 
 // ── live dashboard ──────────────────────────────────────────
 async function loadDashboard(){
-  let s; try{ s=await api('/dashboard'); }catch(e){ return; }
+  let s;
+  try{ s=await api('/dashboard'); }
+  catch(e){
+    if(e && e.status===401){ resetState(); location.reload(); return; }  // session expired
+    const ins=$('d_insight'); if(ins) ins.textContent='Reconnecting…';   // don't freeze stale numbers silently
+    return;
+  }
   $('actPill').textContent=s.active?'ACTIVE':'NOT ACTIVE';
   $('actPill').className='pill '+(s.active?'on':'off');
   show('testBanner', !!s.dry_run);
@@ -891,7 +906,7 @@ function renderPositions(pos){
     // the position opened). Fall back to a price estimate if not available.
     let computed=0; for(let i=0;i<tparr.length;i++){ if(dir*(mark-tparr[i])>=0) computed++; else break; }
     const serverHit=(typeof p.tps_hit==='number')?p.tps_hit:0;
-    let hit=Math.max(computed, serverHit); const fk='tph_'+p.symbol;
+    let hit=Math.max(computed, serverHit); const fk='tph_'+((ME&&ME.id)||'')+'_'+p.symbol;
     try{ const s0=JSON.parse(localStorage.getItem(fk)||'{}');  // sticky: never revert
       const sameEntry=s0 && Math.abs((s0.entry||0)-p.entry_price) <= Math.abs(p.entry_price)*1e-5+1e-9;
       if(sameEntry && typeof s0.hit==='number') hit=Math.max(hit, s0.hit);

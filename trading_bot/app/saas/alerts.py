@@ -13,10 +13,11 @@ log = logging.getLogger(__name__)
 
 
 def send_photo(chat_id: str | None, image: bytes, caption: str | None = None,
-               button: dict | None = None) -> bool:
-    """Send a PNG photo (e.g. a P&L card) to a chat/channel."""
+               button: dict | None = None) -> dict:
+    """Send a PNG photo (e.g. a P&L card). Returns {ok, error} so callers can
+    surface the real Telegram error instead of silently counting a failure."""
     if not chat_id or not settings.telegram_bot_token:
-        return False
+        return {"ok": False, "error": "no chat id or bot token"}
     import json as _json
     data = {"chat_id": chat_id}
     if caption:
@@ -31,10 +32,17 @@ def send_photo(chat_id: str | None, image: bytes, caption: str | None = None,
         r = requests.post(
             f"https://api.telegram.org/bot{settings.telegram_bot_token}/sendPhoto",
             data=data, files={"photo": ("card.png", image, "image/png")}, timeout=15)
-        return r.status_code == 200
+        body = {}
+        try:
+            body = r.json()
+        except Exception:
+            pass
+        if r.status_code == 200 and body.get("ok"):
+            return {"ok": True}
+        return {"ok": False, "error": body.get("description") or f"HTTP {r.status_code}"}
     except Exception as exc:  # pragma: no cover - best effort
         log.warning("telegram photo failed: %s", exc)
-        return False
+        return {"ok": False, "error": str(exc)}
 
 
 def community_button() -> dict | None:
@@ -63,11 +71,19 @@ def post_channel(text: str, button: dict | None = None, pin: bool = False) -> di
         if not data.get("ok"):
             return {"ok": False, "error": f"{data.get('description','error')} (chat={settings.channel_chat_id})"}
         mid = (data.get("result") or {}).get("message_id")
+        pinned = None
         if pin and mid:
-            requests.post(base + "/pinChatMessage",
-                          json={"chat_id": settings.channel_chat_id, "message_id": mid,
-                                "disable_notification": True}, timeout=8)
-        return {"ok": True, "message_id": mid}
+            try:
+                pr = requests.post(base + "/pinChatMessage",
+                                   json={"chat_id": settings.channel_chat_id, "message_id": mid,
+                                         "disable_notification": True}, timeout=8).json()
+                pinned = bool(pr.get("ok"))
+            except Exception:
+                pinned = False
+        out = {"ok": True, "message_id": mid}
+        if pin:
+            out["pinned"] = pinned
+        return out
     except Exception as exc:  # pragma: no cover - best effort
         log.warning("channel post failed: %s", exc)
         return {"ok": False, "error": str(exc)}

@@ -808,7 +808,7 @@ def admin_test_run(admin: dict = Depends(require_admin)) -> dict:
                         "here automatically once trades close.")
         is_sample = True
     img = card.render_card(card_data)
-    sent = {"channel": 0, "dm": 0, "card_sample": is_sample}
+    sent = {"channel": 0, "dm": 0, "card_sample": is_sample, "errors": []}
 
     # ── CHANNEL sequence ──
     ch = []
@@ -823,8 +823,11 @@ def admin_test_run(admin: dict = Depends(require_admin)) -> dict:
         if alerts.post_channel(text, btn).get("ok"):
             sent["channel"] += 1
     # social-proof card to channel (real member data, or a labelled sample)
-    if alerts.send_photo(settings.channel_chat_id, img, card_caption, community):
+    card_res = alerts.send_photo(settings.channel_chat_id, img, card_caption, community)
+    if card_res.get("ok"):
         sent["channel"] += 1
+    else:
+        sent["errors"].append(f"channel card: {card_res.get('error')}")
 
     # ── INDIVIDUAL (DM) sequence to the admin ──
     if chat:
@@ -841,8 +844,11 @@ def admin_test_run(admin: dict = Depends(require_admin)) -> dict:
                 sent["dm"] += 1
         dm_cap = ("Sample card preview 👆 (real results appear here automatically)"
                   if is_sample else "Your shareable result card 👆")
-        if alerts.send_photo(chat, img, dm_cap):
+        dm_res = alerts.send_photo(chat, img, dm_cap)
+        if dm_res.get("ok"):
             sent["dm"] += 1
+        else:
+            sent["errors"].append(f"dm card: {dm_res.get('error')}")
 
     return {"ok": True, **sent}
 

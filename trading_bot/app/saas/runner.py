@@ -64,11 +64,19 @@ class MultiUserRunner:
         while not self._stop.is_set():
             try:
                 self.run_cycle()
-                self._maybe_daily_summary()
-                self._maybe_channel_content()
+                # Run the (blocking) Telegram broadcasts off the trading loop so a
+                # slow/hung send can never delay position & stop management.
+                threading.Thread(target=self._run_broadcasts, daemon=True).start()
             except Exception:  # pragma: no cover
                 log.exception("runner cycle failed")
             self._stop.wait(max(30, settings.saas_loop_seconds))
+
+    def _run_broadcasts(self) -> None:
+        try:
+            self._maybe_daily_summary()
+            self._maybe_channel_content()
+        except Exception:  # pragma: no cover
+            log.exception("runner broadcasts failed")
 
     def _maybe_daily_summary(self) -> None:
         """Once a day at SUMMARY_HOUR_UTC, DM each connected user their day."""

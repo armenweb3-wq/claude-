@@ -179,9 +179,17 @@ class UserTrader:
         # configured % of equity, stop opening NEW positions for the rest of the
         # day (existing positions keep their stops). Same safety rail the
         # single-user bot has.
-        today = dt.datetime.now(dt.timezone.utc).date().isoformat()
-        realized_today = sum((r.get("pnl") or 0) for r in closed
-                             if (r.get("closed_at") or "").startswith(today))
+        now = dt.datetime.now(dt.timezone.utc)
+        today = now.date().isoformat()
+        # Fetch TODAY's closes explicitly (start-of-day filter) so the loss total
+        # isn't truncated by the 100-row window on a busy day.
+        midnight_ms = int(dt.datetime(now.year, now.month, now.day,
+                                      tzinfo=dt.timezone.utc).timestamp() * 1000)
+        try:
+            today_rows = self.ex.closed_pnl(limit=100, start_ms=midnight_ms)
+        except Exception:
+            today_rows = [r for r in closed if (r.get("closed_at") or "").startswith(today)]
+        realized_today = sum((r.get("pnl") or 0) for r in today_rows)
         daily_loss_breached = realized_today <= -(settings.daily_max_loss_pct / 100) * equity
         if daily_loss_breached:
             out["market"] = (out.get("market") or "") + " · daily loss limit hit — new trades paused"
@@ -212,6 +220,9 @@ class UserTrader:
                                      entry=sig.entry, stop=sig.stop_loss,
                                      side=sig.action, leverage_cap=max(1.0, lev_cap))
                 if plan.qty <= 0:
+                    continue
+                if not plan.safe:  # liquidation would sit inside the stop — never trade it
+                    out["signals"][s] = "skipped: unsafe (liquidation inside stop)"
                     continue
                 side = "Buy" if sig.action == "long" else "Sell"
                 if self.dry:

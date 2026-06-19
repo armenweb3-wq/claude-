@@ -59,10 +59,20 @@ def round_step(qty: float, step: float) -> float:
     return (int(qty / step)) * step
 
 
-def round_price(price: float, tick: float) -> float:
-    """Round a price to the nearest valid tick. Falls back to 6 dp if unknown."""
+def round_price(price: float, tick: float, direction: str = "nearest") -> float:
+    """Round a price to a valid tick. ``direction`` "down"/"up" rounds toward the
+    floor/ceil tick (used to keep a stop on the safe side of entry); "nearest"
+    otherwise. Falls back to 6 dp if the tick is unknown."""
+    import math
     if tick and tick > 0:
-        return round(round(price / tick) * tick, 10)
+        q = price / tick
+        if direction == "down":
+            q = math.floor(q)
+        elif direction == "up":
+            q = math.ceil(q)
+        else:
+            q = round(q)
+        return round(q * tick, 10)
     return round(price, 6)
 
 
@@ -132,7 +142,7 @@ class ExchangeAdapter(ABC):
         """
         return set()
 
-    def closed_pnl(self, limit: int = 50) -> list[dict]:
+    def closed_pnl(self, limit: int = 50, start_ms: int | None = None) -> list[dict]:
         """Recent *closed* trades with realised PnL, newest first.
 
         Each item: ``{symbol, side, qty, entry_price, exit_price, pnl,

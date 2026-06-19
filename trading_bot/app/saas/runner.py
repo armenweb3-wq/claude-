@@ -33,7 +33,7 @@ def _is_active(user: dict) -> bool:
         try:
             return dt.date.fromisoformat(until) >= dt.date.today()
         except ValueError:
-            return True
+            return False  # malformed expiry → fail closed
     return True
 
 

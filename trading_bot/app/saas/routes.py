@@ -314,7 +314,7 @@ def _is_active(user: dict) -> bool:
         try:
             return dt.date.fromisoformat(user["active_until"]) >= dt.date.today()
         except ValueError:
-            return True
+            return False  # malformed expiry → fail closed (deny), never grant access
     return True
 
 

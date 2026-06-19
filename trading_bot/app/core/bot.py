@@ -341,6 +341,10 @@ class TradingBot:
         if plan.qty <= 0:
             log.info("[%s] sizing produced no quantity", symbol)
             return False
+        if not plan.safe:  # liquidation would be inside the stop — refuse the trade
+            log.warning("[%s] skipped: unsafe plan (liquidation inside stop)", symbol)
+            self.notifier.send(f"⏭️ {symbol} skipped: unsafe (liquidation inside stop)")
+            return False
 
         # Broadcast the signal BEFORE execution (per spec).
         self.notifier.send(format_signal(symbol, signal, dry_run=not settings.is_live))

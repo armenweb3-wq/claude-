@@ -88,10 +88,10 @@ def test_partial_tp_fills_count_as_one_trade(tmp_path):
     uid = st.get_user_by_email("g@t.com")["id"]
     # one SOL long taken off in 3 TP fills (same day) + a separate OP loss
     st.add_closed_trades(uid, [
-        {"id": "a", "symbol": "SOLUSDT", "side": "Buy", "pnl": 1.8, "pnl_pct": 6, "closed_at": "2026-06-10T10:00:00+00:00"},
-        {"id": "b", "symbol": "SOLUSDT", "side": "Buy", "pnl": 4.8, "pnl_pct": 12, "closed_at": "2026-06-10T12:00:00+00:00"},
-        {"id": "c", "symbol": "SOLUSDT", "side": "Buy", "pnl": 6.0, "pnl_pct": 20, "closed_at": "2026-06-10T14:00:00+00:00"},
-        {"id": "d", "symbol": "OPUSDT", "side": "Sell", "pnl": -2.0, "pnl_pct": -3, "closed_at": "2026-06-12T09:00:00+00:00"},
+        {"id": "a", "symbol": "SOLUSDT", "side": "Buy", "pnl": 1.8, "pnl_pct": 6, "entry_price": 100.0, "qty": 0.3, "closed_at": "2026-06-10T10:00:00+00:00"},
+        {"id": "b", "symbol": "SOLUSDT", "side": "Buy", "pnl": 4.8, "pnl_pct": 12, "entry_price": 100.0, "qty": 0.4, "closed_at": "2026-06-10T12:00:00+00:00"},
+        {"id": "c", "symbol": "SOLUSDT", "side": "Buy", "pnl": 6.0, "pnl_pct": 20, "entry_price": 100.0, "qty": 0.3, "closed_at": "2026-06-10T14:00:00+00:00"},
+        {"id": "d", "symbol": "OPUSDT", "side": "Sell", "pnl": -2.0, "pnl_pct": -3, "entry_price": 2.0, "qty": 10, "closed_at": "2026-06-12T09:00:00+00:00"},
     ])
     jun = next(m for m in cl.get("/app/api/monthly").json()["months"] if m["month"] == "2026-06")
     assert jun["trades"] == 2  # not 4 — the 3 SOL fills count as one position

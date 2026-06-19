@@ -188,10 +188,13 @@ class BybitExchange(ExchangeAdapter):
         _cache_put(key, syms)
         return syms
 
-    def closed_pnl(self, limit: int = 50) -> list[dict]:
+    def closed_pnl(self, limit: int = 50, start_ms: int | None = None) -> list[dict]:
         from datetime import datetime, timezone
 
-        resp = self._client.get_closed_pnl(category=self._category, limit=min(limit, 100))
+        kw = {"category": self._category, "limit": min(limit, 100)}
+        if start_ms is not None:
+            kw["startTime"] = int(start_ms)
+        resp = self._client.get_closed_pnl(**kw)
         out: list[dict] = []
         for item in resp.get("result", {}).get("list", []):
             try:
@@ -286,10 +289,14 @@ class BybitExchange(ExchangeAdapter):
                 ),
             )
 
+        self._ensure_one_way(symbol)  # stops/positionIdx=0 assume one-way mode
         self.set_leverage(symbol, leverage)
 
-        # Market entry with the stop loss attached on the exchange (rounded to tick).
-        sl_price = round_price(stop_loss, rules.tick_size)
+        is_long = side == "Buy"
+        # Round the stop AWAY from entry (down for a long, up for a short) so tick
+        # rounding can never push it onto the wrong side of entry.
+        sl_price = round_price(stop_loss, rules.tick_size,
+                               direction=("down" if is_long else "up"))
         log.warning("[LIVE] open %s %s qty=%s lev=%sx SL=%s", side, symbol, qty, leverage, sl_price)
         entry = self._client.place_order(
             category=self._category, symbol=symbol, side=side,
@@ -298,9 +305,33 @@ class BybitExchange(ExchangeAdapter):
         )
         entry_id = entry.get("result", {}).get("orderId")
 
+        # Reduce-only TP ladder FIRST (before the stop-verify wait, so a fast
+        # market doesn't blow past the TP prices while we poll). The final rung
+        # closes the REMAINDER so floor-rounding can't leave the position
+        # partially un-exit-able. TP prices round TOWARD profit.
+        close_side = "Sell" if side == "Buy" else "Buy"
+        placed = 0.0
+        n = len(take_profits)
+        for i, tp in enumerate(take_profits):
+            if i == n - 1:
+                tp_qty = round_step(qty - placed, rules.qty_step)  # remainder
+            else:
+                tp_qty = round_step(qty * tp.close_fraction, rules.qty_step)
+            if tp_qty <= 0:
+                continue
+            placed += tp_qty
+            try:
+                self._client.place_order(
+                    category=self._category, symbol=symbol, side=close_side,
+                    orderType="Limit", qty=str(tp_qty),
+                    price=str(round_price(tp.price, rules.tick_size,
+                                          direction=("up" if is_long else "down"))),
+                    reduceOnly=True, timeInForce="GTC",
+                )
+            except Exception as exc:  # pragma: no cover - best effort per rung
+                log.warning("TP order failed for %s @ %s: %s", symbol, tp.price, exc)
+
         # CRITICAL: confirm a protective stop actually exists on the exchange.
-        # If the attached SL was rejected (e.g. price/tick issue) the position
-        # would be live and UNPROTECTED, so re-read and set it explicitly.
         # A market fill isn't always reflected immediately, so poll a few times
         # before concluding the position isn't there.
         warning = ""
@@ -324,21 +355,15 @@ class BybitExchange(ExchangeAdapter):
             warning = f"stop-loss not verified: {exc}"
             log.warning("SL verify failed for %s: %s", symbol, exc)
 
-        # Reduce-only TP ladder (prices rounded to tick).
-        close_side = "Sell" if side == "Buy" else "Buy"
-        for tp in take_profits:
-            tp_qty = round_step(qty * tp.close_fraction, rules.qty_step)
-            if tp_qty <= 0:
-                continue
-            try:
-                self._client.place_order(
-                    category=self._category, symbol=symbol, side=close_side,
-                    orderType="Limit", qty=str(tp_qty),
-                    price=str(round_price(tp.price, rules.tick_size)),
-                    reduceOnly=True, timeInForce="GTC",
-                )
-            except Exception as exc:  # pragma: no cover - best effort per rung
-                log.warning("TP order failed for %s @ %s: %s", symbol, tp.price, exc)
-
         return ExecutionResult(ok=True, entry_order_id=entry_id, qty=qty,
                                leverage=leverage, warning=warning)
+
+    def _ensure_one_way(self, symbol: str) -> None:
+        """Force one-way position mode (positionIdx 0). Best-effort: ignore the
+        'not modified' error when it's already one-way. The stop/TP logic assumes
+        one-way; on a hedge-mode account stops would otherwise be misplaced."""
+        try:
+            self._client.switch_position_mode(category=self._category, symbol=symbol, mode=0)
+        except Exception as exc:  # pragma: no cover - benign if already one-way
+            if not any(c in str(exc) for c in ("110025", "not modified", "same")):
+                log.warning("could not set one-way mode for %s: %s", symbol, exc)

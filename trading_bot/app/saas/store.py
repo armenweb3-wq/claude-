@@ -76,7 +76,11 @@ def group_closed(trades: list[dict], gap_seconds: float = 345600.0) -> list[dict
     for t in rows:
         ep = t.get("entry_price")
         epk = round(float(ep), 8) if ep else None
-        key = (t.get("symbol"), (t.get("side") or "").lower(), epk)
+        # When the entry price is unknown we CANNOT prove two fills belong to the
+        # same position, so give each its own key (never merge) — otherwise a
+        # loss could net into an unrelated win.
+        ident = epk if epk is not None else ("noentry", t.get("closed_at"))
+        key = (t.get("symbol"), (t.get("side") or "").lower(), ident)
         tt = _ts(t.get("closed_at") or "")
         qty = float(t.get("qty") or 0)
         pct = float(t.get("pnl_pct") or 0)

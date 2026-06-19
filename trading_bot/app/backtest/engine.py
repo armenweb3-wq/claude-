@@ -1,17 +1,19 @@
 """Event-driven backtester.
 
-Faithfully simulates the live strategy bar-by-bar for one symbol/timeframe:
+Simulates the live strategy bar-by-bar for one symbol/timeframe, matching the
+LIVE exit engine (not an idealised one):
 
-- entries sized by the 5%-risk model (risk/sizing.plan_position)
-- 3% stop, TP ladder (TP1/TP2/TP3 partial closes)
-- trailing stop activated after TP1 (trails by the stop distance)
-- daily trade cap and confidence gate
-- taker fees + slippage on every fill
+- entries sized by the risk model (risk/sizing.plan_position), refused when the
+  plan is liquidation-unsafe (same as live)
+- 3% stop, reduce-only TP ladder (TP1/TP2/TP3 partial closes)
+- stop RATCHETS like live: to break-even+buffer at TP1, to TP1 at TP2 (no
+  continuous distance-trail)
+- taker fees + slippage on EVERY fill (entry and exit) + perpetual FUNDING on
+  held notional
 
 Fills are conservative: signals computed on a *closed* bar are entered at the
-next bar's open; intrabar SL/TP use the bar's high/low. When both the stop
-and a TP fall inside the same bar, the stop is assumed to hit first (worst
-case), avoiding look-ahead optimism.
+next bar's open; intrabar SL/TP use the bar's high/low. When both the stop and a
+TP fall inside the same bar, the stop is assumed to hit first (worst case).
 """
 from __future__ import annotations
 
@@ -31,7 +33,9 @@ class BacktestConfig:
     leverage_cap: float = 10.0
     max_trades_per_day: int = 20
     taker_fee: float = 0.00055     # 0.055% Bybit perp taker
-    slippage: float = 0.0005       # 0.05% per fill
+    slippage: float = 0.0005       # 0.05% per fill (entry AND exit)
+    funding_rate_8h: float = 0.0001  # ~0.01% / 8h funding on held notional
+    breakeven_buffer: float = 0.0012  # stop moves to entry+0.12% at TP1 (matches live)
     warmup: int = 220              # bars before trading (EMA200 + buffer)
     signal_lookback: int = 400     # bars passed to the strategy per step (keeps it O(n))
 
@@ -88,6 +92,13 @@ class Backtester:
         trades_today = 0
         current_day = None
 
+        # Bar duration in hours (for funding accrual); default 1h if unknown.
+        try:
+            self._bar_hours = float(pd.Series(df.index).diff().dropna().median()
+                                    / pd.Timedelta(hours=1)) or 1.0
+        except Exception:
+            self._bar_hours = 1.0
+
         n = len(df)
         for i in range(cfg.warmup, n - 1):
             bar = df.iloc[i]
@@ -112,7 +123,7 @@ class Backtester:
                         equity=equity, risk_pct=cfg.risk_pct, entry=entry_px,
                         stop=sig.stop_loss, side=sig.action, leverage_cap=cfg.leverage_cap,
                     )
-                    if plan.qty > 0:
+                    if plan.qty > 0 and plan.safe:  # refuse unsafe plans, like live
                         trade = Trade(
                             symbol=symbol, side=sig.action, entry_time=df.index[i + 1],
                             entry=entry_px, qty=plan.qty, stop=sig.stop_loss,
@@ -141,16 +152,12 @@ class Backtester:
         long = t.side == "long"
         high, low = bar["high"], bar["low"]
 
-        # Update trailing extreme + stop after TP1.
-        if pos.trailing:
-            if long:
-                pos.extreme = max(pos.extreme, high)
-                trail = pos.extreme * (1 - self._stop_frac(t))
-                t.stop = max(t.stop, trail)
-            else:
-                pos.extreme = min(pos.extreme, low)
-                trail = pos.extreme * (1 + self._stop_frac(t))
-                t.stop = min(t.stop, trail)
+        # Perpetual funding on the held notional for this bar (a real cost on
+        # multi-bar holds, ignored before).
+        funding = (self.cfg.funding_rate_8h * (self._bar_hours / 8.0)
+                   * pos.remaining * float(bar["close"]))
+        t.fees += funding
+        equity -= funding
 
         # Stop assumed to trigger before TP within the same bar (worst case).
         stop_hit = low <= t.stop if long else high >= t.stop
@@ -158,20 +165,22 @@ class Backtester:
             return self._close_remainder(pos, {"close": t.stop}, ts, res, equity,
                                          "trail-stop" if pos.trailing else "stop")
 
-        # Walk the TP ladder.
+        # Walk the TP ladder, RATCHETING the stop the same way live does.
         while pos.tp_idx < len(t.tps):
             tp_price, frac = t.tps[pos.tp_idx]
             hit = high >= tp_price if long else low <= tp_price
             if not hit:
                 break
-            qty = t.qty * frac
-            qty = min(qty, pos.remaining)
+            qty = min(t.qty * frac, pos.remaining)
             equity += self._realize(pos, tp_price, qty, res)
             t.tp_hits += 1
             pos.tp_idx += 1
+            sign = 1 if long else -1
             if pos.tp_idx == 1:
-                pos.trailing = True  # activate trailing after TP1
-                t.stop = t.entry      # move to breakeven
+                pos.trailing = True
+                t.stop = t.entry * (1 + sign * self.cfg.breakeven_buffer)  # TP1 -> break-even
+            elif pos.tp_idx >= 2:
+                t.stop = t.tps[pos.tp_idx - 2][0]  # TP2 -> TP1, etc.
             if pos.remaining <= 1e-12:
                 t.exit_time = ts
                 t.reason = "tp-ladder"
@@ -180,9 +189,12 @@ class Backtester:
 
     def _realize(self, pos, price, qty, res) -> float:
         t = pos.t
-        sign = 1 if t.side == "long" else -1
-        gross = sign * (price - t.entry) * qty
-        fee = price * qty * self.cfg.taker_fee
+        long = t.side == "long"
+        sign = 1 if long else -1
+        # Exit slippage is adverse: a long sells lower, a short buys back higher.
+        fill = price * (1 - self.cfg.slippage) if long else price * (1 + self.cfg.slippage)
+        gross = sign * (fill - t.entry) * qty
+        fee = fill * qty * self.cfg.taker_fee
         pos.remaining -= qty
         t.realized_pnl += gross - fee
         t.fees += fee

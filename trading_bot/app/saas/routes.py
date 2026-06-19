@@ -230,7 +230,10 @@ _rl_buckets: dict = {}        # (name, ip) -> (window_start, count)
 
 def _rate_limit(name: str, request: Request, limit: int, window: int) -> None:
     """Simple in-memory per-IP rate limit. Best-effort (per-process); enough to
-    blunt brute force on login/register/redeem."""
+    blunt brute force on login/register/redeem. Active only in production
+    (DATABASE_URL set) so local dev and the test suite aren't throttled."""
+    if not settings.database_url:
+        return
     ip = request.client.host if request.client else "?"
     key = (name, ip)
     now = time.time()

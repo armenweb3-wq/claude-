@@ -32,7 +32,8 @@ localStorage.setItem("wc_local_attempts_v1", JSON.stringify([
   { id: 5, label: "Attempt 5", startingBankroll: 200, status: "active", bets: [], source: "local" },
 ]));
 const liveJson = JSON.parse(fs.readFileSync("live.json", "utf8"));
-const fetch = async () => ({ ok: true, json: async () => liveJson });
+const aiJson = JSON.parse(fs.readFileSync("ai-track.json", "utf8"));
+const fetch = async (url) => ({ ok: true, json: async () => (String(url).includes("ai-track") ? aiJson : liveJson) });
 const window = {};
 const setInterval = () => 0;
 const setTimeout = (f) => { if (typeof f === "function") f(); return 0; };

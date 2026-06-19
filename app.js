@@ -24,7 +24,13 @@
   const saveSettle = (o) => localStorage.setItem(SET_KEY, JSON.stringify(o));
   const betKey = (b) => `${b.match}|${b.leg}|${b.stake}|${b.odds}`;
   function getAttempts() {
-    const shared = (D.attempts || []).map((a) => ({ ...a, source: "shared" }));
+    let shared = (D.attempts || []).map((a) => ({ ...a, source: "shared" }));
+    if (aiTrack && aiTrack.bets) { // self-driving AI track from ai-track.json (autopilot)
+      shared = shared.filter((a) => (a.owner || "") !== "AI");
+      shared.push({ id: 2, owner: "AI", keepLabel: true, label: aiTrack.label || "🤖 AI (Claude)", source: "shared",
+        startingBankroll: aiTrack.startingBankroll, targetLegs: aiTrack.targetLegs, targetMultiplierPerLeg: aiTrack.targetMultiplierPerLeg,
+        status: aiTrack.status, bets: aiTrack.bets });
+    }
     const local = loadLocal().map((a) => ({ ...a, source: "local" }));
     const deleted = loadDeleted();
     let all = shared.concat(local).filter((a) => !deleted.includes("s" + a.id) && !deleted.includes(a.id));
@@ -32,6 +38,7 @@
     return all;
   }
   let viewIdx = null; // which attempt is being viewed; null => latest
+  let aiTrack = null; // self-driving AI track, loaded from ai-track.json
 
   // =====================================================================
   //  AUTO-SETTLEMENT ENGINE
@@ -465,8 +472,12 @@
       return j.matches || [];
     } catch { return null; }
   }
+  async function loadAi() {
+    try { const r = await fetch("./ai-track.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) aiTrack = await r.json(); } catch {}
+  }
+  async function refresh() { await loadAi(); const m = await loadLive(); render(m || []); }
   render([]);
-  loadLive().then((m) => render(m || [])).catch(() => {});
-  setInterval(() => loadLive().then((m) => render(m || [])).catch(() => {}), 60000);
+  refresh().catch(() => {});
+  setInterval(() => refresh().catch(() => {}), 60000);
   setInterval(updateCountdowns, 1000); // smooth kickoff countdowns
 })();

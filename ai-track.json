@@ -1,0 +1,30 @@
+{
+  "label": "🤖 AI (Claude)",
+  "startingBankroll": 500,
+  "targetLegs": 17,
+  "targetMultiplierPerLeg": 1.4,
+  "status": "active",
+  "updatedAt": "2026-06-17T17:00:00.000Z",
+  "bets": [
+    {
+      "leg": 1, "date": "2026-06-13", "match": "Brazil vs Morocco",
+      "selections": [{ "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 }],
+      "stake": 500, "odds": 1.45, "result": "won", "returnAmount": 725
+    },
+    {
+      "leg": 2, "date": "2026-06-14", "match": "Germany vs Curaçao",
+      "selections": [{ "label": "Over 2.5 total goals", "type": "over_goals", "line": 2.5 }],
+      "stake": 725, "odds": 1.45, "result": "won", "returnAmount": 1051.25
+    },
+    {
+      "leg": 3, "date": "2026-06-15", "match": "Belgium vs Egypt",
+      "selections": [{ "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 }],
+      "stake": 1051.25, "odds": 1.40, "result": "won", "returnAmount": 1471.75
+    },
+    {
+      "leg": 4, "date": "2026-06-17", "match": "England vs Croatia",
+      "selections": [{ "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 }],
+      "stake": 1471.75, "odds": 1.40, "result": "pending", "returnAmount": 0
+    }
+  ]
+}

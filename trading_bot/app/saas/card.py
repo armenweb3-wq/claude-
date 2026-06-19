@@ -14,6 +14,26 @@ def _font(bold: bool, size: int):
     return ImageFont.truetype(str(_ASSETS / name), size)
 
 
+def build_member_card(t: dict) -> tuple[bytes, str]:
+    """Render an anonymised social-proof card + caption from a REAL closed trade.
+    Used by the automated channel poster (never fabricated)."""
+    import datetime as _dt
+    is_long = (t.get("side") or "").lower() in ("buy", "long")
+    pct = round(float(t.get("pnl_pct") or 0), 2)
+    sym = t.get("symbol", "")
+    data = {
+        "name": "a member", "sym": sym, "isLong": is_long,
+        "pnl": round(float(t.get("pnl") or 0), 2), "pct": pct,
+        "entry": t.get("entry_price") or "", "last": t.get("exit_price") or "",
+        "date": (t.get("closed_at") or _dt.datetime.now(_dt.timezone.utc).isoformat())[:16].replace("T", " "),
+        "live": True,
+    }
+    caption = (f"🚀 A member just closed {'LONG' if is_long else 'SHORT'} "
+               f"${str(sym).replace('USDT','')} for +{pct:.1f}% — fully automated "
+               f"on their own account.")
+    return render_card(data), caption
+
+
 def render_card(d: dict) -> bytes:
     from PIL import Image, ImageDraw
 

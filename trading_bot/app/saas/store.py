@@ -324,6 +324,22 @@ class Store:
                     best = t
         return best
 
+    def best_recent_trade(self, hours: float = 48.0, min_pct: float = 5.0) -> dict | None:
+        """Best REAL, marketing-eligible WINNING trade closed in the last `hours`
+        across non-admin users — for the AUTOMATED social-proof card. None if
+        nothing qualifies. Never fabricates."""
+        import datetime as _dt
+        cutoff = (_dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(hours=hours)).isoformat()
+        best = None
+        for r in self._q("SELECT id FROM users WHERE is_admin=0"):
+            for t in self.logical_trades(r["id"]):
+                if (t.get("pnl", 0) > 0 and (t.get("pnl_pct") or 0) >= min_pct
+                        and (t.get("closed_at") or "") >= cutoff
+                        and self._marketing_eligible(t)
+                        and (best is None or t.get("pnl_pct", 0) > best.get("pnl_pct", 0))):
+                    best = t
+        return best
+
     def platform_stats(self) -> dict:
         """Aggregate performance across all users — for proof/marketing. Groups
         each user's partial fills into positions, then totals them. Only

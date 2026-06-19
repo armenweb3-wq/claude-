@@ -81,10 +81,36 @@ class MultiUserRunner:
         try:
             self._maybe_daily_summary()
             self._maybe_channel_content()
+            self._maybe_post_card()
         except Exception:  # pragma: no cover
             log.exception("runner broadcasts failed")
         finally:
             self._bcast_lock.release()
+
+    def _maybe_post_card(self) -> None:
+        """Automatically post a result card to the channel when a genuinely good
+        REAL trade has closed — throttled so it's social proof, not spam:
+        at most once every CARD_COOLDOWN hours, and never the same trade twice."""
+        if not (settings.channel_auto_post and settings.channel_chat_id):
+            return
+        import datetime as _dt
+        from . import alerts, card
+        CARD_COOLDOWN_H = 8.0
+        now = _dt.datetime.now(_dt.timezone.utc).timestamp()
+        last_at = self.store.get_meta("last_card_at")
+        if last_at and (now - float(last_at)) < CARD_COOLDOWN_H * 3600:
+            return
+        t = self.store.best_recent_trade(hours=48, min_pct=5.0)
+        if not t:
+            return
+        tid = f"{t.get('symbol')}|{t.get('closed_at')}"
+        if self.store.get_meta("last_card_id") == tid:
+            return  # already posted this one
+        img, caption = card.build_member_card(t)
+        if alerts.send_photo(settings.channel_chat_id, img, caption,
+                             alerts.community_button()).get("ok"):
+            self.store.set_meta("last_card_at", str(now))
+            self.store.set_meta("last_card_id", tid)
 
     def _maybe_daily_summary(self) -> None:
         """Once a day at SUMMARY_HOUR_UTC, DM each connected user their day."""
@@ -158,9 +184,28 @@ class MultiUserRunner:
         self.store.set_meta("last_channel_day", today)
         from . import alerts, content
         s = self.store.platform_stats()
-        perf = (f"\n\n📊 So far: <b>{s['trades']}</b> trades · <b>{s['win_rate']}%</b> win"
+        perf = (f"📊 Live so far: <b>{s['trades']}</b> trades · <b>{s['win_rate']}%</b> win rate"
                 f" across <b>{s['users']}</b> members." if s.get("trades") else "")
-        alerts.post_channel(content.daily_tip(now) + perf)
+        community = alerts.community_button()
+        broker = ({"text": f"Upgrade with {settings.broker_name} →", "url": settings.broker_link}
+                  if settings.broker_link else None)
+        # Rotate the daily post by day-of-year so the channel has variety, not
+        # just tips — all automatic.
+        slot = now.timetuple().tm_yday % 4
+        if slot == 0:
+            alerts.post_channel(content.daily_tip(now) + ("\n\n" + perf if perf else ""))
+        elif slot == 1 and perf:
+            alerts.post_channel("📈 <b>Performance update</b>\n\n" + perf +
+                                "\n\nFully automated on each member's own account.", community)
+        elif slot == 2:
+            alerts.post_channel("🎁 <b>Refer a friend → 1 month free</b>\nPlus a giveaway "
+                                "ticket per referral this month. Your link is in the app → Referral.",
+                                community)
+        elif slot == 3 and broker:
+            alerts.post_channel("👤 <b>Want a dedicated account manager?</b>\nUpgrade with our "
+                                "partner below.", broker)
+        else:
+            alerts.post_channel(content.daily_tip(now) + ("\n\n" + perf if perf else ""))
 
     def run_cycle(self) -> None:
         for user in self.store.list_users(include_admins=True):

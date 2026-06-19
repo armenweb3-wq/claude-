@@ -384,6 +384,11 @@
     <label>Assets to trade (comma-separated)</label><input id="symbols"/>
     <button onclick="saveSettings()">Save settings</button>
     <div class="msg" id="dashMsg"></div>
+    <hr style="border:0;border-top:1px solid var(--line);margin:18px 0"/>
+    <label>Exchange connection</label>
+    <p class="disc" id="keyTailLine" style="margin:2px 0 8px"></p>
+    <button class="ghost" style="margin:0" onclick="disconnectKeys()">Disconnect / change exchange keys</button>
+    <div class="msg" id="discMsg"></div>
   </div>
 </div>
 
@@ -554,6 +559,14 @@ async function connectKeys(){
   const m=$('keysMsg'); m.className='msg'; m.textContent='Verifying with Bybit…';
   try{ await api('/keys','POST',{api_key:$('apiKey').value,api_secret:$('apiSecret').value});
     m.className='msg ok'; m.textContent='Key verified and connected ✓'; await boot();
+  }catch(e){ m.className='msg err'; m.textContent=e.message; }
+}
+async function disconnectKeys(){
+  if(!confirm('Disconnect the current exchange keys? The bot will stop until you connect new keys.')) return;
+  const m=$('discMsg'); m.className='msg'; m.textContent='…';
+  try{ await api('/keys','DELETE');
+    m.className='msg ok'; m.textContent='Disconnected — enter your new keys on the next screen.';
+    closePanel('botPanel'); await boot();   // boot re-renders; Step 1 (connect) reappears
   }catch(e){ m.className='msg err'; m.textContent=e.message; }
 }
 function copyWallet(){ navigator.clipboard&&navigator.clipboard.writeText(ME.pay.wallet); }
@@ -803,6 +816,7 @@ function render(){
   show('menuAdmin',!!ME.is_admin);
   $('menuName').textContent='@'+(ME.username||'');
   $('menuEmail').textContent=ME.email;
+  { const kt=$('keyTailLine'); if(kt) kt.textContent=hasKeys?'Exchange keys connected ✓':'No exchange keys connected.'; }
   setCardAvatar(); fillAvatar('menuAvatar');
   $('s1').className='s '+(hasKeys?'done':'active');
   $('s2').className='s '+(active?'done':hasKeys?'active':'');

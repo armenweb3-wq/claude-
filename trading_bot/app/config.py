@@ -140,6 +140,10 @@ class Settings:
     # ── SaaS beta (multi-user) ──────────────────────────────────
     saas_seat_limit: int = field(default_factory=lambda: _get_int("SAAS_SEAT_LIMIT", 25))
     saas_secret_key: str = field(default_factory=lambda: _get("SAAS_SECRET_KEY"))
+    # Separate secret for the password-recovery endpoint, so the encryption key
+    # (SAAS_SECRET_KEY) is never placed in a reset URL/body. Falls back to
+    # SAAS_SECRET_KEY if unset, for backward compatibility.
+    saas_recovery_key: str = field(default_factory=lambda: _get("SAAS_RECOVERY_KEY"))
     saas_db_path: str = field(default_factory=lambda: _get("SAAS_DB_PATH", "saas.db"))
     saas_admin_email: str = field(default_factory=lambda: _get("SAAS_ADMIN_EMAIL").strip().lower())
     pay_wallet_address: str = field(default_factory=lambda: _get("PAY_WALLET_ADDRESS"))

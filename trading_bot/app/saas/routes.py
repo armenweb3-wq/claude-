@@ -8,8 +8,10 @@ from __future__ import annotations
 import datetime as dt
 import pathlib
 
+import time
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
 from ..config import settings
@@ -80,6 +82,12 @@ class ProfileIn(BaseModel):
 
 
 class PasswordIn(BaseModel):
+    new_password: str
+
+
+class RecoverIn(BaseModel):
+    email: str
+    key: str
     new_password: str
 
 
@@ -212,24 +220,66 @@ def logout(request: Request, response: Response) -> dict:
     return {"ok": True}
 
 
-@router.get("/api/recover")
-def recover_password(email: str, key: str, new: str) -> dict:
-    """Self-service password reset gated by SAAS_SECRET_KEY (the operator holds
-    it). GET so it can be run from a phone's address bar. There is no email
-    delivery yet, so this is the recovery path for a forgotten password."""
+_recover_attempts: dict = {}  # ip -> (window_start, count), simple rate limit
+
+
+def _recover_key() -> str:
+    # Prefer a dedicated recovery secret; fall back to the encryption key only
+    # if no recovery key is configured (backward compatibility).
+    return settings.saas_recovery_key or settings.saas_secret_key
+
+
+@router.get("/recover", include_in_schema=False)
+def recover_form() -> HTMLResponse:
+    """A tiny form so a password reset can be done from a browser WITHOUT putting
+    the secret key or new password in the URL (POSTs the values in the body)."""
+    return HTMLResponse(
+        """<!doctype html><meta name=viewport content="width=device-width,initial-scale=1">
+<style>body{background:#0d0e10;color:#eceef2;font-family:system-ui;max-width:420px;margin:40px auto;padding:0 18px}
+input{width:100%;box-sizing:border-box;padding:12px;margin:6px 0 14px;border-radius:10px;border:1px solid #2a2c32;background:#17181c;color:#fff}
+button{width:100%;padding:13px;border:0;border-radius:10px;background:#4cc08c;color:#06210f;font-weight:700}
+h2{font-weight:600}.m{margin-top:14px;font-size:.9rem}</style>
+<h2>Reset password</h2>
+<label>Email</label><input id=email type=email>
+<label>Recovery key</label><input id=key type=password>
+<label>New password (8+ chars)</label><input id=pw type=password>
+<button onclick="go()">Reset password</button><div class=m id=msg></div>
+<script>async function go(){var m=document.getElementById('msg');m.textContent='…';
+try{var r=await fetch('/app/api/recover',{method:'POST',headers:{'Content-Type':'application/json'},
+body:JSON.stringify({email:email.value,key:key.value,new_password:pw.value})});
+var d=await r.json();m.textContent=r.ok?'✓ '+(d.message||'done'):('✕ '+(d.detail||'failed'));
+}catch(e){m.textContent='✕ '+e}}</script>""")
+
+
+@router.post("/api/recover")
+def recover_password(body: RecoverIn, request: Request) -> dict:
+    """Self-service password reset, gated by the recovery key. POST so the
+    secret and new password are in the body (not the URL/logs). Rate-limited and
+    returns a generic response so it can't be used to enumerate accounts."""
     import hmac
 
-    if not settings.saas_secret_key or not hmac.compare_digest(key, settings.saas_secret_key):
+    # crude per-IP rate limit: 5 attempts / 10 min
+    ip = (request.client.host if request.client else "?")
+    now = time.time()
+    start, count = _recover_attempts.get(ip, (now, 0))
+    if now - start > 600:
+        start, count = now, 0
+    if count >= 5:
+        raise HTTPException(429, "too many attempts — try again later")
+    _recover_attempts[ip] = (start, count + 1)
+
+    key_required = _recover_key()
+    if not key_required or not hmac.compare_digest(body.key, key_required):
         raise HTTPException(403, "invalid key")
-    if len(new) < 8:
+    if len(body.new_password) < 8:
         raise HTTPException(400, "new password must be at least 8 characters")
     st = store()
-    user = st.get_user_by_email(email.strip().lower())
-    if not user:
-        raise HTTPException(404, "no account with that email")
-    salt, pw_hash = security.hash_password(new)
-    st.set_password(user["id"], salt, pw_hash)
-    return {"ok": True, "message": "password updated — you can now log in"}
+    user = st.get_user_by_email(body.email.strip().lower())
+    # Generic success either way — don't reveal whether the email exists.
+    if user:
+        salt, pw_hash = security.hash_password(body.new_password)
+        st.set_password(user["id"], salt, pw_hash)
+    return {"ok": True, "message": "if that email exists, its password was updated — you can now log in"}
 
 
 def _is_active(user: dict) -> bool:
@@ -404,9 +454,13 @@ async def tg_webhook(request: Request) -> dict:
     if chat and text.startswith("/start"):
         parts = text.split(maxsplit=1)
         payload = parts[1].strip() if len(parts) > 1 else ""
-        if payload.startswith("u") and payload[1:].isdigit():
+        # Bind only on a validly-signed deep link for an existing user — never
+        # trust a raw u<id> from the message text (that lets anyone redirect
+        # another user's alerts).
+        uid = security.verify_tg_payload(payload)
+        if uid is not None and store().get_user(uid):
             st = store()
-            st.set_telegram(int(payload[1:]), str(chat))
+            st.set_telegram(uid, str(chat))
             from . import alerts
             s = st.platform_stats()
             track = (f"\n\nSo far: <b>{s['trades']}</b> trades · <b>{s['win_rate']}%</b> win rate"
@@ -586,7 +640,8 @@ def me(request: Request) -> dict:
         "username": (user.get("username") or user["email"].split("@")[0]),
         "avatar": user.get("avatar"),
         "telegram": user.get("telegram_chat_id") or "",
-        "tg_link": (f"https://t.me/{settings.telegram_bot_username}?start=u{user['id']}"
+        "tg_link": (f"https://t.me/{settings.telegram_bot_username}"
+                    f"?start={security.tg_deeplink_payload(user['id'])}"
                     if settings.telegram_bot_username else ""),
         "referral_count": st.referral_count(user.get("username") or ""),
         "is_admin": _is_admin_user(user),

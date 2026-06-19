@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import hmac
 import logging
 import secrets
 
@@ -19,6 +20,31 @@ from ..config import settings
 log = logging.getLogger(__name__)
 
 _PBKDF2_ROUNDS = 200_000
+
+
+# ── signed Telegram deep-link tokens ────────────────────────
+# The deep link a user taps to connect Telegram carries their user id. Signing
+# it (HMAC) stops anyone forging a link for another user's id and hijacking
+# their trade alerts via the webhook.
+def _sign(msg: str) -> str:
+    key = (settings.saas_secret_key or "DEV-ONLY-INSECURE-KEY").encode()
+    return hmac.new(key, msg.encode(), hashlib.sha256).hexdigest()[:16]
+
+
+def tg_deeplink_payload(uid: int) -> str:
+    return f"u{uid}_{_sign('tg:' + str(uid))}"
+
+
+def verify_tg_payload(payload: str) -> int | None:
+    """Return the uid if the payload is a validly-signed deep link, else None."""
+    if not payload or not payload.startswith("u") or "_" not in payload:
+        return None
+    body, _, sig = payload[1:].partition("_")
+    if not body.isdigit():
+        return None
+    if not hmac.compare_digest(sig, _sign("tg:" + body)):
+        return None
+    return int(body)
 
 
 # ── passwords ───────────────────────────────────────────────

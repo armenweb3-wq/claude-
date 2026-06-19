@@ -222,7 +222,8 @@ class UserTrader:
                                             leverage=plan.leverage, stop_loss=sig.stop_loss,
                                             take_profits=sig.take_profits)
                 if getattr(res, "ok", False):
-                    out["opened"].append({"symbol": s, "side": side, "qty": res.qty})
+                    out["opened"].append({"symbol": s, "side": side, "qty": res.qty,
+                                          "warning": getattr(res, "warning", "")})
                     open_count += 1
                 else:
                     out["signals"][s] = f"skipped: {getattr(res, 'skipped_reason', '')}"

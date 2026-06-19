@@ -23,6 +23,20 @@ def test_separate_positions_not_merged_loss_not_hidden():
     assert pnls == [-8.0, 10.0]              # the loss is still visible
 
 
+def test_same_price_far_apart_not_merged():
+    # Same symbol/side AND same entry price, but a month apart = two separate
+    # positions. Must NOT merge (else a later loss hides in an earlier win).
+    trades = [
+        {"symbol": "BTCUSDT", "side": "Buy", "pnl": 50.0, "pnl_pct": 10, "qty": 1,
+         "entry_price": 100.0, "closed_at": "2026-01-10T10:00:00+00:00"},
+        {"symbol": "BTCUSDT", "side": "Buy", "pnl": -30.0, "pnl_pct": -6, "qty": 1,
+         "entry_price": 100.0, "closed_at": "2026-02-10T10:00:00+00:00"},
+    ]
+    g = group_closed(trades)
+    assert len(g) == 2
+    assert sorted(t["pnl"] for t in g) == [-30.0, 50.0]
+
+
 def test_ladder_fills_merge_with_weighted_pct():
     # Three TP fills of ONE position (same entry), even days apart, -> one trade.
     trades = [

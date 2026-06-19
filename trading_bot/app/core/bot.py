@@ -364,6 +364,8 @@ class TradingBot:
             f"[{tag}] OPEN {side} {result.qty} {symbol} @ ~{signal.entry} "
             f"lev {result.leverage:g}x SL {signal.stop_loss}"
         )
+        if getattr(result, "warning", ""):
+            self.notifier.send(f"⚠️ {symbol}: {result.warning}. Check the position on Bybit.")
         return True
 
     def _trade_levels(self, pos):

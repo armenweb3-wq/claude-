@@ -301,10 +301,20 @@ class BybitExchange(ExchangeAdapter):
         # CRITICAL: confirm a protective stop actually exists on the exchange.
         # If the attached SL was rejected (e.g. price/tick issue) the position
         # would be live and UNPROTECTED, so re-read and set it explicitly.
+        # A market fill isn't always reflected immediately, so poll a few times
+        # before concluding the position isn't there.
         warning = ""
         try:
-            pos = self.get_position(symbol)
-            if pos.side and pos.stop_loss <= 0:
+            pos = None
+            for _ in range(4):
+                pos = self.get_position(symbol)
+                if pos.side:
+                    break
+                time.sleep(0.6)
+            if not pos or not pos.side:
+                warning = "could not confirm the position/stop after entry — check the exchange"
+                log.error("[LIVE] %s entry placed but position not confirmed", symbol)
+            elif pos.stop_loss <= 0:
                 self.set_stop_loss(symbol, stop_loss)
                 pos = self.get_position(symbol)
                 if pos.stop_loss <= 0:

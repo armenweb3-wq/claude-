@@ -50,15 +50,15 @@ def _schema(d: str) -> list[str]:
     ]
 
 
-def group_closed(trades: list[dict], gap_seconds: float = 86400.0) -> list[dict]:
+def group_closed(trades: list[dict], gap_seconds: float = 345600.0) -> list[dict]:
     """Merge the partial closes of ONE position (TP-ladder fills) into a single
     logical trade.
 
-    Fills are grouped by position identity — same symbol, side AND entry price —
-    so the (possibly hours/days apart) TP-ladder fills of one position merge,
-    while two genuinely *separate* positions on the same symbol (different entry
-    prices) stay separate and a loss can never hide inside a win. For legacy
-    rows without an entry price we fall back to a same-symbol+side time window.
+    Fills merge only when they share the same symbol, side AND entry price *and*
+    close within ``gap_seconds`` (default 4 days — generous enough for a daily
+    strategy's TP ladder to fill, tight enough that two genuinely separate
+    positions reopened at the same price days/weeks apart stay separate). This
+    guarantees a loss can never hide inside an unrelated win.
 
     P&L ($) and fees are summed. The position ROI% is the qty-weighted average of
     the fills' ROI% (NOT their sum — summing percentages overstates returns)."""
@@ -81,10 +81,10 @@ def group_closed(trades: list[dict], gap_seconds: float = 86400.0) -> list[dict]
         qty = float(t.get("qty") or 0)
         pct = float(t.get("pnl_pct") or 0)
         g = open_g.get(key)
-        # Merge into the open group when it's the same position: same entry price
-        # (any time gap), or — for legacy rows lacking an entry — within the
-        # time window.
-        mergeable = g is not None and (epk is not None or (tt - g["_last"]) <= gap_seconds)
+        # Merge only if it's the same position key AND within the time window —
+        # the window applies even when the entry price matches, so two separate
+        # trades reopened at the same price are never netted together.
+        mergeable = g is not None and (tt - g["_last"]) <= gap_seconds
         if mergeable:
             g["pnl"] += float(t.get("pnl") or 0)
             g["fee"] += float(t.get("fee") or 0)
@@ -222,14 +222,18 @@ class Store:
             ext = str(t.get("id") or (str(t.get("symbol")) + "|" + str(ca)))
             if self._q("SELECT 1 FROM closed_trades WHERE user_id=? AND ext_id=?", (uid, ext)):
                 continue
+            # Store prices as NULL when missing (never 0) so grouping by entry
+            # price isn't corrupted by a fabricated 0.0.
+            def _num(v):
+                return float(v) if v not in (None, "", 0, 0.0) else None
             self._q(
                 "INSERT INTO closed_trades (user_id, ext_id, symbol, side, pnl, pnl_pct, fee,"
                 " entry_price, exit_price, qty, closed_at)"
                 " VALUES (?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(user_id, ext_id) DO NOTHING",
                 (uid, ext, t.get("symbol"), t.get("side"), float(t.get("pnl") or 0),
                  float(t.get("pnl_pct") or 0), float(t.get("fee") or 0),
-                 float(t.get("entry_price") or 0), float(t.get("exit_price") or 0),
-                 float(t.get("qty") or 0), ca),
+                 _num(t.get("entry_price")), _num(t.get("exit_price")),
+                 _num(t.get("qty")), ca),
             )
             new.append(t)
         return new

@@ -304,7 +304,7 @@ class Store:
     # malicious user could try to game (a tiny self-trade at extreme leverage =
     # huge ROI%). Only count trades with a meaningful notional and a sane ROI%
     # so the public stats / social-proof card can't be poisoned.
-    _MKT_MIN_NOTIONAL = 50.0   # USDT
+    _MKT_MIN_NOTIONAL = 20.0   # USDT (low enough for small beta accounts, blocks dust)
     _MKT_MAX_PCT = 150.0       # ignore implausible ROI% as marketing proof
 
     @classmethod

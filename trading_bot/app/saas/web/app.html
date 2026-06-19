@@ -481,6 +481,11 @@
         <div class="msg" id="chMsg"></div>
       </div>
       <div style="margin-top:12px;border-top:1px solid var(--line2);padding-top:12px">
+        <button class="ghost" onclick="postCard()">🚀 Post best result card to channel</button>
+        <div class="disc" style="margin-top:4px">Posts a card of the best REAL member trade. Won't post if there's no eligible trade yet.</div>
+        <div class="msg" id="cardMsg"></div>
+      </div>
+      <div style="margin-top:12px;border-top:1px solid var(--line2);padding-top:12px">
         <button class="ghost" onclick="runTest()">▶ Run full message test (channel + DM)</button>
         <div class="disc" style="margin-top:4px">Sends the whole sequence so you can preview it. DMs go to your own Telegram.</div>
         <div class="msg" id="testMsg2"></div>
@@ -637,6 +642,12 @@ async function runTest(){
   const m=$('testMsg2'); m.className='msg'; m.textContent='Sending full test…';
   try{ const r=await api('/admin/test-run','POST',{});
     m.className='msg ok'; m.textContent='Sent — '+r.channel+' to channel, '+r.dm+' to your DM ✓';
+  }catch(e){ m.className='msg err'; m.textContent=e.message; }
+}
+async function postCard(){
+  const m=$('cardMsg'); m.className='msg'; m.textContent='Posting card…';
+  try{ await api('/admin/post-card','POST',{});
+    m.className='msg ok'; m.textContent='Result card posted to the channel ✓';
   }catch(e){ m.className='msg err'; m.textContent=e.message; }
 }
 async function postChannel(){

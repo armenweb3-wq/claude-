@@ -866,6 +866,47 @@ def admin_post_channel(body: ChannelPostIn, admin: dict = Depends(require_admin)
     return {"ok": True, "message_id": res.get("message_id")}
 
 
+def _build_top_card():
+    """Return (png_bytes, caption, is_sample) for the best REAL eligible trade,
+    or a clearly-labelled sample if none qualifies. Never fabricates."""
+    from . import card
+    import datetime as dt
+    nows = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    top = store().top_trade()
+    if top:
+        side = (top.get("side") or "").lower()
+        is_long = side in ("buy", "long")
+        data = {
+            "name": "a member", "sym": top.get("symbol", ""), "isLong": is_long,
+            "pnl": round(float(top.get("pnl") or 0), 2),
+            "pct": round(float(top.get("pnl_pct") or 0), 2),
+            "entry": top.get("entry_price") or "", "last": top.get("exit_price") or "",
+            "date": (top.get("closed_at") or nows)[:16].replace("T", " "), "live": True,
+        }
+        caption = (f"🚀 A member just closed {'LONG' if is_long else 'SHORT'} "
+                   f"${data['sym'].replace('USDT','')} for +{data['pct']:.1f}% "
+                   f"— fully automated on their own account.")
+        return card.render_card(data), caption, False
+    data = {"name": "sample", "sym": "BTCUSDT", "isLong": True, "lev": 3,
+            "pnl": 0.0, "pct": 0.0, "entry": "—", "last": "—", "date": nows, "live": False}
+    caption = ("🔍 <b>Sample preview</b> — real member result cards will appear here "
+               "once trades close.")
+    return card.render_card(data), caption, True
+
+
+@router.post("/api/admin/post-card")
+def admin_post_card(admin: dict = Depends(require_admin)) -> dict:
+    """Post the best REAL member result card to the channel (marketing)."""
+    from . import alerts
+    img, caption, is_sample = _build_top_card()
+    if is_sample:
+        raise HTTPException(400, "No eligible member trade yet — nothing real to post.")
+    res = alerts.send_photo(settings.channel_chat_id, img, caption, alerts.community_button())
+    if not res.get("ok"):
+        raise HTTPException(502, f"post failed: {res.get('error')}")
+    return {"ok": True}
+
+
 @router.post("/api/admin/test-run")
 def admin_test_run(admin: dict = Depends(require_admin)) -> dict:
     """Fire the FULL message sequence so the admin can preview it: channel posts
@@ -879,31 +920,7 @@ def admin_test_run(admin: dict = Depends(require_admin)) -> dict:
               if settings.broker_link else None)
     community = alerts.community_button()
 
-    # Build the social-proof card from a REAL member trade — never fabricate.
-    top = store().top_trade()
-    if top:
-        side = (top.get("side") or "").lower()
-        is_long = side in ("buy", "long")
-        card_data = {
-            "name": "a member", "sym": top.get("symbol", ""), "isLong": is_long,
-            "pnl": round(float(top.get("pnl") or 0), 2),
-            "pct": round(float(top.get("pnl_pct") or 0), 2),
-            "entry": top.get("entry_price") or "", "last": top.get("exit_price") or "",
-            "date": (top.get("closed_at") or nows)[:16].replace("T", " "), "live": True,
-        }
-        card_caption = (f"🚀 A member just closed {'LONG' if is_long else 'SHORT'} "
-                        f"${card_data['sym'].replace('USDT','')} for +{card_data['pct']:.1f}% "
-                        f"— fully automated.")
-        is_sample = False
-    else:
-        # No closed trades yet — render a clearly-labelled preview, not fake proof.
-        card_data = {"name": "sample", "sym": "BTCUSDT", "isLong": True, "lev": 3,
-                     "pnl": 0.0, "pct": 0.0, "entry": "—", "last": "—",
-                     "date": nows, "live": False}
-        card_caption = ("🔍 <b>Sample preview</b> — real member result cards will appear "
-                        "here automatically once trades close.")
-        is_sample = True
-    img = card.render_card(card_data)
+    img, card_caption, is_sample = _build_top_card()
     sent = {"channel": 0, "dm": 0, "card_sample": is_sample, "errors": []}
 
     # ── CHANNEL sequence ──

@@ -133,7 +133,10 @@ class MultiUserRunner:
                     alerts.notify(chat, f"⚠️ <b>{_esc(str(o.get('symbol')))}: "
                                         f"{_esc(str(o['warning']))}</b>. "
                                         f"Please check the position on Bybit.")
-        cutoff = (_dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(minutes=20)).isoformat()
+        # "Fresh close" window must comfortably exceed the loop interval, or a
+        # close detected on the next (possibly late) cycle would be skipped.
+        window_min = max(30, int(settings.saas_loop_seconds / 60 * 3) + 10)
+        cutoff = (_dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(minutes=window_min)).isoformat()
         for t in new_closed:
             if (t.get("closed_at") or "") < cutoff:
                 continue  # skip historical backfill, only alert fresh closes
@@ -183,14 +186,14 @@ class MultiUserRunner:
                 )
                 res = trader.run_once()
                 # Persist closed trades every cycle so performance data accrues
-                # over time even if the user never opens the dashboard. On a
-                # user's FIRST cycle we seed their existing history silently —
-                # otherwise up to 100 past trades would be alerted as "closed".
+                # over time even if the user never opens the dashboard. Alerts are
+                # gated purely by the freshness cutoff in _alert (only closes in
+                # the last ~20 min), which already prevents replaying old history
+                # on the first cycle — so we no longer suppress the first batch
+                # (that was swallowing a user's first real close).
                 try:
-                    had_history = self.store.count_closed(uid) > 0
                     new_closed = self.store.add_closed_trades(uid, res.get("closed", []))
-                    self._alert(user, res.get("opened", []),
-                                new_closed if had_history else [])
+                    self._alert(user, res.get("opened", []), new_closed)
                 except Exception:  # pragma: no cover
                     pass
             except Exception as exc:  # one user must not break the rest

@@ -799,6 +799,11 @@ def admin_config(admin: dict = Depends(require_admin)) -> dict:
         "channel_post_hour_utc": settings.channel_post_hour_utc,
         "channel_auto_post": settings.channel_auto_post,
         "saas_dry_run": settings.saas_dry_run,
+        "saas_exec_enabled": settings.saas_exec_enabled,
+        # Diagnostics for YOUR (admin) account — why a trade alert might not arrive:
+        "your_telegram_connected": bool(admin.get("telegram_chat_id")),
+        "your_closed_trades_recorded": store().count_closed(admin["id"]),
+        "your_keys_connected": bool(store().get_keys(admin["id"])),
     }
 
 

@@ -556,11 +556,14 @@ async function pollBacktest(){
     document.getElementById('btStatus').textContent=s.status+(s.status==='running'?' …':'');
     const rows=(s.results||[]).map(r=>{
       if(r.error||r.note) return `<div>• ${r.symbol} ${r.timeframe}: ${r.error||r.note}</div>`;
+      const beat = r.beats_buy_hold;
+      const vs = (r.vs_buy_hold_pct>=0?'+':'')+r.vs_buy_hold_pct+'%';
       return `<div style="margin:6px 0;padding:8px;background:var(--card2);border-radius:10px">
         <b>${r.symbol} ${r.timeframe}</b> · ${r.from}→${r.to}<br>
         win <b>${r.win_rate_pct}%</b> · PF <b style="color:${btColor(r.profit_factor||0)}">${r.profit_factor??'—'}</b>
         · return <b style="color:${(r.total_return_pct||0)>=0?'var(--green)':'var(--red)'}">${r.total_return_pct}%</b>
-        · maxDD ${r.max_drawdown_pct}% · ${r.trades} trades</div>`;
+        · maxDD ${r.max_drawdown_pct}% · ${r.trades} trades<br>
+        <span style="color:${beat?'var(--green)':'var(--red)'}">${beat?'✓ beats':'✗ loses to'} buy&amp;hold (${vs}, hold ${r.buy_hold_pct}%)</span></div>`;
     }).join('');
     document.getElementById('btResults').innerHTML=rows||'<i>no results yet</i>';
     if(s.status==='running') setTimeout(pollBacktest, 4000);

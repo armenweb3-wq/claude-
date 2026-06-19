@@ -73,6 +73,12 @@ def _run(app_state, symbols, tf_windows) -> None:
                         m["bars"] = len(df)
                         m["from"] = str(df.index[0].date())
                         m["to"] = str(df.index[-1].date())
+                        # The decisive benchmark: would you have done better just
+                        # buying and holding the same coin over the same period?
+                        bh = (float(df["close"].iloc[-1]) / float(df["close"].iloc[0]) - 1) * 100
+                        m["buy_hold_pct"] = round(bh, 2)
+                        m["vs_buy_hold_pct"] = round(m["total_return_pct"] - bh, 2)
+                        m["beats_buy_hold"] = m["total_return_pct"] > bh
                         results.append(m)
                     st["results"] = list(results)  # progressive updates
                 except Exception as exc:  # pragma: no cover - per-config

@@ -122,13 +122,21 @@ app.include_router(router)
 app.include_router(backtest_router)
 app.include_router(saas_router)
 
+from fastapi.responses import RedirectResponse
+
 _DASHBOARD = pathlib.Path(__file__).parent / "web" / "index.html"
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/")
+def root() -> RedirectResponse:
+    """Send visitors to the product (SaaS). The legacy single-user dashboard is
+    no longer surfaced publicly."""
+    return RedirectResponse(url="/app", status_code=307)
+
+
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard() -> str:
-    """Mobile-friendly dashboard, served directly from the bot."""
+    """Legacy single-user owner dashboard (kept for the operator; not linked)."""
     return _DASHBOARD.read_text()
 
 

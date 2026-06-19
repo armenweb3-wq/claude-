@@ -39,6 +39,7 @@
   }
   let viewIdx = null; // which attempt is being viewed; null => latest
   let aiTrack = null; // self-driving AI track, loaded from ai-track.json
+  let curated = null; // curated picks queue, loaded from picks.json
 
   // =====================================================================
   //  AUTO-SETTLEMENT ENGINE
@@ -237,30 +238,27 @@
     $("attemptSwitch").querySelectorAll(".attbtn").forEach((b) => { b.onclick = () => { viewIdx = +b.dataset.i; render(lastMatches); }; });
   }
 
-  let pickView = "today";
+  // Picks board reads the curated queue (picks.json) — the same source the AI follows.
   function renderPicks() {
-    const P = D.picks; if (!P) { $("pick").innerHTML = `<div class="r">No picks logged.</div>`; return; }
-    if (!P[pickView]) pickView = P.today ? "today" : "tomorrow";
-    const set = P[pickView];
-    const dayBtn = (k, label) => P[k] ? `<button class="daybtn ${pickView === k ? "active" : ""}" data-day="${k}">${label}${P[k].date ? " · " + P[k].date : ""}</button>` : "";
-    const toggle = `<div class="daytoggle">${dayBtn("today", "Today")}${dayBtn("tomorrow", "Tomorrow")}</div>`;
-    const cands = (set.candidates || []).map((c, i) => {
+    const list = curated && curated.picks ? curated.picks : null;
+    if (!list || !list.length) { $("pick").innerHTML = `<div class="r">No picks queued.</div>`; return; }
+    const cands = list.map((c, i) => {
       const risk = (c.risk || "medium").toLowerCase();
+      const market = c.market || (c.selection ? c.selection.label + (c.odds ? "  (~" + c.odds + ")" : "") : "");
       return `<details class="cand" ${i === 0 ? "open" : ""}>
         <summary><span class="cand-title">${i === 0 ? "⭐ " : ""}${c.match}</span><span class="risk ${risk}">${risk} risk</span></summary>
         <div class="cand-body">
-          <div class="m">${c.market}</div>
+          <div class="m">SINGLE MARKET → ${market}</div>
           ${c.summary ? `<div class="r">${c.summary}</div>` : ""}
           ${c.why ? `<div class="why"><b>Why this bet:</b> ${c.why}</div>` : ""}
           ${c.whyRisk ? `<div class="whyrisk"><b>Risk — ${risk}:</b> ${c.whyRisk}</div>` : ""}
         </div></details>`;
     }).join("");
-    $("pick").innerHTML = toggle + cands;
-    $("pick").querySelectorAll(".daybtn").forEach((b) => { b.onclick = () => { pickView = b.dataset.day; renderPicks(); }; });
+    $("pick").innerHTML = `<div class="pick-head"><span class="tag">Curated queue — the 🤖 AI follows these</span></div>` + cands;
   }
   function firstCandidate() {
-    const P = D.picks, set = P && (P.today || P.tomorrow);
-    return set && set.candidates && set.candidates[0] ? { match: set.candidates[0].match } : null;
+    const list = curated && curated.picks;
+    return list && list[0] ? { match: list[0].match } : null;
   }
 
   let chart;
@@ -474,6 +472,7 @@
   }
   async function loadAi() {
     try { const r = await fetch("./ai-track.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) aiTrack = await r.json(); } catch {}
+    try { const r = await fetch("./picks.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) curated = await r.json(); } catch {}
   }
   async function refresh() { await loadAi(); const m = await loadLive(); render(m || []); }
   render([]);

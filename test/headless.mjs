@@ -33,7 +33,12 @@ localStorage.setItem("wc_local_attempts_v1", JSON.stringify([
 ]));
 const liveJson = JSON.parse(fs.readFileSync("live.json", "utf8"));
 const aiJson = JSON.parse(fs.readFileSync("ai-track.json", "utf8"));
-const fetch = async (url) => ({ ok: true, json: async () => (String(url).includes("ai-track") ? aiJson : liveJson) });
+const picksJson = JSON.parse(fs.readFileSync("picks.json", "utf8"));
+const fetch = async (url) => {
+  const u = String(url);
+  const body = u.includes("ai-track") ? aiJson : u.includes("picks.json") ? picksJson : liveJson;
+  return { ok: true, json: async () => body };
+};
 const window = {};
 const setInterval = () => 0;
 const setTimeout = (f) => { if (typeof f === "function") f(); return 0; };

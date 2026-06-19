@@ -1,0 +1,55 @@
+{
+  "date": "2026-06-19",
+  "note": "Curated queue of single, auto-settleable, always-placeable markets. The AI autopilot consumes these in kickoff order; the site shows them as the picks board. Keep selections to auto types (over_goals/under_goals/btts/team_win/double_chance) so they settle themselves.",
+  "picks": [
+    {
+      "match": "USA vs Australia",
+      "selection": { "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 },
+      "odds": 1.40, "risk": "medium",
+      "why": "USA looked sharp going forward in their opener (4-1); enough to clear 1.5 in most games.",
+      "whyRisk": "Australia are organised and physical and can hold it to a 1-0 type game."
+    },
+    {
+      "match": "Scotland vs Morocco",
+      "selection": { "label": "Morocco Double Chance (win or draw)", "type": "double_chance", "team": "Morocco" },
+      "odds": 1.35, "risk": "medium",
+      "why": "Morocco (2022 semi-finalists) have the quality edge and shouldn't lose to Scotland.",
+      "whyRisk": "Scotland are well-drilled and can nick a result; a draw is fine for DC, a loss isn't."
+    },
+    {
+      "match": "Brazil vs Haiti",
+      "selection": { "label": "Over 2.5 total goals", "type": "over_goals", "line": 2.5 },
+      "odds": 1.40, "risk": "low",
+      "why": "Brazil should overwhelm debutants Haiti; 3+ goals is the likeliest scoreline.",
+      "whyRisk": "Minnows can frustrate for ~60 mins, but quality usually tells."
+    },
+    {
+      "match": "Germany vs Ivory Coast",
+      "selection": { "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 },
+      "odds": 1.30, "risk": "low",
+      "why": "Germany's attack (7 vs Curaçao) should comfortably clear 1.5 goals.",
+      "whyRisk": "Ivory Coast defend well; a cagey low-scoring game is the only threat."
+    },
+    {
+      "match": "Spain vs Saudi Arabia",
+      "selection": { "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 },
+      "odds": 1.35, "risk": "low",
+      "why": "Spain dominate possession and create high chance volume.",
+      "whyRisk": "Saudi may park the bus chasing a 1-0."
+    },
+    {
+      "match": "Uruguay vs Cape Verde",
+      "selection": { "label": "Uruguay Double Chance (win or draw)", "type": "double_chance", "team": "Uruguay" },
+      "odds": 1.20, "risk": "low",
+      "why": "Uruguay are far stronger than debutants Cape Verde and shouldn't lose.",
+      "whyRisk": "Low — only a genuine shock loss hurts."
+    },
+    {
+      "match": "Netherlands vs Sweden",
+      "selection": { "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 },
+      "odds": 1.40, "risk": "medium",
+      "why": "Both sides carry an attacking threat; Netherlands push the game.",
+      "whyRisk": "Sweden defend well and can keep it tight."
+    }
+  ]
+}

@@ -151,28 +151,21 @@ window.BETTING_DATA = {
   //  Never two markets on the same game in a normal bet — that's what gets refused.
   picks: {
     today: {
-      date: "2026-06-17",
+      date: "2026-06-19",
       candidates: [
         {
-          match: "Portugal vs Congo DR", risk: "low",
-          market: "SINGLE MARKET → Over 1.5 total goals  (~1.30-1.40)",
-          summary: "17:00 UTC. Clearest mismatch on today's card.",
-          why: "Portugal have far more attacking quality; they should create enough to clear 1.5 goals comfortably.",
-          whyRisk: "Low — only a shock ultra-defensive 1-0 threatens it; quality usually tells vs a debutant-level side.",
+          match: "USA vs Australia", risk: "medium",
+          market: "SINGLE MARKET → Over 1.5 total goals  (~1.35-1.45)  — the AI track is on this one",
+          summary: "19:00 UTC. USA looked sharp going forward in their opener (4-1).",
+          why: "USA carry a real attacking threat at home; enough to push most games past 1.5 goals.",
+          whyRisk: "Medium — Australia are organised and physical and can keep it to a 1-0 type game.",
         },
         {
-          match: "England vs Croatia", risk: "medium",
-          market: "SINGLE MARKET → Over 1.5 total goals  (~1.40)  — the AI track is on this one",
-          summary: "20:00 UTC. Marquee tie — can be tight.",
-          why: "Two good sides with attacking talent; over 1.5 is a fair lean if it opens up.",
-          whyRisk: "Medium — both are well-organised; a cagey 1-0 is very possible in a big game.",
-        },
-        {
-          match: "Ghana vs Panama", risk: "medium",
-          market: "SINGLE MARKET → Over 1.5 total goals (or Ghana Double Chance)",
-          summary: "23:00 UTC. Ghana favoured but not a gimme.",
-          why: "Ghana carry the greater attacking threat; a single goals or DC market keeps it simple.",
-          whyRisk: "Medium — Panama are physical and can frustrate; tournament openers often run cautious.",
+          match: "Scotland vs Morocco", risk: "medium",
+          market: "SINGLE MARKET → Morocco Double Chance (win or draw)  (~1.30-1.45)",
+          summary: "22:00 UTC. Morocco are the stronger side.",
+          why: "Morocco (2022 semi-finalists) have the quality edge and shouldn't lose to Scotland.",
+          whyRisk: "Medium — Scotland are well-drilled and can nick a result; a draw is fine for DC but a loss isn't.",
         },
       ],
     },

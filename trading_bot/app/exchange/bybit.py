@@ -93,6 +93,15 @@ class BybitExchange(ExchangeAdapter):
             return 0.0
         return float(accounts[0].get("totalEquity") or 0.0)
 
+    def get_balances(self) -> dict:
+        """Equity (cash + open-position uPnL), wallet (cash), available — one call."""
+        resp = self._client.get_wallet_balance(accountType="UNIFIED")
+        a = (resp.get("result", {}).get("list") or [{}])[0]
+        eq = float(a.get("totalEquity") or 0.0)
+        wallet = float(a.get("totalWalletBalance") or eq)
+        avail = float(a.get("totalAvailableBalance") or wallet)
+        return {"equity": eq, "wallet": wallet, "available": avail}
+
     def get_position(self, symbol: str) -> Position:
         from datetime import datetime, timezone
 

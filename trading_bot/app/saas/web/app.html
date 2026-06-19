@@ -264,12 +264,15 @@
       <h2>Your bot <span id="actPill" class="pill off">—</span></h2>
       <div class="banner test hide" id="testBanner">TEST MODE — simulating, no real orders are placed.</div>
       <div class="stats">
+        <div class="stat"><div class="l">Starting balance</div><div class="v" id="d_start">—</div></div>
+        <div class="stat"><div class="l">Balance</div><div class="v" id="d_wallet">—</div></div>
         <div class="stat"><div class="l">Equity</div><div class="v" id="d_equity">—</div></div>
+        <div class="stat"><div class="l">Total return</div><div class="v" id="d_totalret">—</div></div>
         <div class="stat"><div class="l">Open P&amp;L</div><div class="v" id="d_pnl">—</div></div>
-        <div class="stat"><div class="l">Status</div><div class="v sm" id="d_status">—</div></div>
         <div class="stat"><div class="l">Open positions</div><div class="v" id="d_openpos">—</div></div>
       </div>
       <div class="disc" id="d_realtoday" style="margin-top:8px"></div>
+      <div style="margin-top:6px"><span class="link" id="d_setstart" onclick="setStartBalance()">Set starting balance</span></div>
       <div class="disc" id="d_insight" style="margin-top:2px;color:var(--green)"></div>
       <div class="banner flat hide" id="d_market"></div>
       <div class="switchrow">
@@ -645,7 +648,16 @@ async function pollBt(){
 async function adminAct(id){ await api('/admin/activate','POST',{user_id:id,days:30}); loadAdmin(); }
 async function adminDe(id){ await api('/admin/deactivate','POST',{user_id:id}); loadAdmin(); }
 
-let dashTimer=null, botEnabled=false, lastPositions=[], lastDry=false, lastShare=null, lastHistoryTrades=[];
+let dashTimer=null, botEnabled=false, lastPositions=[], lastDry=false, lastShare=null, lastHistoryTrades=[], lastStart=0;
+async function setStartBalance(){
+  const cur=lastStart||'';
+  const v=prompt('Set your starting balance (USDT) — your reference point for total return:', cur);
+  if(v===null) return;
+  const num=parseFloat(v);
+  if(!(num>=0)){ alert('Enter a valid number'); return; }
+  try{ await api('/start-balance','POST',{value:num}); loadDashboard(); }
+  catch(e){ alert(e.message); }
+}
 let avatarImg=null, pendingAvatar=undefined, tpHits={}, tpHitsInit=false, toastTimer=null;
 function toast(msg){
   const t=$('toast'); if(!t) return;
@@ -873,6 +885,12 @@ async function loadDashboard(){
   if($('tradeBtn')) show('tradeBtn', !s.dry_run);  // manual open only when live
   botEnabled=!!s.enabled; updateToggleBtn();
   $('d_equity').textContent=money(s.equity);
+  $('d_wallet').textContent=money(s.wallet);
+  $('d_start').textContent=s.start_equity?money(s.start_equity):'—';
+  lastStart=s.start_equity||0;
+  const tr=s.total_return_pct||0, tp=s.total_pnl||0, te=$('d_totalret');
+  te.textContent=s.start_equity?((tr>=0?'+':'')+tr+'%'):'—';
+  te.className='v '+(tp>0?'pos':tp<0?'neg':'');
   const pnl=s.open_pnl||0, pe=$('d_pnl');
   pe.textContent=signMoney(pnl); pe.className='v '+(pnl>0?'pos':pnl<0?'neg':'');
   $('d_openpos').textContent=(s.open_positions!=null?s.open_positions:'—');

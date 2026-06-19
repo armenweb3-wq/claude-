@@ -350,12 +350,17 @@ def dashboard(request: Request) -> dict:
 
     from . import live as live_mod
 
-    live_data = {"equity": 0.0, "open_pnl": 0.0, "open_positions": 0, "positions": []}
+    live_data = {"equity": 0.0, "wallet": 0.0, "open_pnl": 0.0, "open_positions": 0, "positions": []}
     live_err = None
     realized_today = 0.0
     if keys:
         try:
             live_data = live_mod.positions_snapshot(uid, keys)
+            # Auto-capture the starting balance the first time we see real equity,
+            # so every user gets a reference point with zero setup.
+            if not user.get("start_equity") and live_data.get("equity", 0) > 0:
+                st.set_start_equity(uid, live_data["equity"])
+                user["start_equity"] = live_data["equity"]
         except Exception as exc:  # surface, never 500 the dashboard
             live_err = f"live data unavailable: {exc}"
         try:  # banked (realised) profit from trades closed today + TP-fill counts
@@ -396,6 +401,12 @@ def dashboard(request: Request) -> dict:
         "running": runner is not None,
         "dry_run": settings.saas_dry_run,
         "equity": live_data["equity"],
+        "wallet": live_data.get("wallet", live_data["equity"]),
+        "start_equity": user.get("start_equity") or 0.0,
+        "total_pnl": round((live_data["equity"] - (user.get("start_equity") or 0)), 4)
+                     if user.get("start_equity") else 0.0,
+        "total_return_pct": round((live_data["equity"] / user["start_equity"] - 1) * 100, 2)
+                            if user.get("start_equity") else 0.0,
         "open_pnl": live_data["open_pnl"],
         "realized_today": realized_today,
         "open_positions": live_data["open_positions"],
@@ -531,6 +542,20 @@ def update_profile(body: ProfileIn, request: Request) -> dict:
     if body.telegram is not None:
         st.set_telegram(user["id"], body.telegram.strip() or None)
     return {"ok": True}
+
+
+class StartBalanceIn(BaseModel):
+    value: float
+
+
+@router.post("/api/start-balance")
+def set_start_balance(body: StartBalanceIn, request: Request) -> dict:
+    """Set/correct the starting-balance reference for the logged-in user."""
+    user = current_user(request)
+    if body.value < 0:
+        raise HTTPException(400, "starting balance must be ≥ 0")
+    store().set_start_equity(user["id"], body.value)
+    return {"ok": True, "start_equity": round(body.value, 4)}
 
 
 @router.post("/api/password")

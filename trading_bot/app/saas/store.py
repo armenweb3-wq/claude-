@@ -153,6 +153,8 @@ class Store:
             "ALTER TABLE users ADD COLUMN avatar TEXT",
             "ALTER TABLE users ADD COLUMN referred_by TEXT",
             "ALTER TABLE users ADD COLUMN telegram_chat_id TEXT",
+            f"ALTER TABLE users ADD COLUMN start_equity {_flt}",
+            "ALTER TABLE users ADD COLUMN start_at TEXT",
             f"ALTER TABLE closed_trades ADD COLUMN entry_price {_flt}",
             f"ALTER TABLE closed_trades ADD COLUMN exit_price {_flt}",
             f"ALTER TABLE closed_trades ADD COLUMN qty {_flt}",
@@ -226,6 +228,10 @@ class Store:
 
     def set_telegram(self, uid: int, chat_id: str | None) -> None:
         self._q("UPDATE users SET telegram_chat_id=? WHERE id=?", (chat_id, uid))
+
+    def set_start_equity(self, uid: int, value: float) -> None:
+        self._q("UPDATE users SET start_equity=?, start_at=? WHERE id=?",
+                (float(value), time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), uid))
 
     # ── durable event log / notification outbox ─────────────
     def add_event(self, target: str, kind: str, payload: dict,

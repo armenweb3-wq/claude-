@@ -92,6 +92,11 @@ class ExchangeAdapter(ABC):
     def get_equity(self) -> float:
         """Total account equity in quote currency (USDT)."""
 
+    def get_balances(self) -> dict:
+        """Equity / wallet / available balances. Default: all equal equity."""
+        eq = self.get_equity()
+        return {"equity": eq, "wallet": eq, "available": eq}
+
     @abstractmethod
     def get_position(self, symbol: str) -> Position:
         ...

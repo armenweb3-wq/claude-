@@ -59,10 +59,11 @@ def positions_snapshot(uid: int, keys: dict) -> dict:
         if c and now - c[0] < _POS_TTL:
             return c[1]
     ex = _exchange(keys)
-    equity = ex.get_equity()
+    bals = ex.get_balances()
     details = [_detail(p) for p in ex.get_open_positions()]
     data = {
-        "equity": round(equity, 4),
+        "equity": round(bals.get("equity", 0.0), 4),
+        "wallet": round(bals.get("wallet", 0.0), 4),
         "open_positions": len(details),
         "positions": details,
         "open_pnl": round(sum(p["unrealised_pnl"] for p in details), 4),

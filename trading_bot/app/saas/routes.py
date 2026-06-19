@@ -713,15 +713,15 @@ def admin_test_run(admin: dict = Depends(require_admin)) -> dict:
     # ── INDIVIDUAL (DM) sequence to the admin ──
     if chat:
         dms = [
-            "✅ <b>Welcome to ZENITH</b>\nYou'll get every trade + a daily 7pm summary here.",
-            "🟢 Opened SHORT ORDIUSDT (qty 1.0)",
-            "🎯 ORDIUSDT — TP1 hit, stop moved to break-even",
-            "🎯 ORDIUSDT — TP2 hit, stop moved to TP1",
-            "✅ Closed ORDIUSDT — PnL +0.55 USDT",
-            "📊 <b>Daily summary</b>\nTrades: 2 · Wins: 2 · Losses: 0\nNet: +0.55 USDT",
+            ("✅ <b>Welcome to ZENITH</b>\nYou'll get every trade + a daily 7pm summary here.", community),
+            ("🟢 Opened SHORT ORDIUSDT (qty 1.0)", None),
+            ("🎯 ORDIUSDT — TP1 hit, stop moved to break-even", None),
+            ("🎯 ORDIUSDT — TP2 hit, stop moved to TP1", None),
+            ("✅ Closed ORDIUSDT — PnL +0.55 USDT", None),
+            ("📊 <b>Daily summary</b>\nTrades: 2 · Wins: 2 · Losses: 0\nNet: +0.55 USDT", community),
         ]
-        for m in dms:
-            if alerts.notify(chat, m):
+        for m, btn in dms:
+            if alerts.notify(chat, m, btn):
                 sent["dm"] += 1
         if alerts.send_photo(chat, img, "Your shareable result card 👆"):
             sent["dm"] += 1

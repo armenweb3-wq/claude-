@@ -668,10 +668,10 @@ def admin_post_channel(body: ChannelPostIn, admin: dict = Depends(require_admin)
     button = None
     if body.include_broker and settings.broker_link:
         button = {"text": f"Upgrade with {settings.broker_name} →", "url": settings.broker_link}
-    mid = alerts.post_channel(text, button, body.pin)
-    if not mid:
-        raise HTTPException(502, "post failed — is the bot an admin of the channel?")
-    return {"ok": True, "message_id": mid}
+    res = alerts.post_channel(text, button, body.pin)
+    if not res.get("ok"):
+        raise HTTPException(502, f"post failed: {res.get('error')}")
+    return {"ok": True, "message_id": res.get("message_id")}
 
 
 @router.post("/api/admin/activate")

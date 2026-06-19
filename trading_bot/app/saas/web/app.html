@@ -622,7 +622,7 @@ async function runBt(){
   try{ const r=await api('/admin/backtest','POST',{});
     if(r.ok===false){ $('btStatus').textContent='✗ '+esc(r.error||'failed'); return; }
     pollBt();
-  }catch(e){ $('btStatus').textContent='POST '+e.message+' (if this says 500, the new version isn\\'t live yet)'; }
+  }catch(e){ $('btStatus').textContent='POST '+e.message+' (if this says 500, the new version is not live yet)'; }
 }
 function btVerdict(r){
   if(r.error||r.note) return '<div class="disc">• '+esc(r.symbol||'')+' '+esc(r.timeframe||'')+': '+esc(r.error||r.note)+'</div>';

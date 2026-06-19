@@ -129,7 +129,9 @@ class MultiUserRunner:
             for o in opened:
                 alerts.notify(chat, f"🟢 Opened {o.get('side')} {o.get('symbol')} (qty {o.get('qty')})")
                 if o.get("warning"):
-                    alerts.notify(chat, f"⚠️ <b>{o.get('symbol')}: {o['warning']}</b>. "
+                    from html import escape as _esc
+                    alerts.notify(chat, f"⚠️ <b>{_esc(str(o.get('symbol')))}: "
+                                        f"{_esc(str(o['warning']))}</b>. "
                                         f"Please check the position on Bybit.")
         cutoff = (_dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(minutes=20)).isoformat()
         for t in new_closed:

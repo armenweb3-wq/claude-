@@ -645,16 +645,18 @@ def manual_open(body: OpenIn, request: Request) -> dict:
         raise HTTPException(400, f"amount too large: needs ~{margin:.2f} USDT margin "
                                  f"but balance is {equity:.2f} USDT")
     # 3. Daily-loss circuit breaker (same rule as the automated engine).
+    now = dt.datetime.now(dt.timezone.utc)
+    midnight_ms = int(dt.datetime(now.year, now.month, now.day,
+                                  tzinfo=dt.timezone.utc).timestamp() * 1000)
     try:
-        today = dt.datetime.now(dt.timezone.utc).date().isoformat()
-        realized_today = sum((r.get("pnl") or 0) for r in ex.closed_pnl(limit=100)
-                             if (r.get("closed_at") or "").startswith(today))
-        if equity > 0 and realized_today <= -(settings.daily_max_loss_pct / 100) * equity:
-            raise HTTPException(400, "daily loss limit reached — trading paused until tomorrow")
-    except HTTPException:
-        raise
-    except Exception:
-        pass
+        rows = ex.closed_pnl(limit=100, start_ms=midnight_ms)
+    except Exception as exc:
+        # A safety control must FAIL CLOSED — if we can't read today's P&L we
+        # refuse the trade rather than risk trading past the loss limit.
+        raise HTTPException(503, f"can't verify today's P&L right now: {exc}")
+    realized_today = sum((r.get("pnl") or 0) for r in rows)
+    if equity > 0 and realized_today <= -(settings.daily_max_loss_pct / 100) * equity:
+        raise HTTPException(400, "daily loss limit reached — trading paused until tomorrow")
 
     sign = 1.0 if side == "long" else -1.0
     # Stop/TP prices derived from the live entry and the user's percentages.

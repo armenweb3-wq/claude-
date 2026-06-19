@@ -10,6 +10,7 @@ import asyncio
 import logging
 import threading
 import traceback
+from html import escape as _esc
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
@@ -161,7 +162,7 @@ class TradingBot:
             )
         except Exception:  # pragma: no cover - never let logging mask the error
             log.warning("failed to persist error to database")
-        self.notifier.send(f"⚠️ bot error [{source}]: {exc}")
+        self.notifier.send(f"⚠️ bot error [{_esc(str(source))}]: {_esc(str(exc))}")
 
     def _tick(self) -> None:
         self.state.last_run = datetime.now(timezone.utc).isoformat()
@@ -356,7 +357,7 @@ class TradingBot:
         )
         if not result.ok:
             log.info("[%s] skipped: %s", symbol, result.skipped_reason)
-            self.notifier.send(f"⏭️ {symbol} skipped: {result.skipped_reason}")
+            self.notifier.send(f"⏭️ {symbol} skipped: {_esc(str(result.skipped_reason))}")
             return False
 
         self.storage.record_trade(
@@ -370,7 +371,7 @@ class TradingBot:
             f"lev {result.leverage:g}x SL {signal.stop_loss}"
         )
         if getattr(result, "warning", ""):
-            self.notifier.send(f"⚠️ {symbol}: {result.warning}. Check the position on Bybit.")
+            self.notifier.send(f"⚠️ {symbol}: {_esc(str(result.warning))}. Check the position on Bybit.")
         return True
 
     def _trade_levels(self, pos):

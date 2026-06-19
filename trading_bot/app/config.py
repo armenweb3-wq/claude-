@@ -182,10 +182,20 @@ class Settings:
         )
 
     def safety_summary(self) -> str:
+        net = "TESTNET" if self.bybit_testnet else "MAINNET"
+        parts = []
         if self.is_live:
-            net = "TESTNET" if self.bybit_testnet else "MAINNET"
-            return f"LIVE trading enabled on Bybit {net} ({self.bybit_category})"
-        return "DRY-RUN (no real orders will be placed)"
+            parts.append(f"single-user LIVE on Bybit {net}")
+        else:
+            parts.append("single-user DRY-RUN")
+        # The multi-user (SaaS) engine has its own switches — report them too so
+        # boot logs / /info never falsely claim "no real orders" when friends are
+        # trading live.
+        if self.saas_exec_enabled:
+            parts.append(f"multi-user {'LIVE' if not self.saas_dry_run else 'DRY-RUN'} on {net}")
+        else:
+            parts.append("multi-user engine OFF")
+        return " · ".join(parts)
 
 
 settings = Settings()

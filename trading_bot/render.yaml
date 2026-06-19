@@ -32,6 +32,13 @@ services:
         value: "5"
       - key: MAX_LEVERAGE
         value: "10"
+      # ── Multi-user SaaS engine (the actual product) ──
+      - key: SAAS_EXEC_ENABLED
+        value: "true"          # run the per-user trading engine
+      - key: SAAS_DRY_RUN
+        value: "true"          # START SAFE — flip to "false" only after testing
+      - key: SAAS_PAYMENT_REQUIRED
+        value: "false"         # friends activate by access code, not payment
       # Secrets — set these in the dashboard, do NOT commit:
       - key: BYBIT_API_KEY
         sync: false
@@ -40,6 +47,24 @@ services:
       - key: CONTROL_API_KEY
         sync: false
       - key: DATABASE_URL
+        sync: false
+      - key: SAAS_SECRET_KEY        # encrypts users' exchange keys — REQUIRED, never change
+        sync: false
+      - key: SAAS_RECOVERY_KEY      # separate password-reset secret
+        sync: false
+      - key: SAAS_ADMIN_EMAIL       # your email -> admin panel
+        sync: false
+      - key: SAAS_ACCESS_CODE       # the code friends type to activate free
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_WEBHOOK_SECRET
+        sync: false
+      - key: TELEGRAM_CHANNEL_ID
+        sync: false
+      - key: TELEGRAM_BOT_USERNAME
+        sync: false
+      - key: COMMUNITY_LINK
         sync: false
 
 databases:

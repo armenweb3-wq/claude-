@@ -6,6 +6,7 @@ is written once with ``?`` placeholders and adapted per backend.
 """
 from __future__ import annotations
 
+import logging
 import sqlite3
 import threading
 import time
@@ -159,8 +160,12 @@ class Store:
                 else:
                     self._conn.execute(stmt)
                     self._conn.commit()
-            except Exception:
-                pass  # column already exists
+            except Exception as exc:
+                # Expected when the column already exists; log anything else so a
+                # real migration failure (permissions/lock) isn't hidden.
+                msg = str(exc).lower()
+                if not any(k in msg for k in ("exist", "duplicate")):
+                    logging.getLogger(__name__).warning("migration step failed: %s — %s", stmt, exc)
 
     def _q(self, sql: str, args: tuple = ()) -> list[dict]:
         with self._lock:
@@ -312,7 +317,7 @@ class Store:
         """Best REAL, marketing-eligible closed trade across users (by ROI%).
         Returns None if none qualify — never fabricate, never show a gamed trade."""
         best = None
-        for r in self._q("SELECT id FROM users"):
+        for r in self._q("SELECT id FROM users WHERE is_admin=0"):
             for t in self.logical_trades(r["id"]):
                 if (t.get("pnl", 0) > 0 and self._marketing_eligible(t)
                         and (best is None or t.get("pnl_pct", 0) > best.get("pnl_pct", 0))):

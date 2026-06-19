@@ -12,7 +12,6 @@ import threading
 import time
 
 from ..config import settings
-from ..exchange.bybit import BybitExchange
 from ..strategy.confluence import ConfluenceStrategy
 from . import security
 from .store import Store
@@ -79,6 +78,7 @@ class MultiUserRunner:
         if not self._bcast_lock.acquire(blocking=False):
             return
         try:
+            self._reconcile()         # verify every live position is protected
             self._maybe_daily_summary()
             self._maybe_channel_content()
             self._maybe_post_card()
@@ -87,6 +87,84 @@ class MultiUserRunner:
             log.exception("runner broadcasts failed")
         finally:
             self._bcast_lock.release()
+
+    def _reconcile(self) -> None:
+        """Trust-but-verify the exchange: every ~30 min, check each active user's
+        LIVE positions actually have a stop-loss. An unprotected position = uncapped
+        risk, so we auto-repair it (place a protective stop at the default distance
+        for symbols we manage) and alert the user; we also flag positions on
+        symbols not in the user's trade list (the bot won't manage those). A digest
+        goes to the operator. Skipped in dry-run (no real positions)."""
+        if settings.saas_dry_run:
+            return
+        RECON_INTERVAL_S = 1800   # 30 min
+        RECON_STOP_PCT = 3.0      # default protective distance (matches the ladder)
+        DEDUPE_S = 6 * 3600
+        now = time.time()
+        last = self.store.get_meta("last_reconcile_at")
+        if last and (now - float(last)) < RECON_INTERVAL_S:
+            return
+        self.store.set_meta("last_reconcile_at", str(now))
+        from . import live as live_mod
+        issues: list[str] = []
+        for user in self.store.list_users(include_admins=True):
+            uid = user["id"]
+            if not _is_active(user):
+                continue
+            keys = self.store.get_keys(uid)
+            if not keys:
+                continue
+            cfg = self.store.get_settings(uid)
+            if not cfg["enabled"]:
+                continue
+            try:
+                ex = live_mod._exchange(keys)
+                positions = ex.get_open_positions()
+            except Exception as exc:  # one user must not break the sweep
+                log.warning("reconcile read failed for %s: %s", uid, exc)
+                continue
+            symbols = {s.strip().upper() for s in cfg["symbols"].split(",") if s.strip()}
+            for p in positions:
+                if not p.side or p.size <= 0:
+                    continue
+                sym = p.symbol
+                if p.stop_loss and p.stop_loss > 0:
+                    if sym not in symbols:
+                        issues.append(f"user {uid}: {sym} not in trade list (unmanaged)")
+                    continue
+                # UNPROTECTED — dedupe alerts per position for a few hours.
+                dk = f"recon:{uid}:{sym}"
+                recent = self.store.get_meta(dk)
+                if recent and (now - float(recent)) < DEDUPE_S:
+                    continue
+                self.store.set_meta(dk, str(now))
+                is_long = (p.side or "").lower() in ("buy", "long")
+                fixed = False
+                if sym in symbols and p.entry_price > 0:
+                    sl = p.entry_price * (1 - (RECON_STOP_PCT / 100) * (1 if is_long else -1))
+                    try:
+                        ex.set_stop_loss(sym, sl)
+                        fixed = True
+                    except Exception as exc:  # pragma: no cover
+                        log.warning("reconcile auto-stop failed %s/%s: %s", uid, sym, exc)
+                if fixed:
+                    self.store.add_event("dm", "text", {"text":
+                        f"🛡️ <b>{sym}</b> had no stop-loss — I placed a protective stop to cap your risk. "
+                        f"Check it on Bybit."}, uid)
+                    issues.append(f"user {uid}: {sym} unprotected → auto-fixed")
+                else:
+                    self.store.add_event("dm", "text", {"text":
+                        f"⚠️ <b>{sym} has NO stop-loss</b> on the exchange and I couldn't set one. "
+                        f"Your risk is uncapped — please add a stop or close it on Bybit."}, uid)
+                    issues.append(f"user {uid}: {sym} UNPROTECTED (manual fix needed)")
+        # Operator digest (only when something was found).
+        admin_email = settings.saas_admin_email
+        if issues and admin_email:
+            admin = self.store.get_user_by_email(admin_email)
+            if admin and admin.get("telegram_chat_id"):
+                body = "\n".join(f"• {m}" for m in issues[:25])
+                self.store.add_event("dm", "text", {"text":
+                    f"🔎 <b>Reconciliation: {len(issues)} issue(s) found</b>\n{body}"}, admin["id"])
 
     def _maybe_post_card(self) -> None:
         """Automatically post a result card to the channel when a genuinely good
@@ -274,6 +352,7 @@ class MultiUserRunner:
             if not keys:
                 continue
             try:
+                from ..exchange.bybit import BybitExchange  # lazy: pybit only needed live
                 api_key = security.decrypt(keys["enc_key"])
                 api_secret = security.decrypt(keys["enc_secret"])
                 exchange = BybitExchange(api_key=api_key, api_secret=api_secret,

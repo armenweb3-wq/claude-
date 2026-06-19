@@ -63,6 +63,7 @@ class BybitExchange(ExchangeAdapter):
         )
         self._category = category or settings.bybit_category
         self._rules_cache: dict[str, InstrumentRules] = {}
+        self._margin_set = False  # best-effort isolated-margin set runs once
 
     def get_klines(self, symbol: str, interval: str, limit: int = 200) -> pd.DataFrame:
         key = ("kline", self._category, symbol, interval, limit)
@@ -289,6 +290,7 @@ class BybitExchange(ExchangeAdapter):
                 ),
             )
 
+        self._ensure_isolated()       # best-effort: isolate so the risk model holds
         self._ensure_one_way(symbol)  # stops/positionIdx=0 assume one-way mode
         self.set_leverage(symbol, leverage)
 
@@ -357,6 +359,19 @@ class BybitExchange(ExchangeAdapter):
 
         return ExecutionResult(ok=True, entry_order_id=entry_id, qty=qty,
                                leverage=leverage, warning=warning)
+
+    def _ensure_isolated(self) -> None:
+        """Best-effort: switch the account to ISOLATED margin so the sizing/
+        liquidation model holds. Runs once per client. On a Unified account this
+        is account-wide and may fail (e.g. positions open, or portfolio margin) —
+        in which case we rely on the user having set it. Never raises."""
+        if self._margin_set:
+            return
+        self._margin_set = True
+        try:
+            self._client.set_margin_mode(setMarginMode="ISOLATED_MARGIN")
+        except Exception as exc:  # pragma: no cover - best effort
+            log.warning("could not auto-set ISOLATED margin (user may need to set it): %s", exc)
 
     def _ensure_one_way(self, symbol: str) -> None:
         """Force one-way position mode (positionIdx 0). Best-effort: ignore the

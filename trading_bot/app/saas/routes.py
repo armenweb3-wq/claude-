@@ -819,29 +819,48 @@ _BT_WINDOWS = [("1d", 84), ("4h", 18)]
 def admin_backtest_start(request: Request, admin: dict = Depends(require_admin)) -> dict:
     """Run the strategy backtest on REAL Bybit history (majors × daily/4h), net of
     fees/funding/slippage, vs buy-and-hold — the edge test. Background; poll GET."""
+    import threading
+    import traceback
     try:
-        import threading
+        import pandas as pd
         from ..api.backtest_routes import _run, _state
+        from ..backtest.data import fetch_bybit
         st = _state(request)
         if st["status"] == "running":
             return {"status": "running", "message": "a backtest is already in progress"}
+        # Synchronous probe so a data-access problem returns a CLEAR reason now,
+        # instead of the worker thread dying and the poll returning a blank 500.
+        probe_start = (pd.Timestamp.utcnow() - pd.DateOffset(days=400)).strftime("%Y-%m-%d")
+        try:
+            df = fetch_bybit("BTCUSDT", "1d", start=probe_start)
+        except Exception as exc:
+            raise HTTPException(502, f"market-data fetch failed from the server: {exc}")
+        if df is None or len(df) < 100:
+            raise HTTPException(502, "the server can't pull Bybit candle history "
+                                     f"(got {0 if df is None else len(df)} bars). "
+                                     "Likely a region/IP block on the public data API.")
         st.update(status="running", results=[], error=None,
                   started=dt.datetime.now(dt.timezone.utc).isoformat(), finished=None)
         threading.Thread(target=_run, args=(request.app.state, _BT_SYMBOLS, _BT_WINDOWS),
                          daemon=True).start()
         return {"status": "running", "message": "backtest started"}
+    except HTTPException:
+        raise
     except Exception as exc:  # surface the real error instead of a blank 500
-        raise HTTPException(500, f"could not start backtest: {exc}")
+        raise HTTPException(500, f"could not start backtest: {exc} | {traceback.format_exc()[-400:]}")
 
 
 @router.get("/api/admin/backtest")
 def admin_backtest_status(request: Request, admin: dict = Depends(require_admin)) -> dict:
-    from ..api.backtest_routes import _state
-    st = _state(request)
-    # Return a snapshot so JSON serialisation can't race the worker thread.
-    return {"status": st.get("status"), "error": st.get("error"),
-            "started": st.get("started"), "finished": st.get("finished"),
-            "results": list(st.get("results") or [])}
+    try:
+        from ..api.backtest_routes import _state
+        st = _state(request)
+        # Snapshot so JSON serialisation can't race the worker thread.
+        return {"status": st.get("status"), "error": st.get("error"),
+                "started": st.get("started"), "finished": st.get("finished"),
+                "results": list(st.get("results") or [])}
+    except Exception as exc:
+        raise HTTPException(500, f"status read failed: {exc}")
 
 
 @router.get("/api/admin/stats")

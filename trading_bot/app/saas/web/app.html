@@ -634,7 +634,8 @@ function btVerdict(r){
 }
 async function pollBt(){
   try{ const s=await api('/admin/backtest');
-    $('btStatus').textContent='Status: '+s.status+(s.status==='running'?' … (keep this open)':'');
+    $('btStatus').textContent='Status: '+s.status+(s.status==='running'?' … (keep this open)':'')
+      +(s.error?(' — '+esc(s.error)):'');
     $('btResults').innerHTML=(s.results||[]).map(btVerdict).join('')||'<div class="disc">no results yet…</div>';
     if(s.status==='running') setTimeout(pollBt, 4000);
   }catch(e){ $('btStatus').textContent=e.message; }

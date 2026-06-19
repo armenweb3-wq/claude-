@@ -11,65 +11,39 @@ import logging
 
 from ..config import settings
 from ..risk.sizing import plan_position
+from ..strategy import trailing
 from ..strategy.market_filter import assess_market
 
 log = logging.getLogger(__name__)
 
 
-_TP_LADDER_PCTS = (6.0, 12.0, 20.0)
-
-
-def _tp_hits_from_fills(closed, symbol, opened_at, tps, tol=0.004) -> int:
-    """Count how many distinct TP *levels* have an actual closing fill at (≈) that
-    price since the position opened. Matching the exit price to a TP level avoids
-    counting stop-loss hits, manual closes, regime-flip closes, or earlier
-    round-trips of the same symbol — the root cause of premature force-closes."""
-    n = 0
-    for tp in tps:
-        for r in closed:
-            if r.get("symbol") != symbol:
-                continue
-            ca = r.get("closed_at") or ""
-            if opened_at and ca < opened_at:
-                continue
-            ep = r.get("exit_price") or 0
-            if ep and tp and abs(ep - tp) / tp <= tol:
-                n += 1
-                break
-    return n
+_TP_LADDER_PCTS = trailing.TP_LADDER_PCTS
+_tp_hits_from_fills = trailing.tp_hits_from_fills  # kept for tests/back-compat
 
 
 def manage_breakeven(exchange, symbol, pos, closed=None, opened_at="",
                      tp_pcts=_TP_LADDER_PCTS) -> None:
-    """Trail the stop up the TP ladder: TP1 -> break-even, TP2 -> TP1. Stop only
-    moves forward, never back.
+    """Trail the stop up the TP ladder (shared logic in strategy.trailing).
 
-    When ``closed`` (the list of real closing fills) is given, the number of TPs
-    hit is derived from fills whose price matches a TP level — and we do NOT
-    market-close on the final TP, because the reduce-only TP ladder on the
-    exchange closes the position itself. When ``closed`` is omitted we fall back
-    to comparing the live price to the levels (and may close on the final TP)."""
+    When ``closed`` (real closing fills) is given, TP hits come from fills whose
+    price matches a level — and we do NOT market-close on the final TP (the
+    reduce-only ladder closes it on the exchange). Without ``closed`` we fall
+    back to the live price (and may close on the final TP)."""
     if pos.entry_price <= 0:
         return
     is_long = (pos.side or "").lower() in ("buy", "long")
-    sign = 1.0 if is_long else -1.0
     entry = pos.entry_price
-    tps = [entry * (1 + sign * p / 100) for p in tp_pcts]
+    tps = trailing.ladder_prices(entry, is_long, tp_pcts)
 
     close_on_final = False
     if closed is not None:
-        hit = _tp_hits_from_fills(closed, symbol, opened_at, tps)
+        hit = trailing.tp_hits_from_fills(closed, symbol, opened_at, tps)
     else:
         try:
             price = exchange.last_price(symbol)
         except Exception:
             return
-        hit = 0
-        for t in tps:
-            if sign * (price - t) >= 0:
-                hit += 1
-            else:
-                break
+        hit = trailing.tp_hits_from_price(price, tps, is_long)
         close_on_final = True
 
     if hit <= 0:
@@ -85,11 +59,8 @@ def manage_breakeven(exchange, symbol, pos, closed=None, opened_at="",
         hit = len(tps) - 1  # fills path: just trail, the exchange closes TP3
         if hit <= 0:
             return
-    buf = 0.0012
-    target = entry * (1 + sign * buf) if hit == 1 else tps[hit - 2]
-    cur = pos.stop_loss or 0.0
-    forward = (target > cur) if is_long else (cur == 0 or target < cur)
-    if not forward:
+    target = trailing.trail_target(entry, is_long, tps, hit)
+    if not trailing.is_forward(target, pos.stop_loss or 0.0, is_long):
         return
     try:
         exchange.set_stop_loss(symbol, target)

@@ -397,40 +397,23 @@ class TradingBot:
         ``closed`` we fall back to the live price (and may close on final TP)."""
         if pos.entry_price <= 0:
             return
+        from ..strategy import trailing
         is_long = (pos.side or "").lower() in ("buy", "long")
-        sign = 1.0 if is_long else -1.0
         cfg = getattr(self.strategy, "cfg", None)
         ladder = getattr(cfg, "tp_ladder", None) or [(6.0, 0.30), (12.0, 0.40), (20.0, 0.30)]
         tp_pcts = [p for p, _ in ladder]
         entry = pos.entry_price
-        tps = [entry * (1 + sign * p / 100) for p in tp_pcts]
+        tps = trailing.ladder_prices(entry, is_long, tp_pcts)
 
         close_on_final = False
         if closed is not None:
-            tol = 0.004
-            hit = 0
-            for tp in tps:
-                for r in closed:
-                    if r.get("symbol") != symbol:
-                        continue
-                    ca = r.get("closed_at") or ""
-                    if opened_at and ca < opened_at:
-                        continue
-                    ep = r.get("exit_price") or 0
-                    if ep and tp and abs(ep - tp) / tp <= tol:
-                        hit += 1
-                        break
+            hit = trailing.tp_hits_from_fills(closed, symbol, opened_at, tps)
         else:
             try:
                 price = self.exchange.last_price(symbol)
             except Exception:
                 return
-            hit = 0
-            for t in tps:
-                if sign * (price - t) >= 0:
-                    hit += 1
-                else:
-                    break
+            hit = trailing.tp_hits_from_price(price, tps, is_long)
             close_on_final = True
         if hit <= 0:
             return
@@ -447,16 +430,9 @@ class TradingBot:
             hit = len(tps) - 1  # fills path: trail only, exchange closes TP3
             if hit <= 0:
                 return
-        buf = 0.0012  # ~0.12% past entry to cover round-trip taker fees
-        if hit == 1:
-            target = round(entry * (1 + sign * buf), 6)
-            label = "break-even"
-        else:
-            target = round(tps[hit - 2], 6)  # TP2 hit -> TP1, etc.
-            label = f"TP{hit - 1}"
-        cur = pos.stop_loss or 0.0
-        forward = (target > cur) if is_long else (cur == 0 or target < cur)
-        if not forward:
+        target = round(trailing.trail_target(entry, is_long, tps, hit), 6)
+        label = "break-even" if hit == 1 else f"TP{hit - 1}"
+        if not trailing.is_forward(target, pos.stop_loss or 0.0, is_long):
             return
         try:
             self.exchange.set_stop_loss(symbol, target)

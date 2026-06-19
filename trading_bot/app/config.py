@@ -112,6 +112,9 @@ class Settings:
     # Channel to post announcements to (e.g. @zenithsignals). The bot must be an
     # admin of the channel.
     channel_chat_id: str = field(default_factory=lambda: _get("TELEGRAM_CHANNEL_ID", ""))
+    # Auto-post a daily educational tip + performance line to the channel.
+    channel_post_hour_utc: int = field(default_factory=lambda: _get_int("CHANNEL_POST_HOUR_UTC", 16))
+    channel_auto_post: bool = field(default_factory=lambda: _get_bool("CHANNEL_AUTO_POST", True))
     # Two-way command control (/status, /start, /stop, /pause, /resume).
     telegram_commands_enabled: bool = field(
         default_factory=lambda: _get_bool("TELEGRAM_COMMANDS_ENABLED", False)

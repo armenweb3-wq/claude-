@@ -44,6 +44,7 @@ class MultiUserRunner:
         self._thread: threading.Thread | None = None
         self.results: dict[int, dict] = {}  # user_id -> last run summary
         self._last_summary_day: str | None = None  # daily-summary dedupe
+        self._last_channel_day: str | None = None   # daily channel-post dedupe
 
     def start(self) -> None:
         if self._thread and self._thread.is_alive():
@@ -62,6 +63,7 @@ class MultiUserRunner:
             try:
                 self.run_cycle()
                 self._maybe_daily_summary()
+                self._maybe_channel_content()
             except Exception:  # pragma: no cover
                 log.exception("runner cycle failed")
             self._stop.wait(max(30, settings.saas_loop_seconds))
@@ -111,6 +113,25 @@ class MultiUserRunner:
             pnl = t.get("pnl") or 0
             emoji = "✅" if pnl > 0 else "🔻"
             alerts.notify(chat, f"{emoji} Closed {t.get('symbol')} — PnL {pnl:+.4f} USDT")
+
+    def _maybe_channel_content(self) -> None:
+        """Once a day, auto-post an educational tip + live performance line to
+        the channel — keeps it active with zero manual work."""
+        if not (settings.channel_auto_post and settings.channel_chat_id):
+            return
+        import datetime as _dt
+        now = _dt.datetime.now(_dt.timezone.utc)
+        if now.hour != settings.channel_post_hour_utc:
+            return
+        today = now.date().isoformat()
+        if self._last_channel_day == today:
+            return
+        self._last_channel_day = today
+        from . import alerts, content
+        s = self.store.platform_stats()
+        perf = (f"\n\n📊 So far: <b>{s['trades']}</b> trades · <b>{s['win_rate']}%</b> win"
+                f" across <b>{s['users']}</b> members." if s.get("trades") else "")
+        alerts.post_channel(content.daily_tip(now) + perf)
 
     def run_cycle(self) -> None:
         for user in self.store.list_users(include_admins=True):

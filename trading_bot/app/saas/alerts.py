@@ -27,7 +27,7 @@ def post_channel(text: str, button: dict | None = None, pin: bool = False) -> di
         return {"ok": False, "error": "TELEGRAM_CHANNEL_ID is not set"}
     payload = {"chat_id": settings.channel_chat_id, "text": text, "parse_mode": "HTML",
                "disable_web_page_preview": True}
-    if button and button.get("url"):
+    if button and str(button.get("url", "")).startswith(("http://", "https://")):
         payload["reply_markup"] = {"inline_keyboard": [[{"text": button.get("text", "Open"),
                                                          "url": button["url"]}]]}
     try:
@@ -54,7 +54,7 @@ def notify(chat_id: str | None, text: str, button: dict | None = None) -> bool:
         return False
     payload = {"chat_id": chat_id, "text": text, "parse_mode": "HTML",
                "disable_web_page_preview": True}
-    if button and button.get("url"):
+    if button and str(button.get("url", "")).startswith(("http://", "https://")):
         payload["reply_markup"] = {"inline_keyboard": [[{"text": button.get("text", "Open"),
                                                          "url": button["url"]}]]}
     try:

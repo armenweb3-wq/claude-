@@ -815,6 +815,24 @@ _BT_SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT"]
 _BT_WINDOWS = [("1d", 84), ("4h", 18)]
 
 
+@router.get("/api/admin/backtest-probe")
+def admin_backtest_probe(request: Request, admin: dict = Depends(require_admin)) -> dict:
+    """Plain-JSON diagnostic you can open directly in the URL bar (no frontend
+    JS involved): does the server actually pull Bybit candle history?"""
+    import traceback
+    try:
+        import pandas as pd
+        from ..backtest.data import fetch_bybit
+        start = (pd.Timestamp.utcnow() - pd.DateOffset(days=120)).strftime("%Y-%m-%d")
+        df = fetch_bybit("BTCUSDT", "1d", start=start)
+        n = 0 if df is None else len(df)
+        return {"ok": n > 50, "bars": n,
+                "first": (str(df.index[0]) if n else None),
+                "last": (str(df.index[-1]) if n else None)}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc), "trace": traceback.format_exc()[-600:]}
+
+
 @router.post("/api/admin/backtest")
 def admin_backtest_start(request: Request, admin: dict = Depends(require_admin)) -> dict:
     """Run the strategy backtest on REAL Bybit history (majors × daily/4h), net of

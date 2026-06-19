@@ -259,9 +259,10 @@ function fillSelect(syms){
   if(syms.length){ sel.value=chartSym&&syms.includes(chartSym)?chartSym:syms[0]; loadChart(sel.value); }
 }
 
+function authHeaders(){ const k=KEY(); return k?{'X-API-Key':k}:{}; }
 async function load(){
   try{
-    const s=await (await fetch('/status',{cache:'no-store'})).json();
+    const s=await (await fetch('/status',{cache:'no-store',headers:authHeaders()})).json();
     const live=s.is_live;
     const mode=document.getElementById('mode');
     mode.textContent=live?'LIVE':'DRY-RUN'; mode.className='badge '+(live?'live':'dry');
@@ -389,7 +390,7 @@ async function openHistory(){
   document.getElementById('histStats').innerHTML='';
   document.getElementById('histList').innerHTML='<div class="note">Loading…</div>';
   try{
-    const s=await (await fetch('/history?limit=100',{cache:'no-store'})).json();
+    const s=await (await fetch('/history?limit=100',{cache:'no-store',headers:authHeaders()})).json();
     const st=s.stats||{};
     document.getElementById('histStats').innerHTML=
       `<div class="stats" style="margin:6px 0 2px">

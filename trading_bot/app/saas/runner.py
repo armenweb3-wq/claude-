@@ -47,6 +47,7 @@ class MultiUserRunner:
         # re-send (or skip) the daily messages.
         self._last_summary_day = store.get_meta("last_summary_day")
         self._last_channel_day = store.get_meta("last_channel_day")
+        self._bcast_lock = threading.Lock()  # serialises the broadcast thread
 
     def start(self) -> None:
         if self._thread and self._thread.is_alive():
@@ -72,11 +73,18 @@ class MultiUserRunner:
             self._stop.wait(max(30, settings.saas_loop_seconds))
 
     def _run_broadcasts(self) -> None:
+        # Non-blocking lock: if the previous cycle's broadcast is still running,
+        # skip this one. Prevents overlapping threads from double-sending the
+        # daily summary/channel post and stops thread pile-up if Telegram is slow.
+        if not self._bcast_lock.acquire(blocking=False):
+            return
         try:
             self._maybe_daily_summary()
             self._maybe_channel_content()
         except Exception:  # pragma: no cover
             log.exception("runner broadcasts failed")
+        finally:
+            self._bcast_lock.release()
 
     def _maybe_daily_summary(self) -> None:
         """Once a day at SUMMARY_HOUR_UTC, DM each connected user their day."""

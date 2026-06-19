@@ -24,7 +24,7 @@ def health() -> dict:
     return {"status": "ok"}
 
 
-@router.get("/status")
+@router.get("/status", dependencies=[Depends(require_api_key)])
 def status(request: Request) -> dict:
     bot = _bot(request)
     s = bot.state
@@ -52,7 +52,7 @@ def status(request: Request) -> dict:
     }
 
 
-@router.get("/klines")
+@router.get("/klines", dependencies=[Depends(require_api_key)])
 def klines(request: Request, symbol: str, limit: int = 200) -> dict:
     bot = _bot(request)
     df = bot.exchange.get_klines(symbol, settings.timeframe, limit=min(limit, 1000))
@@ -67,7 +67,7 @@ def klines(request: Request, symbol: str, limit: int = 200) -> dict:
     return {"symbol": symbol, "timeframe": settings.timeframe, "candles": candles}
 
 
-@router.get("/history")
+@router.get("/history", dependencies=[Depends(require_api_key)])
 def history(request: Request, limit: int = 100) -> dict:
     """Recent closed trades plus win/loss aggregates for the dashboard."""
     bot = _bot(request)
@@ -93,7 +93,7 @@ def history(request: Request, limit: int = 100) -> dict:
     }
 
 
-@router.get("/errors")
+@router.get("/errors", dependencies=[Depends(require_api_key)])
 def errors(request: Request, limit: int = 50) -> dict:
     return {"errors": _bot(request).storage.recent_errors(limit=limit)}
 

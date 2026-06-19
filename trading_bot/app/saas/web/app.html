@@ -684,9 +684,10 @@ async function fillMonthly(){
       return '<div class="trow">'
         +'<div style="cursor:pointer" onclick="toggleMonth(\''+m.month+'\')">'
         +'<div class="top"><span class="sym">'+name+'</span>'
-        +'<span class="'+c+'" style="font-weight:700">'+(m.roi_pct>=0?'+':'')+m.roi_pct+'% · '+signMoney(m.pnl)+'</span></div>'
+        +'<span class="'+c+'" style="font-weight:700">'+signMoney(m.pnl)+'</span></div>'
         +'<div class="g2"><span>'+m.trades+' trades</span><span class="pos">'+m.wins+'W</span>'
-        +'<span class="neg">'+m.losses+'L</span><span>win '+m.win_rate+'%</span></div></div>'
+        +'<span class="neg">'+m.losses+'L</span><span>win '+m.win_rate+'%</span>'
+        +'<span>avg '+(m.roi_pct>=0?'+':'')+m.roi_pct+'%/trade</span></div></div>'
         +'<div class="mdetail hide" id="md-'+m.month+'"></div></div>';
     }).join('');
   }catch(e){ $('monthlyList').innerHTML='<div class="trow"><div class="disc" style="margin:0">Could not load.</div></div>'; }

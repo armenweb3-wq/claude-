@@ -135,14 +135,18 @@ class Store:
 
     def _migrate(self) -> None:
         """Add columns introduced after a DB was first created (idempotent)."""
+        # Match the float type used in the fresh-deploy schema so a MIGRATED
+        # Postgres DB gets full double precision (not single-precision REAL,
+        # which would lose precision on large crypto prices).
+        _flt = "DOUBLE PRECISION" if self._pg else "REAL"
         for stmt in (
             "ALTER TABLE users ADD COLUMN username TEXT",
             "ALTER TABLE users ADD COLUMN avatar TEXT",
             "ALTER TABLE users ADD COLUMN referred_by TEXT",
             "ALTER TABLE users ADD COLUMN telegram_chat_id TEXT",
-            "ALTER TABLE closed_trades ADD COLUMN entry_price REAL",
-            "ALTER TABLE closed_trades ADD COLUMN exit_price REAL",
-            "ALTER TABLE closed_trades ADD COLUMN qty REAL",
+            f"ALTER TABLE closed_trades ADD COLUMN entry_price {_flt}",
+            f"ALTER TABLE closed_trades ADD COLUMN exit_price {_flt}",
+            f"ALTER TABLE closed_trades ADD COLUMN qty {_flt}",
         ):
             try:
                 if self._pg:
@@ -278,7 +282,9 @@ class Store:
             out.append({
                 "month": mo, "trades": b["trades"], "wins": b["wins"], "losses": b["losses"],
                 "win_rate": round(b["wins"] / decided * 100, 1) if decided else 0.0,
-                "pnl": round(b["pnl"], 4), "roi_pct": round(b["roi"], 2),
+                "pnl": round(b["pnl"], 4),
+                # Average ROI per trade (NOT a sum of percentages, which inflates).
+                "roi_pct": round(b["roi"] / b["trades"], 2) if b["trades"] else 0.0,
             })
         return out
 
@@ -325,7 +331,9 @@ class Store:
             monthly.append({"month": mo, "trades": b["trades"], "wins": b["wins"],
                             "losses": b["losses"],
                             "win_rate": round(b["wins"] / d * 100, 1) if d else 0.0,
-                            "pnl": round(b["pnl"], 2), "roi_pct": round(b["roi"], 1)})
+                            "pnl": round(b["pnl"], 2),
+                            # average ROI per trade, not a sum of percentages
+                            "roi_pct": round(b["roi"] / b["trades"], 1) if b["trades"] else 0.0})
         times = [t.get("closed_at") for t in trades if t.get("closed_at")]
         return {
             "users": len(uids),

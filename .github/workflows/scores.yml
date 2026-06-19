@@ -29,13 +29,16 @@ jobs:
           FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
         run: node scripts/fetch-scores.mjs
 
+      - name: AI autopilot (settle + auto-pick next bet)
+        run: node scripts/ai-autopilot.mjs
+
       - name: Commit if changed
         run: |
           git config user.name "scores-bot"
           git config user.email "actions@github.com"
-          if ! git diff --quiet -- live.json; then
-            git add live.json
-            git commit -m "chore: update live scores [skip ci]"
+          if ! git diff --quiet -- live.json ai-track.json; then
+            git add live.json ai-track.json
+            git commit -m "chore: update scores + AI autopilot [skip ci]"
             git push
           else
             echo "No changes to commit."

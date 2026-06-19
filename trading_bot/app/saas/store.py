@@ -240,6 +240,16 @@ class Store:
     def closed_by_month(self, uid: int, month: str) -> list[dict]:
         return [g for g in self.logical_trades(uid) if (g.get("closed_at") or "")[:7] == month]
 
+    def top_trade(self) -> dict | None:
+        """Best REAL closed trade across all users (by ROI%), for social proof.
+        Returns None if there are no closed trades yet — never fabricate."""
+        best = None
+        for r in self._q("SELECT id FROM users"):
+            for t in self.logical_trades(r["id"]):
+                if t.get("pnl", 0) > 0 and (best is None or t.get("pnl_pct", 0) > best.get("pnl_pct", 0)):
+                    best = t
+        return best
+
     def platform_stats(self) -> dict:
         """Aggregate performance across all users — for proof/marketing. Groups
         each user's partial fills into positions, then totals them."""

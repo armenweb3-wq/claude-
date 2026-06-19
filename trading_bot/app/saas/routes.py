@@ -686,11 +686,33 @@ def admin_test_run(admin: dict = Depends(require_admin)) -> dict:
     broker = ({"text": f"Upgrade with {settings.broker_name} →", "url": settings.broker_link}
               if settings.broker_link else None)
     community = alerts.community_button()
-    sample = {"name": (admin.get("username") or "trader"), "sym": "ORDIUSDT", "isLong": False,
-              "lev": 3, "pnl": 4.04, "pct": 32.6, "entry": "3.384", "last": "2.978",
-              "date": nows, "live": True}
-    img = card.render_card(sample)
-    sent = {"channel": 0, "dm": 0}
+
+    # Build the social-proof card from a REAL member trade — never fabricate.
+    top = store().top_trade()
+    if top:
+        side = (top.get("side") or "").lower()
+        is_long = side in ("buy", "long")
+        card_data = {
+            "name": "a member", "sym": top.get("symbol", ""), "isLong": is_long,
+            "pnl": round(float(top.get("pnl") or 0), 2),
+            "pct": round(float(top.get("pnl_pct") or 0), 2),
+            "entry": top.get("entry_price") or "", "last": top.get("exit_price") or "",
+            "date": (top.get("closed_at") or nows)[:16].replace("T", " "), "live": True,
+        }
+        card_caption = (f"🚀 A member just closed {'LONG' if is_long else 'SHORT'} "
+                        f"${card_data['sym'].replace('USDT','')} for +{card_data['pct']:.1f}% "
+                        f"— fully automated.")
+        is_sample = False
+    else:
+        # No closed trades yet — render a clearly-labelled preview, not fake proof.
+        card_data = {"name": "sample", "sym": "BTCUSDT", "isLong": True, "lev": 3,
+                     "pnl": 0.0, "pct": 0.0, "entry": "—", "last": "—",
+                     "date": nows, "live": False}
+        card_caption = ("🔍 <b>Sample preview</b> — real member result cards will appear "
+                        "here automatically once trades close.")
+        is_sample = True
+    img = card.render_card(card_data)
+    sent = {"channel": 0, "dm": 0, "card_sample": is_sample}
 
     # ── CHANNEL sequence ──
     ch = []
@@ -704,10 +726,8 @@ def admin_test_run(admin: dict = Depends(require_admin)) -> dict:
     for text, btn, _ in ch:
         if alerts.post_channel(text, btn).get("ok"):
             sent["channel"] += 1
-    # bait card to channel
-    if alerts.send_photo(settings.channel_chat_id,
-                         img, "🚀 A member just banked TP1+TP2 on $ORDI — +32% locked, fully automated.",
-                         community):
+    # social-proof card to channel (real member data, or a labelled sample)
+    if alerts.send_photo(settings.channel_chat_id, img, card_caption, community):
         sent["channel"] += 1
 
     # ── INDIVIDUAL (DM) sequence to the admin ──
@@ -723,7 +743,9 @@ def admin_test_run(admin: dict = Depends(require_admin)) -> dict:
         for m, btn in dms:
             if alerts.notify(chat, m, btn):
                 sent["dm"] += 1
-        if alerts.send_photo(chat, img, "Your shareable result card 👆"):
+        dm_cap = ("Sample card preview 👆 (real results appear here automatically)"
+                  if is_sample else "Your shareable result card 👆")
+        if alerts.send_photo(chat, img, dm_cap):
             sent["dm"] += 1
 
     return {"ok": True, **sent}

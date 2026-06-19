@@ -194,6 +194,8 @@ def register(body: Creds, response: Response, request: Request) -> dict:
                                  "Ask for a spot to open up.")
     username = (body.username or "").strip() or email.split("@")[0]
     ref = (body.ref or "").strip().lower() or None
+    if ref and ref == username.strip().lower():
+        ref = None  # no self-referral
     salt, pw_hash = security.hash_password(body.password)
     user = st.create_user(email, salt, pw_hash, is_admin, username=username, referred_by=ref)
     token = security.new_token()
@@ -237,6 +239,13 @@ def _rate_limit(name: str, request: Request, limit: int, window: int) -> None:
     ip = request.client.host if request.client else "?"
     key = (name, ip)
     now = time.time()
+    # Bound memory: drop entries whose window has fully elapsed (and hard-cap).
+    if len(_rl_buckets) > 5000:
+        for k, (s, _c) in list(_rl_buckets.items()):
+            if now - s > window:
+                _rl_buckets.pop(k, None)
+        if len(_rl_buckets) > 10000:
+            _rl_buckets.clear()
     start, count = _rl_buckets.get(key, (now, 0))
     if now - start > window:
         start, count = now, 0
@@ -515,8 +524,9 @@ def update_profile(body: ProfileIn, request: Request) -> dict:
         av = body.avatar.strip()
         if av and len(av) > 400_000:
             raise HTTPException(400, "image too large — please pick a smaller one")
-        if av and not av.startswith("data:image/"):
-            raise HTTPException(400, "avatar must be an image")
+        # Strict: only raster image data URLs (NOT svg — it can carry script/CSS).
+        if av and not re.fullmatch(r"data:image/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+", av):
+            raise HTTPException(400, "avatar must be a PNG/JPG/WEBP/GIF image")
         st.set_avatar(user["id"], av or None)
     if body.telegram is not None:
         st.set_telegram(user["id"], body.telegram.strip() or None)
@@ -720,9 +730,18 @@ def remove_keys(request: Request) -> dict:
 # ── settings ────────────────────────────────────────────────
 @router.post("/api/settings")
 def save_settings(body: SettingsIn, request: Request) -> dict:
+    import re
     user = current_user(request)
     risk = max(0.5, min(10.0, body.risk_pct))
-    store().save_settings(user["id"], risk, body.symbols, body.enabled)
+    # Sanitise symbols to an exchange-symbol charset (uppercase A-Z0-9, comma-
+    # separated). Prevents anything funky being stored and later rendered.
+    syms = [s.strip().upper() for s in (body.symbols or "").split(",") if s.strip()]
+    bad = [s for s in syms if not re.fullmatch(r"[A-Z0-9]{2,20}", s)]
+    if bad:
+        raise HTTPException(400, f"invalid symbol(s): {', '.join(bad)[:60]}")
+    if len(syms) > 50:
+        raise HTTPException(400, "too many symbols (max 50)")
+    store().save_settings(user["id"], risk, ",".join(syms), body.enabled)
     return {"ok": True}
 
 

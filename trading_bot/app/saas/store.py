@@ -295,23 +295,38 @@ class Store:
     def closed_by_month(self, uid: int, month: str) -> list[dict]:
         return [g for g in self.logical_trades(uid) if (g.get("closed_at") or "")[:7] == month]
 
+    # Marketing figures are derived from users' own exchange data, which a
+    # malicious user could try to game (a tiny self-trade at extreme leverage =
+    # huge ROI%). Only count trades with a meaningful notional and a sane ROI%
+    # so the public stats / social-proof card can't be poisoned.
+    _MKT_MIN_NOTIONAL = 50.0   # USDT
+    _MKT_MAX_PCT = 150.0       # ignore implausible ROI% as marketing proof
+
+    @classmethod
+    def _marketing_eligible(cls, t: dict) -> bool:
+        notional = float(t.get("entry_price") or 0) * float(t.get("qty") or 0)
+        pct = abs(float(t.get("pnl_pct") or 0))
+        return notional >= cls._MKT_MIN_NOTIONAL and pct <= cls._MKT_MAX_PCT
+
     def top_trade(self) -> dict | None:
-        """Best REAL closed trade across all users (by ROI%), for social proof.
-        Returns None if there are no closed trades yet — never fabricate."""
+        """Best REAL, marketing-eligible closed trade across users (by ROI%).
+        Returns None if none qualify — never fabricate, never show a gamed trade."""
         best = None
         for r in self._q("SELECT id FROM users"):
             for t in self.logical_trades(r["id"]):
-                if t.get("pnl", 0) > 0 and (best is None or t.get("pnl_pct", 0) > best.get("pnl_pct", 0)):
+                if (t.get("pnl", 0) > 0 and self._marketing_eligible(t)
+                        and (best is None or t.get("pnl_pct", 0) > best.get("pnl_pct", 0))):
                     best = t
         return best
 
     def platform_stats(self) -> dict:
         """Aggregate performance across all users — for proof/marketing. Groups
-        each user's partial fills into positions, then totals them."""
+        each user's partial fills into positions, then totals them. Only
+        marketing-eligible trades are counted so the figures can't be gamed."""
         uids = [r["id"] for r in self._q("SELECT id FROM users WHERE is_admin=0")]
         trades = []
         for uid in uids:
-            trades.extend(self.logical_trades(uid))
+            trades.extend(t for t in self.logical_trades(uid) if self._marketing_eligible(t))
         wins = sum(1 for t in trades if (t.get("pnl") or 0) > 0)
         losses = sum(1 for t in trades if (t.get("pnl") or 0) < 0)
         decided = wins + losses

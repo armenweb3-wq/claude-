@@ -112,8 +112,8 @@ def test_platform_stats_aggregates_across_users(tmp_path):
     cl.post("/app/api/register", json={"email": "u2@t.com", "password": "pw123456", "username": "u2"})
     u1 = st.get_user_by_email("u1@t.com")["id"]
     u2 = st.get_user_by_email("u2@t.com")["id"]
-    st.add_closed_trades(u1, [{"id": "1", "symbol": "SOLUSDT", "pnl": 5.0, "pnl_pct": 6, "closed_at": "2026-06-03T10:00:00+00:00"}])
-    st.add_closed_trades(u2, [{"id": "2", "symbol": "OPUSDT", "pnl": -2.0, "pnl_pct": -3, "closed_at": "2026-06-04T10:00:00+00:00"}])
+    st.add_closed_trades(u1, [{"id": "1", "symbol": "SOLUSDT", "pnl": 5.0, "pnl_pct": 6, "entry_price": 100.0, "qty": 2, "closed_at": "2026-06-03T10:00:00+00:00"}])
+    st.add_closed_trades(u2, [{"id": "2", "symbol": "OPUSDT", "pnl": -2.0, "pnl_pct": -3, "entry_price": 2.0, "qty": 50, "closed_at": "2026-06-04T10:00:00+00:00"}])
     s = st.platform_stats()
     assert s["users"] == 2 and s["trades"] == 2
     assert s["wins"] == 1 and s["losses"] == 1 and s["win_rate"] == 50.0

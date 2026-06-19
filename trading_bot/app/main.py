@@ -55,13 +55,24 @@ async def lifespan(app: FastAPI):
         log.info("AUTO_START enabled — starting trading loop")
         await app.state.bot.start()
 
+    # Production config sanity checks (loud, at boot — never fail silently).
+    if settings.database_url and not settings.saas_secret_key:
+        log.error("SAAS_SECRET_KEY is NOT set but DATABASE_URL is — exchange keys "
+                  "cannot be decrypted; per-user trading will fail. Set SAAS_SECRET_KEY.")
+    if settings.database_url and not settings.control_api_key:
+        log.warning("CONTROL_API_KEY is not set in production — the single-user "
+                    "status/history endpoints are unprotected. Set CONTROL_API_KEY.")
+
     app.state.saas_runner = None
     if settings.saas_exec_enabled:
         from .saas.routes import store
         from .saas.runner import MultiUserRunner
 
-        app.state.saas_runner = MultiUserRunner(store())
-        app.state.saas_runner.start()
+        if settings.database_url and not settings.saas_secret_key:
+            log.error("Refusing to start the multi-user runner without SAAS_SECRET_KEY.")
+        else:
+            app.state.saas_runner = MultiUserRunner(store())
+            app.state.saas_runner.start()
 
     yield
 

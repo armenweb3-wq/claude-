@@ -53,3 +53,15 @@ def test_ladder_fills_merge_with_weighted_pct():
     # weighted avg = 6*.3 + 12*.4 + 20*.3 = 12.6 (NOT 6+12+20 = 38)
     assert abs(g[0]["pnl_pct"] - 12.6) < 1e-6
     assert g[0]["entry_price"] == 100.0
+
+
+def test_marketing_filter_excludes_gamed_trades():
+    from app.saas.store import Store
+    # tiny notional + extreme % = a gamed trade → not marketing-eligible
+    assert not Store._marketing_eligible(
+        {"entry_price": 0.01, "qty": 1, "pnl_pct": 900})   # $0.01 notional
+    assert not Store._marketing_eligible(
+        {"entry_price": 100, "qty": 5, "pnl_pct": 900})     # implausible %
+    # a real, sizeable, sane trade qualifies
+    assert Store._marketing_eligible(
+        {"entry_price": 100, "qty": 5, "pnl_pct": 18})      # $500 notional, +18%

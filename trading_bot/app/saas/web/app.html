@@ -700,7 +700,7 @@ async function toggleMonth(month){
     d.innerHTML = ts.length ? ts.map(t=>{
       const c=(t.pnl||0)>0?'pos':((t.pnl||0)<0?'neg':'');
       return '<div class="g2" style="margin-top:7px;border-top:1px solid var(--line2);padding-top:7px">'
-        +'<span>'+t.symbol+'</span><span class="'+c+'">'+signMoney(t.pnl)+' ('+(t.pnl_pct>=0?'+':'')+t.pnl_pct+'%)</span>'
+        +'<span>'+esc(t.symbol)+'</span><span class="'+c+'">'+signMoney(t.pnl)+' ('+(t.pnl_pct>=0?'+':'')+t.pnl_pct+'%)</span>'
         +'<span class="disc" style="margin:0">'+fmtDate(t.closed_at)+'</span></div>';
     }).join('') : '<div class="disc" style="margin-top:6px">No trades.</div>';
   }catch(e){ d.innerHTML='<div class="disc" style="margin-top:6px">Could not load.</div>'; }

@@ -139,16 +139,11 @@ _DASHBOARD = pathlib.Path(__file__).parent / "web" / "index.html"
 
 
 @app.get("/")
+@app.get("/dashboard")
 def root() -> RedirectResponse:
-    """Send visitors to the product (SaaS). The legacy single-user dashboard is
-    no longer surfaced publicly."""
+    """Everything lives in the product (SaaS) at /app. The legacy single-user
+    dashboard is fully retired from the UI."""
     return RedirectResponse(url="/app", status_code=307)
-
-
-@app.get("/dashboard", response_class=HTMLResponse)
-def dashboard() -> str:
-    """Legacy single-user owner dashboard (kept for the operator; not linked)."""
-    return _DASHBOARD.read_text()
 
 
 @app.get("/info")

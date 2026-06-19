@@ -469,6 +469,13 @@
       <div class="disc" style="margin:0">📣 Channel &amp; member messaging are fully automated — daily tips, live
       performance, result cards on notable wins, and every trade alert + daily summary go out on their own. Nothing to send manually.</div>
     </div>
+    <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
+      <h2 style="margin:0 0 6px">Strategy backtest</h2>
+      <div class="disc" style="margin:0 0 8px">Runs on real Bybit history (majors × daily/4h/1h), net of fees/funding/slippage, vs buy &amp; hold. Takes a few minutes.</div>
+      <button class="ghost" onclick="runBt()">▶ Run strategy backtest</button>
+      <div class="disc" id="btStatus" style="margin-top:6px"></div>
+      <div id="btResults" style="margin-top:8px"></div>
+    </div>
     <div id="adminUsers" style="margin-top:14px"></div>
   </div>
 </div>
@@ -609,6 +616,28 @@ async function loadAdminStats(){
           +'<span class="'+(m.pnl>=0?'pos':'neg')+'">'+(m.roi_pct>=0?'+':'')+m.roi_pct+'% · '+signMoney(m.pnl)+'</span>'
           +'<span class="disc" style="margin:0">'+m.trades+'t · '+m.win_rate+'%</span></div>').join('')):'');
   }catch(e){ $('adminPerf').innerHTML=''; }
+}
+async function runBt(){
+  $('btStatus').textContent='starting…';
+  try{ await api('/admin/backtest','POST',{}); pollBt(); }
+  catch(e){ $('btStatus').textContent=e.message; }
+}
+function btVerdict(r){
+  if(r.error||r.note) return '<div class="disc">• '+esc(r.symbol||'')+' '+esc(r.timeframe||'')+': '+esc(r.error||r.note)+'</div>';
+  const beat=r.beats_buy_hold, vs=(r.vs_buy_hold_pct>=0?'+':'')+r.vs_buy_hold_pct+'%';
+  const rc=(r.total_return_pct||0)>=0?'pos':'neg';
+  return '<div class="trow" style="margin:6px 0"><div class="top"><span class="sym">'+esc(r.symbol)+' '+esc(r.timeframe)+'</span>'
+    +'<span class="'+(beat?'pos':'neg')+'">'+(beat?'✓ beats':'✗ loses to')+' hold</span></div>'
+    +'<div class="g2"><span>return <b class="'+rc+'">'+r.total_return_pct+'%</b></span>'
+    +'<span>hold '+r.buy_hold_pct+'% ('+vs+')</span><span>win '+r.win_rate_pct+'%</span>'
+    +'<span>maxDD '+r.max_drawdown_pct+'%</span><span>'+r.trades+' trades</span></div></div>';
+}
+async function pollBt(){
+  try{ const s=await api('/admin/backtest');
+    $('btStatus').textContent='Status: '+s.status+(s.status==='running'?' … (keep this open)':'');
+    $('btResults').innerHTML=(s.results||[]).map(btVerdict).join('')||'<div class="disc">no results yet…</div>';
+    if(s.status==='running') setTimeout(pollBt, 4000);
+  }catch(e){ $('btStatus').textContent=e.message; }
 }
 async function adminAct(id){ await api('/admin/activate','POST',{user_id:id,days:30}); loadAdmin(); }
 async function adminDe(id){ await api('/admin/deactivate','POST',{user_id:id}); loadAdmin(); }

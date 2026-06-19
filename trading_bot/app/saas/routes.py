@@ -809,6 +809,29 @@ def admin_config(admin: dict = Depends(require_admin)) -> dict:
     }
 
 
+@router.post("/api/admin/backtest")
+def admin_backtest_start(request: Request, admin: dict = Depends(require_admin)) -> dict:
+    """Run the strategy backtest on REAL Bybit history (majors × 1d/4h/1h), net of
+    fees/funding/slippage, vs buy-and-hold — the edge test. Runs in the
+    background; poll GET /api/admin/backtest for streaming results."""
+    import threading
+    from ..api.backtest_routes import _run, _state, DEFAULT_SYMBOLS, TF_WINDOWS
+    st = _state(request)
+    if st["status"] == "running":
+        return {"status": "running", "message": "a backtest is already in progress"}
+    st.update(status="running", results=[], error=None,
+              started=dt.datetime.now(dt.timezone.utc).isoformat(), finished=None)
+    threading.Thread(target=_run, args=(request.app.state, DEFAULT_SYMBOLS, TF_WINDOWS),
+                     daemon=True).start()
+    return {"status": "running", "message": "backtest started"}
+
+
+@router.get("/api/admin/backtest")
+def admin_backtest_status(request: Request, admin: dict = Depends(require_admin)) -> dict:
+    from ..api.backtest_routes import _state
+    return _state(request)
+
+
 @router.get("/api/admin/stats")
 def admin_stats(admin: dict = Depends(require_admin)) -> dict:
     """Platform-wide performance + user counts (proof / marketing)."""

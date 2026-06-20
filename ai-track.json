@@ -4,7 +4,7 @@
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
   "status": "active",
-  "updatedAt": "2026-06-20T02:40:27.728Z",
+  "updatedAt": "2026-06-20T19:05:25.232Z",
   "bets": [
     {
       "leg": 1,
@@ -136,6 +136,24 @@
       ],
       "stake": 5451.95,
       "odds": 1.4,
+      "result": "won",
+      "returnAmount": 7632.73,
+      "auto": true,
+      "curated": true
+    },
+    {
+      "leg": 9,
+      "date": "2026-06-20",
+      "match": "Germany vs Ivory Coast",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 7632.73,
+      "odds": 1.3,
       "result": "pending",
       "returnAmount": 0,
       "auto": true,

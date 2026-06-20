@@ -1,3 +1,4 @@
+import { currency } from "@/data/barber";
 import type { ClientStat, Segment } from "@/data/barber-analytics";
 
 const SEGMENT_META: Record<Segment, { label: string; dot: string; text: string }> = {
@@ -103,7 +104,8 @@ export function BarList({
             <div className="flex items-baseline justify-between text-sm">
               <span className="text-bone/80">{r.name}</span>
               <span className="font-display text-base text-bone">
-                ${r.revenue.toLocaleString()}
+                {currency}
+                {r.revenue.toLocaleString()}
                 <span className="ml-2 text-xs text-bone/40">{r.count}×</span>
               </span>
             </div>
@@ -169,7 +171,8 @@ export function ClientTable({
               <div className="min-w-0">
                 <p className="truncate font-medium text-bone">{c.name}</p>
                 <p className="truncate text-xs text-bone/45">
-                  {c.visits} visits · {c.topService} · ${c.lifetimeValue.toLocaleString()} lifetime
+                  {c.visits} visits · {currency}
+                  {c.lifetimeValue.toLocaleString()} lifetime
                 </p>
               </div>
             </div>
@@ -199,7 +202,8 @@ export function ClientTable({
                 {metric === "lostValue" && (
                   <>
                     <p className={`font-display text-xl font-bold ${accentMap[accent].split(" ")[0]}`}>
-                      ${Math.round(c.monthlyValue)}
+                      {currency}
+                      {Math.round(c.monthlyValue)}
                     </p>
                     <p className="text-[10px] uppercase tracking-widest text-bone/40">
                       /mo lost

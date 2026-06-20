@@ -1,4 +1,4 @@
-import { services } from "@/data/barber";
+import { services, currency } from "@/data/barber";
 import { SectionHead } from "./Section";
 import Reveal from "./Reveal";
 
@@ -7,11 +7,11 @@ export default function Services() {
     <section id="services" className="mx-auto max-w-editorial px-6 py-24 lg:px-10 lg:py-32">
       <SectionHead
         eyebrow="The Menu"
-        title="Services & Pricing"
-        intro="Straightforward pricing, no surprises. Every service includes a consultation and a finish that holds."
+        title="One Service, Done Right"
+        intro="No upsells, no surprises. One clean cut with the beard included — €15, 40 minutes, every time."
       />
 
-      <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mx-auto mt-14 grid max-w-3xl gap-4 sm:grid-cols-2">
         {services.map((s, i) => (
           <Reveal
             key={s.id}
@@ -36,7 +36,7 @@ export default function Services() {
                 {s.durationMin} min
               </span>
               <span className="font-display text-3xl font-bold text-brass">
-                ${s.price}
+                {s.priceLabel ?? `${currency}${s.price}`}
               </span>
             </div>
             <a

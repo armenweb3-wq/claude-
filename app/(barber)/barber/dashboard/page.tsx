@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { shop } from "@/data/barber";
+import { shop, currency } from "@/data/barber";
 import { computeDashboard } from "@/data/barber-analytics";
 import TrendChart from "@/components/barber/dashboard/TrendChart";
 import {
@@ -50,17 +50,17 @@ export default function DashboardPage() {
       <section className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Kpi
           label="This week"
-          value={`$${k.thisWeek.toLocaleString()}`}
+          value={`${currency}${k.thisWeek.toLocaleString()}`}
           delta={k.weekDelta}
           sub={`${k.thisWeekCuts} cuts · vs last wk`}
         />
         <Kpi
           label="This month"
-          value={`$${k.thisMonth.toLocaleString()}`}
+          value={`${currency}${k.thisMonth.toLocaleString()}`}
           delta={k.monthDelta}
           sub={`${k.thisMonthCuts} cuts · vs last mo`}
         />
-        <Kpi label="Avg ticket" value={`$${k.avgTicket}`} sub="incl. tips" />
+        <Kpi label="Avg ticket" value={`${currency}${k.avgTicket}`} sub="incl. tips" />
         <Kpi
           label="Active clients"
           value={`${k.activeClients}`}
@@ -69,7 +69,7 @@ export default function DashboardPage() {
         <Kpi label="New this month" value={`${k.newThisMonth}`} sub="first-time clients" />
         <Kpi
           label="Revenue at risk"
-          value={`$${k.revenueAtRisk.toLocaleString()}`}
+          value={`${currency}${k.revenueAtRisk.toLocaleString()}`}
           sub="/mo from churn"
           tone="warn"
         />
@@ -83,10 +83,9 @@ export default function DashboardPage() {
         <SegmentBar counts={d.segmentCounts} />
       </section>
 
-      {/* Service & barber breakdown */}
-      <section className="mt-6 grid gap-6 lg:grid-cols-2">
-        <BarList title="Revenue by Service" rows={d.serviceMix} />
-        <BarList title="Revenue by Barber" rows={d.barberPerf} />
+      {/* Busiest days */}
+      <section className="mt-6">
+        <BarList title="Busiest Days (last 12 weeks)" rows={d.weekday} />
       </section>
 
       {/* Client intelligence */}

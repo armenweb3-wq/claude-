@@ -5,7 +5,7 @@ import { shop } from "@/data/barber";
 
 const links = [
   { href: "#services", label: "Services" },
-  { href: "#team", label: "Barbers" },
+  { href: "#team", label: "Barber" },
   { href: "#gallery", label: "Gallery" },
   { href: "#visit", label: "Visit" },
 ];

@@ -1,21 +1,20 @@
 // Hustle Blends — business analytics engine.
 //
-// There is no live booking database yet, so this module synthesizes a realistic
-// appointment history (deterministic, anchored to "now") and derives every
-// business metric from it with PURE functions. When real bookings exist, drop
-// the generated `appointments` array for your real one and the same
-// `computeDashboard()` pipeline produces the numbers — nothing else changes.
+// No live booking database yet, so this synthesizes a realistic appointment
+// history (deterministic, anchored to "now") and derives every business metric
+// with PURE functions. The shop runs one €15 service with one barber (Marios),
+// so value differences come from how often clients visit and tip — which is
+// exactly what drives the retention/RFM segmentation below. Swap the generated
+// `appointments` for a real feed and `computeDashboard()` is unchanged.
 
-import { services, barbers, type Service } from "./barber";
+import { mainService, barber } from "./barber";
 
 export type Appointment = {
   id: string;
   clientId: string;
   date: Date;
-  serviceId: string;
   price: number;
   tip: number;
-  barberId: string;
 };
 
 export type Client = { id: string; name: string };
@@ -32,8 +31,7 @@ function mulberry32(seed: number) {
 }
 
 const DAY = 86_400_000;
-const realBarbers = barbers.filter((b) => b.id !== "any");
-const byId = Object.fromEntries(services.map((s) => [s.id, s])) as Record<string, Service>;
+const PRICE = mainService.price;
 
 type Archetype = {
   key: string;
@@ -44,114 +42,30 @@ type Archetype = {
   lastVisitMin: number; // days ago (range)
   lastVisitMax: number;
   tipRate: number;
-  serviceWeights: Partial<Record<string, number>>;
-  escalate?: boolean; // spend rises over time (a climbing client)
 };
 
-// Each archetype is just a generation recipe — segmentation later is computed
-// from the actual appointment pattern, never from these labels.
+// Each archetype is a generation recipe — segmentation is computed from the
+// actual visit pattern afterwards, never from these labels.
 const ARCHETYPES: Archetype[] = [
-  {
-    key: "vip",
-    count: 5,
-    intervalMean: 16,
-    intervalJitter: 4,
-    tenureDays: 430,
-    lastVisitMin: 2,
-    lastVisitMax: 12,
-    tipRate: 0.18,
-    serviceWeights: { "cut-beard": 3, "signature-cut": 2, "skin-fade": 2, "hot-towel-shave": 1 },
-  },
-  {
-    key: "regular",
-    count: 12,
-    intervalMean: 28,
-    intervalJitter: 6,
-    tenureDays: 250,
-    lastVisitMin: 5,
-    lastVisitMax: 26,
-    tipRate: 0.12,
-    serviceWeights: { "skin-fade": 3, "signature-cut": 3, "beard-trim": 1, "cut-beard": 1 },
-  },
-  {
-    key: "new-rising",
-    count: 5,
-    intervalMean: 19,
-    intervalJitter: 4,
-    tenureDays: 58,
-    lastVisitMin: 3,
-    lastVisitMax: 14,
-    tipRate: 0.1,
-    serviceWeights: { "skin-fade": 3, "signature-cut": 2 },
-  },
-  {
-    key: "climbing",
-    count: 3,
-    intervalMean: 24,
-    intervalJitter: 5,
-    tenureDays: 140,
-    lastVisitMin: 4,
-    lastVisitMax: 15,
-    tipRate: 0.12,
-    serviceWeights: { "signature-cut": 2, "cut-beard": 2 },
-    escalate: true,
-  },
-  {
-    key: "at-risk",
-    count: 6,
-    intervalMean: 27,
-    intervalJitter: 6,
-    tenureDays: 210,
-    lastVisitMin: 40,
-    lastVisitMax: 60,
-    tipRate: 0.1,
-    serviceWeights: { "skin-fade": 2, "signature-cut": 2, "beard-trim": 1 },
-  },
-  {
-    key: "lost",
-    count: 8,
-    intervalMean: 30,
-    intervalJitter: 8,
-    tenureDays: 175,
-    lastVisitMin: 76,
-    lastVisitMax: 170,
-    tipRate: 0.08,
-    serviceWeights: { "skin-fade": 2, "signature-cut": 2, "junior-cut": 1 },
-  },
-  {
-    key: "occasional",
-    count: 4,
-    intervalMean: 55,
-    intervalJitter: 15,
-    tenureDays: 300,
-    lastVisitMin: 10,
-    lastVisitMax: 40,
-    tipRate: 0.1,
-    serviceWeights: { "signature-cut": 2, "hot-towel-shave": 1, "beard-trim": 1 },
-  },
+  { key: "vip", count: 6, intervalMean: 14, intervalJitter: 3, tenureDays: 430, lastVisitMin: 2, lastVisitMax: 12, tipRate: 0.25 },
+  { key: "regular", count: 14, intervalMean: 24, intervalJitter: 6, tenureDays: 260, lastVisitMin: 5, lastVisitMax: 24, tipRate: 0.15 },
+  { key: "new-rising", count: 6, intervalMean: 17, intervalJitter: 4, tenureDays: 55, lastVisitMin: 3, lastVisitMax: 14, tipRate: 0.12 },
+  { key: "at-risk", count: 6, intervalMean: 24, intervalJitter: 6, tenureDays: 210, lastVisitMin: 40, lastVisitMax: 60, tipRate: 0.1 },
+  { key: "lost", count: 9, intervalMean: 28, intervalJitter: 8, tenureDays: 175, lastVisitMin: 76, lastVisitMax: 175, tipRate: 0.08 },
+  { key: "occasional", count: 5, intervalMean: 50, intervalJitter: 14, tenureDays: 300, lastVisitMin: 10, lastVisitMax: 38, tipRate: 0.1 },
 ];
 
 const NAMES = [
-  "Andre Mills", "Tobias Reed", "Chris Dunn", "Marcus Tate", "Jared Boon",
-  "Devon Clarke", "Eli Navarro", "Omar Haddad", "Pierre Laurent", "Sam Okafor",
-  "Liam Doyle", "Noah Brandt", "Caleb Frost", "Mateo Rossi", "Isaiah Vaughn",
-  "Hugo Pereira", "Kenji Watanabe", "Andre Sable", "Felix Romero", "Damian Wolfe",
-  "Theo Marsh", "Rashid Amari", "Victor Salah", "Owen Pratt", "Lucas Greer",
-  "Malik Owens", "Nathan Cole", "Diego Mata", "Aiden Brooks", "Ezra Lin",
-  "Carter Voss", "Jonah Beck", "Ryan Castle", "Simon Wells", "Adrian Cruz",
-  "Gabriel Stone", "Hassan Ali", "Levi Hart", "Julian Pace", "Cole Banner",
-  "Marco Bianchi", "Reza Karimi", "Dominic Shaw",
+  "Andreas K.", "Yiannis P.", "Daniel R.", "Marco S.", "Costas M.",
+  "Petros A.", "Nikos D.", "Stelios G.", "Loukas V.", "Christos N.",
+  "Giorgos T.", "Antonis L.", "Michalis F.", "Savvas R.", "Panayiotis E.",
+  "Elias B.", "Theo C.", "Marios I.", "Renos K.", "Andy P.",
+  "Dimitris H.", "Alex T.", "Sotiris M.", "Charis V.", "Kyriakos D.",
+  "Lefteris S.", "Pavlos A.", "Tasos G.", "Vasilis N.", "Haris L.",
+  "Stavros P.", "Demis K.", "Orestis V.", "Fanos M.", "Iakovos R.",
+  "Neo C.", "Aris D.", "Filippos T.", "Achilleas S.", "Rafael B.",
+  "Leon H.", "Max V.", "Sammy P.", "Joel K.", "Adam R.", "Niko B.",
 ];
-
-function pickWeighted(weights: Partial<Record<string, number>>, r: number): string {
-  const entries = Object.entries(weights) as [string, number][];
-  const total = entries.reduce((a, [, w]) => a + w, 0);
-  let t = r * total;
-  for (const [id, w] of entries) {
-    if ((t -= w) <= 0) return id;
-  }
-  return entries[0][0];
-}
 
 function generate(): { clients: Client[]; appointments: Appointment[]; now: Date } {
   const now = new Date();
@@ -180,35 +94,11 @@ function generate(): { clients: Client[]; appointments: Appointment[]; now: Date
         cursor -= interval * DAY;
       }
       if (visitTimes.length === 0) visitTimes.push(now.getTime() - lastVisitDaysAgo * DAY);
-      visitTimes.reverse(); // oldest → newest
 
-      const total = visitTimes.length;
-      visitTimes.forEach((t, i) => {
-        // Escalating clients buy cheaper early, pricier later.
-        let serviceId: string;
-        if (arc.escalate) {
-          const progress = total > 1 ? i / (total - 1) : 1;
-          serviceId =
-            progress < 0.4
-              ? "beard-trim"
-              : progress < 0.75
-                ? "signature-cut"
-                : "cut-beard";
-        } else {
-          serviceId = pickWeighted(arc.serviceWeights, rng());
-        }
-        const svc = byId[serviceId] ?? services[0];
-        const tip = Math.round(svc.price * arc.tipRate * (0.6 + rng() * 0.8));
-        appointments.push({
-          id: `a${apptId++}`,
-          clientId,
-          date: new Date(t),
-          serviceId,
-          price: svc.price,
-          tip,
-          barberId: realBarbers[Math.floor(rng() * realBarbers.length)].id,
-        });
-      });
+      for (const t of visitTimes) {
+        const tip = Math.round(PRICE * arc.tipRate * (0.5 + rng()));
+        appointments.push({ id: `a${apptId++}`, clientId, date: new Date(t), price: PRICE, tip });
+      }
     }
   }
 
@@ -234,15 +124,13 @@ function revenueIn(appts: Appointment[], start: number, end: number) {
 export type Bucket = { label: string; revenue: number; cuts: number };
 
 function weeklySeries(appts: Appointment[], now: Date, weeks: number): Bucket[] {
-  // Monday-anchored weeks ending with the current week.
   const today = startOfDay(now);
   const dow = (today.getDay() + 6) % 7;
   const thisMonday = today.getTime() - dow * DAY;
   const out: Bucket[] = [];
   for (let i = weeks - 1; i >= 0; i--) {
     const start = thisMonday - i * 7 * DAY;
-    const end = start + 7 * DAY;
-    const { revenue, cuts } = revenueIn(appts, start, end);
+    const { revenue, cuts } = revenueIn(appts, start, start + 7 * DAY);
     out.push({
       label: new Date(start).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
       revenue,
@@ -256,12 +144,29 @@ function monthlySeries(appts: Appointment[], now: Date, months: number): Bucket[
   const out: Bucket[] = [];
   for (let i = months - 1; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const start = d.getTime();
     const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1).getTime();
-    const { revenue, cuts } = revenueIn(appts, start, end);
+    const { revenue, cuts } = revenueIn(appts, d.getTime(), end);
     out.push({ label: d.toLocaleDateString("en-US", { month: "short" }), revenue, cuts });
   }
   return out;
+}
+
+// Revenue by day-of-week over the last ~12 weeks — shows the barber his
+// busiest days so he can plan hours and promos. Sunday/Thursday are closed.
+function weekdayRevenue(appts: Appointment[], now: Date) {
+  const since = now.getTime() - 84 * DAY;
+  const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const rev = new Array(7).fill(0);
+  const cnt = new Array(7).fill(0);
+  for (const a of appts) {
+    if (a.date.getTime() < since) continue;
+    const idx = (a.date.getDay() + 6) % 7;
+    rev[idx] += a.price + a.tip;
+    cnt[idx]++;
+  }
+  return labels
+    .map((name, i) => ({ name, revenue: rev[i], count: cnt[i] }))
+    .filter((r) => r.count > 0);
 }
 
 // ── Per-client profile (the basis for all segmentation) ──────────────────────
@@ -275,9 +180,9 @@ export type ClientStat = {
   daysSinceLast: number;
   avgIntervalDays: number;
   avgTicket: number;
-  monthlyValue: number; // typical spend per 30 days while active
-  spendTrend: number; // recent avg ticket − early avg ticket
-  recencyRatio: number; // daysSinceLast ÷ usual interval (>1 = overdue)
+  monthlyValue: number;
+  spendTrend: number;
+  recencyRatio: number;
   segment: Segment;
   potential: number;
   topService: string;
@@ -301,26 +206,14 @@ function buildStats(clients: Client[], appts: Appointment[], now: Date): ClientS
     const firstVisit = list[0]?.date ?? now;
     const lastVisit = list[visits - 1]?.date ?? now;
     const daysSinceLast = Math.round((now.getTime() - lastVisit.getTime()) / DAY);
-    const tenureDays = Math.max(
-      1,
-      (lastVisit.getTime() - firstVisit.getTime()) / DAY,
-    );
+    const tenureDays = Math.max(1, (lastVisit.getTime() - firstVisit.getTime()) / DAY);
     const avgIntervalDays = visits > 1 ? tenureDays / (visits - 1) : 30;
     const avgTicket = visits ? lifetimeValue / visits : 0;
     const monthlyValue = (lifetimeValue / Math.max(tenureDays, 1)) * 30;
-    const early = list.slice(0, 2);
-    const recent = list.slice(-2);
     const avg = (xs: Appointment[]) =>
       xs.length ? xs.reduce((s, a) => s + a.price + a.tip, 0) / xs.length : 0;
-    const spendTrend = avg(recent) - avg(early);
+    const spendTrend = avg(list.slice(-2)) - avg(list.slice(0, 2));
     const recencyRatio = daysSinceLast / Math.max(avgIntervalDays, 7);
-
-    // Most-booked service for context.
-    const svcCount: Record<string, number> = {};
-    for (const a of list) svcCount[a.serviceId] = (svcCount[a.serviceId] ?? 0) + 1;
-    const topServiceId =
-      Object.entries(svcCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
-    const topService = byId[topServiceId]?.name ?? "—";
 
     return {
       id: client.id,
@@ -335,19 +228,15 @@ function buildStats(clients: Client[], appts: Appointment[], now: Date): ClientS
       monthlyValue,
       spendTrend,
       recencyRatio,
-      topService,
+      topService: mainService.name,
     };
   });
 
-  // Monetary threshold for VIP = top quartile of active lifetime value.
   const ltvSorted = [...raw].map((r) => r.lifetimeValue).sort((a, b) => a - b);
   const vipThreshold = ltvSorted[Math.floor(ltvSorted.length * 0.75)] ?? Infinity;
 
   return raw.map((r) => {
-    const tenureDays = Math.max(
-      1,
-      (r.lastVisit.getTime() - r.firstVisit.getTime()) / DAY,
-    );
+    const tenureDays = Math.max(1, (r.lastVisit.getTime() - r.firstVisit.getTime()) / DAY);
     let segment: Segment;
     if (r.visits >= 2 && r.daysSinceLast > 70) {
       segment = "lost";
@@ -359,41 +248,41 @@ function buildStats(clients: Client[], appts: Appointment[], now: Date): ClientS
     } else if (
       r.daysSinceLast <= 35 &&
       r.visits >= 2 &&
-      ((tenureDays < 95 && r.avgIntervalDays <= 32) || r.spendTrend >= 12)
+      tenureDays < 95 &&
+      r.avgIntervalDays <= 30
     ) {
       segment = "high-potential";
-    } else if (r.lifetimeValue >= vipThreshold && r.visits >= 6 && r.daysSinceLast <= 40) {
+    } else if (r.lifetimeValue >= vipThreshold && r.visits >= 8 && r.daysSinceLast <= 35) {
       segment = "vip";
     } else {
       segment = "regular";
     }
 
-    // Potential = forward-looking value: frequency + recent momentum + runway.
-    const frequencyScore = Math.min(1, 30 / Math.max(r.avgIntervalDays, 7));
-    const momentumScore = Math.max(0, Math.min(1, r.spendTrend / 25 + 0.4));
+    const frequencyScore = Math.min(1, 28 / Math.max(r.avgIntervalDays, 7));
     const runwayScore = Math.max(0, Math.min(1, (120 - tenureDays) / 120));
-    const valueScore = Math.min(1, r.monthlyValue / 120);
+    const valueScore = Math.min(1, r.monthlyValue / 60);
+    const recencyScore = Math.max(0, Math.min(1, 1.5 - r.recencyRatio));
     const potential = Math.round(
-      (frequencyScore * 0.3 + momentumScore * 0.25 + runwayScore * 0.2 + valueScore * 0.25) *
+      (frequencyScore * 0.34 + runwayScore * 0.22 + valueScore * 0.24 + recencyScore * 0.2) *
         100,
     );
 
     const action =
       segment === "lost"
-        ? `Win-back text + 20% off — last seen ${r.daysSinceLast}d ago`
+        ? `Win-back DM + free beard tidy — last seen ${r.daysSinceLast}d ago`
         : segment === "at-risk"
-          ? `"We miss you" message + priority slot this week`
+          ? `"We miss you" text + priority slot this week`
           : segment === "high-potential"
             ? `Lock in a loyalty card — rebook on the spot`
             : segment === "vip"
               ? `Reserved standing slot + ask for a referral`
-              : `Keep the rhythm — nudge to rebook near day ${Math.round(r.avgIntervalDays)}`;
+              : `Nudge to rebook around day ${Math.round(r.avgIntervalDays)}`;
 
     return { ...r, segment, potential, action };
   });
 }
 
-// ── Public API: one call returns everything the dashboard needs ──────────────
+// ── Public API ───────────────────────────────────────────────────────────────
 export type Dashboard = ReturnType<typeof computeDashboard>;
 
 export function computeDashboard() {
@@ -420,35 +309,11 @@ export function computeDashboard() {
   const atRisk = stats.filter((s) => s.segment === "at-risk");
   const highPotential = stats.filter((s) => s.segment === "high-potential");
 
-  // Revenue slipping away = recurring monthly value of churned + at-risk clients.
   const revenueAtRisk = Math.round(
     [...atRisk, ...lost].reduce((s, c) => s + c.monthlyValue, 0),
   );
-
-  // New clients whose first-ever visit was this calendar month.
-  const newThisMonth = stats.filter(
-    (s) => s.firstVisit.getTime() >= monthStart,
-  ).length;
-
+  const newThisMonth = stats.filter((s) => s.firstVisit.getTime() >= monthStart).length;
   const retention = Math.round((active.length / stats.length) * 100);
-
-  // Service mix (by revenue) and barber performance.
-  const serviceMix = services
-    .map((svc) => {
-      const rows = appointments.filter((a) => a.serviceId === svc.id);
-      const revenue = rows.reduce((s, a) => s + a.price + a.tip, 0);
-      return { name: svc.name, revenue, count: rows.length };
-    })
-    .filter((r) => r.count > 0)
-    .sort((a, b) => b.revenue - a.revenue);
-
-  const barberPerf = realBarbers
-    .map((b) => {
-      const rows = appointments.filter((a) => a.barberId === b.id);
-      const revenue = rows.reduce((s, a) => s + a.price + a.tip, 0);
-      return { name: b.name, revenue, count: rows.length };
-    })
-    .sort((a, b) => b.revenue - a.revenue);
 
   const byPotential = (a: ClientStat, b: ClientStat) => b.potential - a.potential;
   const byValue = (a: ClientStat, b: ClientStat) => b.lifetimeValue - a.lifetimeValue;
@@ -456,6 +321,7 @@ export function computeDashboard() {
 
   return {
     now,
+    barberName: barber.name,
     kpis: {
       thisWeek: thisWeek.revenue,
       thisWeekCuts: thisWeek.cuts,
@@ -472,8 +338,7 @@ export function computeDashboard() {
     },
     weekly: weeklySeries(appointments, now, 10),
     monthly: monthlySeries(appointments, now, 6),
-    serviceMix,
-    barberPerf,
+    weekday: weekdayRevenue(appointments, now),
     highPotential: [...highPotential].sort(byPotential),
     atRisk: [...atRisk].sort(byRecency),
     lost: [...lost].sort(byValue),

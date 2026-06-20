@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { currency } from "@/data/barber";
 import type { Bucket } from "@/data/barber-analytics";
 
 export default function TrendChart({
@@ -25,8 +26,11 @@ export default function TrendChart({
           </h3>
           <p className="mt-1 text-sm text-bone/50">
             {mode === "week" ? "Last 10 weeks" : "Last 6 months"} · avg{" "}
-            <span className="text-brass">${avg.toLocaleString()}</span> /{" "}
-            {mode === "week" ? "wk" : "mo"}
+            <span className="text-brass">
+              {currency}
+              {avg.toLocaleString()}
+            </span>{" "}
+            / {mode === "week" ? "wk" : "mo"}
           </p>
         </div>
         <div className="flex rounded-full border border-coal-line p-1 text-xs font-semibold uppercase tracking-widest">
@@ -57,7 +61,8 @@ export default function TrendChart({
                   style={{ height: `${Math.max((d.revenue / max) * 100, 2)}%` }}
                 >
                   <span className="pointer-events-none absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-coal-deep px-2 py-1 text-[10px] font-medium text-bone opacity-0 transition-opacity group-hover:opacity-100">
-                    ${d.revenue.toLocaleString()} · {d.cuts} cuts
+                    {currency}
+                    {d.revenue.toLocaleString()} · {d.cuts} cuts
                   </span>
                 </div>
               </div>

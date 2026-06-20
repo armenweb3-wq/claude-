@@ -24,7 +24,7 @@ export default function VisitUs() {
       <SectionHead
         eyebrow="Find Us"
         title="Visit the Shop"
-        intro="Drop by in the heart of Brickell, or book ahead and skip the wait."
+        intro="Find Marios at Hustle Blends × MadBarbers in Paphos, or book ahead and skip the wait."
       />
 
       <div className="mt-14 grid gap-6 lg:grid-cols-2">
@@ -79,7 +79,7 @@ export default function VisitUs() {
               rel="noopener noreferrer"
               className="rounded-full border border-coal-line px-7 py-3 text-xs font-semibold uppercase tracking-widest text-bone/80 transition-colors hover:border-brass hover:text-brass"
             >
-              Get directions
+              Open in Maps
             </a>
           </div>
         </Reveal>

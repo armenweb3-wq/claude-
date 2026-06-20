@@ -1,30 +1,35 @@
 // Hustle Blends — content & configuration.
-// This is the single edit point for shop details, services, barbers, hours
-// and reviews. Update here and every section of the booking page follows.
+// Single edit point for shop details, services, the barber, hours and reviews.
+// Mirrors the live hustleblends.cc (Hustle Blends × MadBarbers, Paphos, Cyprus).
+
+export const currency = "€";
 
 export const shop = {
   name: "Hustle Blends",
-  tagline: "Precision Cuts. Sharp Confidence.",
+  tagline: "Fresh Fades in Paphos",
   blurb:
-    "A modern barbershop where craft meets consistency. Walk in scruffy, walk out sharp — booked in under a minute.",
-  phone: "(305) 555-0142",
-  phoneHref: "tel:+13055550142",
-  email: "book@hustleblends.cc",
+    "Hustle Blends × MadBarbers — Marios behind the chair in Paphos. One clean service done right: a fresh haircut and fade with the beard included. Book your next cut in seconds.",
+  phone: "+357 96 606 880",
+  phoneHref: "tel:+35796606880",
+  instagram: "https://instagram.com/hustleblends",
+  instagramHandle: "@hustleblends",
   address: {
-    line1: "248 Brickell Ave, Suite 5",
-    line2: "Miami, FL 33131",
+    line1: "Hustle Blends × MadBarbers",
+    line2: "Paphos, Cyprus",
   },
-  // Used for the "Get directions" link and the embedded map.
-  mapsQuery: "248 Brickell Ave, Miami, FL 33131",
-  social: {
-    instagram: "https://instagram.com/hustleblends",
-    tiktok: "https://tiktok.com/@hustleblends",
-  },
+  // Used for the "Open in Maps" link and the embedded map.
+  mapsQuery: "MadBarbers Paphos Cyprus",
   stats: [
-    { value: "12k+", label: "Cuts delivered" },
-    { value: "4.9★", label: "Average rating" },
-    { value: "7", label: "Master barbers" },
-    { value: "<60s", label: "To book a chair" },
+    { value: "40 min", label: "Every cut" },
+    { value: "€15", label: "All-in, beard incl." },
+    { value: "4.9★", label: "Client rating" },
+    { value: "5 days", label: "Open a week" },
+  ],
+  // Shown next to the booking flow.
+  bookingNotes: [
+    "Please arrive 5 minutes early.",
+    "Late arrivals may shorten service time.",
+    "Need to reschedule? Cancel and rebook anytime.",
   ],
 } as const;
 
@@ -34,61 +39,33 @@ export type Service = {
   description: string;
   durationMin: number;
   price: number;
+  priceLabel?: string; // overrides the price (e.g. "Included")
   popular?: boolean;
 };
 
+// The shop runs a single all-in service; the beard trim is bundled.
 export const services: Service[] = [
   {
-    id: "signature-cut",
-    name: "Signature Cut",
+    id: "haircut-fade",
+    name: "Haircut & Fade",
     description:
-      "A consultation-led haircut tailored to your face and hair type, finished with a hot-towel and styling.",
-    durationMin: 45,
-    price: 45,
+      "A fresh haircut and clean skin or taper fade, with the beard trimmed, shaped and detailed — all included.",
+    durationMin: 40,
+    price: 15,
     popular: true,
-  },
-  {
-    id: "skin-fade",
-    name: "Skin Fade",
-    description:
-      "Razor-sharp gradient from skin to length, blended seamlessly with clipper-over-comb precision.",
-    durationMin: 50,
-    price: 50,
-    popular: true,
-  },
-  {
-    id: "cut-beard",
-    name: "Cut & Beard Sculpt",
-    description:
-      "Full haircut paired with a hot-towel beard line-up, shaped and conditioned for a crisp finish.",
-    durationMin: 60,
-    price: 65,
   },
   {
     id: "beard-trim",
-    name: "Beard & Line-up",
-    description:
-      "Detail trim, razor edge-up and beard oil — keep the shape sharp between full cuts.",
-    durationMin: 30,
-    price: 30,
-  },
-  {
-    id: "hot-towel-shave",
-    name: "Hot-Towel Shave",
-    description:
-      "Traditional straight-razor shave with warm towels, pre-shave oil and a cooling balm finish.",
+    name: "Beard Trim",
+    description: "Shape, line-up and detail — included with every cut.",
     durationMin: 40,
-    price: 40,
-  },
-  {
-    id: "junior-cut",
-    name: "Junior Cut (12 & under)",
-    description:
-      "A patient, kid-friendly cut that keeps the little ones still and sends them out looking fresh.",
-    durationMin: 30,
-    price: 28,
+    price: 0,
+    priceLabel: "Included",
   },
 ];
+
+// The bookable service (beard is bundled into it).
+export const mainService = services[0];
 
 export type Barber = {
   id: string;
@@ -96,56 +73,30 @@ export type Barber = {
   role: string;
   bio: string;
   specialties: string[];
-  // Local placeholder portrait — swap for a real photo in /public/barber.
   photo: string;
 };
 
-export const barbers: Barber[] = [
-  {
-    id: "any",
-    name: "First Available",
-    role: "Fastest chair",
-    bio: "Get booked with whichever master barber opens up first.",
-    specialties: ["Shortest wait"],
-    photo: "/barber/portrait-any.svg",
-  },
-  {
-    id: "marcus",
-    name: "Marcus Vale",
-    role: "Master Barber · Owner",
-    bio: "Fifteen years behind the chair. Lives for a flawless skin fade and a clean beard line.",
-    specialties: ["Skin fades", "Beard sculpts"],
-    photo: "/barber/portrait-1.svg",
-  },
-  {
-    id: "deshawn",
-    name: "DeShawn Pierce",
-    role: "Senior Barber",
-    bio: "Texture specialist — curls, waves and afros shaped with surgical precision.",
-    specialties: ["Textured hair", "Tapers"],
-    photo: "/barber/portrait-2.svg",
-  },
-  {
-    id: "luca",
-    name: "Luca Ferro",
-    role: "Barber · Razor Work",
-    bio: "Old-school straight-razor craftsman with a modern eye for clean classic cuts.",
-    specialties: ["Hot-towel shaves", "Classic cuts"],
-    photo: "/barber/portrait-3.svg",
-  },
-];
+export const barber: Barber = {
+  id: "marios",
+  name: "Marios",
+  role: "Master Barber · Hustle Blends × MadBarbers",
+  bio: "Paphos-based barber with an eye for clean, sharp fades and detailed beard work. One chair, one standard — you leave looking your best, every visit.",
+  specialties: ["Skin fades", "Tapers", "Beard detailing"],
+  photo: "/barber/portrait-1.svg",
+};
 
 export type Hours = { day: string; open: string; close: string | null };
 
 // Opening hours drive the booking time-slot generator. `close: null` = closed.
+// Live shop: Mon–Wed & Fri–Sat 09:00–19:00, closed Thursday & Sunday.
 export const hours: Hours[] = [
-  { day: "Monday", open: "10:00", close: "19:00" },
-  { day: "Tuesday", open: "10:00", close: "19:00" },
-  { day: "Wednesday", open: "10:00", close: "19:00" },
-  { day: "Thursday", open: "10:00", close: "20:00" },
-  { day: "Friday", open: "09:00", close: "20:00" },
-  { day: "Saturday", open: "09:00", close: "18:00" },
-  { day: "Sunday", open: "11:00", close: "16:00" },
+  { day: "Monday", open: "09:00", close: "19:00" },
+  { day: "Tuesday", open: "09:00", close: "19:00" },
+  { day: "Wednesday", open: "09:00", close: "19:00" },
+  { day: "Thursday", open: "09:00", close: null },
+  { day: "Friday", open: "09:00", close: "19:00" },
+  { day: "Saturday", open: "09:00", close: "19:00" },
+  { day: "Sunday", open: "09:00", close: null },
 ];
 
 export type Review = {
@@ -157,27 +108,27 @@ export type Review = {
 
 export const reviews: Review[] = [
   {
-    name: "Andre M.",
-    handle: "Signature Cut",
+    name: "Andreas K.",
+    handle: "Haircut & Fade",
     rating: 5,
-    text: "Best fade in Brickell, hands down. Booking took ten seconds and Marcus nailed it exactly how I asked.",
+    text: "Best fade in Paphos, no question. Booking took ten seconds and Marios nailed exactly what I asked for.",
   },
   {
-    name: "Tobias R.",
-    handle: "Cut & Beard Sculpt",
+    name: "Yiannis P.",
+    handle: "Haircut & Fade",
     rating: 5,
-    text: "Walked in for a wedding cut and left looking like a different man. The hot-towel finish is unreal.",
+    text: "Sharp cut, clean beard line, and the whole thing was done in 40 minutes. Consistent every single time.",
   },
   {
-    name: "Chris D.",
-    handle: "Hot-Towel Shave",
+    name: "Daniel R.",
+    handle: "Haircut & Fade",
     rating: 5,
-    text: "Luca's straight-razor shave is the most relaxing 40 minutes of my month. Properly old-school.",
+    text: "Walked in before a trip looking rough, walked out fresh. €15 all-in with the beard is unreal value.",
   },
   {
-    name: "Marcus T.",
-    handle: "Skin Fade",
+    name: "Marco S.",
+    handle: "Haircut & Fade",
     rating: 5,
-    text: "Consistent every single visit. That's the part most shops miss — these guys never miss.",
+    text: "Found Hustle Blends on Instagram and now I won't go anywhere else. Proper barber, proper detail.",
   },
 ];

@@ -1,41 +1,20 @@
 {
-  "date": "2026-06-19",
-  "note": "Curated queue of single, auto-settleable, always-placeable markets. The AI autopilot consumes these in kickoff order; the site shows them as the picks board. Keep selections to auto types (over_goals/under_goals/btts/team_win/double_chance) so they settle themselves.",
+  "date": "2026-06-20",
+  "note": "Curated queue of single, auto-settleable, always-placeable markets. The Model autopilot consumes these in kickoff order; the site shows them as the picks board. Keep selections to auto types (over_goals/under_goals/btts/team_win/double_chance) so they settle themselves. Already-finished matches are removed.",
   "picks": [
-    {
-      "match": "USA vs Australia",
-      "selection": { "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 },
-      "odds": 1.40, "risk": "medium",
-      "why": "USA looked sharp going forward in their opener (4-1); enough to clear 1.5 in most games.",
-      "whyRisk": "Australia are organised and physical and can hold it to a 1-0 type game."
-    },
-    {
-      "match": "Scotland vs Morocco",
-      "selection": { "label": "Morocco Double Chance (win or draw)", "type": "double_chance", "team": "Morocco" },
-      "odds": 1.35, "risk": "medium",
-      "why": "Morocco (2022 semi-finalists) have the quality edge and shouldn't lose to Scotland.",
-      "whyRisk": "Scotland are well-drilled and can nick a result; a draw is fine for DC, a loss isn't."
-    },
-    {
-      "match": "Brazil vs Haiti",
-      "selection": { "label": "Over 2.5 total goals", "type": "over_goals", "line": 2.5 },
-      "odds": 1.40, "risk": "low",
-      "why": "Brazil should overwhelm debutants Haiti; 3+ goals is the likeliest scoreline.",
-      "whyRisk": "Minnows can frustrate for ~60 mins, but quality usually tells."
-    },
-    {
-      "match": "Germany vs Ivory Coast",
-      "selection": { "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 },
-      "odds": 1.30, "risk": "low",
-      "why": "Germany's attack (7 vs Curaçao) should comfortably clear 1.5 goals.",
-      "whyRisk": "Ivory Coast defend well; a cagey low-scoring game is the only threat."
-    },
     {
       "match": "Spain vs Saudi Arabia",
       "selection": { "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 },
       "odds": 1.35, "risk": "low",
-      "why": "Spain dominate possession and create high chance volume.",
-      "whyRisk": "Saudi may park the bus chasing a 1-0."
+      "why": "Spain dominate possession and chance volume; should clear 1.5 comfortably.",
+      "whyRisk": "Saudi may park the bus chasing a 1-0; Spain were held 0-0 by Cape Verde once already."
+    },
+    {
+      "match": "Belgium vs Iran",
+      "selection": { "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 },
+      "odds": 1.40, "risk": "medium",
+      "why": "Belgium carry the attacking quality to push the game past one goal.",
+      "whyRisk": "Iran defend deep and well; a tight low-scoring game is live."
     },
     {
       "match": "Uruguay vs Cape Verde",
@@ -45,11 +24,81 @@
       "whyRisk": "Low — only a genuine shock loss hurts."
     },
     {
-      "match": "Netherlands vs Sweden",
+      "match": "Ecuador vs Curaçao",
+      "selection": { "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 },
+      "odds": 1.45, "risk": "medium",
+      "why": "Ecuador are the clear favourites vs a debutant side and should create chances.",
+      "whyRisk": "Curaçao sit deep; Ecuador can be wasteful, so keep the line at 1.5."
+    },
+    {
+      "match": "Tunisia vs Japan",
+      "selection": { "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 },
+      "odds": 1.45, "risk": "medium",
+      "why": "Japan are sharp going forward; enough quality to open the game up.",
+      "whyRisk": "Tunisia are organised and defensive; could keep it tight."
+    },
+    {
+      "match": "France vs Iraq",
+      "selection": { "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 },
+      "odds": 1.30, "risk": "low",
+      "why": "France's firepower vs a leaky Iraq (conceded 4 to Norway) points to goals.",
+      "whyRisk": "Only a heavy France rotation + cagey Iraq could threaten it."
+    },
+    {
+      "match": "Argentina vs Austria",
       "selection": { "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 },
       "odds": 1.40, "risk": "medium",
-      "why": "Both sides carry an attacking threat; Netherlands push the game.",
-      "whyRisk": "Sweden defend well and can keep it tight."
+      "why": "Argentina's attack should produce; Austria also score goals.",
+      "whyRisk": "Argentina can be game-managers when qualified; a controlled 1-0 is possible."
+    },
+    {
+      "match": "Norway vs Senegal",
+      "selection": { "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 },
+      "odds": 1.35, "risk": "low",
+      "why": "Two strong attacking sides (Norway hit 4 vs Iraq); goals likely.",
+      "whyRisk": "A tense must-win could tighten it up."
+    },
+    {
+      "match": "Portugal vs Uzbekistan",
+      "selection": { "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 },
+      "odds": 1.35, "risk": "low",
+      "why": "Portugal have far more quality and should break Uzbekistan down.",
+      "whyRisk": "Uzbekistan defend in numbers; keep the line modest."
+    },
+    {
+      "match": "England vs Ghana",
+      "selection": { "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 },
+      "odds": 1.40, "risk": "medium",
+      "why": "England looked open (4-2 v Croatia); both sides can score.",
+      "whyRisk": "England can also game-manage if already through."
+    },
+    {
+      "match": "Colombia vs Congo DR",
+      "selection": { "label": "Colombia Double Chance (win or draw)", "type": "double_chance", "team": "Colombia" },
+      "odds": 1.25, "risk": "low",
+      "why": "Colombia impressed (3-1 v Uzbekistan) and are the stronger side.",
+      "whyRisk": "Low — only a surprise defeat hurts."
+    },
+    {
+      "match": "Switzerland vs Canada",
+      "selection": { "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 },
+      "odds": 1.30, "risk": "low",
+      "why": "Both have been free-scoring (Switzerland 4-1, Canada 6-0).",
+      "whyRisk": "A dead rubber could be cautious if both are already qualified."
+    },
+    {
+      "match": "Scotland vs Brazil",
+      "selection": { "label": "Brazil Double Chance (win or draw)", "type": "double_chance", "team": "Brazil" },
+      "odds": 1.20, "risk": "low",
+      "why": "Brazil have the clear quality edge and shouldn't lose to Scotland.",
+      "whyRisk": "Low — Brazil might rest players, but DC covers a draw."
+    },
+    {
+      "match": "Morocco vs Haiti",
+      "selection": { "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 },
+      "odds": 1.35, "risk": "low",
+      "why": "Morocco's quality vs debutants Haiti should yield goals.",
+      "whyRisk": "Haiti defend deep; Morocco can be wasteful, so 1.5 not 2.5."
     }
   ]
 }

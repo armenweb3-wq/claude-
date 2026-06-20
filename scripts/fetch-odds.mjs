@@ -12,22 +12,20 @@ const KEY = process.env.ODDS_API_KEY;
 if (!KEY) { console.error("Missing ODDS_API_KEY"); process.exit(1); }
 
 // category -> list of The Odds API sport keys (out-of-season keys just return nothing)
+// FOOTBALL / WORLD CUP ONLY for now (1 request/run = tiny quota use).
+// Other sports + leagues are kept here, commented, to switch on later.
 const SPORTS = {
   football: [
     "soccer_fifa_world_cup",
-    "soccer_epl",
-    "soccer_uefa_champs_league",
-    "soccer_spain_la_liga",
-    "soccer_germany_bundesliga",
-    "soccer_italy_serie_a",
+    // "soccer_epl", "soccer_uefa_champs_league", "soccer_spain_la_liga",
+    // "soccer_germany_bundesliga", "soccer_italy_serie_a",
   ],
   tennis: [
-    "tennis_atp_wimbledon", "tennis_wta_wimbledon",
-    "tennis_atp_us_open", "tennis_wta_us_open",
+    // "tennis_atp_wimbledon", "tennis_wta_wimbledon", "tennis_atp_us_open", "tennis_wta_us_open",
   ],
-  basketball: ["basketball_nba"],
-  nfl: ["americanfootball_nfl"],
-  mma: ["mma_mixed_martial_arts"],
+  basketball: [/* "basketball_nba" */],
+  nfl: [/* "americanfootball_nfl" */],
+  mma: [/* "mma_mixed_martial_arts" */],
 };
 
 async function fetchSport(sportKey) {

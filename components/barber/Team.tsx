@@ -1,5 +1,6 @@
 import { barbers } from "@/data/barber";
 import { SectionHead } from "./Section";
+import Reveal from "./Reveal";
 
 export default function Team() {
   // Drop the synthetic "First Available" option from the showcase.
@@ -15,10 +16,13 @@ export default function Team() {
         />
 
         <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {crew.map((b) => (
-            <article
+          {crew.map((b, i) => (
+            <Reveal
               key={b.id}
-              className="group overflow-hidden rounded-2xl border border-coal-line bg-coal-deep"
+              variant="up"
+              delay={(i % 3) * 110}
+              as="article"
+              className="group overflow-hidden rounded-2xl border border-coal-line bg-coal-deep transition-transform duration-300 hover:-translate-y-1.5"
             >
               <div className="relative aspect-[4/5] overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -46,7 +50,7 @@ export default function Team() {
                   ))}
                 </div>
               </div>
-            </article>
+            </Reveal>
           ))}
         </div>
       </div>

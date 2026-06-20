@@ -1,5 +1,6 @@
 import { services } from "@/data/barber";
 import { SectionHead } from "./Section";
+import Reveal from "./Reveal";
 
 export default function Services() {
   return (
@@ -11,10 +12,13 @@ export default function Services() {
       />
 
       <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {services.map((s) => (
-          <div
+        {services.map((s, i) => (
+          <Reveal
             key={s.id}
-            className="group relative flex flex-col rounded-2xl border border-coal-line bg-coal-soft p-6 transition-colors hover:border-brass/50"
+            variant="up"
+            delay={(i % 3) * 90}
+            as="div"
+            className="group relative flex flex-col rounded-2xl border border-coal-line bg-coal-soft p-6 transition-all duration-300 hover:-translate-y-1 hover:border-brass/50 hover:shadow-[0_18px_40px_-20px_rgba(200,162,76,0.45)]"
           >
             {s.popular && (
               <span className="absolute right-5 top-5 rounded-full bg-brass/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-brass">
@@ -41,7 +45,7 @@ export default function Services() {
             >
               Book this
             </a>
-          </div>
+          </Reveal>
         ))}
       </div>
     </section>

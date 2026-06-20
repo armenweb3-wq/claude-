@@ -1,5 +1,6 @@
 import { shop, hours } from "@/data/barber";
 import { SectionHead } from "./Section";
+import Reveal from "./Reveal";
 
 function today() {
   // hours[] is Monday-first; JS getDay() is Sunday-first.
@@ -28,7 +29,7 @@ export default function VisitUs() {
 
       <div className="mt-14 grid gap-6 lg:grid-cols-2">
         {/* Hours */}
-        <div className="rounded-2xl border border-coal-line bg-coal-soft p-7">
+        <Reveal variant="left" as="div" className="rounded-2xl border border-coal-line bg-coal-soft p-7">
           <h3 className="font-display text-2xl font-semibold uppercase tracking-wide">
             Opening Hours
           </h3>
@@ -68,7 +69,7 @@ export default function VisitUs() {
           <div className="mt-6 flex flex-wrap gap-3">
             <a
               href="#book"
-              className="rounded-full bg-brass px-7 py-3 text-xs font-semibold uppercase tracking-widest text-coal-deep transition-colors hover:bg-brass-soft"
+              className="shine rounded-full bg-brass px-7 py-3 text-xs font-semibold uppercase tracking-widest text-coal-deep transition-colors hover:bg-brass-soft"
             >
               Book a chair
             </a>
@@ -81,10 +82,10 @@ export default function VisitUs() {
               Get directions
             </a>
           </div>
-        </div>
+        </Reveal>
 
         {/* Map */}
-        <div className="overflow-hidden rounded-2xl border border-coal-line">
+        <Reveal variant="right" delay={120} as="div" className="overflow-hidden rounded-2xl border border-coal-line">
           <iframe
             title={`Map to ${shop.name}`}
             src={mapsUrl}
@@ -92,7 +93,7 @@ export default function VisitUs() {
             referrerPolicy="no-referrer-when-downgrade"
             className="h-full min-h-[320px] w-full grayscale contrast-125"
           />
-        </div>
+        </Reveal>
       </div>
     </section>
   );

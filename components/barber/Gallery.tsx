@@ -1,4 +1,5 @@
 import { SectionHead } from "./Section";
+import Reveal from "./Reveal";
 
 const shots = [
   { src: "/barber/gallery-1.svg", label: "The Fade" },
@@ -19,9 +20,12 @@ export default function Gallery() {
       />
 
       <div className="mt-14 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-        {shots.map((s) => (
-          <figure
+        {shots.map((s, i) => (
+          <Reveal
             key={s.src}
+            variant="scale"
+            delay={(i % 3) * 80}
+            as="figure"
             className="group relative aspect-square overflow-hidden rounded-xl border border-coal-line"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -30,10 +34,10 @@ export default function Gallery() {
               alt={s.label}
               className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
-            <figcaption className="absolute bottom-3 left-3 rounded-full bg-coal-deep/70 px-3 py-1 text-[11px] font-medium uppercase tracking-widest text-bone/80 backdrop-blur">
+            <figcaption className="absolute bottom-3 left-3 translate-y-1 rounded-full bg-coal-deep/70 px-3 py-1 text-[11px] font-medium uppercase tracking-widest text-bone/80 opacity-0 backdrop-blur transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
               {s.label}
             </figcaption>
-          </figure>
+          </Reveal>
         ))}
       </div>
     </section>

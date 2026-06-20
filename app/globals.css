@@ -78,6 +78,120 @@
   }
 }
 
+/* ── Hustle Blends — motion system ─────────────────────────────────────────
+   Scroll reveals are toggled by an IntersectionObserver (see Reveal.tsx). They
+   start hidden and ease in; reduced-motion users get content shown instantly. */
+.reveal {
+  opacity: 0;
+  transition:
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal-up {
+  transform: translateY(32px);
+}
+.reveal-scale {
+  transform: scale(0.94);
+}
+.reveal-left {
+  transform: translateX(-32px);
+}
+.reveal-right {
+  transform: translateX(32px);
+}
+.reveal-blur {
+  filter: blur(10px);
+}
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+/* Animated brass gradient text. */
+.text-shimmer {
+  background: linear-gradient(
+    100deg,
+    #c8a24c 0%,
+    #e2c572 28%,
+    #fff4d6 50%,
+    #e2c572 72%,
+    #c8a24c 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+@keyframes shimmer {
+  to {
+    background-position: 200% center;
+  }
+}
+
+/* Light sweep across buttons on hover. */
+.shine {
+  position: relative;
+  overflow: hidden;
+}
+.shine::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 -150%;
+  width: 55%;
+  background: linear-gradient(
+    110deg,
+    transparent,
+    rgba(255, 255, 255, 0.5),
+    transparent
+  );
+  transform: skewX(-20deg);
+  pointer-events: none;
+}
+.shine:hover::after {
+  animation: shine 0.85s ease;
+}
+@keyframes shine {
+  from {
+    left: -150%;
+  }
+  to {
+    left: 160%;
+  }
+}
+
+/* Gentle float + slow drift for ambient hero elements. */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+.float {
+  animation: float 4.5s ease-in-out infinite;
+}
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(24px, -28px) scale(1.12);
+  }
+}
+.drift {
+  animation: drift 14s ease-in-out infinite;
+}
+.drift-slow {
+  animation: drift 20s ease-in-out infinite reverse;
+}
+
 /* When reduced motion is requested, neutralize transforms/animations. */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -87,5 +201,12 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+
+  /* Never leave reveal content hidden when motion is off. */
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
   }
 }

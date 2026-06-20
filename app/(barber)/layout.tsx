@@ -38,8 +38,12 @@ export default function BarberLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable}`}>
+    <html lang="en" className={`scroll-smooth ${display.variable} ${sans.variable}`}>
       <body className="bg-coal-deep text-bone font-sans antialiased">
+        {/* Without JS the IntersectionObserver never fires — keep content visible. */}
+        <noscript>
+          <style>{`.reveal{opacity:1 !important;transform:none !important;filter:none !important}`}</style>
+        </noscript>
         <a
           href="#book"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-brass focus:px-5 focus:py-2 focus:text-sm focus:font-semibold focus:text-coal-deep"

@@ -1,5 +1,6 @@
 import { reviews } from "@/data/barber";
 import { SectionHead } from "./Section";
+import Reveal from "./Reveal";
 
 function Stars({ n }: { n: number }) {
   return (
@@ -20,10 +21,13 @@ export default function Reviews() {
         <SectionHead eyebrow="The Word" title="What Clients Say" />
 
         <div className="mt-14 grid gap-5 sm:grid-cols-2">
-          {reviews.map((r) => (
-            <blockquote
+          {reviews.map((r, i) => (
+            <Reveal
               key={r.name}
-              className="rounded-2xl border border-coal-line bg-coal-deep p-7"
+              variant={i % 2 === 0 ? "left" : "right"}
+              delay={(i % 2) * 80}
+              as="blockquote"
+              className="rounded-2xl border border-coal-line bg-coal-deep p-7 transition-colors duration-300 hover:border-brass/40"
             >
               <Stars n={r.rating} />
               <p className="mt-4 text-lg leading-relaxed text-bone/80">
@@ -40,7 +44,7 @@ export default function Reviews() {
                   </span>
                 </span>
               </footer>
-            </blockquote>
+            </Reveal>
           ))}
         </div>
       </div>

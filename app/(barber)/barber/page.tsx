@@ -1,4 +1,5 @@
 import Nav from "@/components/barber/Nav";
+import ScrollProgress from "@/components/barber/ScrollProgress";
 import Hero from "@/components/barber/Hero";
 import Marquee from "@/components/barber/Marquee";
 import Services from "@/components/barber/Services";
@@ -8,11 +9,13 @@ import Booking from "@/components/barber/Booking";
 import Reviews from "@/components/barber/Reviews";
 import VisitUs from "@/components/barber/VisitUs";
 import Footer from "@/components/barber/Footer";
+import Reveal from "@/components/barber/Reveal";
 import { SectionHead } from "@/components/barber/Section";
 
 export default function BarberPage() {
   return (
     <>
+      <ScrollProgress />
       <Nav />
       <main>
         <Hero />
@@ -28,9 +31,9 @@ export default function BarberPage() {
               title="Book Your Chair"
               intro="Four quick steps. No account, no hassle — lock in your barber and your time in under a minute."
             />
-            <div className="mt-14">
+            <Reveal variant="scale" className="mt-14">
               <Booking />
-            </div>
+            </Reveal>
           </div>
         </section>
 

@@ -187,6 +187,7 @@ export default function Booking() {
       </div>
 
       <div className="p-5 sm:p-8">
+        <div key={step} className="animate-fade-up">
         {/* Step 0 — Service */}
         {step === 0 && (
           <div className="grid gap-3 sm:grid-cols-2">
@@ -375,6 +376,7 @@ export default function Booking() {
             </div>
           </div>
         )}
+        </div>
 
         {/* Summary + nav */}
         <div className="mt-6 flex flex-col gap-4 border-t border-coal-line pt-5 sm:flex-row sm:items-center sm:justify-between">
@@ -407,7 +409,7 @@ export default function Booking() {
               <button
                 onClick={() => canAdvance && setStep((step + 1) as Step)}
                 disabled={!canAdvance}
-                className="rounded-full bg-brass px-8 py-3 text-sm font-semibold uppercase tracking-widest text-coal-deep transition-colors hover:bg-brass-soft disabled:cursor-not-allowed disabled:opacity-30"
+                className="shine rounded-full bg-brass px-8 py-3 text-sm font-semibold uppercase tracking-widest text-coal-deep transition-colors hover:bg-brass-soft disabled:cursor-not-allowed disabled:opacity-30"
               >
                 Continue
               </button>

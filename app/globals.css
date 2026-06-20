@@ -64,6 +64,20 @@
   }
 }
 
+/* Hustle Blends — rotating barber-pole stripe. */
+@keyframes barber {
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+/* Hustle Blends — looping service marquee (three copies, shift one third). */
+@keyframes marquee {
+  to {
+    transform: translateX(-33.333%);
+  }
+}
+
 /* When reduced motion is requested, neutralize transforms/animations. */
 @media (prefers-reduced-motion: reduce) {
   *,

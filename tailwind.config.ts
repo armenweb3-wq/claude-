@@ -28,10 +28,24 @@ const config: Config = {
           soft: "#CDB984",
           muted: "#9C8049",
         },
+        // Hustle Blends — barbershop palette (dark, warm, premium)
+        coal: {
+          DEFAULT: "#121215",
+          deep: "#0A0A0C",
+          soft: "#1A1A1F",
+          line: "#2A2A31",
+        },
+        brass: {
+          DEFAULT: "#C8A24C", // signature gold
+          soft: "#E2C572",
+          deep: "#9A7A33",
+        },
+        bone: "#F1ECE1", // warm off-white text
       },
       fontFamily: {
         serif: ["var(--font-serif)", "Georgia", "serif"],
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        display: ["var(--font-display)", "Oswald", "Impact", "sans-serif"],
       },
       letterSpacing: {
         widest: "0.28em",

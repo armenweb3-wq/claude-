@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="760" viewBox="0 0 600 760" role="img" aria-label="Barber portrait placeholder">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1A1A1F"/>
+      <stop offset="1" stop-color="#0A0A0C"/>
+    </linearGradient>
+    <linearGradient id="b" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E2C572"/>
+      <stop offset="1" stop-color="#9A7A33"/>
+    </linearGradient>
+    <radialGradient id="spot" cx="50%" cy="32%" r="60%">
+      <stop offset="0" stop-color="#4CC89A" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#4CC89A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="760" fill="url(#g)"/>
+  <rect width="600" height="760" fill="url(#spot)"/>
+  <g fill="#2A2A31">
+    <circle cx="300" cy="300" r="120"/>
+    <path d="M120 760c0-120 80-210 180-210s180 90 180 210z"/>
+  </g>
+  <rect x="0" y="0" width="10" height="760" fill="url(#b)"/>
+  <text x="300" y="690" text-anchor="middle" font-family="Oswald, Impact, sans-serif" font-size="92" font-weight="700" fill="url(#b)" letter-spacing="4">LF</text>
+</svg>

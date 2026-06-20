@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-Three unrelated things share this repo:
+Four unrelated things share this repo:
 
 1. **Catalyst — the startup ⇄ investor marketplace** (primary) — a Next.js App
    Router app served at `/`. Accounts (Supabase auth), founder/investor listings,
@@ -13,11 +13,17 @@ Three unrelated things share this repo:
 2. **The Mkhitaryan Developers website** — the original cinematic, scroll-driven
    landing page for a Paphos, Cyprus luxury property developer. Still here, now
    served at `/property` (relocated into `app/(property)/`).
-3. **A live-scores automation** — `scripts/fetch-scores.mjs` plus
+3. **Hustle Blends — the barbershop booking page** (`hustleblends.cc`) — a
+   self-contained dark/brass landing + reservation flow served at `/barber`
+   (`app/(barber)/`). No Supabase or external deps: content lives in
+   `data/barber.ts`, sections in `components/barber/`, and the multi-step booking
+   widget POSTs to `app/api/barber/booking/route.ts` (a stub — wire to a real
+   backend before going live). Placeholder imagery is SVGs in `public/barber/`.
+4. **A live-scores automation** — `scripts/fetch-scores.mjs` plus
    `.github/workflows/scores.yml`, a standalone GitHub Action unrelated to the
    websites. It is *not* part of the Next.js build (it's excluded in `tsconfig`).
 
-`npm run dev/build` operates on both web apps together.
+`npm run dev/build` operates on all three web apps together.
 
 ## Marketplace (Catalyst) — architecture
 

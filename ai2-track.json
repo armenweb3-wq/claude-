@@ -1,0 +1,9 @@
+{
+  "label": "AI 2.0",
+  "startingBankroll": 500,
+  "targetLegs": 10,
+  "targetMultiplierPerLeg": 2.0,
+  "status": "active",
+  "updatedAt": "2026-06-20T20:00:00.000Z",
+  "bets": []
+}

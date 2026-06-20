@@ -31,6 +31,12 @@
         startingBankroll: aiTrack.startingBankroll, targetLegs: aiTrack.targetLegs, targetMultiplierPerLeg: aiTrack.targetMultiplierPerLeg,
         status: aiTrack.status, bets: aiTrack.bets });
     }
+    if (aiTrack2 && aiTrack2.bets) { // self-driving AI 2.0 track
+      shared = shared.filter((a) => (a.owner || "") !== "AI2");
+      shared.push({ id: 6, owner: "AI2", keepLabel: true, label: aiTrack2.label || "AI 2.0", source: "shared",
+        startingBankroll: aiTrack2.startingBankroll, targetLegs: aiTrack2.targetLegs, targetMultiplierPerLeg: aiTrack2.targetMultiplierPerLeg,
+        status: aiTrack2.status, bets: aiTrack2.bets });
+    }
     const local = loadLocal().map((a) => ({ ...a, source: "local" }));
     const deleted = loadDeleted();
     let all = shared.concat(local).filter((a) => !deleted.includes("s" + a.id) && !deleted.includes(a.id));
@@ -38,8 +44,10 @@
     return all;
   }
   let viewIdx = null; // which attempt is being viewed; null => latest
-  let aiTrack = null; // self-driving AI track, loaded from ai-track.json
-  let curated = null; // curated picks queue, loaded from picks.json
+  let aiTrack = null; // self-driving Model track (ai-track.json)
+  let aiTrack2 = null; // self-driving AI 2.0 track (ai2-track.json)
+  let curated = null; // curated picks queue (picks.json)
+  let odds = null; // multi-sport odds (odds.json)
 
   // =====================================================================
   //  AUTO-SETTLEMENT ENGINE
@@ -111,7 +119,7 @@
     if (viewIdx == null) {
       // default to the latest NON-AI (your) attempt, else the latest overall
       let idx = attempts.length - 1;
-      for (let i = attempts.length - 1; i >= 0; i--) { if ((attempts[i].owner || "") !== "AI") { idx = i; break; } }
+      for (let i = attempts.length - 1; i >= 0; i--) { if (!(attempts[i].owner || "").startsWith("AI")) { idx = i; break; } }
       viewIdx = idx;
     }
     if (viewIdx >= attempts.length) viewIdx = attempts.length - 1;
@@ -392,12 +400,42 @@
     return bank;
   }
 
+  const SPORTS = [["football", "Football"], ["tennis", "Tennis"], ["basketball", "Basketball"], ["nfl", "NFL"], ["mma", "MMA"]];
+  let sportView = "football";
+  function fmtKick(iso) {
+    if (!iso) return "";
+    const d = new Date(iso); const now = Date.now();
+    const opts = { weekday: "short", hour: "2-digit", minute: "2-digit" };
+    return d.getTime() > now ? d.toLocaleString([], opts) : "started";
+  }
+  function bestOddsStr(best) {
+    if (!best) return "";
+    const vals = Object.entries(best).map(([k, v]) => `${k.length > 12 ? k.slice(0, 12) + "…" : k} ${(+v).toFixed(2)}`);
+    return vals.slice(0, 3).join("  ·  ");
+  }
   function renderBuilder(matches) {
-    const upcoming = matches.filter((m) => m.status === "TIMED" || m.status === "SCHEDULED");
-    if (!upcoming.length) { $("builder").innerHTML = `<div class="card" style="font-size:.85rem;color:var(--muted)">No upcoming games in the feed right now.</div>`; return; }
-    $("builder").innerHTML = upcoming.map((m, i) =>
-      `<button class="gamebtn" data-i="${i}">${m.home} vs ${m.away} <span class="go">＋ build bet</span></button>`).join("");
-    $("builder").querySelectorAll(".gamebtn").forEach((b) => { b.onclick = () => openBuilder(upcoming[+b.dataset.i]); });
+    // sport tab bar
+    $("sportTabs").innerHTML = SPORTS.map(([k, label]) =>
+      `<button class="sporttab ${sportView === k ? "active" : ""}" data-s="${k}">${label}</button>`).join("");
+    $("sportTabs").querySelectorAll(".sporttab").forEach((b) => { b.onclick = () => { sportView = b.dataset.s; renderBuilder(lastMatches); }; });
+
+    // events for the selected sport: from odds.json; football falls back to the live (WC) feed
+    let events = (odds && odds.sports && odds.sports[sportView]) ? odds.sports[sportView].slice() : [];
+    if (sportView === "football" && !events.length) {
+      events = matches.filter((m) => m.status === "TIMED" || m.status === "SCHEDULED")
+        .map((m) => ({ home: m.home, away: m.away, commence: m.utcDate, best: null }));
+    }
+    if (!events.length) {
+      $("builder").innerHTML = `<div class="card" style="font-size:.88rem;color:var(--muted)">No upcoming events for ${SPORTS.find((s) => s[0] === sportView)[1]} right now.</div>`;
+      return;
+    }
+    $("builder").innerHTML = events.map((e, i) =>
+      `<button class="gamebtn" data-i="${i}">
+        <span><span class="g-teams">${e.home} <span class="sub">v</span> ${e.away}</span>
+        <span class="g-meta">${fmtKick(e.commence)}${e.best ? " · " + bestOddsStr(e.best) : ""}</span></span>
+        <span class="go">＋ bet</span>
+      </button>`).join("");
+    $("builder").querySelectorAll(".gamebtn").forEach((b) => { b.onclick = () => openBuilder(events[+b.dataset.i]); });
   }
 
   let draftLegs = [];
@@ -526,7 +564,9 @@
   }
   async function loadAi() {
     try { const r = await fetch("./ai-track.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) aiTrack = await r.json(); } catch {}
+    try { const r = await fetch("./ai2-track.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) aiTrack2 = await r.json(); } catch {}
     try { const r = await fetch("./picks.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) curated = await r.json(); } catch {}
+    try { const r = await fetch("./odds.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) odds = await r.json(); } catch {}
   }
   async function refresh() { await loadAi(); const m = await loadLive(); render(m || []); }
   setupMenu();

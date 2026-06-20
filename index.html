@@ -10,14 +10,14 @@
   <title>Matchday</title>
   <meta name="description" content="Matchday: daily football picks, live results, and performance tracking." />
   <!-- installable app (Add to Home Screen) -->
-  <link rel="manifest" href="manifest.json?v=28" />
+  <link rel="manifest" href="manifest.json?v=29" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="icon" type="image/png" href="icon-192.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Matchday" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <link rel="stylesheet" href="styles.css?v=28" />
+  <link rel="stylesheet" href="styles.css?v=29" />
 </head>
 <body>
   <!-- top app bar -->
@@ -93,7 +93,8 @@
     <!-- ADD A BET -->
     <section class="view" id="view-bet">
       <div class="section">
-        <h2>Add a bet <span class="live-updated">· tap a game to choose markets</span></h2>
+        <h2>Add a bet <span class="live-updated">· pick a sport, tap a game</span></h2>
+        <div id="sportTabs" class="sporttabs"></div>
         <div id="builder"></div>
       </div>
     </section>
@@ -149,7 +150,7 @@
   <div id="modal" class="modal" style="display:none"><div class="modal-card" id="modalCard"></div></div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="data.js?v=28"></script>
-  <script src="app.js?v=28"></script>
+  <script src="data.js?v=29"></script>
+  <script src="app.js?v=29"></script>
 </body>
 </html>

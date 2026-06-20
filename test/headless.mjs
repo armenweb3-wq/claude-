@@ -33,10 +33,13 @@ localStorage.setItem("wc_local_attempts_v1", JSON.stringify([
 ]));
 const liveJson = JSON.parse(fs.readFileSync("live.json", "utf8"));
 const aiJson = JSON.parse(fs.readFileSync("ai-track.json", "utf8"));
+const ai2Json = JSON.parse(fs.readFileSync("ai2-track.json", "utf8"));
 const picksJson = JSON.parse(fs.readFileSync("picks.json", "utf8"));
+const oddsJson = JSON.parse(fs.readFileSync("odds.json", "utf8"));
 const fetch = async (url) => {
   const u = String(url);
-  const body = u.includes("ai-track") ? aiJson : u.includes("picks.json") ? picksJson : liveJson;
+  const body = u.includes("ai2-track") ? ai2Json : u.includes("ai-track") ? aiJson
+    : u.includes("picks.json") ? picksJson : u.includes("odds.json") ? oddsJson : liveJson;
   return { ok: true, json: async () => body };
 };
 const window = {};

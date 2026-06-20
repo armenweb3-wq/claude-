@@ -1,0 +1,18 @@
+{
+  "date": "2026-06-20",
+  "note": "Curated queue for AI 2.0 — ~2.0-odds, auto-settleable markets (BTTS / over 2.5 / over 3.5). Higher reward than the 1.4 model, still data-led. (Corners/cards/shots aren't in the free data feeds, so they can't auto-settle; this run sticks to markets it can verify.)",
+  "picks": [
+    { "match": "France vs Iraq", "selection": { "label": "Over 3.5 total goals", "type": "over_goals", "line": 3.5 }, "odds": 2.00, "risk": "medium", "why": "France's firepower vs a leaky Iraq (shipped 4 to Norway) — points to a high-scoring game.", "whyRisk": "France could ease off once in control; 3.5 is a higher bar than 2.5." },
+    { "match": "Switzerland vs Canada", "selection": { "label": "Over 3.5 total goals", "type": "over_goals", "line": 3.5 }, "odds": 2.05, "risk": "medium", "why": "Both have been free-scoring (Switzerland 4-1, Canada 6-0).", "whyRisk": "If both are already through it could be a cautious dead rubber." },
+    { "match": "Norway vs Senegal", "selection": { "label": "Over 2.5 total goals", "type": "over_goals", "line": 2.5 }, "odds": 1.95, "risk": "medium", "why": "Two strong attacking sides; Norway hit 4 vs Iraq.", "whyRisk": "A tense must-win can tighten up." },
+    { "match": "Argentina vs Austria", "selection": { "label": "Both teams to score", "type": "btts" }, "odds": 2.00, "risk": "medium", "why": "Both sides carry goal threat; Austria have scored in their games.", "whyRisk": "Argentina can shut up shop if qualified." },
+    { "match": "England vs Ghana", "selection": { "label": "Both teams to score", "type": "btts" }, "odds": 2.00, "risk": "medium", "why": "England looked open (4-2 v Croatia); Ghana carry a threat.", "whyRisk": "England may game-manage if already through." },
+    { "match": "Portugal vs Uzbekistan", "selection": { "label": "Over 2.5 total goals", "type": "over_goals", "line": 2.5 }, "odds": 2.00, "risk": "medium", "why": "Portugal's quality should produce multiple goals vs Uzbekistan.", "whyRisk": "Uzbekistan defend deep; could keep it to 2-0." },
+    { "match": "Spain vs Saudi Arabia", "selection": { "label": "Over 2.5 total goals", "type": "over_goals", "line": 2.5 }, "odds": 2.10, "risk": "medium", "why": "Spain dominate and create high chance volume.", "whyRisk": "Spain were held 0-0 by Cape Verde once — wastefulness is the risk." },
+    { "match": "Scotland vs Brazil", "selection": { "label": "Over 2.5 total goals", "type": "over_goals", "line": 2.5 }, "odds": 2.05, "risk": "medium", "why": "Brazil's attack should carry the game past 2.5.", "whyRisk": "Brazil may rotate and coast." },
+    { "match": "Morocco vs Haiti", "selection": { "label": "Over 2.5 total goals", "type": "over_goals", "line": 2.5 }, "odds": 1.95, "risk": "medium", "why": "Morocco's quality vs debutants Haiti should mean goals.", "whyRisk": "Haiti defend deep; Morocco can be wasteful." },
+    { "match": "Czechia vs Mexico", "selection": { "label": "Both teams to score", "type": "btts" }, "odds": 2.00, "risk": "medium", "why": "Two evenly-matched sides that both score and concede.", "whyRisk": "A cagey decider could finish tight." },
+    { "match": "Uruguay vs Cape Verde", "selection": { "label": "Over 2.5 total goals", "type": "over_goals", "line": 2.5 }, "odds": 2.00, "risk": "medium", "why": "Uruguay should overwhelm debutants Cape Verde.", "whyRisk": "Cape Verde may sit deep for damage control." },
+    { "match": "Colombia vs Congo DR", "selection": { "label": "Over 2.5 total goals", "type": "over_goals", "line": 2.5 }, "odds": 2.05, "risk": "medium", "why": "Colombia impressed (3-1 v Uzbekistan) and push games.", "whyRisk": "Congo DR could make it a low-block grind." }
+  ]
+}

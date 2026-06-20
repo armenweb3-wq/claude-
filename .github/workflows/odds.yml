@@ -2,7 +2,7 @@ name: Update odds
 
 on:
   schedule:
-    - cron: "0 11 * * *"   # once daily (The Odds API free tier = 500 req/month). Bump if on a paid plan.
+    - cron: "0 */3 * * *"
   workflow_dispatch: {}
 
 permissions:

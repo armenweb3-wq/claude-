@@ -403,9 +403,11 @@ def dashboard(request: Request) -> dict:
         "equity": live_data["equity"],
         "wallet": live_data.get("wallet", live_data["equity"]),
         "start_equity": user.get("start_equity") or 0.0,
-        "total_pnl": round((live_data["equity"] - (user.get("start_equity") or 0)), 4)
-                     if user.get("start_equity") else 0.0,
-        "total_return_pct": round((live_data["equity"] / user["start_equity"] - 1) * 100, 2)
+        # Total return is based on REALISED trading profit (closed trades), not
+        # live equity — so it reflects the bot's actual performance and isn't
+        # skewed by floating positions or deposits/withdrawals.
+        "total_pnl": round(st.realized_total(uid), 4),
+        "total_return_pct": round(st.realized_total(uid) / user["start_equity"] * 100, 2)
                             if user.get("start_equity") else 0.0,
         "open_pnl": live_data["open_pnl"],
         "realized_today": realized_today,

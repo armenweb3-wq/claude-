@@ -233,6 +233,12 @@ class Store:
         self._q("UPDATE users SET start_equity=?, start_at=? WHERE id=?",
                 (float(value), time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), uid))
 
+    def realized_total(self, uid: int) -> float:
+        """Sum of all REALISED P&L from this user's closed trades (the bot's
+        actual trading profit — excludes floating/unrealised P&L)."""
+        rows = self._q("SELECT COALESCE(SUM(pnl),0) AS s FROM closed_trades WHERE user_id=?", (uid,))
+        return float(rows[0]["s"] or 0)
+
     # ── durable event log / notification outbox ─────────────
     def add_event(self, target: str, kind: str, payload: dict,
                   user_id: int | None = None) -> None:

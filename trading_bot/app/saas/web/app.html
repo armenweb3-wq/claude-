@@ -171,6 +171,15 @@
     .wrap.wide .dashcols{column-count:2;column-gap:13px}
     .wrap.wide .dashcols>.card{break-inside:avoid;display:inline-block;width:100%}
   }
+  /* product hub */
+  .prodcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:12px;cursor:pointer;transition:border-color .15s ease}
+  .prodcard:hover{border-color:rgba(76,192,140,.5)}
+  .prodcard.soon{opacity:.55;cursor:default}
+  .prodcard.soon:hover{border-color:var(--line)}
+  .prodtop{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .prodname{font-weight:700;font-size:1.05rem}
+  .proddesc{color:var(--muted);font-size:.85rem;margin-top:6px;line-height:1.5}
+  .prodstat{margin-top:8px;font-size:.85rem}
 </style>
 </head>
 <body>
@@ -215,6 +224,28 @@
       <span id="installTxt">Add ZENITH to your home screen for a faster, app-like experience.</span>
       <span><span class="link" id="installBtn">Install</span> &nbsp; <span class="link" onclick="dismissInstall()">✕</span></span>
     </div>
+
+    <!-- PRODUCT HUB -->
+    <div id="hubView">
+      <h2 style="margin:2px 0 12px">Choose a market</h2>
+      <div class="prodcard" onclick="openProduct('crypto')">
+        <div class="prodtop"><span class="prodname">📈 Crypto</span><span class="pill on" id="hubCryptoStatus">—</span></div>
+        <div class="proddesc">Automated futures trading on your own Bybit account.</div>
+        <div class="prodstat" id="hubCryptoStat"></div>
+      </div>
+      <div class="prodcard soon">
+        <div class="prodtop"><span class="prodname">📊 Indices</span><span class="pill off">Coming soon</span></div>
+        <div class="proddesc">Trade indices (S&amp;P, NAS100…) via a connected broker.</div>
+      </div>
+      <div class="prodcard soon">
+        <div class="prodtop"><span class="prodname">🚀 Memecoins</span><span class="pill off">Coming soon</span></div>
+        <div class="proddesc">Curated memecoin strategies — on-chain, your own wallet.</div>
+      </div>
+    </div>
+
+    <!-- CRYPTO PRODUCT -->
+    <div id="cryptoView" class="hide">
+      <div style="margin:0 0 10px"><span class="link" onclick="backToHub()">← Markets</span></div>
     <div class="stepwrap">
       <div class="s" id="s1">01 · Connect</div>
       <div class="s" id="s2">02 · Activate</div>
@@ -316,6 +347,7 @@
       custody of your funds; withdrawal-disabled keys only.</p>
     </div>
     <div class="foot">ZENITH · ALGORITHMIC TRADING</div>
+    </div><!-- /cryptoView -->
   </div>
 </div>
 
@@ -850,7 +882,19 @@ function render(){
   if(dashTimer){ clearInterval(dashTimer); dashTimer=null; }
   if(active){ loadDashboard(); dashTimer=setInterval(loadDashboard,10000); }
   if(typeof maybeShowInstall==='function') maybeShowInstall();
+  // product hub status + land on the hub
+  const hs=$('hubCryptoStatus');
+  if(hs){ hs.textContent=active?'ACTIVE':(hasKeys?'PENDING':'SET UP');
+    hs.className='pill '+(active?'on':'off'); }
+  showHub();
 }
+function showHub(){ show('hubView',true); show('cryptoView',false); }
+function openProduct(p){
+  if(p!=='crypto') return;             // others are "coming soon"
+  show('hubView',false); show('cryptoView',true);
+  if(ME&&ME.activated) loadDashboard();
+}
+function backToHub(){ showHub(); const hh=$('hubCryptoStat'); if(hh) hh.textContent=''; }
 
 // ── formatting helpers ──────────────────────────────────────
 function money(v){ if(v==null) return '—'; v=Number(v);
@@ -891,6 +935,8 @@ async function loadDashboard(){
   const tr=s.total_return_pct||0, tp=s.total_pnl||0, te=$('d_totalret');
   te.textContent=s.start_equity?((tr>=0?'+':'')+tr+'%'):'—';
   te.className='v '+(tp>0?'pos':tp<0?'neg':'');
+  { const hh=$('hubCryptoStat'); if(hh) hh.innerHTML='Equity <b>'+money(s.equity)+'</b> · return <b class="'
+    +(tp>=0?'pos':'neg')+'">'+(tr>=0?'+':'')+tr+'%</b>'; }
   const pnl=s.open_pnl||0, pe=$('d_pnl');
   pe.textContent=signMoney(pnl); pe.className='v '+(pnl>0?'pos':pnl<0?'neg':'');
   $('d_openpos').textContent=(s.open_positions!=null?s.open_positions:'—');

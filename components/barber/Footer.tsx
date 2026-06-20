@@ -65,7 +65,12 @@ export default function Footer() {
           <p>
             © {new Date().getFullYear()} {shop.name}. All rights reserved.
           </p>
-          <p>Crafted with precision — like every cut.</p>
+          <div className="flex items-center gap-4">
+            <a href="/barber/dashboard" className="hover:text-brass">
+              Owner dashboard
+            </a>
+            <p>Crafted with precision — like every cut.</p>
+          </div>
         </div>
       </div>
     </footer>

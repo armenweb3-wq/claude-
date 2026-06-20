@@ -50,13 +50,15 @@ function processTrack(trackFile, queueFile, fallbackOdds) {
   const bets = track.bets || (track.bets = []);
   let changed = false;
 
-  // 1) settle pending
+  // 1) settle pending — a combo wins only if EVERY selection wins
   const pending = bets.find((b) => b.result === "pending");
   if (pending) {
-    const r = legResult(pending.selections[0], matchFor(pending.match));
-    if (r !== null) {
-      pending.result = r ? "won" : "lost";
-      pending.returnAmount = r ? Math.round(pending.stake * pending.odds * 100) / 100 : 0;
+    const m = matchFor(pending.match);
+    const rs = (pending.selections || []).map((s) => legResult(s, m));
+    if (rs.length && rs.every((r) => r !== null)) {
+      const won = rs.every((r) => r === true);
+      pending.result = won ? "won" : "lost";
+      pending.returnAmount = won ? Math.round(pending.stake * pending.odds * 100) / 100 : 0;
       changed = true;
       console.log(`${trackFile}: settled leg ${pending.leg} (${pending.match}) -> ${pending.result}`);
     }
@@ -83,14 +85,15 @@ function processTrack(trackFile, queueFile, fallbackOdds) {
     if (!pick) {
       m = matches.filter((x) => upcoming(x) && !used.has(norm(x.home + " vs " + x.away)))
         .sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate))[0];
-      if (m) pick = { match: m.home + " vs " + m.away, selection: fallbackOdds.sel, odds: fallbackOdds.odds };
+      if (m) pick = { match: m.home + " vs " + m.away, selections: [fallbackOdds.sel], odds: fallbackOdds.odds };
     }
     if (pick && m) {
+      const sels = pick.selections || (pick.selection ? [pick.selection] : [fallbackOdds.sel]);
       bets.push({
         leg: bets.length + 1,
         date: new Date(m.utcDate).toISOString().slice(0, 10),
         match: pick.match,
-        selections: [pick.selection],
+        selections: sels,
         stake: Math.round(bankroll * 100) / 100,
         odds: pick.odds || fallbackOdds.odds,
         result: "pending", returnAmount: 0, auto: true, curated: cands.length > 0,

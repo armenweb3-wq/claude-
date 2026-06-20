@@ -305,10 +305,12 @@
       const t = meta(m.status), mine = isMine(m);
       const score = m.homeScore == null ? "–" : `${m.homeScore} – ${m.awayScore}`;
       const upcoming = (m.status === "TIMED" || m.status === "SCHEDULED") && m.utcDate;
+      const isLive = m.status === "IN_PLAY" || m.status === "PAUSED";
       const right = upcoming
         ? `<div class="cd" data-kick="${m.utcDate}">…</div><span class="badge soon">Soon</span>`
         : `<div class="score">${score}</div><span class="badge ${t.c}">${t.l}</span>`;
-      return `<div class="match ${mine ? "mine" : ""}"><div class="teams">${m.home} <span class="sub">vs</span> ${m.away}${mine ? ' <span class="sub">· your bet</span>' : ""}</div><div style="text-align:right">${right}</div></div>`;
+      const track = isLive ? `<a class="livelink" href="https://www.google.com/search?q=${encodeURIComponent(m.home + " vs " + m.away + " live")}" target="_blank" rel="noopener">▶ Watch / live tracker</a>` : "";
+      return `<div class="match ${mine ? "mine" : ""}"><div class="teams">${m.home} <span class="sub">vs</span> ${m.away}${mine ? ' <span class="sub">· your bet</span>' : ""}${track}</div><div style="text-align:right">${right}</div></div>`;
     }).join("");
     const mineMatch = matches.find(isMine), host = $("activeLive");
     if (mineMatch && host && mineMatch.homeScore != null) {

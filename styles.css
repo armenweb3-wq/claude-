@@ -152,6 +152,7 @@ details.cand[open] summary::after { transform: rotate(180deg); }
 .match .teams { font-size: .9rem; font-weight: 600; }
 .match .sub { font-size: .72rem; color: var(--muted); font-weight: 400; }
 .match .score { font-size: 1.1rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.livelink { display: inline-block; margin-top: 5px; font-size: .74rem; font-weight: 700; color: var(--red); text-decoration: none; }
 .match .badge { font-size: .64rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 2px 8px; border-radius: 999px; }
 .badge.live { background: #fdeaef; color: var(--red); animation: pulse 1.6s infinite; }
 .badge.ft { background: #e9f9ef; color: var(--green); }

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-20T01:25:24.315Z",
+  "updatedAt": "2026-06-20T01:30:34.250Z",
   "matches": [
     {
       "home": "Iran",
@@ -124,8 +124,8 @@
     {
       "home": "Brazil",
       "away": "Haiti",
-      "status": "IN_PLAY",
-      "homeScore": 2,
+      "status": "PAUSED",
+      "homeScore": 3,
       "awayScore": 0,
       "utcDate": "2026-06-20T00:30:00Z"
     },

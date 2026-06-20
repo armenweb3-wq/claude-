@@ -1,5 +1,5 @@
 {
-  "label": "🤖 AI (Claude)",
+  "label": "Model (auto)",
   "startingBankroll": 500,
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,

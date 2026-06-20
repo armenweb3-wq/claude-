@@ -27,14 +27,14 @@
     let shared = (D.attempts || []).map((a) => ({ ...a, source: "shared" }));
     if (aiTrack && aiTrack.bets) { // self-driving AI track from ai-track.json (autopilot)
       shared = shared.filter((a) => (a.owner || "") !== "AI");
-      shared.push({ id: 2, owner: "AI", keepLabel: true, label: aiTrack.label || "🤖 AI (Claude)", source: "shared",
+      shared.push({ id: 2, owner: "AI", keepLabel: true, label: aiTrack.label || "Model (auto)", source: "shared",
         startingBankroll: aiTrack.startingBankroll, targetLegs: aiTrack.targetLegs, targetMultiplierPerLeg: aiTrack.targetMultiplierPerLeg,
         status: aiTrack.status, bets: aiTrack.bets });
     }
     const local = loadLocal().map((a) => ({ ...a, source: "local" }));
     const deleted = loadDeleted();
     let all = shared.concat(local).filter((a) => !deleted.includes("s" + a.id) && !deleted.includes(a.id));
-    if (!all.length) all = [{ id: 1, label: "Attempt 1", startingBankroll: 340, status: "active", bets: [], source: "shared", _placeholder: true }];
+    if (!all.length) all = [{ id: 1, label: "Run 1", startingBankroll: 340, status: "active", bets: [], source: "shared", _placeholder: true }];
     return all;
   }
   let viewIdx = null; // which attempt is being viewed; null => latest
@@ -150,7 +150,7 @@
     $("legLabel").textContent = (broken ? Alabel + " · streak broken" : Alabel + " · Leg " + currentLeg + " of " + tLegs + " (×" + tMult + ")") + shareTag;
     const bankEl = $("bankroll"); bankEl.textContent = fmt(bankroll); bankEl.className = "bankroll " + (profit >= 0 ? "green" : "red");
     const profEl = $("profit"); profEl.textContent = (profit >= 0 ? "▲ +" : "▼ ") + fmt(Math.abs(profit)) + " from " + fmt(startBank); profEl.className = "profit " + (profit >= 0 ? "green" : "red");
-    $("pace").textContent = broken ? "Streak ended — tap Restart to start a new attempt" : bankroll >= targetNow ? "✓ On / ahead of pace (target " + fmt0(targetNow) + ")" : "Behind pace (target " + fmt0(targetNow) + ")";
+    $("pace").textContent = broken ? "Run ended — tap “New run” to start again" : bankroll >= targetNow ? "✓ On / ahead of pace (target " + fmt0(targetNow) + ")" : "Behind pace (target " + fmt0(targetNow) + ")";
     $("progressBar").style.width = Math.min((wins.length / tLegs) * 100, 100) + "%";
     $("progressLabel").textContent = wins.length + " / " + tLegs + " legs won · final target ≈ " + fmt0(startBank * Math.pow(tMult, tLegs));
 
@@ -196,7 +196,7 @@
         <div class="bet-sel">${(b.selections || []).map((s) => (typeof s === "string" ? s : s.label)).join(" · ")}</div>
         <div class="bet-fig"><span>Odds <b>${b.odds.toFixed(2)}</b></span><span>Stake <b>${fmt(b.stake)}</b></span><span class="ret ${e.result === "won" ? "won" : ""}">${e.result === "pending" ? "in play" : "→ " + fmt(e.ret)}</span></div>
       </div>`;
-    }).join("") || `<div class="card">No bets yet in this attempt.</div>`;
+    }).join("") || `<div class="card">No bets in this run yet.</div>`;
 
     drawChart(eff, startBank, tLegs, tMult);
 
@@ -216,10 +216,10 @@
   // by position, so deleting one re-sequences the rest. AI keeps its own name.
   function displayLabels(attempts) {
     let n = 0;
-    return attempts.map((a) => ((a.owner || "") === "AI" || a.keepLabel ? (a.label || "Strategy") : "Attempt " + (++n)));
+    return attempts.map((a) => ((a.owner || "") === "AI" || a.keepLabel ? (a.label || "Model") : "Run " + (++n)));
   }
   function deleteAttempt(a) {
-    const msg = "Delete this attempt?" + (a.source === "local"
+    const msg = "Delete this run?" + (a.source === "local"
       ? " Removes it from this phone."
       : " Hides it on this device (tap Restore to undo, or tell AI to remove it for everyone).");
     if (typeof confirm === "function" && !confirm(msg)) return;
@@ -254,7 +254,7 @@
           ${c.whyRisk ? `<div class="whyrisk"><b>Risk — ${risk}:</b> ${c.whyRisk}</div>` : ""}
         </div></details>`;
     }).join("");
-    $("pick").innerHTML = `<div class="pick-head"><span class="tag">Curated queue — the 🤖 AI follows these</span></div>` + cands;
+    $("pick").innerHTML = `<div class="pick-head"><span class="tag">Today's curated picks</span></div>` + cands;
   }
   function firstCandidate() {
     const list = curated && curated.picks;
@@ -279,9 +279,9 @@
         { label: "Actual", data: actual, borderColor: "#2ee37a", backgroundColor: "rgba(46,227,122,.12)", fill: true, spanGaps: true, pointRadius: 3, tension: 0.25, borderWidth: 2.5 },
       ]},
       options: { responsive: true, maintainAspectRatio: true,
-        plugins: { legend: { labels: { color: "#cdd7f2", boxWidth: 12, font: { size: 11 } } }, tooltip: { callbacks: { label: (c) => c.dataset.label + ": " + (c.parsed.y == null ? "—" : fmt0(c.parsed.y)) } } },
-        scales: { x: { ticks: { color: "#93a0c0", font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 9 }, grid: { display: false } },
-          y: { type: "logarithmic", ticks: { color: "#93a0c0", font: { size: 10 }, callback: (v) => cur + (v >= 1000 ? v / 1000 + "k" : v) }, grid: { color: "#26304f" } } } },
+        plugins: { legend: { labels: { color: "#6b7280", boxWidth: 12, font: { size: 11 } } }, tooltip: { callbacks: { label: (c) => c.dataset.label + ": " + (c.parsed.y == null ? "—" : fmt0(c.parsed.y)) } } },
+        scales: { x: { ticks: { color: "#9aa3b2", font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 9 }, grid: { display: false } },
+          y: { type: "logarithmic", ticks: { color: "#9aa3b2", font: { size: 10 }, callback: (v) => cur + (v >= 1000 ? v / 1000 + "k" : v) }, grid: { color: "#eef1f6" } } } },
     });
   }
 
@@ -393,7 +393,7 @@
 
     const act = activeLocalAttempt();
     $("stakeIn").value = act ? attemptBankroll(act.att).toFixed(2) : "";
-    $("placeNote").textContent = act ? `Placing into ${act.att.label} (bankroll ${fmt(attemptBankroll(act.att))}).` : "Tip: tap ↻ Restart first to start your attempt, then place bets.";
+    $("placeNote").textContent = act ? `Placing into ${act.att.label} (bankroll ${fmt(attemptBankroll(act.att))}).` : "Tip: tap “New run” first, then add bets.";
 
     $("modalCard").querySelectorAll(".mchip").forEach((b) => {
       b.onclick = () => {
@@ -426,7 +426,7 @@
     if (!(odds > 1)) { alert("Enter the odds, e.g. 1.40"); return; }
     if (!(stake > 0)) { alert("Enter a stake."); return; }
     const act = activeLocalAttempt();
-    if (!act) { alert("Tap ↻ Restart (top-left) to start your attempt first, then place the bet."); return; }
+    if (!act) { alert("Tap “New run” (top-left) first, then add the bet."); return; }
     const bets = act.att.bets || (act.att.bets = []);
     bets.push({
       leg: bets.length + 1,
@@ -445,7 +445,7 @@
 
   // ---- Restart button ----
   function doRestart() {
-    const raw = prompt("New attempt — starting bankroll (" + cur + ")?", "340");
+    const raw = prompt("New run — starting bankroll (" + cur + ")?", "340");
     if (raw == null) return;
     const amt = parseFloat(String(raw).replace(/[^0-9.]/g, ""));
     if (!(amt > 0)) { alert("Please enter a number, e.g. 340"); return; }

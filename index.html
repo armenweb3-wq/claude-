@@ -3,29 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#0b1020" />
-  <!-- never cache the page itself, so refreshes always pull the latest (no Private tab needed) -->
+  <meta name="theme-color" content="#eef1f6" />
+  <!-- never cache the page itself, so refreshes always pull the latest -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>World Cup 2026 — Betting Tracker</title>
-  <meta name="description" content="Compounding World Cup 2026 betting streak: daily pick, results, and pace vs. the 1.4×-per-leg target." />
-  <link rel="stylesheet" href="styles.css?v=23" />
+  <title>Matchday — Form &amp; Results</title>
+  <meta name="description" content="Matchday: daily football picks, live results, and performance tracking." />
+  <link rel="stylesheet" href="styles.css?v=24" />
 </head>
 <body>
   <div class="wrap">
     <div class="topbar">
-      <button id="restartBtn" class="restart-btn">↻ Restart</button>
-      <button id="deleteBtn" class="del-btn" style="display:none">🗑 Delete</button>
-      <button id="restoreBtn" class="del-btn" style="display:none">↺ Restore</button>
+      <button id="restartBtn" class="restart-btn">New run</button>
+      <button id="deleteBtn" class="del-btn" style="display:none">Delete</button>
+      <button id="restoreBtn" class="del-btn" style="display:none">Restore</button>
       <div id="attemptSwitch" class="attempt-switch"></div>
     </div>
     <header class="site">
-      <h1>⚽ World Cup 2026 Tracker</h1>
-      <p>17 legs · ~1.4× each · compounding</p>
+      <h1>Matchday</h1>
+      <p>Daily picks · live results · performance</p>
     </header>
 
-    <!-- HERO: the one thing you check -->
+    <!-- HERO -->
     <div class="card hero">
       <div class="leg" id="legLabel">—</div>
       <div class="bankroll" id="bankroll">—</div>
@@ -37,21 +37,21 @@
 
     <div class="mini" id="mini"></div>
 
-    <!-- ACTIVE BET (shown only when a bet is placed and in play) -->
+    <!-- ACTIVE BET -->
     <div class="section" id="activeSection" style="display:none">
-      <h2>Your active bet</h2>
+      <h2>Current bet</h2>
       <div id="active" class="pick"></div>
     </div>
 
-    <!-- PLACE A BET (tap a game -> build your bet) -->
+    <!-- PLACE A BET -->
     <div class="section">
-      <h2>➕ Place a bet <span class="live-updated">· tap a game to choose markets</span></h2>
+      <h2>Add a bet <span class="live-updated">· tap a game to choose markets</span></h2>
       <div id="builder"></div>
     </div>
 
-    <!-- DAILY PICKS (risk-rated, tap to expand) -->
+    <!-- PICKS -->
     <div class="section">
-      <h2>Daily picks <span class="live-updated">· tap a game for risk &amp; reasoning</span></h2>
+      <h2>Picks <span class="live-updated">· tap a game for the reasoning</span></h2>
       <div id="pick" class="pick"></div>
     </div>
 
@@ -63,41 +63,41 @@
 
     <!-- STREAK -->
     <div class="section">
-      <h2>Streak (17 legs)</h2>
+      <h2>Run progress</h2>
       <div id="streak" class="streak"></div>
     </div>
 
     <!-- CHART -->
     <div class="section">
-      <h2>Bankroll vs. target</h2>
+      <h2>Balance vs. target</h2>
       <div class="chart-box"><canvas id="bankrollChart" height="200"></canvas></div>
     </div>
 
     <!-- REALITY CHECK -->
     <div class="section">
-      <h2>Reality check</h2>
+      <h2>Odds of completing</h2>
       <div class="card reality" id="reality"></div>
     </div>
 
     <!-- RESULTS -->
     <div class="section">
-      <h2>Results log</h2>
+      <h2>History</h2>
       <div id="results"></div>
     </div>
 
     <div class="disclaimer">
-      For entertainment only — a 17-leg compounding streak is high-variance and most attempts fail.
-      Stake only what you can fully afford to lose.
+      18+. For entertainment. Long compounding streaks are high-variance — stake only what you can afford to lose.
+      <br />Gambling support: begambleaware.org
     </div>
 
-    <footer>Updated by editing <code>data.js</code> → the page recalculates itself.</footer>
+    <footer>Matchday · updated automatically</footer>
   </div>
 
   <!-- Bet builder modal -->
   <div id="modal" class="modal" style="display:none"><div class="modal-card" id="modalCard"></div></div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="data.js?v=23"></script>
-  <script src="app.js?v=23"></script>
+  <script src="data.js?v=24"></script>
+  <script src="app.js?v=24"></script>
 </body>
 </html>

@@ -218,6 +218,7 @@
     if (lastMatches.length) renderLiveList(lastMatches, activeEff ? activeEff.bet : firstCandidate());
     renderBuilder(lastMatches);
     renderInsights(lastMatches);
+    renderArbScan();
     updateCountdowns();
   }
 
@@ -351,6 +352,56 @@
     ];
     $("nextup").innerHTML = `<div class="card reality" style="margin-bottom:12px">When the World Cup ends I'll point the feed + picks at the next competition — history and learnings carry over. Likely first: <b>the Premier League / La Liga from mid-August</b>, then the Champions League.</div>` +
       items.map((i) => `<div class="nextcard"><div class="nt">${i[0]}</div><div class="nd">${i[1]}</div></div>`).join("");
+  }
+
+  // ---- sure-bet / arbitrage calculator ----
+  let calcN = 2;
+  function renderCalc() {
+    const oddInputs = Array.from({ length: calcN }).map((_, i) =>
+      `<label>Odds ${String.fromCharCode(65 + i)}<input class="inp calcodd" inputmode="decimal" placeholder="${i === 0 ? "1.90" : i === 1 ? "2.10" : "3.40"}"></label>`).join("");
+    $("calc").innerHTML = `
+      <div class="card">
+        <div class="calc-toggle">
+          <button class="ctab ${calcN === 2 ? "active" : ""}" data-n="2">2 outcomes (win/loss)</button>
+          <button class="ctab ${calcN === 3 ? "active" : ""}" data-n="3">3 outcomes (1 X 2)</button>
+        </div>
+        <div class="calc-grid">${oddInputs}<label>Total stake (${cur})<input id="calcStake" class="inp" inputmode="decimal" value="100"></label></div>
+        <button id="calcBtn" class="place-btn">Calculate split</button>
+        <div id="calcOut" class="calc-out"></div>
+      </div>`;
+    $("calc").querySelectorAll(".ctab").forEach((b) => { b.onclick = () => { calcN = +b.dataset.n; renderCalc(); }; });
+    $("calcBtn").onclick = doCalc;
+  }
+  function doCalc() {
+    const odds = Array.from(document.querySelectorAll(".calcodd")).map((el) => parseFloat((el.value || "").replace(",", ".")));
+    const stake = parseFloat(($("calcStake").value || "").replace(",", "."));
+    if (odds.some((o) => !(o > 1)) || !(stake > 0)) { $("calcOut").innerHTML = `<div class="whyrisk">Enter every odds (greater than 1) and a stake.</div>`; return; }
+    const inv = odds.map((o) => 1 / o), sum = inv.reduce((a, b) => a + b, 0);
+    const ret = stake / sum, profit = ret - stake, roi = profit / stake * 100, arb = sum < 1;
+    const rows = odds.map((o, i) => {
+      const s = stake * inv[i] / sum;
+      return `<div class="crow"><span>Outcome ${String.fromCharCode(65 + i)} @ ${o.toFixed(2)}</span><b>${fmt(s)} <span class="sub">(${(inv[i] / sum * 100).toFixed(1)}%)</span></b></div>`;
+    }).join("");
+    $("calcOut").innerHTML = `
+      ${rows}
+      <div class="crow tot"><span>Pays back (any result)</span><b>${fmt(ret)}</b></div>
+      <div class="verdict ${arb ? "won" : "lost"}">${arb
+        ? `SURE BET ✓ — guaranteed profit ${fmt(profit)} (+${roi.toFixed(2)}%)`
+        : `Not a sure bet — locks a ${profit < 0 ? "loss" : "result"} of ${fmt(profit)} (${roi.toFixed(2)}%)`}</div>
+      <div class="why">Combined implied probability = <b>${(sum * 100).toFixed(2)}%</b>. ${arb
+        ? "Under 100% → the edge is yours."
+        : `Over 100% → that ${((sum - 1) * 100).toFixed(2)}% is the bookmaker margin you can't beat on one book. A true sure bet needs each outcome's best price from <b>different</b> bookmakers.`}</div>`;
+  }
+  function renderArbScan() {
+    const evs = (odds && odds.sports && odds.sports.football) || [];
+    const arbs = [];
+    evs.forEach((e) => {
+      const vals = Object.values(e.best || {}).filter((v) => v > 1);
+      if (vals.length >= 2) { const sum = vals.reduce((a, b) => a + 1 / b, 0); if (sum < 1) arbs.push({ e, sum }); }
+    });
+    $("arbScan").innerHTML = arbs.length
+      ? arbs.map((a) => `<div class="nextcard"><div class="nt">${a.e.home} v ${a.e.away}</div><div class="nd">Sure bet! implied ${(a.sum * 100).toFixed(1)}% → ~${((1 / a.sum - 1) * 100).toFixed(2)}% guaranteed</div></div>`).join("")
+      : `<div class="card" style="font-size:.85rem;color:var(--muted)">No sure bets in the current World Cup odds. Best prices here come from one odds feed — real arbs need several bookmakers and rarely last more than minutes.</div>`;
   }
 
   // ---- menu drawer + view navigation ----
@@ -573,6 +624,7 @@
   async function refresh() { await loadAi(); const m = await loadLive(); render(m || []); }
   setupMenu();
   renderNextUp();
+  renderCalc();
   render([]);
   refresh().catch(() => {});
   setInterval(() => refresh().catch(() => {}), 60000);

@@ -58,6 +58,16 @@ body {
 .view.active { display: block; animation: viewIn .28s ease; }
 @keyframes viewIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
+/* sure-bet calculator */
+.calc-toggle { display: flex; gap: 8px; margin-bottom: 12px; }
+.ctab { flex: 1; cursor: pointer; font: inherit; font-size: .8rem; font-weight: 700; color: var(--muted); background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 9px; }
+.ctab.active { color: #fff; background: var(--accent); border-color: var(--accent); }
+.calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.calc-grid label { font-size: .74rem; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+.calc-out { margin-top: 14px; }
+.crow { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f2f6; font-size: .9rem; }
+.crow.tot { border-top: 2px solid var(--border); border-bottom: 0; font-weight: 700; margin-top: 4px; padding-top: 10px; }
+
 /* next-up cards */
 .nextcard { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; box-shadow: var(--shadow); }
 .nextcard .nt { font-weight: 700; }

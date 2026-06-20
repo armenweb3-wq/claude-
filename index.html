@@ -10,14 +10,14 @@
   <title>Matchday</title>
   <meta name="description" content="Matchday: daily football picks, live results, and performance tracking." />
   <!-- installable app (Add to Home Screen) -->
-  <link rel="manifest" href="manifest.json?v=30" />
+  <link rel="manifest" href="manifest.json?v=31" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
   <link rel="icon" type="image/png" href="icon-192.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Matchday" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <link rel="stylesheet" href="styles.css?v=30" />
+  <link rel="stylesheet" href="styles.css?v=31" />
 </head>
 <body>
   <!-- top app bar -->
@@ -53,6 +53,7 @@
     <button class="navitem" data-view="live"><span class="ic">●</span> Live scores</button>
     <button class="navitem" data-view="history"><span class="ic">≡</span> History</button>
     <button class="navitem" data-view="insights"><span class="ic">◷</span> Insights</button>
+    <button class="navitem" data-view="calc"><span class="ic">=</span> Sure-bet calc</button>
     <button class="navitem" data-view="next"><span class="ic">»</span> Next up / leagues</button>
   </nav>
 
@@ -131,6 +132,18 @@
       </div>
     </section>
 
+    <!-- SURE-BET CALCULATOR -->
+    <section class="view" id="view-calc">
+      <div class="section">
+        <h2>Sure-bet / split calculator</h2>
+        <div id="calc"></div>
+      </div>
+      <div class="section">
+        <h2>Live arbitrage scan (World Cup)</h2>
+        <div id="arbScan"></div>
+      </div>
+    </section>
+
     <!-- NEXT UP -->
     <section class="view" id="view-next">
       <div class="section">
@@ -150,7 +163,7 @@
   <div id="modal" class="modal" style="display:none"><div class="modal-card" id="modalCard"></div></div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="data.js?v=30"></script>
-  <script src="app.js?v=30"></script>
+  <script src="data.js?v=31"></script>
+  <script src="app.js?v=31"></script>
 </body>
 </html>

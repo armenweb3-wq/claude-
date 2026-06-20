@@ -31,6 +31,11 @@ body {
 .appbar { position: sticky; top: 0; z-index: 30; background: rgba(244,246,251,.85); backdrop-filter: saturate(180%) blur(10px); border-bottom: 1px solid var(--border); }
 .appbar-inner { max-width: 600px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; justify-content: flex-start; gap: 12px; }
 .brand { font-size: 1.2rem; font-weight: 800; letter-spacing: -.4px; }
+.feedhealth { margin-left: auto; font-size: .72rem; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.hdot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.hdot.ok { background: var(--green); }
+.hdot.warn { background: var(--amber); }
+.hdot.bad { background: var(--red); animation: pulse 1.6s infinite; }
 .hamburger { width: 40px; height: 40px; border: 1px solid var(--border); background: #fff; border-radius: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; box-shadow: var(--shadow); }
 .hamburger span { width: 18px; height: 2px; background: var(--text); border-radius: 2px; transition: transform .28s ease, opacity .2s ease; }
 .hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }

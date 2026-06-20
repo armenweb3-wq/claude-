@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [claude/world-cup-betting-strategy-tsvivl]
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Syntax check
+        run: |
+          node --check app.js
+          node --check data.js
+          node --check scripts/ai-autopilot.mjs
+          node --check scripts/fetch-odds.mjs
+          node --check scripts/fetch-scores.mjs
+      - name: Unit tests (money logic)
+        run: node --test

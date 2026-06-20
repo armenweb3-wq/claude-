@@ -48,6 +48,15 @@
   let aiTrack2 = null; // self-driving AI 2.0 track (ai2-track.json)
   let curated = null; // curated picks queue (picks.json)
   let odds = null; // multi-sport odds (odds.json)
+  let feedUpdatedAt = null; // scores feed freshness (live.json updatedAt)
+  function renderHealth() {
+    const el = $("feedHealth");
+    if (!feedUpdatedAt) { el.innerHTML = ""; return; }
+    const age = Math.max(0, Math.floor((Date.now() - new Date(feedUpdatedAt)) / 60000));
+    const cls = age < 15 ? "ok" : age < 40 ? "warn" : "bad";
+    el.innerHTML = `<span class="hdot ${cls}"></span>${age < 1 ? "live" : age + "m"}`;
+    el.title = "Scores feed updated " + age + " min ago" + (age >= 40 ? " — may be stale" : "");
+  }
 
   // =====================================================================
   //  AUTO-SETTLEMENT ENGINE
@@ -442,6 +451,7 @@
   }
 
   function updateCountdowns() {
+    renderHealth();
     const now = Date.now();
     document.querySelectorAll(".cd").forEach((el) => {
       const t = new Date(el.dataset.kick).getTime();
@@ -631,7 +641,7 @@
       const r = await fetch("./live.json?t=" + Date.now(), { cache: "no-store" });
       if (!r.ok) return null;
       const j = await r.json();
-      if (j.updatedAt) { const t = new Date(j.updatedAt); $("liveUpdated").textContent = "· updated " + t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
+      if (j.updatedAt) { feedUpdatedAt = j.updatedAt; const t = new Date(j.updatedAt); $("liveUpdated").textContent = "· updated " + t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
       return j.matches || [];
     } catch { return null; }
   }

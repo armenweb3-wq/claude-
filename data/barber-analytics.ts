@@ -7,7 +7,7 @@
 // exactly what drives the retention/RFM segmentation below. Swap the generated
 // `appointments` for a real feed and `computeDashboard()` is unchanged.
 
-import { mainService, barber } from "./barber";
+import { mainService, barber, hours } from "./barber";
 
 export type Appointment = {
   id: string;
@@ -169,6 +169,92 @@ function weekdayRevenue(appts: Appointment[], now: Date) {
     .filter((r) => r.count > 0);
 }
 
+// ── Upcoming bookings (synthesized future schedule for the admin view) ───────
+function toMin(hhmm: string) {
+  const [h, m] = hhmm.split(":").map(Number);
+  return h * 60 + m;
+}
+function fmtHM(min: number) {
+  return `${Math.floor(min / 60).toString().padStart(2, "0")}:${(min % 60)
+    .toString()
+    .padStart(2, "0")}`;
+}
+
+export type Segment = "vip" | "high-potential" | "regular" | "at-risk" | "lost";
+
+export type BookingRow = {
+  id: string;
+  dateIso: string;
+  weekday: string;
+  dayNum: number;
+  monthShort: string;
+  time: string;
+  name: string;
+  phone: string;
+  segment: Segment;
+};
+
+function genPhone(rng: () => number) {
+  const d = () => Math.floor(rng() * 10);
+  return `+357 9${d()} ${d()}${d()}${d()} ${d()}${d()}${d()}`;
+}
+
+function upcomingBookings(now: Date, stats: ClientStat[]): BookingRow[] {
+  const rng = mulberry32(424242);
+  const active = stats.filter((s) => s.segment !== "lost");
+  const out: BookingRow[] = [];
+  let id = 0;
+
+  for (let offset = 0; offset < 12; offset++) {
+    const d = new Date(now);
+    d.setDate(now.getDate() + offset);
+    const dow = (d.getDay() + 6) % 7;
+    const dayHours = hours[dow];
+    if (!dayHours?.close) continue;
+
+    const open = toMin(dayHours.open);
+    const close = toMin(dayHours.close);
+    const totalSlots = Math.floor((close - open) / mainService.durationMin);
+    const n = 3 + Math.floor(rng() * 5); // 3–7 bookings a day
+    const used = new Set<number>();
+    const dayRows: BookingRow[] = [];
+
+    for (let k = 0; k < n && used.size < totalSlots; k++) {
+      let si = Math.floor(rng() * totalSlots);
+      while (used.has(si)) si = (si + 1) % totalSlots;
+      used.add(si);
+      const client = active[Math.floor(rng() * active.length)];
+      dayRows.push({
+        id: `b${id++}`,
+        dateIso: d.toISOString().slice(0, 10),
+        weekday: d.toLocaleDateString("en-US", { weekday: "short" }),
+        dayNum: d.getDate(),
+        monthShort: d.toLocaleDateString("en-US", { month: "short" }),
+        time: fmtHM(open + si * mainService.durationMin),
+        name: client.name,
+        phone: genPhone(rng),
+        segment: client.segment,
+      });
+    }
+    dayRows.sort((a, b) => a.time.localeCompare(b.time));
+    out.push(...dayRows);
+  }
+  return out;
+}
+
+// Flat, serializable client record for the admin Clients table.
+export type ClientRow = {
+  id: string;
+  name: string;
+  segment: Segment;
+  visits: number;
+  lifetimeValue: number;
+  daysSinceLast: number;
+  avgIntervalDays: number;
+  potential: number;
+  action: string;
+};
+
 // ── Per-client profile (the basis for all segmentation) ──────────────────────
 export type ClientStat = {
   id: string;
@@ -188,8 +274,6 @@ export type ClientStat = {
   topService: string;
   action: string;
 };
-
-export type Segment = "vip" | "high-potential" | "regular" | "at-risk" | "lost";
 
 function buildStats(clients: Client[], appts: Appointment[], now: Date): ClientStat[] {
   const byClient = new Map<string, Appointment[]>();
@@ -319,6 +403,22 @@ export function computeDashboard() {
   const byValue = (a: ClientStat, b: ClientStat) => b.lifetimeValue - a.lifetimeValue;
   const byRecency = (a: ClientStat, b: ClientStat) => b.daysSinceLast - a.daysSinceLast;
 
+  const allClients: ClientRow[] = [...stats]
+    .sort(byValue)
+    .map((s) => ({
+      id: s.id,
+      name: s.name,
+      segment: s.segment,
+      visits: s.visits,
+      lifetimeValue: s.lifetimeValue,
+      daysSinceLast: s.daysSinceLast,
+      avgIntervalDays: Math.round(s.avgIntervalDays),
+      potential: s.potential,
+      action: s.action,
+    }));
+
+  const upcoming = upcomingBookings(now, stats);
+
   return {
     now,
     barberName: barber.name,
@@ -344,7 +444,14 @@ export function computeDashboard() {
     lost: [...lost].sort(byValue),
     vips: stats.filter((s) => s.segment === "vip").sort(byValue),
     segmentCounts: countSegments(stats),
+    allClients,
+    upcoming,
+    upcomingToday: upcoming.filter((b) => b.dateIso === toISO(now)).length,
   };
+}
+
+function toISO(d: Date) {
+  return d.toISOString().slice(0, 10);
 }
 
 function pctDelta(current: number, previous: number): number {

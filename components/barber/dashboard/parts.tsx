@@ -9,6 +9,16 @@ const SEGMENT_META: Record<Segment, { label: string; dot: string; text: string }
   lost: { label: "Lost", dot: "bg-red-400", text: "text-red-400" },
 };
 
+export function SegmentBadge({ segment }: { segment: Segment }) {
+  const m = SEGMENT_META[segment];
+  return (
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs ${m.text}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${m.dot}`} />
+      {m.label}
+    </span>
+  );
+}
+
 export function Kpi({
   label,
   value,

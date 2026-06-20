@@ -2,8 +2,27 @@
   "label": "AI 2.0",
   "startingBankroll": 500,
   "targetLegs": 10,
-  "targetMultiplierPerLeg": 2.0,
+  "targetMultiplierPerLeg": 2,
   "status": "active",
-  "updatedAt": "2026-06-20T20:00:00.000Z",
-  "bets": []
+  "updatedAt": "2026-06-20T20:40:13.105Z",
+  "bets": [
+    {
+      "leg": 1,
+      "date": "2026-06-21",
+      "match": "Spain vs Saudi Arabia",
+      "selections": [
+        {
+          "label": "Over 2.5 total goals",
+          "type": "over_goals",
+          "line": 2.5
+        }
+      ],
+      "stake": 500,
+      "odds": 2.1,
+      "result": "pending",
+      "returnAmount": 0,
+      "auto": true,
+      "curated": true
+    }
+  ]
 }

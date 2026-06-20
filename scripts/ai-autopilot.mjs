@@ -23,6 +23,40 @@ const matchFor = (name) => {
     norm(m.home).includes(p) || norm(m.away).includes(p) || p.includes(norm(m.home)) || p.includes(norm(m.away))));
 };
 
+// Real odds from odds.json (product of real single-market prices). Returns null if any
+// price is unavailable, so the curated estimate is used as a fallback.
+const oddsData = read("odds.json", { sports: {} });
+function evFor(name) {
+  const evs = (oddsData.sports && oddsData.sports.football) || [];
+  const parts = norm(name).split(/\s+vs\.?\s+|\s+-\s+/).map((s) => s.trim()).filter(Boolean);
+  if (parts.length < 2) return null;
+  return evs.find((e) => parts.every((p) =>
+    norm(e.home).includes(p) || norm(e.away).includes(p) || p.includes(norm(e.home)) || p.includes(norm(e.away))));
+}
+function realOddsFor(name, selections) {
+  const e = evFor(name);
+  if (!e) return null;
+  let prod = 1;
+  for (const s of selections) {
+    let pr = null;
+    if (s.type === "team_win") {
+      for (const [team, v] of Object.entries(e.best || {})) {
+        const t = norm(s.team);
+        if (norm(team).includes(t) || t.includes(norm(team))) { pr = (v && v.price) || v; break; }
+      }
+    } else if (s.type === "over_goals") {
+      const L = e.totals && e.totals[String(s.line)];
+      pr = L && L.over && L.over.price;
+    } else if (s.type === "under_goals") {
+      const L = e.totals && e.totals[String(s.line)];
+      pr = L && L.under && L.under.price;
+    } // btts / double_chance / manual: not in feed -> keep estimate
+    if (!(pr > 1)) return null;
+    prod *= pr;
+  }
+  return Math.round(prod * 100) / 100;
+}
+
 function processTrack(trackFile, queueFile, fallbackOdds) {
   const track = read(trackFile, null);
   if (!track) { console.log(`skip ${trackFile} (missing)`); return; }
@@ -68,17 +102,20 @@ function processTrack(trackFile, queueFile, fallbackOdds) {
     }
     if (pick && m) {
       const sels = pick.selections || (pick.selection ? [pick.selection] : [fallbackOdds.sel]);
+      const real = realOddsFor(pick.match, sels);
       bets.push({
         leg: bets.length + 1,
         date: new Date(m.utcDate).toISOString().slice(0, 10),
         match: pick.match,
+        kickoff: m.utcDate,
         selections: sels,
         stake: Math.round(bankroll * 100) / 100,
-        odds: pick.odds || fallbackOdds.odds,
+        odds: real || pick.odds || fallbackOdds.odds,
+        oddsReal: !!real,
         result: "pending", returnAmount: 0, auto: true, curated: cands.length > 0,
       });
       changed = true;
-      console.log(`${trackFile}: placed leg ${bets.length} (${pick.match})`);
+      console.log(`${trackFile}: placed leg ${bets.length} (${pick.match}) odds ${real ? real + " [real]" : (pick.odds || fallbackOdds.odds) + " [est]"}`);
     }
   }
 

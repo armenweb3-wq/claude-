@@ -131,6 +131,8 @@ header.site p { margin: 2px 0 0; color: var(--muted); font-size: .85rem; }
 .pick .h { font-size: 1.2rem; font-weight: 800; margin-top: 10px; }
 .pick .m { color: var(--accent); font-weight: 600; margin-top: 4px; font-size: .9rem; }
 .pick .r { margin-top: 10px; font-size: .9rem; color: #374151; }
+.cd-line { margin-top: 10px; font-size: .9rem; font-weight: 700; color: var(--accent); }
+.cd-line.live { color: var(--red); }
 .pick-head { margin-bottom: 6px; }
 
 .legs { list-style: none; margin: 12px 0 0; padding: 0; font-size: .9rem; }

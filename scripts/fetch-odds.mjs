@@ -29,21 +29,31 @@ const SPORTS = {
 };
 
 async function fetchSport(sportKey) {
-  const url = `https://api.the-odds-api.com/v4/sports/${sportKey}/odds/?apiKey=${KEY}&regions=eu&markets=h2h&oddsFormat=decimal`;
+  const url = `https://api.the-odds-api.com/v4/sports/${sportKey}/odds/?apiKey=${KEY}&regions=eu&markets=h2h,totals&oddsFormat=decimal`;
   const res = await fetch(url);
   const remaining = res.headers.get("x-requests-remaining");
   if (!res.ok) { console.error(`${sportKey}: HTTP ${res.status}`); return { events: [], remaining }; }
   const data = await res.json();
   const events = (data || []).map((ev) => {
-    const best = {};
+    const best = {};      // h2h: outcome -> {price, book}
+    const totals = {};    // goal line -> { over:{price,book}, under:{price,book} }  (best prices)
     for (const bk of ev.bookmakers || []) {
-      const mkt = (bk.markets || []).find((m) => m.key === "h2h");
-      if (!mkt) continue;
-      for (const o of mkt.outcomes || []) {
-        if (!best[o.name] || o.price > best[o.name].price) best[o.name] = { price: o.price, book: bk.title };
+      for (const mkt of bk.markets || []) {
+        if (mkt.key === "h2h") {
+          for (const o of mkt.outcomes || []) {
+            if (!best[o.name] || o.price > best[o.name].price) best[o.name] = { price: o.price, book: bk.title };
+          }
+        } else if (mkt.key === "totals") {
+          for (const o of mkt.outcomes || []) {
+            const L = String(o.point);
+            const k = (o.name || "").toLowerCase(); // "over" | "under"
+            totals[L] = totals[L] || {};
+            if (!totals[L][k] || o.price > totals[L][k].price) totals[L][k] = { price: o.price, book: bk.title };
+          }
+        }
       }
     }
-    return { id: ev.id, sportKey, home: ev.home_team, away: ev.away_team, commence: ev.commence_time, best };
+    return { id: ev.id, sportKey, home: ev.home_team, away: ev.away_team, commence: ev.commence_time, best, totals };
   });
   return { events, remaining };
 }

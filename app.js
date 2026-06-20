@@ -185,11 +185,18 @@
       if (ev.verdict === "won") v = `<div class="verdict won">AUTO-SETTLED: WON → ${fmt(ret)}</div>`;
       else if (ev.verdict === "lost") v = `<div class="verdict lost">AUTO-SETTLED: LOST</div>`;
       else if (ev.match && ev.match.status === "FINISHED" && ev.allAutoHit && ev.hasManual) v = `<div class="verdict wait">Auto legs passed ✓ — confirm corners/cards</div>`;
+      // kickoff countdown for the upcoming match
+      const kick = b.kickoff || (ev.match && ev.match.utcDate);
+      const status = ev.match && ev.match.status;
+      let cd = "";
+      if (kick && (status === "TIMED" || status === "SCHEDULED" || !status)) cd = `<div class="cd-line">Kicks off in <span class="cd" data-kick="${kick}">…</span></div>`;
+      else if (status === "IN_PLAY" || status === "PAUSED") cd = `<div class="cd-line live">● Live now</div>`;
       $("activeSection").style.display = "";
       $("active").innerHTML = `
-        <span class="tag">Placed · ${ev.match && ev.match.status === "FINISHED" ? "full time" : "in play"}</span>
+        <span class="tag">Placed · ${status === "FINISHED" ? "full time" : status === "IN_PLAY" || status === "PAUSED" ? "in play" : "upcoming"}</span>
         <div class="h">${b.match}</div>
-        <div class="m">Leg ${b.leg} · odds ${b.odds.toFixed(2)} · returns ${fmt(ret)} if it lands</div>
+        <div class="m">Leg ${b.leg} · odds ${b.odds.toFixed(2)}${b.oddsReal ? " (real)" : ""} · returns ${fmt(ret)} if it lands</div>
+        ${cd}
         <ul class="legs">${legsHtml}</ul>${v}<div id="activeLive"></div>`;
     } else { $("activeSection").style.display = "none"; }
 

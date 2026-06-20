@@ -407,12 +407,19 @@
     const evs = (odds && odds.sports && odds.sports.football) || [];
     const arbs = [];
     evs.forEach((e) => {
-      const vals = Object.values(e.best || {}).filter((v) => v > 1);
-      if (vals.length >= 2) { const sum = vals.reduce((a, b) => a + 1 / b, 0); if (sum < 1) arbs.push({ e, sum }); }
+      const entries = Object.entries(e.best || {}).filter(([, v]) => oddPrice(v) > 1);
+      if (entries.length >= 2) { const sum = entries.reduce((a, [, v]) => a + 1 / oddPrice(v), 0); if (sum < 1) arbs.push({ e, entries, sum }); }
     });
     $("arbScan").innerHTML = arbs.length
-      ? arbs.map((a) => `<div class="nextcard"><div class="nt">${a.e.home} v ${a.e.away}</div><div class="nd">Sure bet! implied ${(a.sum * 100).toFixed(1)}% → ~${((1 / a.sum - 1) * 100).toFixed(2)}% guaranteed</div></div>`).join("")
-      : `<div class="card" style="font-size:.85rem;color:var(--muted)">No sure bets in the current World Cup odds. Best prices here come from one odds feed — real arbs need several bookmakers and rarely last more than minutes.</div>`;
+      ? arbs.map((a) => {
+          const rows = a.entries.map(([name, v]) => {
+            const s = 100 * (1 / oddPrice(v)) / a.sum;
+            const bk = oddBook(v) ? ` <span class="sub">@ ${oddBook(v)}</span>` : "";
+            return `<div class="crow"><span>${name} (${(+oddPrice(v)).toFixed(2)})${bk}</span><b>€${s.toFixed(2)}</b></div>`;
+          }).join("");
+          return `<div class="card" style="margin-bottom:10px"><div class="bet-match">${a.e.home} v ${a.e.away}</div>${rows}<div class="verdict won">Stake €100 → guaranteed +€${(100 / a.sum - 100).toFixed(2)} (+${((1 / a.sum - 1) * 100).toFixed(2)}%)</div></div>`;
+        }).join("")
+      : `<div class="card" style="font-size:.85rem;color:var(--muted)">No sure bets in the current World Cup odds right now. (Best prices come from one feed/region — real arbs need several bookmakers and rarely last more than minutes.)</div>`;
   }
 
   // ---- menu drawer + view navigation ----
@@ -472,9 +479,11 @@
     const opts = { weekday: "short", hour: "2-digit", minute: "2-digit" };
     return d.getTime() > now ? d.toLocaleString([], opts) : "started";
   }
+  const oddPrice = (v) => (v && typeof v === "object") ? v.price : v;  // supports old (number) & new ({price,book}) shapes
+  const oddBook = (v) => (v && typeof v === "object") ? v.book : "";
   function bestOddsStr(best) {
     if (!best) return "";
-    const vals = Object.entries(best).map(([k, v]) => `${k.length > 12 ? k.slice(0, 12) + "…" : k} ${(+v).toFixed(2)}`);
+    const vals = Object.entries(best).map(([k, v]) => `${k.length > 12 ? k.slice(0, 12) + "…" : k} ${(+oddPrice(v)).toFixed(2)}`);
     return vals.slice(0, 3).join("  ·  ");
   }
   function renderBuilder(matches) {

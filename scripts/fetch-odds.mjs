@@ -40,7 +40,7 @@ async function fetchSport(sportKey) {
       const mkt = (bk.markets || []).find((m) => m.key === "h2h");
       if (!mkt) continue;
       for (const o of mkt.outcomes || []) {
-        if (!best[o.name] || o.price > best[o.name]) best[o.name] = o.price;
+        if (!best[o.name] || o.price > best[o.name].price) best[o.name] = { price: o.price, book: bk.title };
       }
     }
     return { id: ev.id, sportKey, home: ev.home_team, away: ev.away_team, commence: ev.commence_time, best };

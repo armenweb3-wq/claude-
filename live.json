@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-20T03:05:27.852Z",
+  "updatedAt": "2026-06-20T03:10:29.220Z",
   "matches": [
     {
       "home": "Iran",
@@ -132,9 +132,9 @@
     {
       "home": "Turkey",
       "away": "Paraguay",
-      "status": "TIMED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "IN_PLAY",
+      "homeScore": 0,
+      "awayScore": 1,
       "utcDate": "2026-06-20T03:00:00Z"
     },
     {

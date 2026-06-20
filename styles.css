@@ -7,7 +7,7 @@
   --green: #16a34a;
   --red: #e11d48;
   --amber: #d97706;
-  --accent: #2563eb;
+  --accent: #059669;
   --border: #e5e7eb;
   --shadow: 0 1px 3px rgba(16,24,40,.07), 0 1px 2px rgba(16,24,40,.04);
   --shadow-lg: 0 8px 24px rgba(16,24,40,.10);
@@ -49,7 +49,7 @@ body {
 .drawer-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .navitem { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; font: inherit; font-size: .95rem; font-weight: 600; color: var(--text); background: transparent; border: 0; border-radius: 10px; padding: 12px 12px; cursor: pointer; }
 .navitem:hover { background: #f3f5f9; }
-.navitem.active { background: #eef4ff; color: var(--accent); }
+.navitem.active { background: #ecfdf5; color: var(--accent); }
 .navitem .ic { width: 22px; text-align: center; color: var(--muted); font-size: .95rem; }
 .navitem.active .ic { color: var(--accent); }
 
@@ -71,7 +71,7 @@ body {
 .del-btn:active { background: #fff1f4; }
 .attempt-switch { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
 .attbtn { cursor: pointer; font: inherit; font-size: .74rem; font-weight: 600; color: var(--muted); background: #fff; border: 1px solid var(--border); border-radius: 999px; padding: 6px 11px; }
-.attbtn.active { color: var(--accent); border-color: var(--accent); background: #eff4ff; }
+.attbtn.active { color: var(--accent); border-color: var(--accent); background: #ecfdf5; }
 
 /* header */
 header.site { text-align: center; margin-bottom: 14px; }
@@ -95,7 +95,7 @@ header.site p { margin: 2px 0 0; color: var(--muted); font-size: .85rem; }
 .hero .profit.red { color: var(--red); }
 .hero .pace { display: inline-block; margin-top: 12px; font-size: .8rem; padding: 5px 14px; border-radius: 999px; background: #f3f5f9; border: 1px solid var(--border); color: var(--muted); }
 .progress { height: 10px; background: #eef1f6; border-radius: 999px; margin-top: 18px; overflow: hidden; }
-.progress > span { display: block; height: 100%; background: linear-gradient(90deg, #2563eb, #16a34a); border-radius: 999px; transition: width .4s; }
+.progress > span { display: block; height: 100%; background: linear-gradient(90deg, #34d399, #059669); border-radius: 999px; transition: width .4s; }
 .progress-label { font-size: .76rem; color: var(--muted); margin-top: 7px; }
 
 .mini { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px; }
@@ -112,7 +112,7 @@ header.site p { margin: 2px 0 0; color: var(--muted); font-size: .85rem; }
 
 /* active bet + picks */
 .pick { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); }
-.pick .tag { display: inline-block; font-size: .68rem; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--accent); background: #eff4ff; padding: 3px 10px; border-radius: 999px; }
+.pick .tag { display: inline-block; font-size: .68rem; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--accent); background: #ecfdf5; padding: 3px 10px; border-radius: 999px; }
 .pick .h { font-size: 1.2rem; font-weight: 800; margin-top: 10px; }
 .pick .m { color: var(--accent); font-weight: 600; margin-top: 4px; font-size: .9rem; }
 .pick .r { margin-top: 10px; font-size: .9rem; color: #374151; }

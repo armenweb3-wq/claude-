@@ -277,7 +277,7 @@
       type: "line",
       data: { labels, datasets: [
         { label: "Target", data: target, borderColor: "#7a86a8", borderDash: [5, 4], pointRadius: 0, tension: 0.25, borderWidth: 2 },
-        { label: "Actual", data: actual, borderColor: "#2ee37a", backgroundColor: "rgba(46,227,122,.12)", fill: true, spanGaps: true, pointRadius: 3, tension: 0.25, borderWidth: 2.5 },
+        { label: "Actual", data: actual, borderColor: "#059669", backgroundColor: "rgba(5,150,105,.12)", fill: true, spanGaps: true, pointRadius: 3, tension: 0.25, borderWidth: 2.5 },
       ]},
       options: { responsive: true, maintainAspectRatio: true,
         plugins: { legend: { labels: { color: "#6b7280", boxWidth: 12, font: { size: 11 } } }, tooltip: { callbacks: { label: (c) => c.dataset.label + ": " + (c.parsed.y == null ? "—" : fmt0(c.parsed.y)) } } },

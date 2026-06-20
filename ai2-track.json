@@ -2,8 +2,34 @@
   "label": "AI 2.0",
   "startingBankroll": 500,
   "targetLegs": 10,
-  "targetMultiplierPerLeg": 2.0,
+  "targetMultiplierPerLeg": 2,
   "status": "active",
-  "updatedAt": "2026-06-20T21:45:00.000Z",
-  "bets": []
+  "updatedAt": "2026-06-20T21:55:23.123Z",
+  "bets": [
+    {
+      "leg": 1,
+      "date": "2026-06-21",
+      "match": "Ecuador vs Curaçao",
+      "kickoff": "2026-06-21T00:00:00Z",
+      "selections": [
+        {
+          "label": "Ecuador to win",
+          "type": "team_win",
+          "team": "Ecuador"
+        },
+        {
+          "label": "Over 2.5 total goals",
+          "type": "over_goals",
+          "line": 2.5
+        }
+      ],
+      "stake": 500,
+      "odds": 1.94,
+      "oddsReal": true,
+      "result": "pending",
+      "returnAmount": 0,
+      "auto": true,
+      "curated": true
+    }
+  ]
 }

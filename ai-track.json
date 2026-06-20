@@ -4,7 +4,7 @@
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
   "status": "active",
-  "updatedAt": "2026-06-20T00:10:29.358Z",
+  "updatedAt": "2026-06-20T02:40:27.728Z",
   "bets": [
     {
       "leg": 1,
@@ -117,6 +117,24 @@
         }
       ],
       "stake": 3894.25,
+      "odds": 1.4,
+      "result": "won",
+      "returnAmount": 5451.95,
+      "auto": true,
+      "curated": true
+    },
+    {
+      "leg": 8,
+      "date": "2026-06-20",
+      "match": "Netherlands vs Sweden",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 5451.95,
       "odds": 1.4,
       "result": "pending",
       "returnAmount": 0,

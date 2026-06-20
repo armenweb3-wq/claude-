@@ -209,6 +209,7 @@
 
     if (lastMatches.length) renderLiveList(lastMatches, activeEff ? activeEff.bet : firstCandidate());
     renderBuilder(lastMatches);
+    renderInsights(lastMatches);
     updateCountdowns();
   }
 
@@ -306,6 +307,59 @@
       const t = meta(mineMatch.status);
       host.innerHTML = `<div class="live-score-pill">${t.l}: ${mineMatch.home} ${mineMatch.homeScore} – ${mineMatch.awayScore} ${mineMatch.away}</div>`;
     }
+  }
+
+  // ---- insights / next-up content ----
+  function renderInsights(matches) {
+    const fin = matches.filter((m) => m.status === "FINISHED" && m.homeScore != null);
+    const n = fin.length;
+    const stat = (label, val) => `<div class="card"><div class="v">${val}</div><div class="l">${label}</div></div>`;
+    if (!n) { $("insightStats").innerHTML = stat("Matches", "—") + stat("Avg goals", "—"); }
+    else {
+      const tot = fin.map((m) => m.homeScore + m.awayScore);
+      const avg = (tot.reduce((a, b) => a + b, 0) / n);
+      const pct = (k) => Math.round((tot.filter(k).length / n) * 100) + "%";
+      const btts = Math.round(fin.filter((m) => m.homeScore > 0 && m.awayScore > 0).length / n * 100) + "%";
+      $("insightStats").innerHTML =
+        stat("Matches", n) + stat("Avg goals", avg.toFixed(2)) +
+        stat("Over 1.5", pct((t) => t > 1.5)) + stat("Over 2.5", pct((t) => t > 2.5)) +
+        stat("BTTS", btts) + stat("Under 2", pct((t) => t < 2));
+    }
+    $("learn").innerHTML =
+      "Patterns this tournament: <b>favourite vs debutant → goals flow</b> (Germany 7-1, Canada 6-0). " +
+      "<b>Blowouts run clean & low-foul</b> (Germany 7-1 had 0 cards, 11 fouls) — so avoid over-cards/fouls in mismatches. " +
+      "Deep-defending minnows can frustrate (Spain 0-0 Cape Verde) — keep goal lines at 1.5. " +
+      "Single markets across different matches always combine; same-match combos need a Bet Builder.";
+  }
+  function renderNextUp() {
+    const items = [
+      ["World Cup 2026 — knockouts", "After the group stage (ends ~27 Jun): Round of 32 → Final on 19 Jul. The Model keeps running on these."],
+      ["Pre-season friendlies", "Late Jul 2026 — low value, usually skipped."],
+      ["Top-5 European leagues restart", "Premier League, La Liga, Serie A, Ligue 1 (~14–17 Aug), Bundesliga (~late Aug) — 2026-27 season."],
+      ["UEFA Super Cup", "Early Aug 2026 — one-off, decent spot."],
+      ["UEFA Champions League", "League phase from ~mid-Sep 2026 — high-volume, well-priced markets return."],
+    ];
+    $("nextup").innerHTML = `<div class="card reality" style="margin-bottom:12px">When the World Cup ends I'll point the feed + picks at the next competition — history and learnings carry over. Likely first: <b>the Premier League / La Liga from mid-August</b>, then the Champions League.</div>` +
+      items.map((i) => `<div class="nextcard"><div class="nt">${i[0]}</div><div class="nd">${i[1]}</div></div>`).join("");
+  }
+
+  // ---- menu drawer + view navigation ----
+  function setupMenu() {
+    const drawer = $("drawer"), overlay = $("overlay"), burger = $("menuBtn");
+    const open = () => { drawer.classList.add("open"); overlay.classList.add("open"); burger.classList.add("open"); };
+    const close = () => { drawer.classList.remove("open"); overlay.classList.remove("open"); burger.classList.remove("open"); };
+    if (burger.addEventListener) burger.addEventListener("click", () => (drawer.classList.contains("open") ? close() : open()));
+    if (overlay.addEventListener) overlay.addEventListener("click", close);
+    const x = $("drawerClose"); if (x.addEventListener) x.addEventListener("click", close);
+    document.querySelectorAll(".navitem").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const v = btn.dataset.view;
+        document.querySelectorAll(".navitem").forEach((b) => b.classList.toggle("active", b === btn));
+        document.querySelectorAll(".view").forEach((s) => s.classList.toggle("active", s.id === "view-" + v));
+        close();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
   }
 
   function updateCountdowns() {
@@ -475,6 +529,8 @@
     try { const r = await fetch("./picks.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) curated = await r.json(); } catch {}
   }
   async function refresh() { await loadAi(); const m = await loadLive(); render(m || []); }
+  setupMenu();
+  renderNextUp();
   render([]);
   refresh().catch(() => {});
   setInterval(() => refresh().catch(() => {}), 60000);

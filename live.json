@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-20T22:00:39.356Z",
+  "updatedAt": "2026-06-20T22:05:23.387Z",
   "matches": [
     {
       "home": "Iran",
@@ -148,8 +148,8 @@
     {
       "home": "Germany",
       "away": "Ivory Coast",
-      "status": "IN_PLAY",
-      "homeScore": 1,
+      "status": "FINISHED",
+      "homeScore": 2,
       "awayScore": 1,
       "utcDate": "2026-06-20T20:00:00Z"
     },

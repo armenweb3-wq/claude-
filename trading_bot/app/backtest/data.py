@@ -92,6 +92,61 @@ def fetch_bybit(
     return _normalise(df)
 
 
+_BINANCE_INTERVALS = {"1h": "1h", "4h": "4h", "1d": "1d"}
+
+
+def fetch_binance(symbol: str, timeframe: str, start: str, end: str | None = None) -> pd.DataFrame:
+    """Fetch klines from Binance spot (paginated). Fallback data source."""
+    import requests
+
+    interval = _BINANCE_INTERVALS.get(timeframe, timeframe)
+    start_ms = int(pd.Timestamp(start, tz="UTC").timestamp() * 1000)
+    end_ms = int((pd.Timestamp(end, tz="UTC") if end else pd.Timestamp.utcnow()).timestamp() * 1000)
+    rows: list[list] = []
+    cursor = start_ms
+    s = requests.Session(); s.headers.update({"User-Agent": "Mozilla/5.0"})
+    while cursor < end_ms:
+        r = s.get("https://api.binance.com/api/v3/klines",
+                  params={"symbol": symbol, "interval": interval, "startTime": cursor, "limit": 1000},
+                  timeout=20)
+        r.raise_for_status()
+        batch = r.json()
+        if not batch:
+            break
+        rows.extend(batch)
+        last = int(batch[-1][0])
+        if last <= cursor or len(batch) < 1000:
+            break
+        cursor = last + 1
+        time.sleep(0.15)
+    if not rows:
+        return pd.DataFrame()
+    df = pd.DataFrame(rows, columns=["start", "open", "high", "low", "close", "volume",
+                                     "ct", "qv", "n", "tb", "tq", "ig"])
+    df.index = pd.to_datetime(df["start"].astype("int64"), unit="ms", utc=True)
+    df = df[~df.index.duplicated(keep="first")]
+    return _normalise(df)
+
+
+def fetch_history(symbol: str, timeframe: str, start: str, end: str | None = None) -> pd.DataFrame:
+    """Try multiple public data sources in order; return the first that yields
+    data. Makes the backtest work regardless of which exchange the server can
+    reach (some regions/IPs block Bybit but not Binance, etc.)."""
+    import logging
+    log = logging.getLogger(__name__)
+    errors = []
+    for name, fn in (("bybit", fetch_bybit), ("binance", fetch_binance)):
+        try:
+            df = fn(symbol, timeframe, start, end)
+            if df is not None and len(df) > 50:
+                return df
+            errors.append(f"{name}: {0 if df is None else len(df)} bars")
+        except Exception as exc:  # try the next source
+            errors.append(f"{name}: {exc}")
+            log.warning("data source %s failed for %s/%s: %s", name, symbol, timeframe, exc)
+    raise RuntimeError("no data source reachable — " + " | ".join(errors)[:300])
+
+
 def synthetic_ohlcv(
     periods: int = 3000, freq: str = "1h", seed: int = 7, start_price: float = 30_000.0
 ) -> pd.DataFrame:

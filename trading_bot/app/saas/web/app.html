@@ -205,6 +205,7 @@
       <button id="authBtn" onclick="doAuth()">Log in</button>
       <div class="msg" id="authMsg"></div>
       <div style="margin-top:14px"><span class="link" id="authSwap" onclick="swapAuth()">New here? Create an account</span></div>
+      <div style="margin-top:8px"><a class="link" id="forgotLink" href="/app/recover" target="_blank" rel="noopener">Forgot password?</a></div>
       <p class="disc" id="seatNote"></p>
     </div>
     <div class="card">
@@ -560,6 +561,7 @@ function swapAuth(){ isRegister=!isRegister;
   $('authSwap').textContent=isRegister?'Have an account? Log in':'New here? Create an account';
   $('agreeWrap').classList.toggle('hide',!isRegister);
   $('userWrap').classList.toggle('hide',!isRegister);
+  show('forgotLink', !isRegister);
   $('authMsg').textContent=''; }
 async function doAuth(){
   const m=$('authMsg'); m.className='msg';

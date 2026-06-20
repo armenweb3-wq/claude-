@@ -849,9 +849,9 @@ def admin_backtest_probe(request: Request, admin: dict = Depends(require_admin))
     import traceback
     try:
         import pandas as pd
-        from ..backtest.data import fetch_bybit
+        from ..backtest.data import fetch_history
         start = (pd.Timestamp.utcnow() - pd.DateOffset(days=120)).strftime("%Y-%m-%d")
-        df = fetch_bybit("BTCUSDT", "1d", start=start)
+        df = fetch_history("BTCUSDT", "1d", start=start)
         n = 0 if df is None else len(df)
         return {"ok": n > 50, "bars": n,
                 "first": (str(df.index[0]) if n else None),
@@ -869,13 +869,13 @@ def admin_backtest_start(request: Request, admin: dict = Depends(require_admin))
     try:
         import pandas as pd
         from ..api.backtest_routes import _run, _state
-        from ..backtest.data import fetch_bybit
+        from ..backtest.data import fetch_history
         st = _state(request)
         if st["status"] == "running":
             return {"ok": True, "status": "running", "message": "already running"}
         probe_start = (pd.Timestamp.utcnow() - pd.DateOffset(days=400)).strftime("%Y-%m-%d")
         try:
-            df = fetch_bybit("BTCUSDT", "1d", start=probe_start)
+            df = fetch_history("BTCUSDT", "1d", start=probe_start)
         except Exception as exc:
             return {"ok": False, "error": f"market-data fetch failed from the server: {exc}"}
         if df is None or len(df) < 100:

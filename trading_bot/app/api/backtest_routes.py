@@ -17,7 +17,7 @@ from fastapi import APIRouter, Depends, Request
 
 from .auth import require_api_key
 from ..config import settings
-from ..backtest.data import fetch_bybit
+from ..backtest.data import fetch_history
 from ..backtest.engine import BacktestConfig, Backtester
 from ..backtest.metrics import compute_metrics
 
@@ -63,7 +63,7 @@ def _run(app_state, symbols, tf_windows) -> None:
             start = _start_for(months)
             for sym in symbols:
                 try:
-                    df = fetch_bybit(sym, tf, start=start)
+                    df = fetch_history(sym, tf, start=start)
                     if df is None or len(df) < 260:
                         results.append({"symbol": sym, "timeframe": tf,
                                         "note": f"not enough data ({0 if df is None else len(df)})"})

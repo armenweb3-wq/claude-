@@ -366,6 +366,7 @@
           <button class="ctab ${calcN === 3 ? "active" : ""}" data-n="3">3 outcomes (1 X 2)</button>
         </div>
         <div class="calc-grid">${oddInputs}<label>Total stake (${cur})<input id="calcStake" class="inp" inputmode="decimal" value="100"></label></div>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:.74rem;color:var(--muted);margin-bottom:12px">Or: target guaranteed profit (${cur}) — optional, overrides stake<input id="calcTarget" class="inp" inputmode="decimal" placeholder="e.g. 20"></label>
         <button id="calcBtn" class="place-btn">Calculate split</button>
         <div id="calcOut" class="calc-out"></div>
       </div>`;
@@ -374,17 +375,27 @@
   }
   function doCalc() {
     const odds = Array.from(document.querySelectorAll(".calcodd")).map((el) => parseFloat((el.value || "").replace(",", ".")));
-    const stake = parseFloat(($("calcStake").value || "").replace(",", "."));
-    if (odds.some((o) => !(o > 1)) || !(stake > 0)) { $("calcOut").innerHTML = `<div class="whyrisk">Enter every odds (greater than 1) and a stake.</div>`; return; }
-    const inv = odds.map((o) => 1 / o), sum = inv.reduce((a, b) => a + b, 0);
-    const ret = stake / sum, profit = ret - stake, roi = profit / stake * 100, arb = sum < 1;
+    if (odds.some((o) => !(o > 1))) { $("calcOut").innerHTML = `<div class="whyrisk">Enter every odds (greater than 1).</div>`; return; }
+    const inv = odds.map((o) => 1 / o), sum = inv.reduce((a, b) => a + b, 0), arb = sum < 1;
+    const target = parseFloat(($("calcTarget").value || "").replace(",", "."));
+    let stake = parseFloat(($("calcStake").value || "").replace(",", "."));
+    let derived = false;
+    if (target > 0) {
+      if (!arb) { $("calcOut").innerHTML = `<div class="verdict lost">A guaranteed ${fmt(target)} is impossible with these odds</div><div class="why">Combined implied probability is <b>${(sum * 100).toFixed(2)}%</b> (over 100%). A guaranteed profit only exists when it's under 100% — get each side's best price from <b>different</b> bookmakers.</div>`; return; }
+      stake = target * sum / (1 - sum); // total stake needed to net `target`
+      derived = true;
+    }
+    if (!(stake > 0)) { $("calcOut").innerHTML = `<div class="whyrisk">Enter a stake, or a target profit.</div>`; return; }
+    const ret = stake / sum, profit = ret - stake, roi = profit / stake * 100;
     const rows = odds.map((o, i) => {
       const s = stake * inv[i] / sum;
       return `<div class="crow"><span>Outcome ${String.fromCharCode(65 + i)} @ ${o.toFixed(2)}</span><b>${fmt(s)} <span class="sub">(${(inv[i] / sum * 100).toFixed(1)}%)</span></b></div>`;
     }).join("");
     $("calcOut").innerHTML = `
+      <div class="crow"><span>${derived ? "Total stake to place (for " + fmt(target) + " profit)" : "Total stake"}</span><b>${fmt(stake)}</b></div>
       ${rows}
-      <div class="crow tot"><span>Pays back (any result)</span><b>${fmt(ret)}</b></div>
+      <div class="crow tot"><span>Pays back (any result)</span><b>${fmt(ret)}</b></div>`;
+    $("calcOut").innerHTML += `
       <div class="verdict ${arb ? "won" : "lost"}">${arb
         ? `SURE BET ✓ — guaranteed profit ${fmt(profit)} (+${roi.toFixed(2)}%)`
         : `Not a sure bet — locks a ${profit < 0 ? "loss" : "result"} of ${fmt(profit)} (${roi.toFixed(2)}%)`}</div>

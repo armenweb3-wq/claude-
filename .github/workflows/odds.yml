@@ -1,0 +1,39 @@
+name: Update odds
+
+on:
+  schedule:
+    - cron: "0 11 * * *"   # once daily (The Odds API free tier = 500 req/month). Bump if on a paid plan.
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: odds
+  cancel-in-progress: false
+
+jobs:
+  odds:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/world-cup-betting-strategy-tsvivl
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Fetch odds
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: node scripts/fetch-odds.mjs
+      - name: Commit if changed
+        run: |
+          git config user.name "odds-bot"
+          git config user.email "actions@github.com"
+          if ! git diff --quiet -- odds.json; then
+            git add odds.json
+            git commit -m "chore: update odds [skip ci]"
+            git push
+          else
+            echo "No odds change."
+          fi

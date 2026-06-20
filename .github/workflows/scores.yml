@@ -2,8 +2,8 @@ name: Update live scores
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # every 5 minutes (GitHub's scheduler is best-effort and may delay)
-  workflow_dispatch: {}        # lets you run it manually from the Actions tab
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -19,27 +19,23 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: claude/world-cup-betting-strategy-tsvivl
-
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-
       - name: Fetch scores
         env:
           FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
         run: node scripts/fetch-scores.mjs
-
-      - name: AI autopilot (settle + auto-pick next bet)
+      - name: AI autopilot (settle + auto-pick for all runs)
         run: node scripts/ai-autopilot.mjs
-
       - name: Commit if changed
         run: |
           git config user.name "scores-bot"
           git config user.email "actions@github.com"
-          if ! git diff --quiet -- live.json ai-track.json; then
-            git add live.json ai-track.json
-            git commit -m "chore: update scores + AI autopilot [skip ci]"
+          if ! git diff --quiet -- live.json ai-track.json ai2-track.json; then
+            git add live.json ai-track.json ai2-track.json
+            git commit -m "chore: update scores + autopilot [skip ci]"
             git push
           else
-            echo "No changes to commit."
+            echo "No changes."
           fi

@@ -314,31 +314,43 @@
       </div>
     </div>
 
-    <!-- MEMECOINS PRODUCT (structural preview) -->
+    <!-- MEMECOINS PRODUCT (Solana, bot-managed dedicated wallet) -->
     <div id="memecoinsView" class="hide">
       <div style="margin:0 0 10px"><span class="link" onclick="backToHub()">← Markets</span></div>
       <div class="card">
-        <h2 style="margin-top:0">🚀 Memecoins <span class="pill off">Preview</span></h2>
-        <p class="lead">Curated on-chain memecoin strategies, executed from your <b>own wallet</b> with hard risk caps. You stay self-custodied.</p>
-        <div class="banner flat">🚧 Coming soon — the layout below is how this market will work.</div>
+        <h2 style="margin-top:0">🚀 Memecoins</h2>
+        <p class="lead">Automated Solana memecoin trading from a <b>dedicated wallet the bot manages for you</b>. Fund it with only what you want to trade — your main wallet is never touched.</p>
+        <div class="banner flat" id="memeState">Loading…</div>
       </div>
-      <div class="card">
-        <h2 style="margin-top:0">How it will work</h2>
-        <div class="step"><div class="num">1</div><div>Connect your wallet (delegated trade-only — never withdrawal).</div></div>
-        <div class="step"><div class="num">2</div><div>Pick a curated strategy and set the slice of capital to allocate.</div></div>
-        <div class="step"><div class="num">3</div><div>The bot rotates the basket on-chain with stop-losses and position caps.</div></div>
+      <div class="card" id="memeCreate" style="display:none">
+        <h2 style="margin-top:0">Your dedicated trading wallet</h2>
+        <div class="banner down" style="margin-top:0"><b>Read before you create.</b> This wallet is for <b>this bot only</b> — don't use it for anything else. Fund it with <b>only the amount you're willing to trade</b>. When you reach a number you're happy with, <b>cash out your profits</b> and keep only what you want to continue trading. Crypto is high-risk — you can lose your trading balance.</div>
+        <label style="display:flex;align-items:flex-start;gap:8px;text-transform:none;letter-spacing:0;margin-top:10px">
+          <input id="meme_agree" type="checkbox" style="width:auto;margin-top:3px"/>
+          <span style="font-size:.8rem;color:var(--muted)">I understand this is a dedicated trading wallet, I'll fund it only with money I can afford to lose, and I'll withdraw profits regularly.</span></label>
+        <button id="meme_createBtn" onclick="createMemeWallet()" style="margin-top:10px">Create my dedicated wallet</button>
+        <div class="msg" id="meme_createMsg"></div>
       </div>
-      <div class="card">
-        <h2 style="margin-top:0">Your memecoins dashboard</h2>
+      <div class="card" id="memePanel" style="display:none">
+        <h2 style="margin-top:0">Your memecoins wallet</h2>
         <div class="stats">
-          <div class="stat"><div class="l">Wallet value</div><div class="v">—</div></div>
-          <div class="stat"><div class="l">Allocated</div><div class="v">—</div></div>
-          <div class="stat"><div class="l">Open positions</div><div class="v">—</div></div>
-          <div class="stat"><div class="l">Total return</div><div class="v">—</div></div>
-          <div class="stat"><div class="l">Win rate</div><div class="v">—</div></div>
-          <div class="stat"><div class="l">Strategies</div><div class="v">—</div></div>
+          <div class="stat"><div class="l">Balance (SOL)</div><div class="v" id="meme_sol">—</div></div>
+          <div class="stat"><div class="l">Status</div><div class="v sm" id="meme_status">—</div></div>
         </div>
-        <div class="banner flat" style="margin-top:12px">No wallet connected yet — preview only.</div>
+        <label style="margin-top:10px">Deposit address — send SOL here to fund trading</label>
+        <div class="copy"><span id="meme_addr" style="word-break:break-all"></span><span class="link" onclick="copyMemeAddr()">copy</span></div>
+        <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
+          <label>Risk per trade (%)</label><input id="meme_risk" type="number" step="1" min="1" max="25"/>
+          <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;margin-top:8px">
+            <input id="meme_enabled" type="checkbox" style="width:auto"/> <span style="font-size:.8rem;color:var(--muted)">Enable automated memecoin trading on this wallet</span></label>
+          <button onclick="saveMeme()" style="margin-top:10px">Save settings</button>
+          <div class="msg" id="meme_msg"></div>
+        </div>
+        <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
+          <div class="disc" style="margin:0 0 6px">Keep control: import this wallet's key into your own Solflare to monitor or withdraw at any time.</div>
+          <span class="link" onclick="revealMemeKey()">Export private key for Solflare →</span>
+          <div class="banner down hide" id="meme_secret" style="margin-top:8px;word-break:break-all"></div>
+        </div>
       </div>
     </div>
 
@@ -1037,6 +1049,7 @@ function render(){
     hs.className='pill '+(active?'on':'off'); }
   refreshCopy();
   refreshIndices();
+  refreshMeme();
   showHub();
 }
 // ── market views (one "inside" per hub tile) ────────────────
@@ -1053,13 +1066,17 @@ function openIndices(){
   if(!(indicesAvailable||isAdmin())) return;
   openMarket('indicesView'); renderIndices();
 }
-function openMemecoins(){ if(isAdmin()) openMarket('memecoinsView'); }
+function openMemecoins(){
+  if(!(memeAvailable||isAdmin())) return;
+  openMarket('memecoinsView'); renderMeme();
+}
 function openUnlimited(){ if(isAdmin()) openMarket('unlimitedView'); }
 function backToHub(){ showHub(); const hh=$('hubCryptoStat'); if(hh) hh.textContent=''; }
 
 // ── copy trading (follower opt-in) + market tile states ─────
 let copyAvailable=false, copyEnabled=false;
 let indicesAvailable=false, indicesConnected=false, ixCfg=null;
+let memeAvailable=false, memeWallet=false, memeCfg=null;
 function isAdmin(){ return !!(ME&&ME.is_admin); }
 function show2(id,on){ const e=$(id); if(e) e.style.display=on?'':'none'; }
 async function refreshCopy(){
@@ -1089,9 +1106,65 @@ function updateTiles(){
   if(indicesAvailable) _setTile(ic,ip,true,'openIndices()',indicesConnected?'Connected':'Trade',indicesConnected);
   else if(isAdmin()) _setTile(ic,ip,true,'openIndices()','Preview',false);
   else _setTile(ic,ip,false,'','Coming soon',false);
-  // Memecoins & Unlimited Leverage: structural previews, admin-only for now.
-  _setTile($('memeCard'),$('memeStatus'),isAdmin(),'openMemecoins()',isAdmin()?'Preview':'Coming soon',false);
+  // Memecoins: live for everyone when enabled; preview for admins otherwise.
+  const mc=$('memeCard'), ms=$('memeStatus');
+  if(memeAvailable) _setTile(mc,ms,true,'openMemecoins()',memeWallet?'Wallet':'Start',memeWallet);
+  else if(isAdmin()) _setTile(mc,ms,true,'openMemecoins()','Preview',false);
+  else _setTile(mc,ms,false,'','Coming soon',false);
+  // Unlimited Leverage: structural preview, admin-only for now.
   _setTile($('unlimCard'),$('unlimStatus'),isAdmin(),'openUnlimited()',isAdmin()?'Preview':'Coming soon',false);
+}
+async function refreshMeme(){
+  try{ memeCfg=await api('/memecoins'); memeAvailable=!!memeCfg.available; memeWallet=!!memeCfg.wallet; }
+  catch(e){ memeAvailable=false; memeWallet=false; memeCfg=null; }
+  updateTiles();
+}
+function renderMeme(){
+  const st=$('memeState');
+  if(!memeAvailable){
+    if(st) st.textContent='Preview — the memecoins market isn’t switched on yet (MEMECOINS_ENABLED).';
+    show2('memeCreate',false); show2('memePanel',false); return;
+  }
+  if(!memeWallet){
+    if(st) st.textContent='Create your dedicated Solana trading wallet to begin.';
+    show2('memeCreate',true); show2('memePanel',false); return;
+  }
+  if(st) st.textContent='✓ Dedicated wallet ready. Fund it and enable trading.';
+  show2('memeCreate',false); show2('memePanel',true);
+  const w=memeCfg||{}, cfg=w.settings||{};
+  if($('meme_addr')) $('meme_addr').textContent=(w.wallet&&w.wallet.address)||'';
+  if($('meme_risk')) $('meme_risk').value=cfg.risk_pct||5;
+  if($('meme_enabled')) $('meme_enabled').checked=!!cfg.enabled;
+  if($('meme_status')) $('meme_status').textContent=cfg.enabled?'trading':'paused';
+  const sec=$('meme_secret'); if(sec){ sec.classList.add('hide'); sec.textContent=''; }
+  loadMemeBalance();
+}
+async function createMemeWallet(){
+  const btn=$('meme_createBtn'), msg=$('meme_createMsg'); if(msg) msg.textContent='';
+  if(!$('meme_agree').checked){ if(msg) msg.textContent='Please tick the box to confirm you understand.'; return; }
+  if(btn) btn.disabled=true;
+  try{ await api('/memecoins/wallet','POST',{agreed:true}); await refreshMeme(); renderMeme(); }
+  catch(e){ if(msg) msg.textContent=e.message||'Could not create wallet'; }
+  if(btn) btn.disabled=false;
+}
+async function saveMeme(){
+  const msg=$('meme_msg'); if(msg) msg.textContent='';
+  try{ await api('/memecoins/settings','POST',{risk_pct:parseFloat($('meme_risk').value)||5,enabled:$('meme_enabled').checked,agreed:true});
+    if(msg) msg.textContent='Saved.'; await refreshMeme();
+  }catch(e){ if(msg) msg.textContent=e.message||'Could not save'; }
+}
+async function revealMemeKey(){
+  if(!confirm('Show your private key? Anyone who sees it controls this wallet. Only do this to import it into your own Solflare.')) return;
+  const box=$('meme_secret');
+  try{ const r=await api('/memecoins/secret');
+    if(box){ box.textContent='Private key (import into Solflare, then keep it secret): '+r.secret_key; box.classList.remove('hide'); }
+  }catch(e){ if(box){ box.textContent='Could not load key.'; box.classList.remove('hide'); } }
+}
+function copyMemeAddr(){ const a=$('meme_addr'); if(a&&navigator.clipboard) navigator.clipboard.writeText(a.textContent||''); }
+async function loadMemeBalance(){
+  const el=$('meme_sol'); if(!el) return;
+  try{ const b=await api('/memecoins/balance'); el.textContent=b.ok?(Number(b.sol).toFixed(4)+' ◎'):'—'; }
+  catch(e){ el.textContent='—'; }
 }
 function renderIndices(){
   const st=$('indicesState');

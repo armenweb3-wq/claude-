@@ -126,6 +126,16 @@ class IndicesSettingsIn(BaseModel):
     enabled: bool = False
 
 
+class MemeCreateIn(BaseModel):
+    agreed: bool = False
+
+
+class MemeSettingsIn(BaseModel):
+    risk_pct: float = 5.0
+    enabled: bool = False
+    agreed: bool = True
+
+
 class PaymentIn(BaseModel):
     tx_hash: str
 
@@ -887,6 +897,87 @@ def indices_account(request: Request) -> dict:
         return {"ok": False, "error": "no MT5 account connected"}
     try:
         return {"ok": True, "equity": bk.get_equity(), "positions": bk.open_positions()}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)[:200]}
+
+
+# ── memecoins market (Solana, bot-managed dedicated wallet) ──
+@router.get("/api/memecoins")
+def get_memecoins(request: Request) -> dict:
+    user = current_user(request)
+    w = store().get_memecoin_wallet(user["id"])
+    return {
+        "available": settings.memecoins_enabled,
+        "wallet": ({"address": w["address"]} if w else None),
+        "settings": ({"risk_pct": w["risk_pct"], "enabled": bool(w["enabled"]),
+                      "agreed": bool(w["agreed"])} if w else None),
+    }
+
+
+@router.post("/api/memecoins/wallet")
+def create_memecoin_wallet(body: MemeCreateIn, request: Request) -> dict:
+    """Generate a FRESH dedicated Solana wallet for the user (one only). The
+    secret is encrypted at rest and never returned here — export it separately."""
+    user = current_user(request)
+    if not settings.memecoins_enabled:
+        raise HTTPException(400, "the memecoins market is not enabled yet")
+    if not body.agreed:
+        raise HTTPException(400, "you must accept the dedicated-wallet terms first")
+    st = store()
+    existing = st.get_memecoin_wallet(user["id"])
+    if existing:
+        return {"ok": True, "address": existing["address"]}
+    from .solana_wallet import generate_wallet
+    w = generate_wallet()
+    st.create_memecoin_wallet(user["id"], w["address"], security.encrypt(w["secret_key"]))
+    st.save_memecoin_settings(user["id"], 5.0, False, True)  # record consent
+    return {"ok": True, "address": w["address"]}
+
+
+@router.get("/api/memecoins/secret")
+def reveal_memecoin_secret(request: Request) -> dict:
+    """Return the wallet's private key so the user can import it into Solflare
+    and keep ultimate control / withdraw any time. It's THEIR wallet — but it's
+    sensitive, so this is an explicit, separate action."""
+    user = current_user(request)
+    w = store().get_memecoin_wallet(user["id"])
+    if not w:
+        raise HTTPException(404, "no wallet yet")
+    return {"secret_key": security.decrypt(w["enc_secret"]), "address": w["address"]}
+
+
+@router.post("/api/memecoins/settings")
+def save_memecoins(body: MemeSettingsIn, request: Request) -> dict:
+    user = current_user(request)
+    if not store().get_memecoin_wallet(user["id"]):
+        raise HTTPException(400, "create your dedicated wallet first")
+    risk = max(1.0, min(25.0, body.risk_pct))
+    store().save_memecoin_settings(user["id"], risk, body.enabled and body.agreed, body.agreed)
+    return {"ok": True}
+
+
+@router.delete("/api/memecoins/wallet")
+def forget_memecoin_wallet(request: Request) -> dict:
+    """Forget the wallet from the platform. Funds are NOT lost if the user has
+    exported the key to Solflare — but warn them in the UI before calling this."""
+    store().delete_memecoin_wallet(current_user(request)["id"])
+    return {"ok": True}
+
+
+@router.get("/api/memecoins/balance")
+def memecoin_balance(request: Request) -> dict:
+    """Best-effort SOL balance of the dedicated wallet via Solana RPC."""
+    user = current_user(request)
+    w = store().get_memecoin_wallet(user["id"])
+    if not w:
+        return {"ok": False, "error": "no wallet"}
+    try:
+        import requests
+        r = requests.post(settings.solana_rpc_url, timeout=12, json={
+            "jsonrpc": "2.0", "id": 1, "method": "getBalance", "params": [w["address"]]})
+        r.raise_for_status()
+        lamports = (r.json().get("result") or {}).get("value", 0)
+        return {"ok": True, "address": w["address"], "sol": lamports / 1e9}
     except Exception as exc:
         return {"ok": False, "error": str(exc)[:200]}
 

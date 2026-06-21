@@ -180,6 +180,12 @@ class Settings:
     indices_symbols: list[str] = field(default_factory=lambda: _get_list("INDICES_SYMBOLS", "US500,USTEC"))
     indices_timeframe: str = field(default_factory=lambda: _get("INDICES_TIMEFRAME", "1h"))
 
+    # ── Memecoins market (Solana, bot-managed dedicated wallet) ───────────
+    # Off by default; live on-chain trading is a separate, devnet-verified step.
+    memecoins_enabled: bool = field(default_factory=lambda: _get_bool("MEMECOINS_ENABLED", False))
+    solana_rpc_url: str = field(default_factory=lambda: _get(
+        "SOLANA_RPC_URL", "https://api.mainnet-beta.solana.com"))
+
     @property
     def auth_enabled(self) -> bool:
         return bool(self.control_api_key)

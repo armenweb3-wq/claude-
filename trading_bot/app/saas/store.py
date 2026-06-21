@@ -75,6 +75,11 @@ def _schema(d: str) -> list[str]:
         """CREATE TABLE IF NOT EXISTS indices_settings (
           user_id INTEGER PRIMARY KEY, risk_pct REAL NOT NULL DEFAULT 1.0,
           symbols TEXT NOT NULL DEFAULT 'US500,USTEC', enabled INTEGER NOT NULL DEFAULT 0)""",
+        # Memecoins: bot-managed dedicated Solana wallet per user (secret encrypted).
+        f"""CREATE TABLE IF NOT EXISTS memecoin_wallets (
+          user_id INTEGER PRIMARY KEY, address TEXT NOT NULL, enc_secret TEXT NOT NULL,
+          risk_pct REAL NOT NULL DEFAULT 5.0, enabled INTEGER NOT NULL DEFAULT 0,
+          agreed INTEGER NOT NULL DEFAULT 0, created_at {_TS[d]} NOT NULL)""",
     ]
 
 
@@ -633,6 +638,25 @@ class Store:
         self.get_indices_settings(uid)
         self._q("UPDATE indices_settings SET risk_pct=?, symbols=?, enabled=? WHERE user_id=?",
                 (risk_pct, symbols, 1 if enabled else 0, uid))
+
+    # ── memecoins: dedicated Solana wallet ──────────────────
+    def create_memecoin_wallet(self, uid: int, address: str, enc_secret: str) -> None:
+        self._q(
+            "INSERT INTO memecoin_wallets (user_id, address, enc_secret, created_at)"
+            " VALUES (?,?,?,?) ON CONFLICT(user_id) DO NOTHING",
+            (uid, address, enc_secret, time.time()))
+
+    def get_memecoin_wallet(self, uid: int) -> dict | None:
+        rows = self._q("SELECT * FROM memecoin_wallets WHERE user_id=?", (uid,))
+        return rows[0] if rows else None
+
+    def delete_memecoin_wallet(self, uid: int) -> None:
+        self._q("DELETE FROM memecoin_wallets WHERE user_id=?", (uid,))
+
+    def save_memecoin_settings(self, uid: int, risk_pct: float,
+                               enabled: bool, agreed: bool) -> None:
+        self._q("UPDATE memecoin_wallets SET risk_pct=?, enabled=?, agreed=? WHERE user_id=?",
+                (risk_pct, 1 if enabled else 0, 1 if agreed else 0, uid))
 
     # ── payments ────────────────────────────────────────────
     def add_payment(self, uid: int, tx_hash: str) -> None:

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-21T20:15:28.510Z",
+  "updatedAt": "2026-06-21T20:20:27.352Z",
   "matches": [
     {
       "home": "Argentina",
@@ -156,7 +156,7 @@
     {
       "home": "Belgium",
       "away": "Iran",
-      "status": "PAUSED",
+      "status": "IN_PLAY",
       "homeScore": 0,
       "awayScore": 0,
       "utcDate": "2026-06-21T19:00:00Z"

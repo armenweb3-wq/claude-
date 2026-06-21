@@ -1141,10 +1141,11 @@ async function refreshMeme(){
 }
 function renderMeme(){
   const st=$('memeState');
-  if(!memeAvailable){
+  if(!memeAvailable && !isAdmin()){
     if(st) st.textContent='Preview — the memecoins market isn’t switched on yet (MEMECOINS_ENABLED).';
     show2('memeCreate',false); show2('memePanel',false); return;
   }
+  if(!memeAvailable && st) st.textContent='Admin preview — usable on your account; not live for clients yet.';
   if(!memeWallet){
     if(st) st.textContent='Create your dedicated Solana trading wallet to begin.';
     show2('memeCreate',true); show2('memePanel',false); return;

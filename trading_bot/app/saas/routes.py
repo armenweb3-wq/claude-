@@ -934,7 +934,7 @@ def create_memecoin_wallet(body: MemeCreateIn, request: Request) -> dict:
     """Generate a FRESH dedicated Solana wallet for the user (one only). The
     secret is encrypted at rest and never returned here — export it separately."""
     user = current_user(request)
-    if not settings.memecoins_enabled:
+    if not (settings.memecoins_enabled or _is_admin_user(user)):
         raise HTTPException(400, "the memecoins market is not enabled yet")
     if not body.agreed:
         raise HTTPException(400, "you must accept the dedicated-wallet terms first")
@@ -1026,14 +1026,15 @@ def memecoin_holdings(request: Request) -> dict:
 @router.post("/api/memecoins/buy")
 def memecoin_buy(body: MemeBuyIn, request: Request) -> dict:
     """Swap SOL → token via Jupiter on the dedicated wallet. Real on-chain order."""
-    if not settings.memecoins_enabled:
+    user = current_user(request)
+    if not (settings.memecoins_enabled or _is_admin_user(user)):
         raise HTTPException(400, "memecoins market is not enabled")
     if not _valid_mint(body.mint):
         raise HTTPException(400, "invalid token mint")
     amount = max(0.0, min(float(body.sol_amount), settings.meme_max_sol_per_trade))
     if amount <= 0:
         raise HTTPException(400, "amount must be > 0")
-    ex = _meme_executor(current_user(request)["id"])
+    ex = _meme_executor(user["id"])
     if not ex:
         raise HTTPException(400, "create your wallet first")
     try:
@@ -1046,12 +1047,13 @@ def memecoin_buy(body: MemeBuyIn, request: Request) -> dict:
 @router.post("/api/memecoins/sell")
 def memecoin_sell(body: MemeSellIn, request: Request) -> dict:
     """Swap a token → SOL via Jupiter (sell a % of the holding)."""
-    if not settings.memecoins_enabled:
+    user = current_user(request)
+    if not (settings.memecoins_enabled or _is_admin_user(user)):
         raise HTTPException(400, "memecoins market is not enabled")
     if not _valid_mint(body.mint):
         raise HTTPException(400, "invalid token mint")
     pct = max(1.0, min(float(body.percent), 100.0))
-    ex = _meme_executor(current_user(request)["id"])
+    ex = _meme_executor(user["id"])
     if not ex:
         raise HTTPException(400, "create your wallet first")
     try:

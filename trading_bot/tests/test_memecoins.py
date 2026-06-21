@@ -52,6 +52,14 @@ def test_memecoins_gated_when_disabled(client):
     assert client.post("/app/api/memecoins/wallet", json={"agreed": True}).status_code == 400
 
 
+def test_admin_can_use_memecoins_in_preview(client):
+    # Market switch OFF, but the admin can still create a wallet (preview/test).
+    object.__setattr__(settings, "memecoins_enabled", False)
+    client.post("/app/api/register", json={"email": "admin@z.com", "password": "password1"})
+    r = client.post("/app/api/memecoins/wallet", json={"agreed": True})
+    assert r.status_code == 200 and len(b58decode(r.json()["address"])) == 32
+
+
 def test_memecoins_trade_endpoints_gated(client):
     object.__setattr__(settings, "memecoins_enabled", True)
     try:

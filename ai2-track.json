@@ -3,19 +3,19 @@
   "startingBankroll": 500,
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
-  "status": "busted",
-  "updatedAt": "2026-06-21T02:00:38.238Z",
+  "status": "active",
+  "updatedAt": "2026-06-21T21:16:47.909Z",
   "bets": [
     {
       "leg": 1,
       "date": "2026-06-21",
-      "match": "Ecuador vs Curaçao",
-      "kickoff": "2026-06-21T00:00:00Z",
+      "match": "Uruguay vs Cape Verde",
+      "kickoff": "2026-06-21T22:00:00Z",
       "selections": [
         {
-          "label": "Ecuador to win",
+          "label": "Uruguay to win",
           "type": "team_win",
-          "team": "Ecuador"
+          "team": "Uruguay"
         },
         {
           "label": "Over 2.5 total goals",
@@ -24,12 +24,47 @@
         }
       ],
       "stake": 500,
-      "odds": 1.94,
+      "odds": 3.43,
       "oddsReal": true,
-      "result": "lost",
+      "result": "pending",
       "returnAmount": 0,
       "auto": true,
       "curated": true
     }
-  ]
+  ],
+  "history": [
+    {
+      "run": 1,
+      "wins": 0,
+      "peak": 500,
+      "bets": [
+        {
+          "leg": 1,
+          "date": "2026-06-21",
+          "match": "Ecuador vs Curaçao",
+          "kickoff": "2026-06-21T00:00:00Z",
+          "selections": [
+            {
+              "label": "Ecuador to win",
+              "type": "team_win",
+              "team": "Ecuador"
+            },
+            {
+              "label": "Over 2.5 total goals",
+              "type": "over_goals",
+              "line": 2.5
+            }
+          ],
+          "stake": 500,
+          "odds": 1.94,
+          "oddsReal": true,
+          "result": "lost",
+          "returnAmount": 0,
+          "auto": true,
+          "curated": true
+        }
+      ]
+    }
+  ],
+  "run": 2
 }

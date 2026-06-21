@@ -1,0 +1,28 @@
+name: tests
+
+# Safety net: run the trading-bot test suite + the frontend JS guard on every
+# push and PR, so a broken commit can't reach the live app unnoticed.
+on:
+  push:
+  pull_request:
+  workflow_dispatch: {}
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: trading_bot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Run tests (pytest + JS guard)
+        run: python -m pytest -q

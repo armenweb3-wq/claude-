@@ -29,13 +29,13 @@
       shared = shared.filter((a) => (a.owner || "") !== "AI");
       shared.push({ id: 2, owner: "AI", keepLabel: true, label: aiTrack.label || "Model (auto)", source: "shared",
         startingBankroll: aiTrack.startingBankroll, targetLegs: aiTrack.targetLegs, targetMultiplierPerLeg: aiTrack.targetMultiplierPerLeg,
-        status: aiTrack.status, bets: aiTrack.bets });
+        status: aiTrack.status, bets: aiTrack.bets, run: aiTrack.run });
     }
     if (aiTrack2 && aiTrack2.bets) { // self-driving AI 2.0 track
       shared = shared.filter((a) => (a.owner || "") !== "AI2");
       shared.push({ id: 6, owner: "AI2", keepLabel: true, label: aiTrack2.label || "AI 2.0", source: "shared",
         startingBankroll: aiTrack2.startingBankroll, targetLegs: aiTrack2.targetLegs, targetMultiplierPerLeg: aiTrack2.targetMultiplierPerLeg,
-        status: aiTrack2.status, bets: aiTrack2.bets });
+        status: aiTrack2.status, bets: aiTrack2.bets, run: aiTrack2.run });
     }
     if (aiTrack3 && aiTrack3.bets) { // self-driving Pro flat-stake track
       shared = shared.filter((a) => (a.owner || "") !== "AI3");
@@ -179,7 +179,8 @@
     const roi = startBank ? (profit / startBank) * 100 : 0;
     const targetNow = startBank * Math.pow(tMult, legsDone);
 
-    const shareTag = A.source === "local" ? " · 📱 on this phone only (tell AI to share)" : "";
+    const runTag = A.run && A.run > 1 ? " · run " + A.run : "";
+    const shareTag = (A.source === "local" ? " · 📱 on this phone only (tell AI to share)" : "") + runTag;
     $("legLabel").textContent = (flat
       ? Alabel + " · " + wins.length + "W " + losses.length + "L · flat " + Math.round((A.stakePct || 0.1) * 100) + "%/bet"
       : (broken ? Alabel + " · streak broken" : Alabel + " · Leg " + currentLeg + " of " + tLegs + " (×" + tMult + ")")) + shareTag;

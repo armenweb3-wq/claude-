@@ -61,8 +61,21 @@ function processTrack(trackFile, queueFile, fallbackOdds) {
   const track = read(trackFile, null);
   if (!track) { console.log(`skip ${trackFile} (missing)`); return; }
   const queue = (read(queueFile, { picks: [] }).picks) || [];
-  const bets = track.bets || (track.bets = []);
   let changed = false;
+
+  // AUTO-RESTART: if the previous run busted, archive it and start a fresh run.
+  if (track.status === "busted" && (track.bets || []).length) {
+    track.history = track.history || [];
+    const b = track.bets;
+    const peak = b.reduce((mx, x) => Math.max(mx, x.result === "won" ? x.returnAmount : 0), track.startingBankroll);
+    track.history.push({ run: track.run || 1, wins: b.filter((x) => x.result === "won").length, peak, bets: b });
+    track.run = (track.run || 1) + 1;
+    track.bets = [];
+    track.status = "active";
+    changed = true;
+    console.log(`${trackFile}: busted run archived -> starting run ${track.run}`);
+  }
+  const bets = track.bets || (track.bets = []);
 
   // 1) settle pending — a combo wins only if EVERY selection wins (tested in engine)
   const pending = bets.find((b) => b.result === "pending");

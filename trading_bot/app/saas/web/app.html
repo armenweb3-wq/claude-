@@ -305,6 +305,7 @@
           <button onclick="saveIndices()" style="margin-top:10px">Save settings</button>
           <span class="link" style="margin-left:12px" onclick="disconnectIndices()">Disconnect</span>
           <div class="msg" id="ix_msg"></div>
+          <div class="disc" id="ix_probe" style="margin-top:10px;display:none"><a class="link" href="/app/api/admin/indices-probe?symbol=US500" target="_blank" rel="noopener">Run MetaApi diagnostic (admin) →</a></div>
         </div>
       </div>
     </div>
@@ -1093,6 +1094,7 @@ function renderIndices(){
   if($('ix_symbols')) $('ix_symbols').value=cfg.symbols||'US500,USTEC';
   if($('ix_enabled')) $('ix_enabled').checked=!!cfg.enabled;
   if($('ix_acctlbl')) $('ix_acctlbl').textContent=(ixCfg&&ixCfg.account_id)||'—';
+  show2('ix_probe', isAdmin());
   loadIndicesAccount();
 }
 async function connectIndices(){

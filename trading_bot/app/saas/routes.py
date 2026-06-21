@@ -1053,6 +1053,28 @@ def admin_copy_enable(body: CopyUserIn, admin: dict = Depends(require_admin)) ->
     return {"ok": True}
 
 
+@router.get("/api/admin/indices-probe")
+def admin_indices_probe(request: Request, symbol: str = "US500",
+                        admin: dict = Depends(require_admin)) -> dict:
+    """Plain-JSON diagnostic (open it in the URL bar) returning the RAW MetaApi
+    responses for the admin's connected MT5 account + one symbol — so the live
+    field shapes can be confirmed and the adapter locked to Equiti's reality."""
+    import traceback
+    bk = _broker_for(admin["id"])
+    if not bk:
+        return {"ok": False, "error": "connect an MT5 account first (Indices → Connect)"}
+    keys = store().get_broker_keys(admin["id"]) or {}
+    try:
+        diag = bk.diagnostic(symbol)
+        ai = diag.get("account_information") or {}
+        eq = ai.get("equity") if isinstance(ai, dict) else None
+        return {"ok": eq is not None, "symbol": symbol,
+                "account_id": keys.get("account_id"), "base_url": keys.get("base_url"),
+                "diagnostic": diag}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc), "trace": traceback.format_exc()[-400:]}
+
+
 @router.get("/api/admin/members")
 def admin_members(request: Request, admin: dict = Depends(require_admin)) -> dict:
     """Per-member health from the last run — keys, bot, copy, equity, last-run

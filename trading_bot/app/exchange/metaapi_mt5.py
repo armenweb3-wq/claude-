@@ -154,6 +154,26 @@ class MetaApiMT5:
                         json={"actionType": "POSITION_MODIFY", "positionId": position_id,
                               "stopLoss": stop_loss}) or {}
 
+    def diagnostic(self, symbol: str) -> dict:
+        """Raw MetaApi payloads (un-normalised) for one symbol — so the exact
+        live field names can be confirmed and the adapter locked to them."""
+        out: dict = {}
+
+        def _try(name, fn):
+            try:
+                out[name] = fn()
+            except Exception as exc:
+                out[name] = {"_error": str(exc)[:300]}
+
+        _try("account_information", lambda: self._req("GET", f"{self._root}/account-information"))
+        _try("symbol_specification",
+             lambda: self._req("GET", f"{self._root}/symbols/{symbol}/specification"))
+        _try("positions", lambda: self._req("GET", f"{self._root}/positions"))
+        _try("candles_sample", lambda: self._req(
+            "GET", f"{self._root}/historical-market-data/symbols/{symbol}/timeframes/1h/candles",
+            params={"limit": 2}))
+        return out
+
     def closed_deals(self, start_iso: str, end_iso: str) -> list[dict]:
         rows = self._req("GET", f"{self._root}/history-deals/time/{start_iso}/{end_iso}") or []
         out = []

@@ -153,6 +153,17 @@ def test_indices_gated_when_disabled(client):
                        json={"token": "x" * 10, "account_id": "a1"}).status_code == 400
 
 
+def test_indices_probe_requires_connection_and_admin(client):
+    # Non-admin is forbidden.
+    client.post("/app/api/register", json={"email": "u@b.com", "password": "password1"})
+    assert client.get("/app/api/admin/indices-probe").status_code == 403
+    # Admin with no MT5 connected gets a clear (non-500) message, no network used.
+    client.cookies.clear()
+    client.post("/app/api/register", json={"email": "admin@z.com", "password": "password1"})
+    body = client.get("/app/api/admin/indices-probe").json()
+    assert body["ok"] is False and "connect" in body["error"].lower()
+
+
 def test_indices_connect_and_settings_when_enabled(client):
     object.__setattr__(settings, "indices_enabled", True)
     try:

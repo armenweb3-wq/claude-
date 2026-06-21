@@ -66,6 +66,15 @@ def _schema(d: str) -> list[str]:
           symbol TEXT, side TEXT, qty {_TS[d]}, status TEXT NOT NULL,
           reason TEXT, opened_at {_TS[d]} NOT NULL, closed_at {_TS[d]},
           UNIQUE(signal_id, user_id))""",
+        # Indices market: encrypted MT5/MetaApi broker credentials per user.
+        f"""CREATE TABLE IF NOT EXISTS broker_keys (
+          user_id INTEGER PRIMARY KEY, provider TEXT NOT NULL DEFAULT 'metaapi',
+          enc_token TEXT NOT NULL, account_id TEXT NOT NULL, base_url TEXT,
+          created_at {_TS[d]} NOT NULL)""",
+        # Per-user indices settings (separate from crypto `settings`).
+        """CREATE TABLE IF NOT EXISTS indices_settings (
+          user_id INTEGER PRIMARY KEY, risk_pct REAL NOT NULL DEFAULT 1.0,
+          symbols TEXT NOT NULL DEFAULT 'US500,USTEC', enabled INTEGER NOT NULL DEFAULT 0)""",
     ]
 
 
@@ -592,6 +601,38 @@ class Store:
     def copy_exec_counts(self) -> dict:
         rows = self._q("SELECT status, COUNT(*) AS c FROM copy_executions GROUP BY status")
         return {r["status"]: int(r["c"]) for r in rows}
+
+    # ── indices market: broker keys + settings ──────────────
+    def save_broker_keys(self, uid: int, enc_token: str, account_id: str,
+                         base_url: str, provider: str = "metaapi") -> None:
+        self._q(
+            "INSERT INTO broker_keys (user_id, provider, enc_token, account_id, base_url, created_at)"
+            " VALUES (?,?,?,?,?,?)"
+            " ON CONFLICT(user_id) DO UPDATE SET provider=excluded.provider,"
+            " enc_token=excluded.enc_token, account_id=excluded.account_id,"
+            " base_url=excluded.base_url, created_at=excluded.created_at",
+            (uid, provider, enc_token, account_id, base_url, time.time()))
+
+    def get_broker_keys(self, uid: int) -> dict | None:
+        rows = self._q("SELECT * FROM broker_keys WHERE user_id=?", (uid,))
+        return rows[0] if rows else None
+
+    def delete_broker_keys(self, uid: int) -> None:
+        self._q("DELETE FROM broker_keys WHERE user_id=?", (uid,))
+
+    def get_indices_settings(self, uid: int) -> dict:
+        rows = self._q("SELECT * FROM indices_settings WHERE user_id=?", (uid,))
+        if not rows:
+            self._q("INSERT INTO indices_settings (user_id, symbols) VALUES (?,?)"
+                    " ON CONFLICT(user_id) DO NOTHING",
+                    (uid, ",".join(settings.indices_symbols) or "US500,USTEC"))
+            rows = self._q("SELECT * FROM indices_settings WHERE user_id=?", (uid,))
+        return rows[0]
+
+    def save_indices_settings(self, uid: int, risk_pct: float, symbols: str, enabled: bool) -> None:
+        self.get_indices_settings(uid)
+        self._q("UPDATE indices_settings SET risk_pct=?, symbols=?, enabled=? WHERE user_id=?",
+                (risk_pct, symbols, 1 if enabled else 0, uid))
 
     # ── payments ────────────────────────────────────────────
     def add_payment(self, uid: int, tx_hash: str) -> None:

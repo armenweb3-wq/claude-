@@ -271,31 +271,41 @@
       </div>
     </div>
 
-    <!-- INDICES PRODUCT (structural preview) -->
+    <!-- INDICES PRODUCT (Equiti MT5 via MetaApi) -->
     <div id="indicesView" class="hide">
       <div style="margin:0 0 10px"><span class="link" onclick="backToHub()">← Markets</span></div>
       <div class="card">
-        <h2 style="margin-top:0">📊 Indices <span class="pill off">Preview</span></h2>
-        <p class="lead">Automated trading of major indices (S&amp;P 500, NAS100, DAX…) through a connected broker — same risk-sized engine as crypto.</p>
-        <div class="banner flat">🚧 Coming soon — the layout below is how this market will work.</div>
+        <h2 style="margin-top:0">📊 Indices</h2>
+        <p class="lead">Automated trading of major indices (S&amp;P 500, NAS100…) on your own <b>Equiti MT5</b> account via MetaApi — the same risk-% engine as crypto. Your funds stay in your broker account.</p>
+        <div class="banner flat" id="indicesState">Loading…</div>
       </div>
-      <div class="card">
-        <h2 style="margin-top:0">How it will work</h2>
-        <div class="step"><div class="num">1</div><div>Connect a supported CFD/indices broker by API (or our partner broker).</div></div>
-        <div class="step"><div class="num">2</div><div>Activate and set risk per trade — the same sizing model as crypto.</div></div>
-        <div class="step"><div class="num">3</div><div>The bot trades index setups on your own account; you keep full control.</div></div>
+      <div class="card" id="indicesConnect" style="display:none">
+        <h2 style="margin-top:0">Connect your MT5 account</h2>
+        <div class="step"><div class="num">1</div><div>In <b>MetaApi</b> (metaapi.cloud) add your Equiti MT5 login, then copy the <b>account id</b> and an <b>auth token</b>.</div></div>
+        <div class="step"><div class="num">2</div><div>Paste them below. The token is stored <b>encrypted</b>; we never see your MT5 password, and the connection can't withdraw funds.</div></div>
+        <label>MetaApi token</label><input id="ix_token" type="password" autocomplete="off"/>
+        <label>MT5 account id</label><input id="ix_acct" autocomplete="off"/>
+        <label>MetaApi region host (optional)</label><input id="ix_base" placeholder="leave blank for default" autocomplete="off"/>
+        <button id="ix_connectBtn" onclick="connectIndices()">Connect</button>
+        <div class="msg" id="ix_connectMsg"></div>
       </div>
-      <div class="card">
+      <div class="card" id="indicesPanel" style="display:none">
         <h2 style="margin-top:0">Your indices dashboard</h2>
         <div class="stats">
-          <div class="stat"><div class="l">Starting balance</div><div class="v">—</div></div>
-          <div class="stat"><div class="l">Balance</div><div class="v">—</div></div>
-          <div class="stat"><div class="l">Equity</div><div class="v">—</div></div>
-          <div class="stat"><div class="l">Total return</div><div class="v">—</div></div>
-          <div class="stat"><div class="l">Open positions</div><div class="v">—</div></div>
-          <div class="stat"><div class="l">Win rate</div><div class="v">—</div></div>
+          <div class="stat"><div class="l">Equity</div><div class="v" id="ix_equity">—</div></div>
+          <div class="stat"><div class="l">Open positions</div><div class="v" id="ix_pos">—</div></div>
+          <div class="stat"><div class="l">Account</div><div class="v sm" id="ix_acctlbl">—</div></div>
         </div>
-        <div class="banner flat" style="margin-top:12px">No broker connected yet — preview only.</div>
+        <div id="ix_poslist" style="margin-top:10px"></div>
+        <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
+          <label>Risk per trade (%)</label><input id="ix_risk" type="number" step="0.25" min="0.25" max="5"/>
+          <label>Index symbols (comma-separated, exact broker names)</label><input id="ix_symbols"/>
+          <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;margin-top:8px">
+            <input id="ix_enabled" type="checkbox" style="width:auto"/> <span style="font-size:.8rem;color:var(--muted)">Enable automated indices trading on my account</span></label>
+          <button onclick="saveIndices()" style="margin-top:10px">Save settings</button>
+          <span class="link" style="margin-left:12px" onclick="disconnectIndices()">Disconnect</span>
+          <div class="msg" id="ix_msg"></div>
+        </div>
       </div>
     </div>
 
@@ -1011,6 +1021,7 @@ function render(){
   if(hs){ hs.textContent=active?'ACTIVE':(hasKeys?'PENDING':'SET UP');
     hs.className='pill '+(active?'on':'off'); }
   refreshCopy();
+  refreshIndices();
   showHub();
 }
 // ── market views (one "inside" per hub tile) ────────────────
@@ -1023,16 +1034,26 @@ function openProduct(p){
   openMarket('cryptoView');
   if(ME&&ME.activated) loadDashboard();
 }
-function openIndices(){ if(isAdmin()) openMarket('indicesView'); }
+function openIndices(){
+  if(!(indicesAvailable||isAdmin())) return;
+  openMarket('indicesView'); renderIndices();
+}
 function openMemecoins(){ if(isAdmin()) openMarket('memecoinsView'); }
 function backToHub(){ showHub(); const hh=$('hubCryptoStat'); if(hh) hh.textContent=''; }
 
 // ── copy trading (follower opt-in) + market tile states ─────
 let copyAvailable=false, copyEnabled=false;
+let indicesAvailable=false, indicesConnected=false, ixCfg=null;
 function isAdmin(){ return !!(ME&&ME.is_admin); }
+function show2(id,on){ const e=$(id); if(e) e.style.display=on?'':'none'; }
 async function refreshCopy(){
   try{ const c=await api('/copy'); copyAvailable=!!c.available; copyEnabled=!!c.copy_enabled; }
   catch(e){ copyAvailable=false; copyEnabled=false; }
+  updateTiles();
+}
+async function refreshIndices(){
+  try{ ixCfg=await api('/indices'); indicesAvailable=!!ixCfg.available; indicesConnected=!!ixCfg.connected; }
+  catch(e){ indicesAvailable=false; indicesConnected=false; ixCfg=null; }
   updateTiles();
 }
 function _setTile(card,pill,clickable,onclick,label,on){
@@ -1047,9 +1068,66 @@ function updateTiles(){
   if(copyAvailable) _setTile(btc,btcPill,true,'openCopy()',copyEnabled?'ON':'Copy',copyEnabled);
   else if(isAdmin()) _setTile(btc,btcPill,true,'openCopy()','Preview',false);
   else _setTile(btc,btcPill,false,'','Coming soon',false);
-  // Indices & memecoins: structural previews, admin-only for now.
-  _setTile($('indicesCard'),$('indicesStatus'),isAdmin(),'openIndices()',isAdmin()?'Preview':'Coming soon',false);
+  // Indices: live for everyone when enabled; preview for admins otherwise.
+  const ic=$('indicesCard'), ip=$('indicesStatus');
+  if(indicesAvailable) _setTile(ic,ip,true,'openIndices()',indicesConnected?'Connected':'Trade',indicesConnected);
+  else if(isAdmin()) _setTile(ic,ip,true,'openIndices()','Preview',false);
+  else _setTile(ic,ip,false,'','Coming soon',false);
+  // Memecoins: structural preview, admin-only for now.
   _setTile($('memeCard'),$('memeStatus'),isAdmin(),'openMemecoins()',isAdmin()?'Preview':'Coming soon',false);
+}
+function renderIndices(){
+  const st=$('indicesState');
+  if(!indicesAvailable){
+    if(st) st.textContent='Preview — the indices market isn’t switched on yet (INDICES_ENABLED).';
+    show2('indicesConnect',false); show2('indicesPanel',false); return;
+  }
+  if(!indicesConnected){
+    if(st) st.textContent='Connect your Equiti MT5 account to begin.';
+    show2('indicesConnect',true); show2('indicesPanel',false); return;
+  }
+  if(st) st.textContent='✓ Connected.';
+  show2('indicesConnect',false); show2('indicesPanel',true);
+  const cfg=(ixCfg&&ixCfg.settings)||{};
+  if($('ix_risk')) $('ix_risk').value=cfg.risk_pct||1;
+  if($('ix_symbols')) $('ix_symbols').value=cfg.symbols||'US500,USTEC';
+  if($('ix_enabled')) $('ix_enabled').checked=!!cfg.enabled;
+  if($('ix_acctlbl')) $('ix_acctlbl').textContent=(ixCfg&&ixCfg.account_id)||'—';
+  loadIndicesAccount();
+}
+async function connectIndices(){
+  const btn=$('ix_connectBtn'), msg=$('ix_connectMsg'); if(msg) msg.textContent='';
+  if(btn) btn.disabled=true;
+  try{ await api('/indices/connect','POST',{token:$('ix_token').value,account_id:$('ix_acct').value,base_url:$('ix_base').value||null});
+    await refreshIndices(); renderIndices();
+  }catch(e){ if(msg) msg.textContent=e.message||'Could not connect'; }
+  if(btn) btn.disabled=false;
+}
+async function saveIndices(){
+  const msg=$('ix_msg'); if(msg) msg.textContent='';
+  try{ await api('/indices/settings','POST',{risk_pct:parseFloat($('ix_risk').value)||1,symbols:$('ix_symbols').value,enabled:$('ix_enabled').checked});
+    if(msg) msg.textContent='Saved.'; await refreshIndices();
+  }catch(e){ if(msg) msg.textContent=e.message||'Could not save'; }
+}
+async function disconnectIndices(){
+  if(!confirm('Disconnect your MT5 account?')) return;
+  try{ await api('/indices/connect','DELETE'); await refreshIndices(); renderIndices(); }catch(e){}
+}
+async function loadIndicesAccount(){
+  const eq=$('ix_equity'), pos=$('ix_pos'), list=$('ix_poslist');
+  try{
+    const a=await api('/indices/account');
+    if(!a.ok){ if(eq) eq.textContent='—'; if(pos) pos.textContent='—';
+      if(list) list.innerHTML='<div class="disc">'+esc(a.error||'not reachable')+'</div>'; return; }
+    if(eq) eq.textContent=money(a.equity);
+    const ps=a.positions||[];
+    if(pos) pos.textContent=ps.length;
+    if(list) list.innerHTML = ps.length
+      ? '<table><tr><th>Symbol</th><th>Side</th><th>Volume</th><th>P&amp;L</th></tr>'
+        + ps.map(p=>'<tr><td>'+esc(p.symbol)+'</td><td>'+esc(p.side)+'</td><td>'+esc(p.volume)
+          +'</td><td class="'+((p.profit>=0)?'pos':'neg')+'">'+signMoney(p.profit)+'</td></tr>').join('')+'</table>'
+      : '<div class="disc">No open index positions.</div>';
+  }catch(e){ if(list) list.innerHTML='<div class="disc">Could not load account.</div>'; }
 }
 function openCopy(){
   if(!(copyAvailable||isAdmin())) return;

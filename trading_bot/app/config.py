@@ -170,6 +170,16 @@ class Settings:
     # a follower missed. Closes are always mirrored, regardless of age.
     copy_max_age_seconds: int = field(default_factory=lambda: _get_int("COPY_MAX_AGE_SECONDS", 3600))
 
+    # ── Indices market (MT5 broker, e.g. Equiti, via MetaApi) ─────────────
+    # Off by default like copy trading; nothing runs until switched on.
+    indices_enabled: bool = field(default_factory=lambda: _get_bool("INDICES_ENABLED", False))
+    # MetaApi client REST host (region-specific; confirm yours in the MetaApi UI).
+    metaapi_base_url: str = field(default_factory=lambda: _get(
+        "METAAPI_BASE_URL", "https://mt-client-api-v1.new-york.agiliumtrade.ai"))
+    # Default index instruments offered to new connections (broker symbol names).
+    indices_symbols: list[str] = field(default_factory=lambda: _get_list("INDICES_SYMBOLS", "US500,USTEC"))
+    indices_timeframe: str = field(default_factory=lambda: _get("INDICES_TIMEFRAME", "1h"))
+
     @property
     def auth_enabled(self) -> bool:
         return bool(self.control_api_key)

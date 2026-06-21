@@ -114,6 +114,18 @@ class CopyUserIn(BaseModel):
     enabled: bool
 
 
+class IndicesConnectIn(BaseModel):
+    token: str
+    account_id: str
+    base_url: str | None = None
+
+
+class IndicesSettingsIn(BaseModel):
+    risk_pct: float = 1.0
+    symbols: str = "US500,USTEC"
+    enabled: bool = False
+
+
 class PaymentIn(BaseModel):
     tx_hash: str
 
@@ -801,6 +813,82 @@ def get_copy(request: Request) -> dict:
     cfg = store().get_settings(user["id"])
     return {"available": settings.copy_trading_enabled,
             "copy_enabled": bool(cfg.get("copy_enabled"))}
+
+
+# ── indices market (MT5 / Equiti via MetaApi) ───────────────
+def _broker_for(uid: int):
+    """Build a MetaApi MT5 broker from the user's stored, encrypted credentials."""
+    bk = store().get_broker_keys(uid)
+    if not bk:
+        return None
+    from ..exchange.metaapi_mt5 import MetaApiMT5
+    token = security.decrypt(bk["enc_token"])
+    return MetaApiMT5(token=token, account_id=bk["account_id"],
+                      base_url=bk.get("base_url") or settings.metaapi_base_url)
+
+
+@router.get("/api/indices")
+def get_indices(request: Request) -> dict:
+    user = current_user(request)
+    st = store()
+    bk = st.get_broker_keys(user["id"])
+    cfg = st.get_indices_settings(user["id"])
+    return {
+        "available": settings.indices_enabled,
+        "connected": bool(bk),
+        "account_id": (bk["account_id"] if bk else None),
+        "settings": {"risk_pct": cfg["risk_pct"], "symbols": cfg["symbols"],
+                     "enabled": bool(cfg["enabled"])},
+    }
+
+
+@router.post("/api/indices/connect")
+def connect_indices(body: IndicesConnectIn, request: Request) -> dict:
+    user = current_user(request)
+    if not settings.indices_enabled:
+        raise HTTPException(400, "the indices market is not enabled yet")
+    token, acct = body.token.strip(), body.account_id.strip()
+    if len(token) < 8 or not acct:
+        raise HTTPException(400, "enter your MetaApi token and MT5 account id")
+    store().save_broker_keys(user["id"], security.encrypt(token), acct,
+                             (body.base_url or settings.metaapi_base_url).strip())
+    return {"ok": True}
+
+
+@router.delete("/api/indices/connect")
+def disconnect_indices(request: Request) -> dict:
+    user = current_user(request)
+    store().delete_broker_keys(user["id"])
+    return {"ok": True}
+
+
+@router.post("/api/indices/settings")
+def save_indices(body: IndicesSettingsIn, request: Request) -> dict:
+    import re
+    user = current_user(request)
+    risk = max(0.25, min(5.0, body.risk_pct))
+    syms = [s.strip().upper() for s in (body.symbols or "").split(",") if s.strip()]
+    bad = [s for s in syms if not re.fullmatch(r"[A-Z0-9._]{2,20}", s)]
+    if bad:
+        raise HTTPException(400, f"invalid symbol(s): {', '.join(bad)[:60]}")
+    if len(syms) > 30:
+        raise HTTPException(400, "too many symbols (max 30)")
+    store().save_indices_settings(user["id"], risk, ",".join(syms), body.enabled)
+    return {"ok": True}
+
+
+@router.get("/api/indices/account")
+def indices_account(request: Request) -> dict:
+    """Best-effort live read of the connected MT5 account (equity + positions).
+    Requires network to MetaApi — surfaces the error rather than 500ing."""
+    user = current_user(request)
+    bk = _broker_for(user["id"])
+    if not bk:
+        return {"ok": False, "error": "no MT5 account connected"}
+    try:
+        return {"ok": True, "equity": bk.get_equity(), "positions": bk.open_positions()}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)[:200]}
 
 
 # ── payment ─────────────────────────────────────────────────

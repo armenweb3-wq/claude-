@@ -47,6 +47,7 @@ class MultiUserRunner:
         self._last_summary_day = store.get_meta("last_summary_day")
         self._last_channel_day = store.get_meta("last_channel_day")
         self._bcast_lock = threading.Lock()  # serialises the broadcast thread
+        self.indices_results: dict[int, dict] = {}  # user_id -> last indices run
 
     def start(self) -> None:
         if self._thread and self._thread.is_alive():
@@ -64,6 +65,7 @@ class MultiUserRunner:
         while not self._stop.is_set():
             try:
                 self.run_cycle()
+                self.run_indices_cycle()
                 # Run the (blocking) Telegram broadcasts off the trading loop so a
                 # slow/hung send can never delay position & stop management.
                 threading.Thread(target=self._run_broadcasts, daemon=True).start()
@@ -414,3 +416,38 @@ class MultiUserRunner:
             res.pop("closed", None)
             res["ts"] = time.time()
             self.results[uid] = res
+
+    def run_indices_cycle(self) -> None:
+        """Run the indices (MT5/Equiti via MetaApi) market for connected users.
+        Independent of the crypto loop — own keys, settings and enable switch."""
+        if not settings.indices_enabled:
+            return
+        from ..strategy.confluence import ConfluenceStrategy
+        from .indices import IndicesTrader
+        for user in self.store.list_users(include_admins=True):
+            uid = user["id"]
+            if not _is_active(user):
+                continue
+            cfg = self.store.get_indices_settings(uid)
+            if not cfg["enabled"]:
+                continue
+            bk = self.store.get_broker_keys(uid)
+            if not bk:
+                continue
+            try:
+                from ..exchange.metaapi_mt5 import MetaApiMT5
+                token = security.decrypt(bk["enc_token"])
+                broker = MetaApiMT5(token=token, account_id=bk["account_id"],
+                                    base_url=bk.get("base_url") or settings.metaapi_base_url)
+                trader = IndicesTrader(
+                    broker, ConfluenceStrategy(),
+                    risk_pct=cfg["risk_pct"],
+                    symbols=[s.strip() for s in cfg["symbols"].split(",") if s.strip()],
+                    timeframe=settings.indices_timeframe,
+                    dry=settings.saas_dry_run)
+                res = trader.run_once()
+            except Exception as exc:  # one user must not break the rest
+                res = {"error": str(exc)}
+                log.warning("indices user %s run failed: %s", uid, exc)
+            res["ts"] = time.time()
+            self.indices_results[uid] = res

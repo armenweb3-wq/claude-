@@ -175,3 +175,21 @@ def test_copy_opt_in_when_enabled(client):
         assert client.get("/app/api/copy").json()["copy_enabled"] is True
     finally:
         object.__setattr__(settings, "copy_trading_enabled", False)
+
+
+def test_admin_members_health(client):
+    # Admin registers first (admin@z.com per fixture), then a member joins.
+    client.post("/app/api/register", json={"email": "admin@z.com", "password": "password1"})
+    body = client.get("/app/api/admin/members").json()
+    assert "summary" in body and "members" in body
+    # Non-admin can't see member health.
+    client.cookies.clear()
+    client.post("/app/api/register", json={"email": "m1@b.com", "password": "password1"})
+    assert client.get("/app/api/admin/members").status_code == 403
+    # Admin now sees the member (not the admin) counted, with no keys yet.
+    client.cookies.clear()
+    client.post("/app/api/login", json={"email": "admin@z.com", "password": "password1"})
+    body = client.get("/app/api/admin/members").json()
+    assert body["summary"]["total"] == 1
+    m1 = next(m for m in body["members"] if m["email"] == "m1@b.com")
+    assert m1["has_keys"] is False and m1["is_admin"] is False

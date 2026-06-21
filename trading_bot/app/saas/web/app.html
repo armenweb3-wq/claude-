@@ -585,6 +585,12 @@
     </div>
     <div id="adminPerf" style="margin-top:14px"></div>
     <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
+      <h2 style="margin:0 0 6px">Member health</h2>
+      <div class="disc" style="margin:0 0 8px">Per-member status from the last run — keys, bot, copy, equity and any error. Confirms everyone is actually working. <span id="memberMode"></span></div>
+      <div class="stats" id="memberSummary" style="margin:0 0 10px"></div>
+      <div id="memberHealth"></div>
+    </div>
+    <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
       <div class="disc" style="margin:0">📣 Channel &amp; member messaging are fully automated — daily tips, live
       performance, result cards on notable wins, and every trade alert + daily summary go out on their own. Nothing to send manually.</div>
     </div>
@@ -737,6 +743,39 @@ async function loadAdminStats(){
           +'<span class="disc" style="margin:0">'+m.trades+'t · '+m.win_rate+'%</span></div>').join('')):'');
   }catch(e){ $('adminPerf').innerHTML=''; }
 }
+function fmtAge(s){ s=Number(s)||0; if(s<60) return s+'s'; if(s<3600) return Math.round(s/60)+'m';
+  if(s<86400) return Math.round(s/3600)+'h'; return Math.round(s/86400)+'d'; }
+async function loadMembers(){
+  const box=$('memberHealth'), sumEl=$('memberSummary'), mode=$('memberMode');
+  if(!box) return;
+  try{
+    const d=await api('/admin/members'), s=d.summary||{}, ms=(d.members||[]).filter(m=>!m.is_admin);
+    if(mode) mode.textContent='· engine '+(s.exec_enabled?(s.dry_run?'DRY-RUN':'LIVE'):'OFF');
+    if(sumEl) sumEl.innerHTML=
+      '<div class="stat"><div class="l">Members</div><div class="v">'+(s.total||0)+'/'+(s.seat_limit||0)+'</div></div>'
+      +'<div class="stat"><div class="l">Active</div><div class="v pos">'+(s.active||0)+'</div></div>'
+      +'<div class="stat"><div class="l">With keys</div><div class="v">'+(s.with_keys||0)+'</div></div>'
+      +'<div class="stat"><div class="l">Errors</div><div class="v '+((s.errors||0)>0?'neg':'')+'">'+(s.errors||0)+'</div></div>';
+    box.innerHTML = ms.length ?
+      '<table><tr><th>Member</th><th>Keys</th><th>Bot</th><th>Copy</th><th>Equity</th><th>Status</th></tr>'
+      + ms.map(m=>{
+          let status, cls='';
+          if(m.error){ status='⚠ '+esc(String(m.error).slice(0,40)); cls='neg'; }
+          else if(!m.active){ status='inactive'; }
+          else if(!m.has_keys){ status='no keys'; }
+          else if(!m.bot_enabled){ status='bot off'; }
+          else if(m.last_run_age==null){ status='not run yet'; }
+          else { status='✓ ran '+fmtAge(m.last_run_age)+' ago'; cls='pos'; }
+          return '<tr><td>'+esc(m.username)+'<br><span class="disc">'+esc(m.active?('active'+(m.active_until?(' · '+m.active_until):'')):'inactive')+'</span></td>'
+            +'<td>'+(m.has_keys?'✓':'—')+'</td>'
+            +'<td>'+(m.bot_enabled?'on':'off')+'</td>'
+            +'<td>'+(m.copy_enabled?'on':'—')+'</td>'
+            +'<td>'+(m.equity==null?'—':money(m.equity))+'</td>'
+            +'<td class="'+cls+'">'+status+'</td></tr>';
+        }).join('') + '</table>'
+      : '<div class="disc">No members yet.</div>';
+  }catch(e){ box.innerHTML='<div class="disc">Could not load member health ('+esc(e.message||'error')+').</div>'; }
+}
 async function runBt(){
   $('btStatus').textContent='starting…';
   try{ const r=await api('/admin/backtest','POST',{});
@@ -792,7 +831,7 @@ function lockScroll(){
 function toggleMenu(on){ $('drawer').classList.toggle('show',on); lockScroll(); }
 function openPanel(id){
   toggleMenu(false);
-  if(id==='adminPanel'){ loadAdmin(); loadAdminStats(); }
+  if(id==='adminPanel'){ loadAdmin(); loadAdminStats(); loadMembers(); }
   if(id==='profilePanel') fillProfile();
   if(id==='referralPanel') fillReferral();
   if(id==='tradePanel') fillTradeForm();

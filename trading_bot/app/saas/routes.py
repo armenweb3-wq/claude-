@@ -965,6 +965,52 @@ def admin_copy_enable(body: CopyUserIn, admin: dict = Depends(require_admin)) ->
     return {"ok": True}
 
 
+@router.get("/api/admin/members")
+def admin_members(request: Request, admin: dict = Depends(require_admin)) -> dict:
+    """Per-member health from the last run — keys, bot, copy, equity, last-run
+    age and any error — so the operator can confirm all members actually work."""
+    st = store()
+    runner = getattr(request.app.state, "saas_runner", None)
+    results = getattr(runner, "results", {}) if runner else {}
+    rows = []
+    for u in st.list_users(include_admins=True):
+        uid = u["id"]
+        cfg = st.get_settings(uid)
+        r = results.get(uid) or {}
+        ts = r.get("ts")
+        rows.append({
+            "id": uid,
+            "username": u.get("username") or (u.get("email") or "").split("@")[0],
+            "email": u.get("email"),
+            "is_admin": _is_admin_user(u),
+            "active": _is_active(u),
+            "active_until": u.get("active_until"),
+            "has_keys": bool(u.get("has_keys")),
+            "bot_enabled": bool(cfg.get("enabled")),
+            "copy_enabled": bool(cfg.get("copy_enabled")),
+            "risk_pct": cfg.get("risk_pct"),
+            "symbols": len([s for s in (cfg.get("symbols") or "").split(",") if s.strip()]),
+            "equity": r.get("equity"),
+            "open_positions": r.get("positions"),
+            "closed_trades": st.count_closed(uid),
+            "last_run_age": (round(time.time() - float(ts)) if ts else None),
+            "error": r.get("error"),
+        })
+    members = [m for m in rows if not m["is_admin"]]
+    summary = {
+        "total": len(members),
+        "active": sum(1 for m in members if m["active"]),
+        "with_keys": sum(1 for m in members if m["has_keys"]),
+        "bot_on": sum(1 for m in members if m["bot_enabled"]),
+        "copy_on": sum(1 for m in members if m["copy_enabled"]),
+        "errors": sum(1 for m in members if m["error"]),
+        "seat_limit": settings.saas_seat_limit,
+        "exec_enabled": settings.saas_exec_enabled,
+        "dry_run": settings.saas_dry_run,
+    }
+    return {"summary": summary, "members": rows}
+
+
 @router.post("/api/admin/activate")
 def admin_activate(body: ActivateIn, admin: dict = Depends(require_admin)) -> dict:
     st = store()

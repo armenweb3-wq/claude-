@@ -4,6 +4,27 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-06-21T20:30:00.000Z",
-  "bets": []
+  "updatedAt": "2026-06-21T21:10:02.981Z",
+  "bets": [
+    {
+      "leg": 1,
+      "date": "2026-06-21",
+      "match": "Uruguay vs Cape Verde",
+      "kickoff": "2026-06-21T22:00:00Z",
+      "selections": [
+        {
+          "label": "Uruguay to win",
+          "type": "team_win",
+          "team": "Uruguay"
+        }
+      ],
+      "stake": 50,
+      "odds": 1.48,
+      "oddsReal": true,
+      "result": "pending",
+      "returnAmount": 0,
+      "auto": true,
+      "curated": true
+    }
+  ]
 }

@@ -202,8 +202,19 @@ class UserTrader:
                     out["signals"][s] = "skipped: unsafe (liquidation inside stop)"
                     continue
                 side = "Buy" if sig.action == "long" else "Sell"
+                # Full trade detail so copy-trading can mirror this open onto
+                # followers (entry/stop/TP ladder + the leverage and risk used).
+                detail = {
+                    "entry": sig.entry, "stop_loss": sig.stop_loss,
+                    "leverage": plan.leverage, "risk_pct": self.risk_pct,
+                    "take_profits": [
+                        {"pct": tp.pct, "close_fraction": tp.close_fraction, "price": tp.price}
+                        for tp in (sig.take_profits or [])
+                    ],
+                }
                 if self.dry:
-                    out["opened"].append({"symbol": s, "side": side, "qty": plan.qty, "dry": True})
+                    out["opened"].append({"symbol": s, "side": side, "qty": plan.qty,
+                                          "dry": True, **detail})
                     open_count += 1
                     continue
                 res = self.ex.open_position(symbol=s, side=side, qty=plan.qty,
@@ -211,7 +222,7 @@ class UserTrader:
                                             take_profits=sig.take_profits)
                 if getattr(res, "ok", False):
                     out["opened"].append({"symbol": s, "side": side, "qty": res.qty,
-                                          "warning": getattr(res, "warning", "")})
+                                          "warning": getattr(res, "warning", ""), **detail})
                     open_count += 1
                 else:
                     out["signals"][s] = f"skipped: {getattr(res, 'skipped_reason', '')}"

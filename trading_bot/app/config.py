@@ -160,6 +160,16 @@ class Settings:
     saas_dry_run: bool = field(default_factory=lambda: _get_bool("SAAS_DRY_RUN", True))
     saas_loop_seconds: int = field(default_factory=lambda: _get_int("SAAS_LOOP_SECONDS", 900))
 
+    # ── Copy trading (followers mirror the leader/admin's trades) ──────────
+    # Off by default: when true, users who opted in (copy_enabled) mirror the
+    # leader's positions, sized to THEIR OWN balance at the same risk % — a 2%
+    # leader entry becomes a 2% entry on each follower, scaled to their equity.
+    # Deliberate switch, like SAAS_EXEC_ENABLED; dry-run still places no orders.
+    copy_trading_enabled: bool = field(default_factory=lambda: _get_bool("COPY_TRADING_ENABLED", False))
+    # Only mirror a leader OPEN this fresh (seconds) — never chase a stale entry
+    # a follower missed. Closes are always mirrored, regardless of age.
+    copy_max_age_seconds: int = field(default_factory=lambda: _get_int("COPY_MAX_AGE_SECONDS", 3600))
+
     @property
     def auth_enabled(self) -> bool:
         return bool(self.control_api_key)

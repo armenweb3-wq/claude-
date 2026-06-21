@@ -105,6 +105,15 @@ class SettingsIn(BaseModel):
     enabled: bool = False
 
 
+class CopyToggleIn(BaseModel):
+    enabled: bool
+
+
+class CopyUserIn(BaseModel):
+    user_id: int
+    enabled: bool
+
+
 class PaymentIn(BaseModel):
     tx_hash: str
 
@@ -774,6 +783,26 @@ def save_settings(body: SettingsIn, request: Request) -> dict:
     return {"ok": True}
 
 
+# ── copy trading ────────────────────────────────────────────
+@router.post("/api/copy")
+def set_copy(body: CopyToggleIn, request: Request) -> dict:
+    """Follower opt-in: mirror the leader's trades on this account, sized to
+    your own balance. No effect until copy trading is enabled platform-wide."""
+    user = current_user(request)
+    if not settings.copy_trading_enabled:
+        raise HTTPException(400, "copy trading is not enabled yet")
+    store().set_copy_enabled(user["id"], body.enabled)
+    return {"ok": True, "copy_enabled": body.enabled}
+
+
+@router.get("/api/copy")
+def get_copy(request: Request) -> dict:
+    user = current_user(request)
+    cfg = store().get_settings(user["id"])
+    return {"available": settings.copy_trading_enabled,
+            "copy_enabled": bool(cfg.get("copy_enabled"))}
+
+
 # ── payment ─────────────────────────────────────────────────
 @router.post("/api/payment")
 def submit_payment(body: PaymentIn, request: Request) -> dict:
@@ -914,6 +943,26 @@ def admin_stats(admin: dict = Depends(require_admin)) -> dict:
     return data
 
 
+
+
+@router.get("/api/admin/copy")
+def admin_copy(admin: dict = Depends(require_admin)) -> dict:
+    """The copy-trading proof ledger: every trade the leader made (open/closed,
+    with outcome) and how the mirror fan-out is doing."""
+    st = store()
+    return {
+        "copy_trading_enabled": settings.copy_trading_enabled,
+        "followers": st.copy_follower_count(),
+        "executions": st.copy_exec_counts(),
+        "signals": st.recent_leader_signals(limit=50),
+    }
+
+
+@router.post("/api/admin/copy-enable")
+def admin_copy_enable(body: CopyUserIn, admin: dict = Depends(require_admin)) -> dict:
+    """Operator switch to opt a specific user into (or out of) copy trading."""
+    store().set_copy_enabled(body.user_id, body.enabled)
+    return {"ok": True}
 
 
 @router.post("/api/admin/activate")

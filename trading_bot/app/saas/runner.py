@@ -340,8 +340,44 @@ class MultiUserRunner:
             self.store.add_event("channel", "text", {
                 "text": content.daily_tip(now) + ("\n\n" + perf if perf else "")})
 
+    def _build_exchange(self, keys: dict):
+        from ..exchange.bybit import BybitExchange  # lazy: pybit only needed live
+        api_key = security.decrypt(keys["enc_key"])
+        api_secret = security.decrypt(keys["enc_secret"])
+        return BybitExchange(api_key=api_key, api_secret=api_secret,
+                             testnet=bool(keys["testnet"]))
+
+    def _strategy_once(self, exchange, cfg: dict) -> dict:
+        trader = UserTrader(
+            exchange, ConfluenceStrategy(),
+            risk_pct=cfg["risk_pct"],
+            symbols=[s.strip() for s in cfg["symbols"].split(",") if s.strip()],
+            dry=settings.saas_dry_run,
+        )
+        return trader.run_once()
+
+    def _copy_once(self, exchange, uid: int) -> dict:
+        from .copy import CopyTrader
+        ct = CopyTrader(exchange, self.store, uid, dry=settings.saas_dry_run,
+                        max_age_s=settings.copy_max_age_seconds,
+                        leverage_cap=settings.max_leverage)
+        return ct.run_once()
+
+    def _leader_id(self, users: list[dict]) -> int | None:
+        """The copy-trading leader: the admin account everyone mirrors."""
+        admin_email = settings.saas_admin_email
+        for u in users:
+            if u.get("is_admin") or (admin_email and (u.get("email") or "").strip().lower() == admin_email):
+                return u["id"]
+        return None
+
     def run_cycle(self) -> None:
-        for user in self.store.list_users(include_admins=True):
+        users = self.store.list_users(include_admins=True)
+        copy_on = settings.copy_trading_enabled
+        # The leader (admin) is created first, so iterating in created_at order
+        # records its signals before followers mirror them in the same cycle.
+        leader_id = self._leader_id(users) if copy_on else None
+        for user in users:
             uid = user["id"]
             if not _is_active(user):
                 continue
@@ -352,18 +388,15 @@ class MultiUserRunner:
             if not keys:
                 continue
             try:
-                from ..exchange.bybit import BybitExchange  # lazy: pybit only needed live
-                api_key = security.decrypt(keys["enc_key"])
-                api_secret = security.decrypt(keys["enc_secret"])
-                exchange = BybitExchange(api_key=api_key, api_secret=api_secret,
-                                         testnet=bool(keys["testnet"]))
-                trader = UserTrader(
-                    exchange, ConfluenceStrategy(),
-                    risk_pct=cfg["risk_pct"],
-                    symbols=[s.strip() for s in cfg["symbols"].split(",") if s.strip()],
-                    dry=settings.saas_dry_run,
-                )
-                res = trader.run_once()
+                exchange = self._build_exchange(keys)
+                if copy_on and cfg.get("copy_enabled") and uid != leader_id:
+                    # Follower: mirror the leader instead of running its own strategy.
+                    res = self._copy_once(exchange, uid)
+                else:
+                    res = self._strategy_once(exchange, cfg)
+                    if copy_on and uid == leader_id:
+                        from .copy import record_leader_activity
+                        record_leader_activity(self.store, res)
                 # Persist closed trades every cycle so performance data accrues
                 # over time even if the user never opens the dashboard. Alerts are
                 # gated purely by the freshness cutoff in _alert (only closes in

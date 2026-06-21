@@ -52,6 +52,20 @@ def _schema(d: str) -> list[str]:
           id {_PK[d]}, user_id INTEGER, target TEXT, kind TEXT, payload TEXT,
           status TEXT DEFAULT 'pending', attempts INTEGER DEFAULT 0, error TEXT,
           created_at {_TS[d]}, sent_at {_TS[d]})""",
+        # Copy trading: durable ledger of every trade the leader (admin) makes —
+        # the proof record followers mirror from. status: 'open' | 'closed'.
+        f"""CREATE TABLE IF NOT EXISTS leader_signals (
+          id {_PK[d]}, symbol TEXT NOT NULL, side TEXT NOT NULL,
+          entry {_TS[d]}, stop_loss {_TS[d]}, take_profits TEXT,
+          leverage {_TS[d]}, risk_pct {_TS[d]},
+          status TEXT NOT NULL DEFAULT 'open', pnl_pct {_TS[d]},
+          opened_at {_TS[d]} NOT NULL, closed_at {_TS[d]})""",
+        # Per-follower mirror ledger: one decision row per (signal, follower).
+        f"""CREATE TABLE IF NOT EXISTS copy_executions (
+          id {_PK[d]}, signal_id INTEGER NOT NULL, user_id INTEGER NOT NULL,
+          symbol TEXT, side TEXT, qty {_TS[d]}, status TEXT NOT NULL,
+          reason TEXT, opened_at {_TS[d]} NOT NULL, closed_at {_TS[d]},
+          UNIQUE(signal_id, user_id))""",
     ]
 
 
@@ -158,6 +172,8 @@ class Store:
             f"ALTER TABLE closed_trades ADD COLUMN entry_price {_flt}",
             f"ALTER TABLE closed_trades ADD COLUMN exit_price {_flt}",
             f"ALTER TABLE closed_trades ADD COLUMN qty {_flt}",
+            # Copy-trading opt-in for existing settings rows (idempotent).
+            "ALTER TABLE settings ADD COLUMN copy_enabled INTEGER NOT NULL DEFAULT 0",
         ):
             try:
                 if self._pg:
@@ -498,6 +514,84 @@ class Store:
         self.get_settings(uid)
         self._q("UPDATE settings SET risk_pct=?, symbols=?, enabled=? WHERE user_id=?",
                 (risk_pct, symbols, 1 if enabled else 0, uid))
+
+    # ── copy trading ────────────────────────────────────────
+    def set_copy_enabled(self, uid: int, enabled: bool) -> None:
+        """Follower opt-in: mirror the leader's trades on this account."""
+        self.get_settings(uid)  # ensure a row exists
+        self._q("UPDATE settings SET copy_enabled=? WHERE user_id=?",
+                (1 if enabled else 0, uid))
+
+    def copy_follower_count(self) -> int:
+        return int(self._q(
+            "SELECT COUNT(*) AS c FROM settings WHERE copy_enabled=1")[0]["c"])
+
+    # Leader signal ledger (durable proof of every leader trade) ───────────
+    def record_leader_open(self, symbol: str, side: str, entry, stop_loss,
+                           take_profits, leverage, risk_pct) -> bool:
+        """Record an OPEN leader signal. Idempotent: a no-op if an open signal
+        for this symbol already exists, so a persistent (dry-run) open isn't
+        re-logged every cycle. Returns True when a new signal was inserted."""
+        import json
+        if self._q("SELECT 1 FROM leader_signals WHERE symbol=? AND status='open'", (symbol,)):
+            return False
+        self._q(
+            "INSERT INTO leader_signals (symbol, side, entry, stop_loss, take_profits,"
+            " leverage, risk_pct, status, opened_at) VALUES (?,?,?,?,?,?,?, 'open', ?)",
+            (symbol, side, float(entry or 0), float(stop_loss or 0),
+             json.dumps(take_profits or []), float(leverage or 1),
+             float(risk_pct or 0), time.time()))
+        return True
+
+    def close_leader_signal(self, symbol: str, pnl_pct=None) -> bool:
+        """Mark the open leader signal for `symbol` closed. Returns True if one
+        was open (i.e. the leader actually held a mirrored position)."""
+        rows = self._q("SELECT id FROM leader_signals WHERE symbol=? AND status='open'"
+                        " ORDER BY id DESC LIMIT 1", (symbol,))
+        if not rows:
+            return False
+        self._q("UPDATE leader_signals SET status='closed', pnl_pct=?, closed_at=? WHERE id=?",
+                (None if pnl_pct is None else float(pnl_pct), time.time(), rows[0]["id"]))
+        return True
+
+    def open_leader_signals(self, max_age_s: float | None = None) -> list[dict]:
+        rows = self._q("SELECT * FROM leader_signals WHERE status='open' ORDER BY id ASC")
+        if max_age_s is not None:
+            cutoff = time.time() - max_age_s
+            rows = [r for r in rows if float(r.get("opened_at") or 0) >= cutoff]
+        return rows
+
+    def get_leader_signal(self, sid: int) -> dict | None:
+        rows = self._q("SELECT * FROM leader_signals WHERE id=?", (sid,))
+        return rows[0] if rows else None
+
+    def recent_leader_signals(self, limit: int = 50) -> list[dict]:
+        return self._q("SELECT * FROM leader_signals ORDER BY id DESC LIMIT ?", (limit,))
+
+    # Per-follower mirror ledger ───────────────────────────────────────────
+    def has_copy_exec(self, signal_id: int, uid: int) -> bool:
+        return bool(self._q(
+            "SELECT 1 FROM copy_executions WHERE signal_id=? AND user_id=?", (signal_id, uid)))
+
+    def add_copy_exec(self, signal_id: int, uid: int, symbol: str, side: str,
+                      qty, status: str, reason: str = "") -> None:
+        self._q(
+            "INSERT INTO copy_executions (signal_id, user_id, symbol, side, qty, status,"
+            " reason, opened_at) VALUES (?,?,?,?,?,?,?,?)"
+            " ON CONFLICT(signal_id, user_id) DO NOTHING",
+            (signal_id, uid, symbol, side, float(qty or 0), status, reason, time.time()))
+
+    def open_copy_execs(self, uid: int) -> list[dict]:
+        return self._q(
+            "SELECT * FROM copy_executions WHERE user_id=? AND status='open'", (uid,))
+
+    def close_copy_exec(self, exec_id: int) -> None:
+        self._q("UPDATE copy_executions SET status='closed', closed_at=? WHERE id=?",
+                (time.time(), exec_id))
+
+    def copy_exec_counts(self) -> dict:
+        rows = self._q("SELECT status, COUNT(*) AS c FROM copy_executions GROUP BY status")
+        return {r["status"]: int(r["c"]) for r in rows}
 
     # ── payments ────────────────────────────────────────────
     def add_payment(self, uid: int, tx_hash: str) -> None:

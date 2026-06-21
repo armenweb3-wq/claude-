@@ -284,14 +284,25 @@
         <div class="banner flat" id="indicesState">Loading…</div>
       </div>
       <div class="card" id="indicesConnect" style="display:none">
-        <h2 style="margin-top:0">Connect your MT5 account</h2>
-        <div class="step"><div class="num">1</div><div>In <b>MetaApi</b> (metaapi.cloud) add your Equiti MT5 login, then copy the <b>account id</b> and an <b>auth token</b>.</div></div>
-        <div class="step"><div class="num">2</div><div>Paste them below. The token is stored <b>encrypted</b>; we never see your MT5 password, and the connection can't withdraw funds.</div></div>
-        <label>MetaApi token</label><input id="ix_token" type="password" autocomplete="off"/>
-        <label>MT5 account id</label><input id="ix_acct" autocomplete="off"/>
-        <label>MetaApi region host (optional)</label><input id="ix_base" placeholder="leave blank for default" autocomplete="off"/>
-        <button id="ix_connectBtn" onclick="connectIndices()">Connect</button>
-        <div class="msg" id="ix_connectMsg"></div>
+        <div id="ix_provBox">
+          <h2 style="margin-top:0">Connect your Equiti account</h2>
+          <p class="lead">Enter your Equiti MT5 login and we set up the connection for you. Your password goes straight to the broker bridge — we never store it — and the link <b>can't withdraw</b> funds.</p>
+          <label>MT5 login (account number)</label><input id="ix_login" autocomplete="off"/>
+          <label>MT5 password</label><input id="ix_pass" type="password" autocomplete="off"/>
+          <label>Server</label><input id="ix_server" placeholder="e.g. EquitiBrokerageSC-Demo" autocomplete="off"/>
+          <button id="ix_provBtn" onclick="provisionIndices()">Connect</button>
+          <div class="msg" id="ix_provMsg"></div>
+        </div>
+        <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
+          <span class="link" id="ix_advToggle" onclick="toggleIxAdvanced()">Advanced: use your own MetaApi token →</span>
+          <div id="ix_advBox" class="hide" style="margin-top:10px">
+            <label>MetaApi token</label><input id="ix_token" type="password" autocomplete="off"/>
+            <label>MT5 account id</label><input id="ix_acct" autocomplete="off"/>
+            <label>MetaApi region host (optional)</label><input id="ix_base" placeholder="leave blank for default" autocomplete="off"/>
+            <button id="ix_connectBtn" onclick="connectIndices()">Connect with token</button>
+            <div class="msg" id="ix_connectMsg"></div>
+          </div>
+        </div>
       </div>
       <div class="card" id="indicesPanel" style="display:none">
         <h2 style="margin-top:0">Your indices dashboard</h2>
@@ -1226,7 +1237,14 @@ function renderIndices(){
   }
   if(!indicesConnected){
     if(st) st.textContent='Connect your Equiti MT5 account to begin.';
-    show2('indicesConnect',true); show2('indicesPanel',false); return;
+    show2('indicesConnect',true); show2('indicesPanel',false);
+    // Easy onboarding only when the platform MetaApi token is configured.
+    const prov=!!(ixCfg&&ixCfg.provisioning);
+    show2('ix_provBox',prov);
+    const adv=$('ix_advBox'), tog=$('ix_advToggle');
+    if(!prov){ if(adv) adv.classList.remove('hide'); if(tog) tog.classList.add('hide'); }
+    else { if(adv) adv.classList.add('hide'); if(tog) tog.classList.remove('hide'); }
+    return;
   }
   if(st) st.textContent='✓ Connected.';
   show2('indicesConnect',false); show2('indicesPanel',true);
@@ -1237,6 +1255,16 @@ function renderIndices(){
   if($('ix_acctlbl')) $('ix_acctlbl').textContent=(ixCfg&&ixCfg.account_id)||'—';
   show2('ix_probe', isAdmin());
   loadIndicesAccount();
+}
+function toggleIxAdvanced(){ const b=$('ix_advBox'); if(b) b.classList.toggle('hide'); }
+async function provisionIndices(){
+  const btn=$('ix_provBtn'), msg=$('ix_provMsg'); if(msg) msg.textContent='Connecting…';
+  if(btn) btn.disabled=true;
+  try{ const r=await api('/indices/provision','POST',{login:($('ix_login').value||'').trim(),password:$('ix_pass').value,server:($('ix_server').value||'').trim()});
+    if(r.ok){ await refreshIndices(); renderIndices(); }
+    else if(msg) msg.textContent=r.error||'Could not connect';
+  }catch(e){ if(msg) msg.textContent=e.message||'Could not connect'; }
+  if(btn) btn.disabled=false;
 }
 async function connectIndices(){
   const btn=$('ix_connectBtn'), msg=$('ix_connectMsg'); if(msg) msg.textContent='';

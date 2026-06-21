@@ -120,6 +120,12 @@ class IndicesConnectIn(BaseModel):
     base_url: str | None = None
 
 
+class IndicesProvisionIn(BaseModel):
+    login: str
+    password: str
+    server: str
+
+
 class IndicesSettingsIn(BaseModel):
     risk_pct: float = 1.0
     symbols: str = "US500,USTEC"
@@ -860,11 +866,48 @@ def get_indices(request: Request) -> dict:
     cfg = st.get_indices_settings(user["id"])
     return {
         "available": settings.indices_enabled,
+        "provisioning": bool(settings.metaapi_token),
         "connected": bool(bk),
         "account_id": (bk["account_id"] if bk else None),
         "settings": {"risk_pct": cfg["risk_pct"], "symbols": cfg["symbols"],
                      "enabled": bool(cfg["enabled"])},
     }
+
+
+@router.get("/api/indices/provisioning")
+def indices_provisioning_available(request: Request) -> dict:
+    """Whether the easy client onboarding (enter Equiti login, we provision
+    MetaApi) is available — i.e. the operator has set a platform MetaApi token."""
+    current_user(request)
+    return {"provisioning": bool(settings.metaapi_token)}
+
+
+@router.post("/api/indices/provision")
+def provision_indices(body: IndicesProvisionIn, request: Request) -> dict:
+    """Client onboarding: they enter their Equiti MT5 login/password/server and
+    we provision a MetaApi account under the PLATFORM token — the client never
+    touches MetaApi, and we never store their MT5 password (MetaApi holds it)."""
+    user = current_user(request)
+    if not (settings.indices_enabled or _is_admin_user(user)):
+        raise HTTPException(400, "the indices market is not enabled yet")
+    if not settings.metaapi_token:
+        raise HTTPException(400, "platform MetaApi isn't configured yet — set METAAPI_TOKEN")
+    if not (body.login.strip() and body.password and body.server.strip()):
+        raise HTTPException(400, "enter your MT5 login, password and server")
+    from .metaapi_provision import MetaApiProvisioner
+    prov = MetaApiProvisioner(settings.metaapi_token, settings.metaapi_provisioning_url,
+                              settings.metaapi_region)
+    try:
+        account_id = prov.create_account(body.login.strip(), body.password, body.server.strip())
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)[:300]}
+    if not account_id:
+        return {"ok": False, "error": "MetaApi did not return an account id"}
+    prov.deploy(account_id)
+    base = f"https://mt-client-api-v1.{settings.metaapi_region}.agiliumtrade.ai"
+    store().save_broker_keys(user["id"], security.encrypt(settings.metaapi_token), account_id, base)
+    return {"ok": True, "account_id": account_id,
+            "note": "deploying — it may take a minute to connect to Equiti"}
 
 
 @router.post("/api/indices/connect")

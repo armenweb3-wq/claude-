@@ -176,6 +176,13 @@ class Settings:
     # MetaApi client REST host (region-specific; confirm yours in the MetaApi UI).
     metaapi_base_url: str = field(default_factory=lambda: _get(
         "METAAPI_BASE_URL", "https://mt-client-api-v1.new-york.agiliumtrade.ai"))
+    # Platform-level MetaApi token: lets the SaaS PROVISION client MT5 accounts on
+    # the operator's behalf, so clients only enter their Equiti login (never touch
+    # MetaApi). Region is where provisioned terminals run + the client-api host.
+    metaapi_token: str = field(default_factory=lambda: _get("METAAPI_TOKEN"))
+    metaapi_provisioning_url: str = field(default_factory=lambda: _get(
+        "METAAPI_PROVISIONING_URL", "https://mt-provisioning-api-v1.agiliumtrade.ai"))
+    metaapi_region: str = field(default_factory=lambda: _get("METAAPI_REGION", "london"))
     # Default index instruments offered to new connections (broker symbol names).
     indices_symbols: list[str] = field(default_factory=lambda: _get_list("INDICES_SYMBOLS", "US500,USTEC"))
     indices_timeframe: str = field(default_factory=lambda: _get("INDICES_TIMEFRAME", "1h"))

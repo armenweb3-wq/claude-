@@ -164,6 +164,40 @@ def test_indices_probe_requires_connection_and_admin(client):
     assert body["ok"] is False and "connect" in body["error"].lower()
 
 
+def test_provisioner_builds_create_request():
+    from app.saas.metaapi_provision import MetaApiProvisioner
+    sent = {}
+
+    def transport(method, url, json=None):
+        sent["method"] = method
+        sent["url"] = url
+        sent["body"] = json
+        return {"id": "acct-xyz"}
+
+    p = MetaApiProvisioner("platform-token", "https://prov", "london", transport=transport)
+    acct = p.create_account("5012345", "secretpw", "Equiti-Demo")
+    assert acct == "acct-xyz"
+    assert sent["method"] == "POST" and sent["url"].endswith("/users/current/accounts")
+    assert sent["body"]["login"] == "5012345" and sent["body"]["server"] == "Equiti-Demo"
+    assert sent["body"]["platform"] == "mt5" and sent["body"]["region"] == "london"
+    # We forward the password to MetaApi but it is never persisted by us.
+    assert sent["body"]["password"] == "secretpw"
+
+
+def test_provision_endpoint_needs_platform_token(client):
+    object.__setattr__(settings, "indices_enabled", True)
+    object.__setattr__(settings, "metaapi_token", "")
+    try:
+        client.post("/app/api/register", json={"email": "p@b.com", "password": "password1"})
+        assert client.get("/app/api/indices").json()["provisioning"] is False
+        # Without a platform token, the easy onboarding is unavailable (clear 400).
+        r = client.post("/app/api/indices/provision",
+                        json={"login": "1", "password": "x", "server": "S"})
+        assert r.status_code == 400 and "METAAPI_TOKEN" in r.json()["detail"]
+    finally:
+        object.__setattr__(settings, "indices_enabled", False)
+
+
 def test_indices_connect_and_settings_when_enabled(client):
     object.__setattr__(settings, "indices_enabled", True)
     try:

@@ -238,25 +238,92 @@
         <div class="prodtop"><span class="prodname"><svg viewBox="0 0 64 64" width="20" height="20" style="vertical-align:-4px;margin-right:6px" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="#8a8f98"/><path fill="#0e1116" d="M46.1 27.4c.6-4.2-2.6-6.5-7-8l1.4-5.7-3.5-.9-1.4 5.6c-.9-.2-1.9-.4-2.8-.7l1.4-5.6-3.5-.9-1.4 5.7c-.7-.2-1.5-.3-2.2-.5l-4.8-1.2-.9 3.7s2.6.6 2.5.6c1.4.4 1.7 1.3 1.6 2.1l-1.6 6.4c.1 0 .2.1.4.1l-.4-.1-2.2 9c-.2.4-.6 1-1.6.8 0 .1-2.5-.6-2.5-.6l-1.7 4 4.5 1.1c.8.2 1.7.4 2.5.6l-1.4 5.8 3.5.9 1.4-5.7c1 .3 1.9.5 2.8.7l-1.4 5.7 3.5.9 1.4-5.8c5.9 1.1 10.4.7 12.2-4.7 1.5-4.3-.1-6.8-3.2-8.4 2.3-.5 4-2 4.5-5.1zm-8 11.1c-1.1 4.3-8.3 2-10.6 1.4l1.9-7.6c2.3.6 9.8 1.7 8.7 6.2zm1-11.2c-1 3.9-7 1.9-8.9 1.4l1.7-6.9c1.9.5 8.1 1.4 7.2 5.5z"/></svg>Bitcoin</span><span class="pill off" id="btcStatus">Coming soon</span></div>
         <div class="proddesc">Copy Armen M.'s live Bitcoin trades — auto-sized to your balance.</div>
       </div>
-      <div class="prodcard soon">
-        <div class="prodtop"><span class="prodname">📊 Indices</span><span class="pill off">Coming soon</span></div>
+      <div class="prodcard soon" id="indicesCard">
+        <div class="prodtop"><span class="prodname">📊 Indices</span><span class="pill off" id="indicesStatus">Coming soon</span></div>
         <div class="proddesc">Trade indices (S&amp;P, NAS100…) via a connected broker.</div>
       </div>
-      <div class="prodcard soon">
-        <div class="prodtop"><span class="prodname">🚀 Memecoins</span><span class="pill off">Coming soon</span></div>
+      <div class="prodcard soon" id="memeCard">
+        <div class="prodtop"><span class="prodname">🚀 Memecoins</span><span class="pill off" id="memeStatus">Coming soon</span></div>
         <div class="proddesc">Curated memecoin strategies — on-chain, your own wallet.</div>
       </div>
     </div>
 
-    <!-- COPY TRADING PRODUCT -->
+    <!-- COPY TRADING (BITCOIN) PRODUCT -->
     <div id="copyView" class="hide">
       <div style="margin:0 0 10px"><span class="link" onclick="backToHub()">← Markets</span></div>
       <div class="card">
-        <h2>Copy Armen M.'s trades</h2>
+        <h2 style="margin-top:0">₿ Copy Armen M.'s trades</h2>
         <p class="lead">When Armen opens a trade, the bot opens the <b>same trade on your own Bybit account</b> — automatically sized to <b>your</b> balance at the same risk %. When he closes, you close. Your funds never leave your account.</p>
         <div class="banner flat" id="copyState">Loading…</div>
         <button id="copyBtn" onclick="toggleCopy()">Enable copy trading</button>
         <p class="disc">Requires your exchange keys connected and your account active (Crypto, steps 1–2) and your bot switched on. Copy trading mirrors live trades — crypto is high-risk and past performance is not a guarantee. You stay in control and can turn this off anytime.</p>
+      </div>
+      <div class="card">
+        <h2 style="margin-top:0">How it works</h2>
+        <div class="step"><div class="num">1</div><div>Connect your Bybit keys &amp; activate (Crypto, steps 1–2), then switch your bot on.</div></div>
+        <div class="step"><div class="num">2</div><div>Enable copy trading above — there's nothing else to manage.</div></div>
+        <div class="step"><div class="num">3</div><div>Each entry is sized to <b>your</b> balance at the same risk %; exits mirror Armen's.</div></div>
+      </div>
+      <div class="card" id="copyAdmin" style="display:none">
+        <h2 style="margin-top:0">Leader trades · proof <span class="pill off">admin</span></h2>
+        <div class="stats" id="copyAdminStats"></div>
+        <div id="copyAdminSignals" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <!-- INDICES PRODUCT (structural preview) -->
+    <div id="indicesView" class="hide">
+      <div style="margin:0 0 10px"><span class="link" onclick="backToHub()">← Markets</span></div>
+      <div class="card">
+        <h2 style="margin-top:0">📊 Indices <span class="pill off">Preview</span></h2>
+        <p class="lead">Automated trading of major indices (S&amp;P 500, NAS100, DAX…) through a connected broker — same risk-sized engine as crypto.</p>
+        <div class="banner flat">🚧 Coming soon — the layout below is how this market will work.</div>
+      </div>
+      <div class="card">
+        <h2 style="margin-top:0">How it will work</h2>
+        <div class="step"><div class="num">1</div><div>Connect a supported CFD/indices broker by API (or our partner broker).</div></div>
+        <div class="step"><div class="num">2</div><div>Activate and set risk per trade — the same sizing model as crypto.</div></div>
+        <div class="step"><div class="num">3</div><div>The bot trades index setups on your own account; you keep full control.</div></div>
+      </div>
+      <div class="card">
+        <h2 style="margin-top:0">Your indices dashboard</h2>
+        <div class="stats">
+          <div class="stat"><div class="l">Starting balance</div><div class="v">—</div></div>
+          <div class="stat"><div class="l">Balance</div><div class="v">—</div></div>
+          <div class="stat"><div class="l">Equity</div><div class="v">—</div></div>
+          <div class="stat"><div class="l">Total return</div><div class="v">—</div></div>
+          <div class="stat"><div class="l">Open positions</div><div class="v">—</div></div>
+          <div class="stat"><div class="l">Win rate</div><div class="v">—</div></div>
+        </div>
+        <div class="banner flat" style="margin-top:12px">No broker connected yet — preview only.</div>
+      </div>
+    </div>
+
+    <!-- MEMECOINS PRODUCT (structural preview) -->
+    <div id="memecoinsView" class="hide">
+      <div style="margin:0 0 10px"><span class="link" onclick="backToHub()">← Markets</span></div>
+      <div class="card">
+        <h2 style="margin-top:0">🚀 Memecoins <span class="pill off">Preview</span></h2>
+        <p class="lead">Curated on-chain memecoin strategies, executed from your <b>own wallet</b> with hard risk caps. You stay self-custodied.</p>
+        <div class="banner flat">🚧 Coming soon — the layout below is how this market will work.</div>
+      </div>
+      <div class="card">
+        <h2 style="margin-top:0">How it will work</h2>
+        <div class="step"><div class="num">1</div><div>Connect your wallet (delegated trade-only — never withdrawal).</div></div>
+        <div class="step"><div class="num">2</div><div>Pick a curated strategy and set the slice of capital to allocate.</div></div>
+        <div class="step"><div class="num">3</div><div>The bot rotates the basket on-chain with stop-losses and position caps.</div></div>
+      </div>
+      <div class="card">
+        <h2 style="margin-top:0">Your memecoins dashboard</h2>
+        <div class="stats">
+          <div class="stat"><div class="l">Wallet value</div><div class="v">—</div></div>
+          <div class="stat"><div class="l">Allocated</div><div class="v">—</div></div>
+          <div class="stat"><div class="l">Open positions</div><div class="v">—</div></div>
+          <div class="stat"><div class="l">Total return</div><div class="v">—</div></div>
+          <div class="stat"><div class="l">Win rate</div><div class="v">—</div></div>
+          <div class="stat"><div class="l">Strategies</div><div class="v">—</div></div>
+        </div>
+        <div class="banner flat" style="margin-top:12px">No wallet connected yet — preview only.</div>
       </div>
     </div>
 
@@ -907,41 +974,58 @@ function render(){
   refreshCopy();
   showHub();
 }
-function showHub(){ show('hubView',true); show('cryptoView',false); show('copyView',false); }
+// ── market views (one "inside" per hub tile) ────────────────
+const MARKET_VIEWS=['cryptoView','copyView','indicesView','memecoinsView'];
+function hideMarkets(){ MARKET_VIEWS.forEach(v=>{ if($(v)) show(v,false); }); }
+function showHub(){ show('hubView',true); hideMarkets(); }
+function openMarket(id){ show('hubView',false); hideMarkets(); show(id,true); }
 function openProduct(p){
-  if(p!=='crypto') return;             // others are "coming soon"
-  show('hubView',false); show('copyView',false); show('cryptoView',true);
+  if(p!=='crypto') return;
+  openMarket('cryptoView');
   if(ME&&ME.activated) loadDashboard();
 }
+function openIndices(){ if(isAdmin()) openMarket('indicesView'); }
+function openMemecoins(){ if(isAdmin()) openMarket('memecoinsView'); }
 function backToHub(){ showHub(); const hh=$('hubCryptoStat'); if(hh) hh.textContent=''; }
 
-// ── copy trading (follower opt-in) ──────────────────────────
+// ── copy trading (follower opt-in) + market tile states ─────
 let copyAvailable=false, copyEnabled=false;
+function isAdmin(){ return !!(ME&&ME.is_admin); }
 async function refreshCopy(){
   try{ const c=await api('/copy'); copyAvailable=!!c.available; copyEnabled=!!c.copy_enabled; }
   catch(e){ copyAvailable=false; copyEnabled=false; }
-  updateCopyTile();
+  updateTiles();
 }
-function updateCopyTile(){
-  const card=$('btcCard'), pill=$('btcStatus');
+function _setTile(card,pill,clickable,onclick,label,on){
   if(!card) return;
-  if(copyAvailable){
-    card.classList.remove('soon');
-    card.setAttribute('onclick','openCopy()');
-    if(pill){ pill.textContent=copyEnabled?'ON':'Copy'; pill.className='pill '+(copyEnabled?'on':'off'); }
-  } else {
-    card.classList.add('soon');
-    card.removeAttribute('onclick');
-    if(pill){ pill.textContent='Coming soon'; pill.className='pill off'; }
-  }
+  if(clickable){ card.classList.remove('soon'); card.setAttribute('onclick',onclick); }
+  else { card.classList.add('soon'); card.removeAttribute('onclick'); }
+  if(pill){ pill.textContent=label; pill.className='pill '+(on?'on':'off'); }
+}
+function updateTiles(){
+  // Bitcoin / copy: live for everyone when enabled; preview for admins otherwise.
+  const btc=$('btcCard'), btcPill=$('btcStatus');
+  if(copyAvailable) _setTile(btc,btcPill,true,'openCopy()',copyEnabled?'ON':'Copy',copyEnabled);
+  else if(isAdmin()) _setTile(btc,btcPill,true,'openCopy()','Preview',false);
+  else _setTile(btc,btcPill,false,'','Coming soon',false);
+  // Indices & memecoins: structural previews, admin-only for now.
+  _setTile($('indicesCard'),$('indicesStatus'),isAdmin(),'openIndices()',isAdmin()?'Preview':'Coming soon',false);
+  _setTile($('memeCard'),$('memeStatus'),isAdmin(),'openMemecoins()',isAdmin()?'Preview':'Coming soon',false);
 }
 function openCopy(){
-  if(!copyAvailable) return;
-  show('hubView',false); show('cryptoView',false); show('copyView',true);
+  if(!(copyAvailable||isAdmin())) return;
+  openMarket('copyView');
   renderCopyState();
+  loadCopyAdmin();
 }
 function renderCopyState(){
   const st=$('copyState'), btn=$('copyBtn');
+  if(!copyAvailable){
+    if(st) st.textContent='Preview — copy trading isn’t switched on platform-wide yet (COPY_TRADING_ENABLED).';
+    if(btn){ btn.textContent='Enable copy trading'; btn.disabled=true; }
+    return;
+  }
+  if(btn) btn.disabled=false;
   if(st) st.textContent=copyEnabled
     ? '✓ Copy trading is ON — your account mirrors Armen’s trades.'
     : 'Copy trading is OFF — enable it to start mirroring Armen’s trades.';
@@ -952,7 +1036,27 @@ async function toggleCopy(){
   try{ const r=await api('/copy','POST',{enabled:!copyEnabled}); copyEnabled=!!r.copy_enabled; }
   catch(e){ alert(e.message||'Could not update copy trading'); }
   if(btn) btn.disabled=false;
-  renderCopyState(); updateCopyTile();
+  renderCopyState(); updateTiles();
+}
+async function loadCopyAdmin(){
+  const box=$('copyAdmin'); if(!box) return;
+  if(!isAdmin()){ box.style.display='none'; return; }
+  box.style.display='';
+  try{
+    const d=await api('/admin/copy'), ex=d.executions||{};
+    $('copyAdminStats').innerHTML=
+      '<div class="stat"><div class="l">Platform switch</div><div class="v sm">'+(d.copy_trading_enabled?'ON':'OFF')+'</div></div>'
+      +'<div class="stat"><div class="l">Followers</div><div class="v">'+(d.followers||0)+'</div></div>'
+      +'<div class="stat"><div class="l">Mirrors open</div><div class="v">'+(ex.open||0)+'</div></div>'
+      +'<div class="stat"><div class="l">Mirrors closed</div><div class="v">'+(ex.closed||0)+'</div></div>';
+    const sigs=d.signals||[];
+    $('copyAdminSignals').innerHTML = sigs.length
+      ? '<table><tr><th>Symbol</th><th>Side</th><th>Status</th><th>P&amp;L%</th></tr>'
+        + sigs.slice(0,12).map(s=>'<tr><td>'+esc(s.symbol)+'</td><td>'+esc(s.side)
+          +'</td><td>'+esc(s.status)+'</td><td>'+(s.pnl_pct==null?'—':esc(s.pnl_pct))+'</td></tr>').join('')
+        + '</table>'
+      : '<div class="disc">No leader trades recorded yet.</div>';
+  }catch(e){ $('copyAdminSignals').innerHTML='<div class="disc">Could not load proof ('+esc(e.message||'error')+').</div>'; }
 }
 
 // ── formatting helpers ──────────────────────────────────────

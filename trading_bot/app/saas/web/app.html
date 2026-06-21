@@ -246,6 +246,10 @@
         <div class="prodtop"><span class="prodname">🚀 Memecoins</span><span class="pill off" id="memeStatus">Coming soon</span></div>
         <div class="proddesc">Curated memecoin strategies — on-chain, your own wallet.</div>
       </div>
+      <div class="prodcard soon" id="unlimCard">
+        <div class="prodtop"><span class="prodname">⚡ Unlimited Leverage</span><span class="pill off" id="unlimStatus">Coming soon</span></div>
+        <div class="proddesc">High-leverage trading — concept in progress.</div>
+      </div>
     </div>
 
     <!-- COPY TRADING (BITCOIN) PRODUCT -->
@@ -335,6 +339,16 @@
           <div class="stat"><div class="l">Strategies</div><div class="v">—</div></div>
         </div>
         <div class="banner flat" style="margin-top:12px">No wallet connected yet — preview only.</div>
+      </div>
+    </div>
+
+    <!-- UNLIMITED LEVERAGE PRODUCT (concept placeholder) -->
+    <div id="unlimitedView" class="hide">
+      <div style="margin:0 0 10px"><span class="link" onclick="backToHub()">← Markets</span></div>
+      <div class="card">
+        <h2 style="margin-top:0">⚡ Unlimited Leverage <span class="pill off">Preview</span></h2>
+        <p class="lead">A high-leverage trading product — the concept is being defined.</p>
+        <div class="banner flat">🚧 Coming soon — structure to be designed.</div>
       </div>
     </div>
 
@@ -1026,7 +1040,7 @@ function render(){
   showHub();
 }
 // ── market views (one "inside" per hub tile) ────────────────
-const MARKET_VIEWS=['cryptoView','copyView','indicesView','memecoinsView'];
+const MARKET_VIEWS=['cryptoView','copyView','indicesView','memecoinsView','unlimitedView'];
 function hideMarkets(){ MARKET_VIEWS.forEach(v=>{ if($(v)) show(v,false); }); }
 function showHub(){ show('hubView',true); hideMarkets(); }
 function openMarket(id){ show('hubView',false); hideMarkets(); show(id,true); }
@@ -1040,6 +1054,7 @@ function openIndices(){
   openMarket('indicesView'); renderIndices();
 }
 function openMemecoins(){ if(isAdmin()) openMarket('memecoinsView'); }
+function openUnlimited(){ if(isAdmin()) openMarket('unlimitedView'); }
 function backToHub(){ showHub(); const hh=$('hubCryptoStat'); if(hh) hh.textContent=''; }
 
 // ── copy trading (follower opt-in) + market tile states ─────
@@ -1074,8 +1089,9 @@ function updateTiles(){
   if(indicesAvailable) _setTile(ic,ip,true,'openIndices()',indicesConnected?'Connected':'Trade',indicesConnected);
   else if(isAdmin()) _setTile(ic,ip,true,'openIndices()','Preview',false);
   else _setTile(ic,ip,false,'','Coming soon',false);
-  // Memecoins: structural preview, admin-only for now.
+  // Memecoins & Unlimited Leverage: structural previews, admin-only for now.
   _setTile($('memeCard'),$('memeStatus'),isAdmin(),'openMemecoins()',isAdmin()?'Preview':'Coming soon',false);
+  _setTile($('unlimCard'),$('unlimStatus'),isAdmin(),'openUnlimited()',isAdmin()?'Preview':'Coming soon',false);
 }
 function renderIndices(){
   const st=$('indicesState');

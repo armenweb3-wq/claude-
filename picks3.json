@@ -1,0 +1,14 @@
+{
+  "date": "2026-06-21",
+  "note": "Pro bot queue — single, lower-variance value picks at real odds (favourite to win, or over 1.5 in open games). Flat-staked, so no single loss is fatal. Auto-settleable markets only.",
+  "picks": [
+    { "match": "Uruguay vs Cape Verde", "selections": [ { "label": "Uruguay to win", "type": "team_win", "team": "Uruguay" } ], "odds": 1.48, "risk": "low", "why": "Uruguay clearly stronger than debutants.", "whyRisk": "A shock or a frustrating low-block draw." },
+    { "match": "New Zealand vs Egypt", "selections": [ { "label": "Egypt to win", "type": "team_win", "team": "Egypt" } ], "odds": 1.64, "risk": "medium", "why": "Egypt have the edge in quality.", "whyRisk": "New Zealand are organised and physical." },
+    { "match": "Argentina vs Austria", "selections": [ { "label": "Argentina to win", "type": "team_win", "team": "Argentina" } ], "odds": 1.61, "risk": "medium", "why": "Argentina the stronger side.", "whyRisk": "Austria can frustrate; a draw loses this single." },
+    { "match": "France vs Iraq", "selections": [ { "label": "France to win", "type": "team_win", "team": "France" } ], "odds": 1.12, "risk": "low", "why": "France far superior to Iraq.", "whyRisk": "Tiny price; only a shock hurts." },
+    { "match": "Norway vs Senegal", "selections": [ { "label": "Over 1.5 total goals", "type": "over_goals", "line": 1.5 } ], "odds": 1.35, "risk": "low", "why": "Two strong attacks; goals likely.", "whyRisk": "A tense, tight game." },
+    { "match": "Portugal vs Uzbekistan", "selections": [ { "label": "Portugal to win", "type": "team_win", "team": "Portugal" } ], "odds": 1.25, "risk": "low", "why": "Portugal's quality should win it.", "whyRisk": "Uzbekistan defend deep." },
+    { "match": "England vs Ghana", "selections": [ { "label": "England to win", "type": "team_win", "team": "England" } ], "odds": 1.25, "risk": "low", "why": "England the clear favourites.", "whyRisk": "Ghana can spring a surprise." },
+    { "match": "Panama vs Croatia", "selections": [ { "label": "Croatia to win", "type": "team_win", "team": "Croatia" } ], "odds": 1.6, "risk": "medium", "why": "Croatia's quality edge.", "whyRisk": "Panama are physical and awkward." }
+  ]
+}

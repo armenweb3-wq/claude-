@@ -1,0 +1,9 @@
+{
+  "label": "Pro (flat-stake)",
+  "startingBankroll": 500,
+  "mode": "flat",
+  "stakePct": 0.1,
+  "status": "active",
+  "updatedAt": "2026-06-21T20:30:00.000Z",
+  "bets": []
+}

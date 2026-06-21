@@ -37,6 +37,12 @@
         startingBankroll: aiTrack2.startingBankroll, targetLegs: aiTrack2.targetLegs, targetMultiplierPerLeg: aiTrack2.targetMultiplierPerLeg,
         status: aiTrack2.status, bets: aiTrack2.bets });
     }
+    if (aiTrack3 && aiTrack3.bets) { // self-driving Pro flat-stake track
+      shared = shared.filter((a) => (a.owner || "") !== "AI3");
+      shared.push({ id: 7, owner: "AI3", keepLabel: true, label: aiTrack3.label || "Pro (flat-stake)", source: "shared",
+        startingBankroll: aiTrack3.startingBankroll, mode: "flat", stakePct: aiTrack3.stakePct || 0.1,
+        status: aiTrack3.status, bets: aiTrack3.bets });
+    }
     const local = loadLocal().map((a) => ({ ...a, source: "local" }));
     const deleted = loadDeleted();
     let all = shared.concat(local).filter((a) => !deleted.includes("s" + a.id) && !deleted.includes(a.id));
@@ -46,6 +52,7 @@
   let viewIdx = null; // which attempt is being viewed; null => latest
   let aiTrack = null; // self-driving Model track (ai-track.json)
   let aiTrack2 = null; // self-driving AI 2.0 track (ai2-track.json)
+  let aiTrack3 = null; // self-driving Pro flat-stake track (ai3-track.json)
   let curated = null; // curated picks queue (picks.json)
   let odds = null; // multi-sport odds (odds.json)
   let feedUpdatedAt = null; // scores feed freshness (live.json updatedAt)
@@ -149,27 +156,44 @@
 
     renderAttemptBar(attempts, labels);
 
+    const flat = A.mode === "flat";
     const eff = (A.bets || []).map((b) => ({ bet: b, ...effectiveResult(b, lastMatches) }));
     const settled = eff.filter((e) => e.result === "won" || e.result === "lost");
     const wins = settled.filter((e) => e.result === "won");
     const losses = settled.filter((e) => e.result === "lost");
-    const broken = losses.length > 0;
-
-    let bankroll = startBank;
-    if (settled.length) { const last = settled[settled.length - 1]; bankroll = last.result === "won" ? last.ret : 0; }
+    const hitRate = settled.length ? (wins.length / settled.length) * 100 : 0;
     const legsDone = settled.length;
+
+    let bankroll, broken;
+    if (flat) {
+      bankroll = settled.reduce((s, e) => s + (e.result === "won" ? (e.ret - e.bet.stake) : -e.bet.stake), startBank);
+      bankroll = Math.round(bankroll * 100) / 100;
+      broken = bankroll < startBank * 0.05;
+    } else {
+      bankroll = startBank;
+      if (settled.length) { const last = settled[settled.length - 1]; bankroll = last.result === "won" ? last.ret : 0; }
+      broken = losses.length > 0;
+    }
     const currentLeg = Math.min(legsDone + 1, tLegs);
     const profit = bankroll - startBank;
-    const hitRate = settled.length ? (wins.length / settled.length) * 100 : 0;
+    const roi = startBank ? (profit / startBank) * 100 : 0;
     const targetNow = startBank * Math.pow(tMult, legsDone);
 
     const shareTag = A.source === "local" ? " · 📱 on this phone only (tell AI to share)" : "";
-    $("legLabel").textContent = (broken ? Alabel + " · streak broken" : Alabel + " · Leg " + currentLeg + " of " + tLegs + " (×" + tMult + ")") + shareTag;
+    $("legLabel").textContent = (flat
+      ? Alabel + " · " + wins.length + "W " + losses.length + "L · flat " + Math.round((A.stakePct || 0.1) * 100) + "%/bet"
+      : (broken ? Alabel + " · streak broken" : Alabel + " · Leg " + currentLeg + " of " + tLegs + " (×" + tMult + ")")) + shareTag;
     const bankEl = $("bankroll"); bankEl.textContent = fmt(bankroll); bankEl.className = "bankroll " + (profit >= 0 ? "green" : "red");
     const profEl = $("profit"); profEl.textContent = (profit >= 0 ? "▲ +" : "▼ ") + fmt(Math.abs(profit)) + " from " + fmt(startBank); profEl.className = "profit " + (profit >= 0 ? "green" : "red");
-    $("pace").textContent = broken ? "Run ended — tap “New run” to start again" : bankroll >= targetNow ? "✓ On / ahead of pace (target " + fmt0(targetNow) + ")" : "Behind pace (target " + fmt0(targetNow) + ")";
-    $("progressBar").style.width = Math.min((wins.length / tLegs) * 100, 100) + "%";
-    $("progressLabel").textContent = wins.length + " / " + tLegs + " legs won · final target ≈ " + fmt0(startBank * Math.pow(tMult, tLegs));
+    if (flat) {
+      $("pace").textContent = broken ? "Bankroll depleted" : "Flat staking · ROI " + roi.toFixed(1) + "% · survives variance";
+      $("progressBar").style.width = Math.min(Math.max(bankroll / (startBank * 2) * 100, 0), 100) + "%";
+      $("progressLabel").textContent = settled.length + " bets settled · " + Math.round((A.stakePct || 0.1) * 100) + "% of bankroll staked each";
+    } else {
+      $("pace").textContent = broken ? "Run ended — tap “New run” to start again" : bankroll >= targetNow ? "✓ On / ahead of pace (target " + fmt0(targetNow) + ")" : "Behind pace (target " + fmt0(targetNow) + ")";
+      $("progressBar").style.width = Math.min((wins.length / tLegs) * 100, 100) + "%";
+      $("progressLabel").textContent = wins.length + " / " + tLegs + " legs won · final target ≈ " + fmt0(startBank * Math.pow(tMult, tLegs));
+    }
 
     $("mini").innerHTML = `
       <div class="card"><div class="v">${wins.length}W / ${losses.length}L</div><div class="l">Record</div></div>
@@ -202,12 +226,20 @@
 
     renderPicks();
 
-    // STREAK
+    // STREAK / bet history dots
     let dots = "";
-    for (let i = 1; i <= tLegs; i++) {
-      const e = eff.find((x) => x.bet.leg === i);
-      let cls = "dot"; if (e) cls += " " + (e.result === "won" ? "won" : e.result === "lost" ? "lost" : "pending");
-      dots += `<div class="${cls}" title="${e ? e.bet.match : "Leg " + i}">${i}</div>`;
+    if (flat) {
+      eff.forEach((e, i) => {
+        const cls = "dot " + (e.result === "won" ? "won" : e.result === "lost" ? "lost" : "pending");
+        dots += `<div class="${cls}" title="${e.bet.match}">${i + 1}</div>`;
+      });
+      if (!eff.length) dots = `<div class="sub" style="color:var(--muted)">No bets yet.</div>`;
+    } else {
+      for (let i = 1; i <= tLegs; i++) {
+        const e = eff.find((x) => x.bet.leg === i);
+        let cls = "dot"; if (e) cls += " " + (e.result === "won" ? "won" : e.result === "lost" ? "lost" : "pending");
+        dots += `<div class="${cls}" title="${e ? e.bet.match : "Leg " + i}">${i}</div>`;
+      }
     }
     $("streak").innerHTML = dots;
 
@@ -222,14 +254,37 @@
       </div>`;
     }).join("") || `<div class="card">No bets in this run yet.</div>`;
 
-    drawChart(eff, startBank, tLegs, tMult);
+    // chart series
+    const cLabels = ["Start"], cActual = [startBank], cTarget = [startBank];
+    if (flat) {
+      let run = startBank;
+      eff.forEach((e, i) => {
+        cLabels.push("B" + (i + 1));
+        if (e.result === "won") run = Math.round((run + (e.ret - e.bet.stake)) * 100) / 100;
+        else if (e.result === "lost") run = Math.round((run - e.bet.stake) * 100) / 100;
+        cActual.push(e.result === "pending" ? null : run);
+        cTarget.push(startBank);
+      });
+    } else {
+      for (let i = 1; i <= tLegs; i++) {
+        cLabels.push("L" + i);
+        cTarget.push(startBank * Math.pow(tMult, i));
+        const e = eff.find((x) => x.bet.leg === i);
+        cActual.push(e && (e.result === "won" || e.result === "lost") ? e.ret : null);
+      }
+    }
+    drawChart(cLabels, cActual, cTarget, flat);
 
-    const remaining = tLegs - wins.length;
-    const pLeg = settled.length >= 1 ? Math.min(hitRate / 100, 0.95) : (tMult >= 1.9 ? 0.5 : 0.8);
-    const pFinish = broken ? 0 : Math.pow(pLeg, Math.max(remaining, 0));
-    $("reality").innerHTML = broken
-      ? `This attempt broke at leg ${losses[0].bet.leg}. That's the math of a long chain — one swing ends it. Restart only with money you can fully lose.`
-      : `${wins.length} win(s) so far. The odds don't reset each leg — at a ${(pLeg * 100).toFixed(0)}% per-leg rate, completing the remaining <b>${remaining}</b> legs is ~<b>${(pFinish * 100).toFixed(1)}%</b>. Stake only what you can lose.`;
+    if (flat) {
+      $("reality").innerHTML = `Flat staking risks ${Math.round((A.stakePct || 0.1) * 100)}% of the bankroll per bet, so a loss only dents it — it can't be wiped out in one go like a compounding run. Honest expectation: it drifts slowly with variance and, without a true edge over the bookmaker's margin, tends to grind down over time. It's the disciplined approach, not a money machine.`;
+    } else {
+      const remaining = tLegs - wins.length;
+      const pLeg = settled.length >= 1 ? Math.min(hitRate / 100, 0.95) : (tMult >= 1.9 ? 0.5 : 0.8);
+      const pFinish = broken ? 0 : Math.pow(pLeg, Math.max(remaining, 0));
+      $("reality").innerHTML = broken
+        ? `This run busted at leg ${(losses[0] && losses[0].bet.leg) || "?"}. That's the math of a long chain — one swing ends it. Restart only with money you can fully lose.`
+        : `${wins.length} win(s) so far. The odds don't reset each leg — at a ${(pLeg * 100).toFixed(0)}% per-leg rate, completing the remaining <b>${remaining}</b> legs is ~<b>${(pFinish * 100).toFixed(1)}%</b>. Stake only what you can lose.`;
+    }
 
     if (lastMatches.length) renderLiveList(lastMatches, activeEff ? activeEff.bet : firstCandidate());
     renderBuilder(lastMatches);
@@ -288,26 +343,22 @@
   }
 
   let chart;
-  function drawChart(eff, startBank, tLegs, tMult) {
-    tLegs = tLegs || D.targetLegs; tMult = tMult || D.targetMultiplierPerLeg;
-    const labels = ["Start"], actual = [startBank], target = [startBank];
-    for (let i = 1; i <= tLegs; i++) {
-      labels.push("L" + i);
-      target.push(startBank * Math.pow(tMult, i));
-      const e = eff.find((x) => x.bet.leg === i);
-      actual.push(e && (e.result === "won" || e.result === "lost") ? e.ret : null);
+  function drawChart(labels, actual, target, flat) {
+    const yType = flat ? "linear" : "logarithmic";
+    if (chart) {
+      chart.data.labels = labels; chart.data.datasets[0].data = target; chart.data.datasets[1].data = actual;
+      chart.options.scales.y.type = yType; chart.update(); return;
     }
-    if (chart) { chart.data.labels = labels; chart.data.datasets[0].data = target; chart.data.datasets[1].data = actual; chart.update(); return; }
     chart = new Chart($("bankrollChart"), {
       type: "line",
       data: { labels, datasets: [
-        { label: "Target", data: target, borderColor: "#7a86a8", borderDash: [5, 4], pointRadius: 0, tension: 0.25, borderWidth: 2 },
-        { label: "Actual", data: actual, borderColor: "#059669", backgroundColor: "rgba(5,150,105,.12)", fill: true, spanGaps: true, pointRadius: 3, tension: 0.25, borderWidth: 2.5 },
+        { label: flat ? "Starting bankroll" : "Target", data: target, borderColor: "#7a86a8", borderDash: [5, 4], pointRadius: 0, tension: 0.25, borderWidth: 2 },
+        { label: "Bankroll", data: actual, borderColor: "#059669", backgroundColor: "rgba(5,150,105,.12)", fill: true, spanGaps: true, pointRadius: 3, tension: 0.25, borderWidth: 2.5 },
       ]},
       options: { responsive: true, maintainAspectRatio: true,
         plugins: { legend: { labels: { color: "#6b7280", boxWidth: 12, font: { size: 11 } } }, tooltip: { callbacks: { label: (c) => c.dataset.label + ": " + (c.parsed.y == null ? "—" : fmt0(c.parsed.y)) } } },
         scales: { x: { ticks: { color: "#9aa3b2", font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 9 }, grid: { display: false } },
-          y: { type: "logarithmic", ticks: { color: "#9aa3b2", font: { size: 10 }, callback: (v) => cur + (v >= 1000 ? v / 1000 + "k" : v) }, grid: { color: "#eef1f6" } } } },
+          y: { type: yType, ticks: { color: "#9aa3b2", font: { size: 10 }, callback: (v) => cur + (v >= 1000 ? v / 1000 + "k" : v) }, grid: { color: "#eef1f6" } } } },
     });
   }
 
@@ -655,6 +706,7 @@
   async function loadAi() {
     try { const r = await fetch("./ai-track.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) aiTrack = await r.json(); } catch {}
     try { const r = await fetch("./ai2-track.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) aiTrack2 = await r.json(); } catch {}
+    try { const r = await fetch("./ai3-track.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) aiTrack3 = await r.json(); } catch {}
     try { const r = await fetch("./picks.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) curated = await r.json(); } catch {}
     try { const r = await fetch("./odds.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) odds = await r.json(); } catch {}
   }

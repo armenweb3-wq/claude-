@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { legResult, betResult, arb, targetStake, compound } from "../lib/engine.mjs";
+import { legResult, betResult, arb, targetStake, compound, flatBankroll } from "../lib/engine.mjs";
 
 const ft = (h, a) => ({ status: "FINISHED", home: "Spain", away: "Saudi Arabia", homeScore: h, awayScore: a });
 
@@ -54,4 +54,11 @@ test("target-profit stake", () => {
 test("compounding", () => {
   assert.equal(compound(500, [{ odds: 1.45, result: "won" }, { odds: 1.45, result: "won" }]), 1051.25);
   assert.equal(compound(500, [{ odds: 1.45, result: "won" }, { odds: 1.4, result: "lost" }]), 0);
+});
+
+test("flat staking survives a loss", () => {
+  // win €50 @2.0 (+50), then lose €50 (-50) -> back to start
+  assert.equal(flatBankroll(500, [{ stake: 50, odds: 2.0, result: "won" }, { stake: 50, odds: 2.0, result: "lost" }]), 500);
+  // a single loss does NOT wipe the bankroll (unlike compounding)
+  assert.equal(flatBankroll(500, [{ stake: 50, odds: 2.0, result: "lost" }]), 450);
 });

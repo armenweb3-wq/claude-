@@ -10,7 +10,7 @@
  *   - ai2-track.json + picks2.json  (AI 2.0: 10 legs, ~2.00)
  */
 import { readFileSync, writeFileSync } from "node:fs";
-import { norm, betResult } from "../lib/engine.mjs"; // shared, unit-tested money logic
+import { norm, betResult, flatBankroll } from "../lib/engine.mjs"; // shared, unit-tested money logic
 
 const read = (f, d) => { try { return JSON.parse(readFileSync(f, "utf8")); } catch { return d; } };
 
@@ -125,6 +125,59 @@ function processTrack(trackFile, queueFile, fallbackOdds) {
   else console.log(`${trackFile}: no change`);
 }
 
-// Model: fallback Over 1.5 @1.40 ; AI 2.0: fallback Over 2.5 @2.00
+// Pro bot: flat staking (% of bankroll per bet) — a loss only dents, never wipes.
+function processFlat(trackFile, queueFile, fallbackOdds) {
+  const track = read(trackFile, null);
+  if (!track) { console.log(`skip ${trackFile} (missing)`); return; }
+  const queue = (read(queueFile, { picks: [] }).picks) || [];
+  const bets = track.bets || (track.bets = []);
+  let changed = false;
+
+  const pending = bets.find((b) => b.result === "pending");
+  if (pending) {
+    const res = betResult(pending.selections, matchFor(pending.match));
+    if (res !== null) {
+      pending.result = res;
+      pending.returnAmount = res === "won" ? Math.round(pending.stake * pending.odds * 100) / 100 : 0;
+      changed = true;
+      console.log(`${trackFile}: settled ${pending.match} -> ${res}`);
+    }
+  }
+
+  const bank = flatBankroll(track.startingBankroll, bets);
+  const broke = bank < track.startingBankroll * 0.05;
+  const hasPending = bets.some((b) => b.result === "pending");
+  const now = Date.now();
+  const used = new Set(bets.map((b) => norm(b.match)));
+  const upcoming = (m) => m && (m.status === "TIMED" || m.status === "SCHEDULED") && m.utcDate && new Date(m.utcDate).getTime() > now + 5 * 60000;
+
+  if (!broke && !hasPending && bank > 1) {
+    let pick = null, m = null;
+    const cands = queue.map((p) => ({ p, m: matchFor(p.match) }))
+      .filter((x) => upcoming(x.m) && !used.has(norm(x.p.match)))
+      .sort((a, b) => new Date(a.m.utcDate) - new Date(b.m.utcDate));
+    if (cands.length) { pick = cands[0].p; m = cands[0].m; }
+    if (!pick) {
+      m = matches.filter((x) => upcoming(x) && !used.has(norm(x.home + " vs " + x.away)))
+        .sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate))[0];
+      if (m) pick = { match: m.home + " vs " + m.away, selections: [fallbackOdds.sel], odds: fallbackOdds.odds };
+    }
+    if (pick && m) {
+      const sels = pick.selections || (pick.selection ? [pick.selection] : [fallbackOdds.sel]);
+      const real = realOddsFor(pick.match, sels);
+      const stake = Math.max(1, Math.round(bank * (track.stakePct || 0.1) * 100) / 100);
+      bets.push({ leg: bets.length + 1, date: new Date(m.utcDate).toISOString().slice(0, 10), match: pick.match, kickoff: m.utcDate, selections: sels, stake, odds: real || pick.odds || fallbackOdds.odds, oddsReal: !!real, result: "pending", returnAmount: 0, auto: true, curated: cands.length > 0 });
+      changed = true;
+      console.log(`${trackFile}: placed ${pick.match} stake ${stake}`);
+    }
+  }
+  const newStatus = broke ? "busted" : "active";
+  if (newStatus !== track.status) { track.status = newStatus; changed = true; }
+  if (changed) { track.updatedAt = new Date().toISOString(); writeFileSync(trackFile, JSON.stringify(track, null, 2)); }
+  else console.log(`${trackFile}: no change`);
+}
+
+// Model: fallback Over 1.5 @1.40 ; AI 2.0: fallback Over 2.5 @2.00 ; Pro: flat singles
 processTrack("ai-track.json", "picks.json", { sel: { label: "Over 1.5 total goals", type: "over_goals", line: 1.5 }, odds: 1.40 });
 processTrack("ai2-track.json", "picks2.json", { sel: { label: "Over 2.5 total goals", type: "over_goals", line: 2.5 }, odds: 2.00 });
+processFlat("ai3-track.json", "picks3.json", { sel: { label: "Over 1.5 total goals", type: "over_goals", line: 1.5 }, odds: 1.40 });

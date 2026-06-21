@@ -137,3 +137,41 @@ def test_stale_signal_is_not_chased():
     out = CopyTrader(ex, st, user_id=7, dry=False, max_age_s=60, leverage_cap=5).run_once()
     assert ex.opened == []
     assert out["opened"] == []
+
+
+# ── API endpoints ───────────────────────────────────────────
+import pytest  # noqa: E402
+
+from app.config import settings  # noqa: E402
+
+
+@pytest.fixture()
+def client(tmp_path):
+    for k, v in {"saas_db_path": str(tmp_path / "t.db"), "saas_secret_key": "test-secret",
+                 "saas_seat_limit": 5, "saas_admin_email": "admin@z.com"}.items():
+        object.__setattr__(settings, k, v)
+    import app.saas.routes as r
+    r._store = None  # fresh store on the temp path
+    from fastapi.testclient import TestClient
+    import app.main as m
+    return TestClient(m.app)
+
+
+def test_copy_endpoint_gated_when_disabled(client):
+    object.__setattr__(settings, "copy_trading_enabled", False)
+    client.post("/app/api/register", json={"email": "f@b.com", "password": "password1"})
+    assert client.get("/app/api/copy").json()["available"] is False
+    # Opting in is rejected while the platform switch is off.
+    assert client.post("/app/api/copy", json={"enabled": True}).status_code == 400
+
+
+def test_copy_opt_in_when_enabled(client):
+    object.__setattr__(settings, "copy_trading_enabled", True)
+    try:
+        client.post("/app/api/register", json={"email": "g@b.com", "password": "password1"})
+        assert client.get("/app/api/copy").json() == {"available": True, "copy_enabled": False}
+        r = client.post("/app/api/copy", json={"enabled": True})
+        assert r.status_code == 200 and r.json()["copy_enabled"] is True
+        assert client.get("/app/api/copy").json()["copy_enabled"] is True
+    finally:
+        object.__setattr__(settings, "copy_trading_enabled", False)

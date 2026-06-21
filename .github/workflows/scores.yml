@@ -32,8 +32,8 @@ jobs:
         run: |
           git config user.name "scores-bot"
           git config user.email "actions@github.com"
-          if ! git diff --quiet -- live.json ai-track.json ai2-track.json; then
-            git add live.json ai-track.json ai2-track.json
+          if ! git diff --quiet -- live.json ai-track.json ai2-track.json ai3-track.json; then
+            git add live.json ai-track.json ai2-track.json ai3-track.json
             git commit -m "chore: update scores + autopilot [skip ci]"
             git push
           else

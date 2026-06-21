@@ -185,6 +185,10 @@ class Settings:
     memecoins_enabled: bool = field(default_factory=lambda: _get_bool("MEMECOINS_ENABLED", False))
     solana_rpc_url: str = field(default_factory=lambda: _get(
         "SOLANA_RPC_URL", "https://api.mainnet-beta.solana.com"))
+    jupiter_url: str = field(default_factory=lambda: _get("JUPITER_URL", "https://quote-api.jup.ag"))
+    # Slippage tolerance and a hard cap on SOL spent per single swap (safety rail).
+    meme_slippage_bps: int = field(default_factory=lambda: _get_int("MEME_SLIPPAGE_BPS", 150))
+    meme_max_sol_per_trade: float = field(default_factory=lambda: _get_float("MEME_MAX_SOL_PER_TRADE", 1.0))
 
     @property
     def auth_enabled(self) -> bool:

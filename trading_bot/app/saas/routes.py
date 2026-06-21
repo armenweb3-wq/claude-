@@ -136,6 +136,21 @@ class MemeSettingsIn(BaseModel):
     agreed: bool = True
 
 
+class MemeBuyIn(BaseModel):
+    mint: str
+    sol_amount: float
+
+
+class MemeSellIn(BaseModel):
+    mint: str
+    percent: float = 100.0
+
+
+class MemeWithdrawIn(BaseModel):
+    destination: str
+    sol_amount: float | None = None
+
+
 class PaymentIn(BaseModel):
     tx_hash: str
 
@@ -980,6 +995,89 @@ def memecoin_balance(request: Request) -> dict:
         return {"ok": True, "address": w["address"], "sol": lamports / 1e9}
     except Exception as exc:
         return {"ok": False, "error": str(exc)[:200]}
+
+
+def _meme_executor(uid: int):
+    w = store().get_memecoin_wallet(uid)
+    if not w:
+        return None
+    from .solana_exec import JupiterExecutor
+    secret = security.decrypt(w["enc_secret"])
+    return JupiterExecutor(secret, settings.solana_rpc_url, settings.jupiter_url)
+
+
+def _valid_mint(s: str) -> bool:
+    return bool(s) and 32 <= len(s) <= 44 and all(
+        c in "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz" for c in s)
+
+
+@router.get("/api/memecoins/holdings")
+def memecoin_holdings(request: Request) -> dict:
+    """Live SOL + token balances of the dedicated wallet (best-effort, on-chain)."""
+    ex = _meme_executor(current_user(request)["id"])
+    if not ex:
+        return {"ok": False, "error": "no wallet"}
+    try:
+        return {"ok": True, "sol": ex.get_balance_sol(), "tokens": ex.get_token_balances()}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)[:200]}
+
+
+@router.post("/api/memecoins/buy")
+def memecoin_buy(body: MemeBuyIn, request: Request) -> dict:
+    """Swap SOL → token via Jupiter on the dedicated wallet. Real on-chain order."""
+    if not settings.memecoins_enabled:
+        raise HTTPException(400, "memecoins market is not enabled")
+    if not _valid_mint(body.mint):
+        raise HTTPException(400, "invalid token mint")
+    amount = max(0.0, min(float(body.sol_amount), settings.meme_max_sol_per_trade))
+    if amount <= 0:
+        raise HTTPException(400, "amount must be > 0")
+    ex = _meme_executor(current_user(request)["id"])
+    if not ex:
+        raise HTTPException(400, "create your wallet first")
+    try:
+        sig = ex.buy(body.mint, amount, settings.meme_slippage_bps)
+        return {"ok": True, "signature": sig}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)[:300]}
+
+
+@router.post("/api/memecoins/sell")
+def memecoin_sell(body: MemeSellIn, request: Request) -> dict:
+    """Swap a token → SOL via Jupiter (sell a % of the holding)."""
+    if not settings.memecoins_enabled:
+        raise HTTPException(400, "memecoins market is not enabled")
+    if not _valid_mint(body.mint):
+        raise HTTPException(400, "invalid token mint")
+    pct = max(1.0, min(float(body.percent), 100.0))
+    ex = _meme_executor(current_user(request)["id"])
+    if not ex:
+        raise HTTPException(400, "create your wallet first")
+    try:
+        holding = next((t for t in ex.get_token_balances() if t["mint"] == body.mint), None)
+        if not holding or holding["raw"] <= 0:
+            return {"ok": False, "error": "no balance of that token"}
+        raw = int(holding["raw"] * pct / 100.0)
+        sig = ex.sell(body.mint, raw, settings.meme_slippage_bps)
+        return {"ok": True, "signature": sig}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)[:300]}
+
+
+@router.post("/api/memecoins/withdraw")
+def memecoin_withdraw(body: MemeWithdrawIn, request: Request) -> dict:
+    """Cash out: send SOL from the dedicated wallet to the user's own wallet."""
+    if not _valid_mint(body.destination):
+        raise HTTPException(400, "invalid destination address")
+    ex = _meme_executor(current_user(request)["id"])
+    if not ex:
+        raise HTTPException(400, "no wallet")
+    try:
+        sig = ex.withdraw_sol(body.destination, body.sol_amount)
+        return {"ok": True, "signature": sig}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)[:300]}
 
 
 # ── payment ─────────────────────────────────────────────────

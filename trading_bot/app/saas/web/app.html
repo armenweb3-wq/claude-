@@ -340,6 +340,26 @@
         <label style="margin-top:10px">Deposit address — send SOL here to fund trading</label>
         <div class="copy"><span id="meme_addr" style="word-break:break-all"></span><span class="link" onclick="copyMemeAddr()">copy</span></div>
         <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
+          <h2 style="margin:0 0 6px;font-size:1rem">Trade terminal</h2>
+          <div class="disc" style="margin:0 0 8px">Live on-chain swaps via Jupiter — start with tiny amounts to verify.</div>
+          <div id="meme_holdings"></div>
+          <label>Token mint address</label><input id="meme_mint" placeholder="token mint (from Dexscreener / pump.fun)"/>
+          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:6px">
+            <div style="flex:1;min-width:120px"><label>Buy with SOL</label><input id="meme_buyamt" type="number" step="0.01" min="0"/></div>
+            <button onclick="memeBuy()">Buy</button>
+            <button class="ghost" onclick="memeSell()">Sell 100%</button>
+          </div>
+          <div class="msg" id="meme_trademsg"></div>
+          <div style="margin-top:8px"><span class="link" onclick="memeRefreshHoldings()">Refresh holdings</span></div>
+        </div>
+        <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
+          <h2 style="margin:0 0 6px;font-size:1rem">Cash out</h2>
+          <label>Your main Solana wallet address</label><input id="meme_dest"/>
+          <label>SOL amount (blank = all)</label><input id="meme_wdamt" type="number" step="0.01" min="0"/>
+          <button onclick="memeWithdraw()" style="margin-top:8px">Withdraw to my wallet</button>
+          <div class="msg" id="meme_wdmsg"></div>
+        </div>
+        <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
           <label>Risk per trade (%)</label><input id="meme_risk" type="number" step="1" min="1" max="25"/>
           <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;margin-top:8px">
             <input id="meme_enabled" type="checkbox" style="width:auto"/> <span style="font-size:.8rem;color:var(--muted)">Enable automated memecoin trading on this wallet</span></label>
@@ -1137,7 +1157,38 @@ function renderMeme(){
   if($('meme_enabled')) $('meme_enabled').checked=!!cfg.enabled;
   if($('meme_status')) $('meme_status').textContent=cfg.enabled?'trading':'paused';
   const sec=$('meme_secret'); if(sec){ sec.classList.add('hide'); sec.textContent=''; }
+  loadMemeBalance(); memeRefreshHoldings();
+}
+async function memeBuy(){
+  const m=$('meme_trademsg'); if(m) m.textContent='Submitting…';
+  try{ const r=await api('/memecoins/buy','POST',{mint:($('meme_mint').value||'').trim(),sol_amount:parseFloat($('meme_buyamt').value)||0});
+    if(m) m.textContent=r.ok?('✓ Bought · tx '+String(r.signature).slice(0,16)+'…'):('✗ '+(r.error||'failed'));
+  }catch(e){ if(m) m.textContent=e.message||'failed'; }
+  memeRefreshHoldings();
+}
+async function memeSell(){
+  const m=$('meme_trademsg'); if(m) m.textContent='Submitting…';
+  try{ const r=await api('/memecoins/sell','POST',{mint:($('meme_mint').value||'').trim(),percent:100});
+    if(m) m.textContent=r.ok?('✓ Sold · tx '+String(r.signature).slice(0,16)+'…'):('✗ '+(r.error||'failed'));
+  }catch(e){ if(m) m.textContent=e.message||'failed'; }
+  memeRefreshHoldings();
+}
+async function memeWithdraw(){
+  const m=$('meme_wdmsg'); if(m) m.textContent='Submitting…';
+  const amt=parseFloat($('meme_wdamt').value);
+  try{ const r=await api('/memecoins/withdraw','POST',{destination:($('meme_dest').value||'').trim(),sol_amount:isNaN(amt)?null:amt});
+    if(m) m.textContent=r.ok?('✓ Withdrawn · tx '+String(r.signature).slice(0,16)+'…'):('✗ '+(r.error||'failed'));
+  }catch(e){ if(m) m.textContent=e.message||'failed'; }
   loadMemeBalance();
+}
+async function memeRefreshHoldings(){
+  const box=$('meme_holdings'); if(!box) return;
+  try{ const h=await api('/memecoins/holdings');
+    if(!h.ok){ box.innerHTML='<div class="disc">'+esc(h.error||'not reachable')+'</div>'; return; }
+    const ts=h.tokens||[];
+    box.innerHTML='<div class="disc" style="margin:0 0 6px">Balance: '+Number(h.sol).toFixed(4)+' ◎ SOL'+(ts.length?'':' · no tokens')+'</div>'
+      +(ts.length?('<table><tr><th>Mint</th><th>Amount</th></tr>'+ts.map(t=>'<tr><td>'+esc(String(t.mint).slice(0,10))+'…</td><td>'+esc(t.amount)+'</td></tr>').join('')+'</table>'):'');
+  }catch(e){ box.innerHTML=''; }
 }
 async function createMemeWallet(){
   const btn=$('meme_createBtn'), msg=$('meme_createMsg'); if(msg) msg.textContent='';

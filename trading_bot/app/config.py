@@ -196,6 +196,12 @@ class Settings:
     # Slippage tolerance and a hard cap on SOL spent per single swap (safety rail).
     meme_slippage_bps: int = field(default_factory=lambda: _get_int("MEME_SLIPPAGE_BPS", 150))
     meme_max_sol_per_trade: float = field(default_factory=lambda: _get_float("MEME_MAX_SOL_PER_TRADE", 1.0))
+    # Shadow mode: run the strategy on live data and LOG would-be trades into a
+    # virtual portfolio (no funds) to prove the edge before going live.
+    meme_shadow_enabled: bool = field(default_factory=lambda: _get_bool("MEME_SHADOW_ENABLED", False))
+    meme_shadow_start_sol: float = field(default_factory=lambda: _get_float("MEME_SHADOW_START_SOL", 10.0))
+    meme_base_size_sol: float = field(default_factory=lambda: _get_float("MEME_BASE_SIZE_SOL", 0.2))
+    meme_max_open: int = field(default_factory=lambda: _get_int("MEME_MAX_OPEN", 5))
 
     @property
     def auth_enabled(self) -> bool:

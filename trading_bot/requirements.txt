@@ -23,5 +23,7 @@ python-dotenv>=1.0
 python-telegram-bot>=21.0
 Pillow>=10.0.0
 
-# Memecoins market: Solana transaction signing (Jupiter swaps + withdrawals)
-solders>=0.21
+# Memecoins LIVE signing needs `solders` (Rust). It is imported lazily only when a
+# swap/withdraw actually executes, so it is NOT required to run the app — and it's
+# kept OUT of the default build because compiling it can stall/OOM small builders.
+# When you enable real memecoin trading, install a wheel build:  pip install solders

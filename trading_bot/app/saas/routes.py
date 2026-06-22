@@ -423,13 +423,15 @@ def dashboard(request: Request) -> dict:
             realized_today = round(sum(
                 (t.get("pnl") or 0) for t in hist.get("trades", [])
                 if (t.get("closed_at") or "").startswith(today)), 4)
-            # how many TPs each open position has actually hit = closing orders
-            # for that symbol recorded since the position opened (authoritative,
-            # unlike inferring from current price which misses brief touches).
+            # how many TPs each open position has actually hit = closing fills
+            # whose PRICE matches a TP level since the position opened. Matching on
+            # price (not just "any close for this symbol") prevents a stop-loss or
+            # a PRIOR trade's close from being miscounted as a take-profit.
+            from ..strategy.trailing import tp_hits_from_fills
             for p in live_data.get("positions", []):
                 ot = p.get("opened_at") or ""
-                p["tps_hit"] = (sum(1 for r in raw if r.get("symbol") == p["symbol"]
-                                    and (r.get("closed_at") or "") >= ot) if ot else 0)
+                tps = p.get("take_profits") or []
+                p["tps_hit"] = tp_hits_from_fills(raw, p["symbol"], ot, tps) if (ot and tps) else 0
         except Exception:
             pass
 

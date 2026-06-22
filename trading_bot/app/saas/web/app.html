@@ -1432,7 +1432,7 @@ function renderPositions(pos){
     // the position opened). Fall back to a price estimate if not available.
     let computed=0; for(let i=0;i<tparr.length;i++){ if(dir*(mark-tparr[i])>=0) computed++; else break; }
     const serverHit=(typeof p.tps_hit==='number')?p.tps_hit:0;
-    let hit=Math.max(computed, serverHit); const fk='tph_'+((ME&&ME.id)||'')+'_'+p.symbol;
+    let hit=Math.max(computed, serverHit); const fk='tph2_'+((ME&&ME.id)||'')+'_'+p.symbol;
     try{ const s0=JSON.parse(localStorage.getItem(fk)||'{}');  // sticky: never revert
       const sameEntry=s0 && Math.abs((s0.entry||0)-p.entry_price) <= Math.abs(p.entry_price)*1e-5+1e-9;
       if(sameEntry && typeof s0.hit==='number') hit=Math.max(hit, s0.hit);

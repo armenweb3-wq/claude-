@@ -54,3 +54,19 @@ def test_history_endpoint_aggregates_stats():
     assert stats["total"] == 2
     assert stats["win_rate"] == 50.0
     assert len(data["trades"]) == 2
+
+
+# ── dashboard TP-hit counting (regression: stop-out must not show as TP) ──
+def test_tps_hit_ignores_stop_and_prior_closes():
+    """A short re-entry after a stop-out used to count the stop close as 'TP1 hit'.
+    Only a close whose PRICE matches a TP level should count."""
+    from app.strategy.trailing import tp_hits_from_fills
+    # Short from entry 74.18 -> TP ladder below entry.
+    tps = [69.73, 65.28, 59.34]
+    opened = "2026-06-22T04:30:00+00:00"
+    # The prior trade's stop-out filled at 74.60 (above entry) — NOT a take-profit.
+    stop = [{"symbol": "SOLUSDT", "exit_price": 74.60, "closed_at": "2026-06-22T04:31:00+00:00"}]
+    assert tp_hits_from_fills(stop, "SOLUSDT", opened, tps) == 0
+    # A genuine TP1 fill at ~69.73 DOES count.
+    tp1 = [{"symbol": "SOLUSDT", "exit_price": 69.70, "closed_at": "2026-06-22T05:00:00+00:00"}]
+    assert tp_hits_from_fills(tp1, "SOLUSDT", opened, tps) == 1

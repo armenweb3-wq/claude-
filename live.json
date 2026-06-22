@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-22T01:50:27.610Z",
+  "updatedAt": "2026-06-22T01:55:25.220Z",
   "matches": [
     {
       "home": "Uzbekistan",
@@ -132,7 +132,7 @@
     {
       "home": "New Zealand",
       "away": "Egypt",
-      "status": "IN_PLAY",
+      "status": "PAUSED",
       "homeScore": 1,
       "awayScore": 0,
       "utcDate": "2026-06-22T01:00:00Z"

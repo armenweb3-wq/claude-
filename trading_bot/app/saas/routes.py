@@ -60,6 +60,28 @@ def require_admin(request: Request) -> dict:
     return user
 
 
+def _json_safe(obj):
+    """Coerce a value tree to JSON-safe Python types: numpy scalars -> Python,
+    NaN/inf -> None. Prevents bare 500s when serialising backtest results."""
+    import math
+    if isinstance(obj, dict):
+        return {k: _json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_json_safe(v) for v in obj]
+    if isinstance(obj, bool):
+        return obj
+    if isinstance(obj, float):
+        return obj if math.isfinite(obj) else None
+    if isinstance(obj, int) or obj is None or isinstance(obj, str):
+        return obj
+    if hasattr(obj, "item"):           # numpy scalar (float64/bool_/int64…)
+        try:
+            return _json_safe(obj.item())
+        except Exception:
+            return str(obj)
+    return obj
+
+
 def _set_cookie(resp: Response, token: str, request: Request) -> None:
     # Secure over https, including behind a TLS-terminating proxy (Render sets
     # X-Forwarded-Proto: https even though the app sees http internally).
@@ -1248,10 +1270,11 @@ def admin_backtest_status(request: Request, admin: dict = Depends(require_admin)
     try:
         from ..api.backtest_routes import _state
         st = _state(request)
-        # Snapshot so JSON serialisation can't race the worker thread.
-        return {"status": st.get("status"), "error": st.get("error"),
-                "started": st.get("started"), "finished": st.get("finished"),
-                "results": list(st.get("results") or [])}
+        # Snapshot so JSON serialisation can't race the worker thread, and make
+        # every value JSON-safe (numpy scalars / NaN / inf would 500 otherwise).
+        return _json_safe({"status": st.get("status"), "error": st.get("error"),
+                           "started": st.get("started"), "finished": st.get("finished"),
+                           "results": list(st.get("results") or [])})
     except Exception as exc:
         raise HTTPException(500, f"status read failed: {exc}")
 

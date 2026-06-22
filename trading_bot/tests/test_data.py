@@ -34,3 +34,22 @@ def test_cryptocompare_in_fallback_chain():
     from app.backtest import data
     src = inspect.getsource(data.fetch_history)
     assert "cryptocompare" in src
+
+
+def test_json_safe_handles_numpy_and_nonfinite():
+    import math
+    import numpy as np
+    from app.saas.routes import _json_safe
+    out = _json_safe({
+        "a": np.float64(1.5), "b": np.int64(3), "c": np.bool_(True),
+        "d": float("inf"), "e": float("nan"), "f": [np.float64(2.0), "x", None],
+        "g": {"h": np.float64(9.0)},
+    })
+    assert out["a"] == 1.5 and isinstance(out["a"], float)
+    assert out["b"] == 3 and out["c"] is True
+    assert out["d"] is None and out["e"] is None           # inf/nan -> None
+    assert out["f"][0] == 2.0 and out["f"][1] == "x"
+    assert out["g"]["h"] == 9.0
+    # the whole thing must now be real JSON (no NaN/Infinity tokens)
+    import json
+    json.dumps(out)

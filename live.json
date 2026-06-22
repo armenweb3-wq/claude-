@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-22T17:05:27.174Z",
+  "updatedAt": "2026-06-22T17:10:31.023Z",
   "matches": [
     {
       "home": "Uzbekistan",
@@ -140,9 +140,9 @@
     {
       "home": "Argentina",
       "away": "Austria",
-      "status": "TIMED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "IN_PLAY",
+      "homeScore": 0,
+      "awayScore": 0,
       "utcDate": "2026-06-22T17:00:00Z"
     },
     {

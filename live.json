@@ -1,46 +1,6 @@
 {
-  "updatedAt": "2026-06-21T23:55:20.606Z",
+  "updatedAt": "2026-06-22T00:00:39.341Z",
   "matches": [
-    {
-      "home": "Argentina",
-      "away": "Algeria",
-      "status": "FINISHED",
-      "homeScore": 3,
-      "awayScore": 0,
-      "utcDate": "2026-06-17T01:00:00Z"
-    },
-    {
-      "home": "Austria",
-      "away": "Jordan",
-      "status": "FINISHED",
-      "homeScore": 3,
-      "awayScore": 1,
-      "utcDate": "2026-06-17T04:00:00Z"
-    },
-    {
-      "home": "Portugal",
-      "away": "Congo DR",
-      "status": "FINISHED",
-      "homeScore": 1,
-      "awayScore": 1,
-      "utcDate": "2026-06-17T17:00:00Z"
-    },
-    {
-      "home": "England",
-      "away": "Croatia",
-      "status": "FINISHED",
-      "homeScore": 4,
-      "awayScore": 2,
-      "utcDate": "2026-06-17T20:00:00Z"
-    },
-    {
-      "home": "Ghana",
-      "away": "Panama",
-      "status": "FINISHED",
-      "homeScore": 1,
-      "awayScore": 0,
-      "utcDate": "2026-06-17T23:00:00Z"
-    },
     {
       "home": "Uzbekistan",
       "away": "Colombia",
@@ -232,6 +192,46 @@
       "homeScore": null,
       "awayScore": null,
       "utcDate": "2026-06-23T23:00:00Z"
+    },
+    {
+      "home": "Colombia",
+      "away": "Congo DR",
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
+      "utcDate": "2026-06-24T02:00:00Z"
+    },
+    {
+      "home": "Switzerland",
+      "away": "Canada",
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
+      "utcDate": "2026-06-24T19:00:00Z"
+    },
+    {
+      "home": "Bosnia-H.",
+      "away": "Qatar",
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
+      "utcDate": "2026-06-24T19:00:00Z"
+    },
+    {
+      "home": "Morocco",
+      "away": "Haiti",
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
+      "utcDate": "2026-06-24T22:00:00Z"
+    },
+    {
+      "home": "Scotland",
+      "away": "Brazil",
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
+      "utcDate": "2026-06-24T22:00:00Z"
     }
   ]
 }

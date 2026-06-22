@@ -3,19 +3,19 @@
   "startingBankroll": 500,
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
-  "status": "busted",
-  "updatedAt": "2026-06-22T00:15:26.527Z",
+  "status": "active",
+  "updatedAt": "2026-06-22T00:20:29.084Z",
   "bets": [
     {
       "leg": 1,
-      "date": "2026-06-21",
-      "match": "Uruguay vs Cape Verde",
-      "kickoff": "2026-06-21T22:00:00Z",
+      "date": "2026-06-22",
+      "match": "Argentina vs Austria",
+      "kickoff": "2026-06-22T17:00:00Z",
       "selections": [
         {
-          "label": "Uruguay to win",
+          "label": "Argentina to win",
           "type": "team_win",
-          "team": "Uruguay"
+          "team": "Argentina"
         },
         {
           "label": "Over 2.5 total goals",
@@ -24,9 +24,9 @@
         }
       ],
       "stake": 500,
-      "odds": 3.43,
+      "odds": 3.12,
       "oddsReal": true,
-      "result": "lost",
+      "result": "pending",
       "returnAmount": 0,
       "auto": true,
       "curated": true
@@ -64,7 +64,39 @@
           "curated": true
         }
       ]
+    },
+    {
+      "run": 2,
+      "wins": 0,
+      "peak": 500,
+      "bets": [
+        {
+          "leg": 1,
+          "date": "2026-06-21",
+          "match": "Uruguay vs Cape Verde",
+          "kickoff": "2026-06-21T22:00:00Z",
+          "selections": [
+            {
+              "label": "Uruguay to win",
+              "type": "team_win",
+              "team": "Uruguay"
+            },
+            {
+              "label": "Over 2.5 total goals",
+              "type": "over_goals",
+              "line": 2.5
+            }
+          ],
+          "stake": 500,
+          "odds": 3.43,
+          "oddsReal": true,
+          "result": "lost",
+          "returnAmount": 0,
+          "auto": true,
+          "curated": true
+        }
+      ]
     }
   ],
-  "run": 2
+  "run": 3
 }

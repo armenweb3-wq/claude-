@@ -128,14 +128,49 @@ def fetch_binance(symbol: str, timeframe: str, start: str, end: str | None = Non
     return _normalise(df)
 
 
+# CryptoCompare aggregation: (aggregate, endpoint) per timeframe.
+_CC = {"1h": (1, "histohour"), "4h": (4, "histohour"), "1d": (1, "histoday"), "D": (1, "histoday")}
+
+
+def fetch_cryptocompare(symbol: str, timeframe: str, start: str, end: str | None = None) -> pd.DataFrame:
+    """OHLCV from CryptoCompare's data API. Unlike Bybit/Binance (exchanges that
+    geo-block many cloud IPs), this is a data provider reachable from almost
+    anywhere — the source that makes the backtest work on a blocked Render region.
+    No API key needed (rate-limited). Up to 2000 bars per call."""
+    import requests
+
+    agg, endpoint = _CC.get(timeframe, (1, "histoday"))
+    fsym = symbol[:-4] if symbol.upper().endswith("USDT") else symbol
+    start_ts = int(pd.Timestamp(start, tz="UTC").timestamp())
+    end_ts = int((pd.Timestamp(end, tz="UTC") if end else pd.Timestamp.utcnow()).timestamp())
+    secs = (86400 if endpoint == "histoday" else 3600) * agg
+    limit = int(min(2000, max(60, (end_ts - start_ts) // secs + 5)))
+    r = requests.get(
+        f"https://min-api.cryptocompare.com/data/v2/{endpoint}",
+        params={"fsym": fsym, "tsym": "USDT", "limit": limit, "aggregate": agg},
+        headers={"User-Agent": "Mozilla/5.0"}, timeout=20)
+    r.raise_for_status()
+    rows = (r.json().get("Data") or {}).get("Data") or []
+    if not rows:
+        return pd.DataFrame()
+    df = pd.DataFrame(rows)
+    df.index = pd.to_datetime(df["time"].astype("int64"), unit="s", utc=True)
+    df = df.rename(columns={"volumefrom": "volume"})
+    df = df[df.index >= pd.Timestamp(start, tz="UTC")]
+    # CryptoCompare pads pre-listing periods with zero rows — drop them.
+    df = df[df["close"].astype(float) > 0]
+    return _normalise(df) if not df.empty else df
+
+
 def fetch_history(symbol: str, timeframe: str, start: str, end: str | None = None) -> pd.DataFrame:
     """Try multiple public data sources in order; return the first that yields
     data. Makes the backtest work regardless of which exchange the server can
-    reach (some regions/IPs block Bybit but not Binance, etc.)."""
+    reach (some regions/IPs block Bybit AND Binance, but rarely CryptoCompare)."""
     import logging
     log = logging.getLogger(__name__)
     errors = []
-    for name, fn in (("bybit", fetch_bybit), ("binance", fetch_binance)):
+    for name, fn in (("bybit", fetch_bybit), ("binance", fetch_binance),
+                     ("cryptocompare", fetch_cryptocompare)):
         try:
             df = fn(symbol, timeframe, start, end)
             if df is not None and len(df) > 50:

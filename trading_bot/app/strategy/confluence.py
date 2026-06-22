@@ -44,9 +44,12 @@ class StrategyConfig:
     ema_slow: int = 200
     stop_pct: float = 3.0
     tp_ladder: list[tuple[float, float]] = field(
-        default_factory=lambda: [(6.0, 0.30), (12.0, 0.40), (20.0, 0.30)]
+        default_factory=lambda: [(6.0, 0.40), (15.0, 0.30), (50.0, 0.30)]
     )
     confidence_threshold: float = 0.70
+    # Only trade when the market is actually trending (ADX gate) — a trend
+    # strategy bleeds in chop, so refuse to enter sideways markets.
+    require_adx_trend: bool = True
     leverage_cap: float = 10.0
     zone_proximity_pct: float = 1.5
     crossover_lookback: int = 3
@@ -133,6 +136,10 @@ class ConfluenceStrategy(Strategy):
                 reason=f"confidence {confidence:.2f} < {cfg.confidence_threshold:.2f}",
                 confidence=confidence,
             )
+        # Trend gate: a trend-following strategy loses in chop, so don't enter
+        # unless ADX confirms a real trend.
+        if cfg.require_adx_trend and not ctx["adx_ok"]:
+            return Signal("hold", reason="no trend (ADX below threshold)", confidence=confidence)
         return self._build_plan(action, ctx["price"], confidence, lev_cap)
 
     # ── scoring ─────────────────────────────────────────────

@@ -60,7 +60,7 @@ def test_tp_hits_match_prices_not_unrelated_closes():
 def test_fills_path_does_not_force_close_on_final_tp():
     ex = _FX()
     pos = Position("BTCUSDT", "Buy", 0.3, 100.0, 0.0, 0.0)
-    tps = [106.0, 112.0, 120.0]
+    tps = [106.0, 115.0, 150.0]   # new ladder (+6 / +15 / +50%)
     closed = [{"symbol": "BTCUSDT", "exit_price": p, "closed_at": "2026-06-19T10:00:00+00:00"}
               for p in tps]
     manage_breakeven(ex, "BTCUSDT", pos, closed=closed, opened_at="2026-06-19T09:00:00+00:00")

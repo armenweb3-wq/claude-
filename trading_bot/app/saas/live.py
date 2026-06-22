@@ -18,7 +18,7 @@ _pos_cache: dict[int, tuple[float, dict]] = {}
 _hist_cache: dict[int, tuple[float, dict]] = {}
 
 # Same ladder/stop defaults the strategy uses, so the dashboard can draw levels.
-_LADDER = [(6.0, 0.30), (12.0, 0.40), (20.0, 0.30)]
+_LADDER = [(6.0, 0.40), (15.0, 0.30), (50.0, 0.30)]
 _STOP_PCT = 3.0
 
 

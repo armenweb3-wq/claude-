@@ -6,7 +6,7 @@ TP2 -> TP1, etc. The stop only ever moves in the profitable direction.
 """
 from __future__ import annotations
 
-TP_LADDER_PCTS = (6.0, 12.0, 20.0)
+TP_LADDER_PCTS = (6.0, 15.0, 50.0)
 BREAKEVEN_BUFFER = 0.0012  # ~0.12% past entry to cover round-trip taker fees
 
 

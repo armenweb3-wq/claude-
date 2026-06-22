@@ -97,15 +97,15 @@ class _FX:
 
 
 def test_trailing_stop_tp2_moves_to_tp1():
-    ex = _FX(113.0)  # past TP2 (112), below TP3 (120)
+    ex = _FX(120.0)  # past TP2 (115), below TP3 (150)
     pos = Position("BTCUSDT", "Buy", 0.3, 100.0, 0.0, 0.0)
     manage_breakeven(ex, "BTCUSDT", pos)
-    assert ex.stops and abs(ex.stops[-1] - 106.0) < 1e-6  # SL -> TP1
+    assert ex.stops and abs(ex.stops[-1] - 106.0) < 1e-6  # SL -> TP1 (+6%)
     assert not ex.closed
 
 
 def test_trailing_stop_final_tp_closes_position():
-    ex = _FX(121.0)  # >= TP3 (120)
+    ex = _FX(151.0)  # >= TP3 (150)
     pos = Position("BTCUSDT", "Buy", 0.3, 100.0, 0.0, 0.0)
     manage_breakeven(ex, "BTCUSDT", pos)
     assert ex.closed == ["BTCUSDT"]

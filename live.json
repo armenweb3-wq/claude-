@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-22T00:10:28.107Z",
+  "updatedAt": "2026-06-22T00:15:26.408Z",
   "matches": [
     {
       "home": "Uzbekistan",
@@ -124,7 +124,7 @@
     {
       "home": "Uruguay",
       "away": "Cape Verde",
-      "status": "IN_PLAY",
+      "status": "FINISHED",
       "homeScore": 2,
       "awayScore": 2,
       "utcDate": "2026-06-21T22:00:00Z"

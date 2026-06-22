@@ -4,7 +4,7 @@
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
   "status": "active",
-  "updatedAt": "2026-06-21T21:16:47.907Z",
+  "updatedAt": "2026-06-22T00:15:26.526Z",
   "bets": [
     {
       "leg": 1,
@@ -20,6 +20,26 @@
       ],
       "stake": 500,
       "odds": 1.2,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 600,
+      "auto": true,
+      "curated": true
+    },
+    {
+      "leg": 2,
+      "date": "2026-06-22",
+      "match": "Argentina vs Austria",
+      "kickoff": "2026-06-22T17:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 600,
+      "odds": 1.4,
       "oddsReal": false,
       "result": "pending",
       "returnAmount": 0,

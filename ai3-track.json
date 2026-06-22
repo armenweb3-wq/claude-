@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-06-22T00:15:26.528Z",
+  "updatedAt": "2026-06-22T03:10:28.038Z",
   "bets": [
     {
       "leg": 1,
@@ -40,6 +40,26 @@
       ],
       "stake": 45,
       "odds": 1.65,
+      "oddsReal": true,
+      "result": "won",
+      "returnAmount": 74.25,
+      "auto": true,
+      "curated": true
+    },
+    {
+      "leg": 3,
+      "date": "2026-06-22",
+      "match": "Argentina vs Austria",
+      "kickoff": "2026-06-22T17:00:00Z",
+      "selections": [
+        {
+          "label": "Argentina to win",
+          "type": "team_win",
+          "team": "Argentina"
+        }
+      ],
+      "stake": 47.93,
+      "odds": 1.56,
       "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,

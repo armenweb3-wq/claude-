@@ -3,19 +3,19 @@
   "startingBankroll": 500,
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
-  "status": "busted",
-  "updatedAt": "2026-06-22T19:10:35.796Z",
+  "status": "active",
+  "updatedAt": "2026-06-22T19:15:27.628Z",
   "bets": [
     {
       "leg": 1,
       "date": "2026-06-22",
-      "match": "Argentina vs Austria",
-      "kickoff": "2026-06-22T17:00:00Z",
+      "match": "France vs Iraq",
+      "kickoff": "2026-06-22T21:00:00Z",
       "selections": [
         {
-          "label": "Argentina to win",
+          "label": "France to win",
           "type": "team_win",
-          "team": "Argentina"
+          "team": "France"
         },
         {
           "label": "Over 2.5 total goals",
@@ -24,9 +24,9 @@
         }
       ],
       "stake": 500,
-      "odds": 3.12,
+      "odds": 1.53,
       "oddsReal": true,
-      "result": "lost",
+      "result": "pending",
       "returnAmount": 0,
       "auto": true,
       "curated": true
@@ -96,7 +96,39 @@
           "curated": true
         }
       ]
+    },
+    {
+      "run": 3,
+      "wins": 0,
+      "peak": 500,
+      "bets": [
+        {
+          "leg": 1,
+          "date": "2026-06-22",
+          "match": "Argentina vs Austria",
+          "kickoff": "2026-06-22T17:00:00Z",
+          "selections": [
+            {
+              "label": "Argentina to win",
+              "type": "team_win",
+              "team": "Argentina"
+            },
+            {
+              "label": "Over 2.5 total goals",
+              "type": "over_goals",
+              "line": 2.5
+            }
+          ],
+          "stake": 500,
+          "odds": 3.12,
+          "oddsReal": true,
+          "result": "lost",
+          "returnAmount": 0,
+          "auto": true,
+          "curated": true
+        }
+      ]
     }
   ],
-  "run": 3
+  "run": 4
 }

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-23T17:05:28.532Z",
+  "updatedAt": "2026-06-23T17:10:35.611Z",
   "matches": [
     {
       "home": "Mexico",
@@ -140,9 +140,9 @@
     {
       "home": "Portugal",
       "away": "Uzbekistan",
-      "status": "TIMED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "IN_PLAY",
+      "homeScore": 0,
+      "awayScore": 0,
       "utcDate": "2026-06-23T17:00:00Z"
     },
     {

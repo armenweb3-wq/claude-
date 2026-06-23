@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-23T04:35:23.756Z",
+  "updatedAt": "2026-06-23T04:40:28.897Z",
   "matches": [
     {
       "home": "Mexico",
@@ -134,7 +134,7 @@
       "away": "Algeria",
       "status": "IN_PLAY",
       "homeScore": 1,
-      "awayScore": 0,
+      "awayScore": 1,
       "utcDate": "2026-06-23T03:00:00Z"
     },
     {

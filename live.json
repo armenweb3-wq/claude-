@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-23T21:10:29.890Z",
+  "updatedAt": "2026-06-23T21:15:30.472Z",
   "matches": [
     {
       "home": "Mexico",
@@ -148,7 +148,7 @@
     {
       "home": "England",
       "away": "Ghana",
-      "status": "PAUSED",
+      "status": "LIVE",
       "homeScore": 0,
       "awayScore": 0,
       "utcDate": "2026-06-23T20:00:00Z"

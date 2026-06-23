@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-23T01:50:29.866Z",
+  "updatedAt": "2026-06-23T01:55:24.517Z",
   "matches": [
     {
       "home": "Mexico",
@@ -124,7 +124,7 @@
     {
       "home": "Norway",
       "away": "Senegal",
-      "status": "PAUSED",
+      "status": "IN_PLAY",
       "homeScore": 3,
       "awayScore": 1,
       "utcDate": "2026-06-23T00:00:00Z"

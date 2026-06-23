@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-06-23T19:05:30.773Z",
+  "updatedAt": "2026-06-23T22:05:24.733Z",
   "bets": [
     {
       "leg": 1,
@@ -120,6 +120,26 @@
       ],
       "stake": 52.45,
       "odds": 4.25,
+      "oddsReal": true,
+      "result": "lost",
+      "returnAmount": 0,
+      "auto": true,
+      "curated": true
+    },
+    {
+      "leg": 7,
+      "date": "2026-06-23",
+      "match": "Panama vs Croatia",
+      "kickoff": "2026-06-23T23:00:00Z",
+      "selections": [
+        {
+          "label": "Croatia to win",
+          "type": "team_win",
+          "team": "Croatia"
+        }
+      ],
+      "stake": 47.2,
+      "odds": 1.52,
       "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,

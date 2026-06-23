@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-06-23T00:55:24.196Z",
+  "updatedAt": "2026-06-23T19:05:30.773Z",
   "bets": [
     {
       "leg": 1,
@@ -100,6 +100,26 @@
       ],
       "stake": 51.27,
       "odds": 1.23,
+      "oddsReal": true,
+      "result": "won",
+      "returnAmount": 63.06,
+      "auto": true,
+      "curated": true
+    },
+    {
+      "leg": 6,
+      "date": "2026-06-23",
+      "match": "England vs Ghana",
+      "kickoff": "2026-06-23T20:00:00Z",
+      "selections": [
+        {
+          "label": "England to win",
+          "type": "team_win",
+          "team": "England"
+        }
+      ],
+      "stake": 52.45,
+      "odds": 4.25,
       "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,

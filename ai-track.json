@@ -4,7 +4,7 @@
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
   "status": "active",
-  "updatedAt": "2026-06-23T00:55:24.193Z",
+  "updatedAt": "2026-06-23T19:05:30.770Z",
   "bets": [
     {
       "leg": 1,
@@ -80,6 +80,26 @@
       ],
       "stake": 1092,
       "odds": 1.35,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 1474.2,
+      "auto": true,
+      "curated": true
+    },
+    {
+      "leg": 5,
+      "date": "2026-06-23",
+      "match": "England vs Ghana",
+      "kickoff": "2026-06-23T20:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 1474.2,
+      "odds": 1.4,
       "oddsReal": false,
       "result": "pending",
       "returnAmount": 0,

@@ -4,7 +4,7 @@
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
   "status": "active",
-  "updatedAt": "2026-06-22T19:15:27.628Z",
+  "updatedAt": "2026-06-23T00:55:24.194Z",
   "bets": [
     {
       "leg": 1,
@@ -25,6 +25,31 @@
       ],
       "stake": 500,
       "odds": 1.53,
+      "oddsReal": true,
+      "result": "won",
+      "returnAmount": 765,
+      "auto": true,
+      "curated": true
+    },
+    {
+      "leg": 2,
+      "date": "2026-06-23",
+      "match": "Portugal vs Uzbekistan",
+      "kickoff": "2026-06-23T17:00:00Z",
+      "selections": [
+        {
+          "label": "Portugal to win",
+          "type": "team_win",
+          "team": "Portugal"
+        },
+        {
+          "label": "Over 2.5 total goals",
+          "type": "over_goals",
+          "line": 2.5
+        }
+      ],
+      "stake": 765,
+      "odds": 2.03,
       "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,

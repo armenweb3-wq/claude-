@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-06-22T19:10:35.797Z",
+  "updatedAt": "2026-06-23T00:55:24.196Z",
   "bets": [
     {
       "leg": 1,
@@ -80,6 +80,26 @@
       ],
       "stake": 50.61,
       "odds": 1.13,
+      "oddsReal": true,
+      "result": "won",
+      "returnAmount": 57.19,
+      "auto": true,
+      "curated": true
+    },
+    {
+      "leg": 5,
+      "date": "2026-06-23",
+      "match": "Portugal vs Uzbekistan",
+      "kickoff": "2026-06-23T17:00:00Z",
+      "selections": [
+        {
+          "label": "Portugal to win",
+          "type": "team_win",
+          "team": "Portugal"
+        }
+      ],
+      "stake": 51.27,
+      "odds": 1.23,
       "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,

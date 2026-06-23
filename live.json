@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-23T00:50:28.727Z",
+  "updatedAt": "2026-06-23T00:55:24.081Z",
   "matches": [
     {
       "home": "Mexico",
@@ -116,7 +116,7 @@
     {
       "home": "France",
       "away": "Iraq",
-      "status": "IN_PLAY",
+      "status": "FINISHED",
       "homeScore": 3,
       "awayScore": 0,
       "utcDate": "2026-06-22T21:00:00Z"

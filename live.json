@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-24T23:10:27.053Z",
+  "updatedAt": "2026-06-24T23:15:30.531Z",
   "matches": [
     {
       "home": "Brazil",
@@ -164,7 +164,7 @@
     {
       "home": "Morocco",
       "away": "Haiti",
-      "status": "PAUSED",
+      "status": "IN_PLAY",
       "homeScore": 2,
       "awayScore": 2,
       "utcDate": "2026-06-24T22:00:00Z"
@@ -172,7 +172,7 @@
     {
       "home": "Scotland",
       "away": "Brazil",
-      "status": "PAUSED",
+      "status": "LIVE",
       "homeScore": 0,
       "awayScore": 2,
       "utcDate": "2026-06-24T22:00:00Z"

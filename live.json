@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-24T02:50:27.379Z",
+  "updatedAt": "2026-06-24T02:55:22.067Z",
   "matches": [
     {
       "home": "Brazil",
@@ -140,7 +140,7 @@
     {
       "home": "Colombia",
       "away": "Congo DR",
-      "status": "LIVE",
+      "status": "PAUSED",
       "homeScore": 0,
       "awayScore": 0,
       "utcDate": "2026-06-24T02:00:00Z"

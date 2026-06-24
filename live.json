@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-24T21:00:38.517Z",
+  "updatedAt": "2026-06-24T21:05:25.730Z",
   "matches": [
     {
       "home": "Brazil",
@@ -148,7 +148,7 @@
     {
       "home": "Switzerland",
       "away": "Canada",
-      "status": "IN_PLAY",
+      "status": "FINISHED",
       "homeScore": 2,
       "awayScore": 1,
       "utcDate": "2026-06-24T19:00:00Z"
@@ -156,7 +156,7 @@
     {
       "home": "Bosnia-H.",
       "away": "Qatar",
-      "status": "IN_PLAY",
+      "status": "FINISHED",
       "homeScore": 3,
       "awayScore": 1,
       "utcDate": "2026-06-24T19:00:00Z"

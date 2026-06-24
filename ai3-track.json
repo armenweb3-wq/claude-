@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-06-24T04:05:27.238Z",
+  "updatedAt": "2026-06-24T21:05:25.837Z",
   "bets": [
     {
       "leg": 1,
@@ -179,6 +179,26 @@
         }
       ],
       "stake": 44.69,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 62.57,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 10,
+      "date": "2026-06-24",
+      "match": "Morocco vs Haiti",
+      "kickoff": "2026-06-24T22:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 46.48,
       "odds": 1.4,
       "oddsReal": false,
       "result": "pending",

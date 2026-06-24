@@ -4,7 +4,7 @@
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
   "status": "active",
-  "updatedAt": "2026-06-24T04:05:27.236Z",
+  "updatedAt": "2026-06-24T21:05:25.834Z",
   "bets": [
     {
       "leg": 1,
@@ -40,6 +40,26 @@
       ],
       "stake": 625,
       "odds": 1.3,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 812.5,
+      "auto": true,
+      "curated": true
+    },
+    {
+      "leg": 3,
+      "date": "2026-06-24",
+      "match": "Scotland vs Brazil",
+      "kickoff": "2026-06-24T22:00:00Z",
+      "selections": [
+        {
+          "label": "Brazil Double Chance (win or draw)",
+          "type": "double_chance",
+          "team": "Brazil"
+        }
+      ],
+      "stake": 812.5,
+      "odds": 1.2,
       "oddsReal": false,
       "result": "pending",
       "returnAmount": 0,

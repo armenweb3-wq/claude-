@@ -20,6 +20,23 @@ from .usertrader import UserTrader
 log = logging.getLogger(__name__)
 
 
+def _tp_level(t: dict) -> int | None:
+    """Which take-profit rung a closing fill matches (1/2/3), or None. Matches the
+    close's price move against entry to the TP ladder — so a profitable partial
+    close can be reported as 'took profit at TP1/TP2', not just 'closed'."""
+    from ..strategy.trailing import TP_LADDER_PCTS
+    entry = float(t.get("entry_price") or 0)
+    exit_ = float(t.get("exit_price") or 0)
+    if entry <= 0 or exit_ <= 0:
+        return None
+    is_long = (t.get("side") or "").lower() in ("buy", "long")
+    move_pct = (exit_ - entry) / entry * 100 * (1 if is_long else -1)
+    for i, p in enumerate(TP_LADDER_PCTS, start=1):
+        if abs(move_pct - p) <= max(0.8, p * 0.15):  # within ~0.8% or 15% of the level
+            return i
+    return None
+
+
 def _is_active(user: dict) -> bool:
     # The operator (admin) is always active — they don't pay/activate themselves.
     admin = settings.saas_admin_email
@@ -250,8 +267,13 @@ class MultiUserRunner:
                 continue  # skip historical backfill, only alert fresh closes
             pnl = t.get("pnl") or 0
             emoji = "✅" if pnl > 0 else "🔻"
-            self.store.add_event("dm", "text", {
-                "text": f"{emoji} Closed {t.get('symbol')} — PnL {pnl:+.4f} USDT"}, uid)
+            lvl = _tp_level(t)
+            if pnl > 0 and lvl:
+                text = (f"✅ <b>{_esc(str(t.get('symbol')))}</b> — took profit at "
+                        f"<b>TP{lvl}</b>, banked <b>{pnl:+.4f} USDT</b>")
+            else:
+                text = f"{emoji} Closed {t.get('symbol')} — PnL {pnl:+.4f} USDT"
+            self.store.add_event("dm", "text", {"text": text}, uid)
 
     def _dispatch_events(self) -> None:
         """Deliver pending events (the notification outbox). Retries on failure,

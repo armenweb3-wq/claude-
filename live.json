@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-24T20:45:30.994Z",
+  "updatedAt": "2026-06-24T20:50:32.251Z",
   "matches": [
     {
       "home": "Brazil",
@@ -157,7 +157,7 @@
       "home": "Bosnia-H.",
       "away": "Qatar",
       "status": "IN_PLAY",
-      "homeScore": 2,
+      "homeScore": 3,
       "awayScore": 1,
       "utcDate": "2026-06-24T19:00:00Z"
     },

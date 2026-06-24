@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-24T19:00:43.912Z",
+  "updatedAt": "2026-06-24T19:05:26.075Z",
   "matches": [
     {
       "home": "Brazil",
@@ -148,9 +148,9 @@
     {
       "home": "Switzerland",
       "away": "Canada",
-      "status": "TIMED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "LIVE",
+      "homeScore": 0,
+      "awayScore": 0,
       "utcDate": "2026-06-24T19:00:00Z"
     },
     {

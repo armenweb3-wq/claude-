@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-06-23T22:05:24.733Z",
+  "updatedAt": "2026-06-24T01:00:39.921Z",
   "bets": [
     {
       "leg": 1,
@@ -141,10 +141,30 @@
       "stake": 47.2,
       "odds": 1.52,
       "oddsReal": true,
+      "result": "won",
+      "returnAmount": 71.74,
+      "auto": true,
+      "curated": true
+    },
+    {
+      "leg": 8,
+      "date": "2026-06-24",
+      "match": "Colombia vs Congo DR",
+      "kickoff": "2026-06-24T02:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 49.66,
+      "odds": 1.4,
+      "oddsReal": false,
       "result": "pending",
       "returnAmount": 0,
       "auto": true,
-      "curated": true
+      "curated": false
     }
   ]
 }

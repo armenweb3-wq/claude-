@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-24T22:15:25.460Z",
+  "updatedAt": "2026-06-24T22:20:30.985Z",
   "matches": [
     {
       "home": "Brazil",
@@ -166,7 +166,7 @@
       "away": "Haiti",
       "status": "LIVE",
       "homeScore": 0,
-      "awayScore": 0,
+      "awayScore": 1,
       "utcDate": "2026-06-24T22:00:00Z"
     },
     {

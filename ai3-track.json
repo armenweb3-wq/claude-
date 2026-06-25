@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-06-24T21:05:25.837Z",
+  "updatedAt": "2026-06-25T00:10:29.230Z",
   "bets": [
     {
       "leg": 1,
@@ -199,6 +199,26 @@
         }
       ],
       "stake": 46.48,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 65.07,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 11,
+      "date": "2026-06-25",
+      "match": "Czechia vs Mexico",
+      "kickoff": "2026-06-25T01:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 48.34,
       "odds": 1.4,
       "oddsReal": false,
       "result": "pending",

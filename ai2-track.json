@@ -4,7 +4,7 @@
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
   "status": "active",
-  "updatedAt": "2026-06-24T21:05:25.835Z",
+  "updatedAt": "2026-06-25T00:10:29.228Z",
   "bets": [
     {
       "leg": 1,
@@ -50,6 +50,30 @@
       "stake": 1050,
       "odds": 2.58,
       "oddsReal": true,
+      "result": "won",
+      "returnAmount": 2709,
+      "auto": true,
+      "curated": true
+    },
+    {
+      "leg": 3,
+      "date": "2026-06-25",
+      "match": "Czechia vs Mexico",
+      "kickoff": "2026-06-25T01:00:00Z",
+      "selections": [
+        {
+          "label": "Over 2.5 total goals",
+          "type": "over_goals",
+          "line": 2.5
+        },
+        {
+          "label": "Both teams to score",
+          "type": "btts"
+        }
+      ],
+      "stake": 2709,
+      "odds": 2.15,
+      "oddsReal": false,
       "result": "pending",
       "returnAmount": 0,
       "auto": true,

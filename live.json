@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-25T01:05:25.702Z",
+  "updatedAt": "2026-06-25T01:10:29.179Z",
   "matches": [
     {
       "home": "Ecuador",
@@ -148,17 +148,17 @@
     {
       "home": "Czechia",
       "away": "Mexico",
-      "status": "TIMED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "IN_PLAY",
+      "homeScore": 0,
+      "awayScore": 0,
       "utcDate": "2026-06-25T01:00:00Z"
     },
     {
       "home": "South Africa",
       "away": "Korea Republic",
-      "status": "TIMED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "IN_PLAY",
+      "homeScore": 0,
+      "awayScore": 0,
       "utcDate": "2026-06-25T01:00:00Z"
     },
     {

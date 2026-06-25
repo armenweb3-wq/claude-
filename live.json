@@ -1,38 +1,6 @@
 {
-  "updatedAt": "2026-06-24T23:55:26.053Z",
+  "updatedAt": "2026-06-25T00:00:41.940Z",
   "matches": [
-    {
-      "home": "Brazil",
-      "away": "Haiti",
-      "status": "FINISHED",
-      "homeScore": 3,
-      "awayScore": 0,
-      "utcDate": "2026-06-20T00:30:00Z"
-    },
-    {
-      "home": "Turkey",
-      "away": "Paraguay",
-      "status": "FINISHED",
-      "homeScore": 0,
-      "awayScore": 1,
-      "utcDate": "2026-06-20T03:00:00Z"
-    },
-    {
-      "home": "Netherlands",
-      "away": "Sweden",
-      "status": "FINISHED",
-      "homeScore": 5,
-      "awayScore": 1,
-      "utcDate": "2026-06-20T17:00:00Z"
-    },
-    {
-      "home": "Germany",
-      "away": "Ivory Coast",
-      "status": "FINISHED",
-      "homeScore": 2,
-      "awayScore": 1,
-      "utcDate": "2026-06-20T20:00:00Z"
-    },
     {
       "home": "Ecuador",
       "away": "Curaçao",
@@ -165,7 +133,7 @@
       "home": "Morocco",
       "away": "Haiti",
       "status": "IN_PLAY",
-      "homeScore": 3,
+      "homeScore": 4,
       "awayScore": 2,
       "utcDate": "2026-06-24T22:00:00Z"
     },
@@ -272,6 +240,54 @@
       "homeScore": null,
       "awayScore": null,
       "utcDate": "2026-06-27T00:00:00Z"
+    },
+    {
+      "home": "New Zealand",
+      "away": "Belgium",
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
+      "utcDate": "2026-06-27T03:00:00Z"
+    },
+    {
+      "home": "Egypt",
+      "away": "Iran",
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
+      "utcDate": "2026-06-27T03:00:00Z"
+    },
+    {
+      "home": "Panama",
+      "away": "England",
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
+      "utcDate": "2026-06-27T21:00:00Z"
+    },
+    {
+      "home": "Croatia",
+      "away": "Ghana",
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
+      "utcDate": "2026-06-27T21:00:00Z"
+    },
+    {
+      "home": "Colombia",
+      "away": "Portugal",
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
+      "utcDate": "2026-06-27T23:30:00Z"
+    },
+    {
+      "home": "Congo DR",
+      "away": "Uzbekistan",
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
+      "utcDate": "2026-06-27T23:30:00Z"
     }
   ]
 }

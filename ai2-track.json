@@ -3,81 +3,28 @@
   "startingBankroll": 500,
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
-  "status": "busted",
-  "updatedAt": "2026-06-25T03:05:23.834Z",
+  "status": "active",
+  "updatedAt": "2026-06-25T03:10:27.752Z",
   "bets": [
     {
       "leg": 1,
-      "date": "2026-06-24",
-      "match": "Switzerland vs Canada",
-      "kickoff": "2026-06-24T19:00:00Z",
+      "date": "2026-06-25",
+      "match": "Ecuador vs Germany",
+      "kickoff": "2026-06-25T20:00:00Z",
       "selections": [
         {
           "label": "Over 2.5 total goals",
           "type": "over_goals",
           "line": 2.5
-        },
-        {
-          "label": "Both teams to score",
-          "type": "btts"
         }
       ],
       "stake": 500,
-      "odds": 2.1,
-      "oddsReal": false,
-      "result": "won",
-      "returnAmount": 1050,
-      "auto": true,
-      "curated": true
-    },
-    {
-      "leg": 2,
-      "date": "2026-06-24",
-      "match": "Scotland vs Brazil",
-      "kickoff": "2026-06-24T22:00:00Z",
-      "selections": [
-        {
-          "label": "Brazil to win",
-          "type": "team_win",
-          "team": "Brazil"
-        },
-        {
-          "label": "Over 2.5 total goals",
-          "type": "over_goals",
-          "line": 2.5
-        }
-      ],
-      "stake": 1050,
-      "odds": 2.58,
+      "odds": 1.78,
       "oddsReal": true,
-      "result": "won",
-      "returnAmount": 2709,
-      "auto": true,
-      "curated": true
-    },
-    {
-      "leg": 3,
-      "date": "2026-06-25",
-      "match": "Czechia vs Mexico",
-      "kickoff": "2026-06-25T01:00:00Z",
-      "selections": [
-        {
-          "label": "Over 2.5 total goals",
-          "type": "over_goals",
-          "line": 2.5
-        },
-        {
-          "label": "Both teams to score",
-          "type": "btts"
-        }
-      ],
-      "stake": 2709,
-      "odds": 2.15,
-      "oddsReal": false,
-      "result": "lost",
+      "result": "pending",
       "returnAmount": 0,
       "auto": true,
-      "curated": true
+      "curated": false
     }
   ],
   "history": [
@@ -258,7 +205,87 @@
           "curated": true
         }
       ]
+    },
+    {
+      "run": 5,
+      "wins": 2,
+      "peak": 2709,
+      "bets": [
+        {
+          "leg": 1,
+          "date": "2026-06-24",
+          "match": "Switzerland vs Canada",
+          "kickoff": "2026-06-24T19:00:00Z",
+          "selections": [
+            {
+              "label": "Over 2.5 total goals",
+              "type": "over_goals",
+              "line": 2.5
+            },
+            {
+              "label": "Both teams to score",
+              "type": "btts"
+            }
+          ],
+          "stake": 500,
+          "odds": 2.1,
+          "oddsReal": false,
+          "result": "won",
+          "returnAmount": 1050,
+          "auto": true,
+          "curated": true
+        },
+        {
+          "leg": 2,
+          "date": "2026-06-24",
+          "match": "Scotland vs Brazil",
+          "kickoff": "2026-06-24T22:00:00Z",
+          "selections": [
+            {
+              "label": "Brazil to win",
+              "type": "team_win",
+              "team": "Brazil"
+            },
+            {
+              "label": "Over 2.5 total goals",
+              "type": "over_goals",
+              "line": 2.5
+            }
+          ],
+          "stake": 1050,
+          "odds": 2.58,
+          "oddsReal": true,
+          "result": "won",
+          "returnAmount": 2709,
+          "auto": true,
+          "curated": true
+        },
+        {
+          "leg": 3,
+          "date": "2026-06-25",
+          "match": "Czechia vs Mexico",
+          "kickoff": "2026-06-25T01:00:00Z",
+          "selections": [
+            {
+              "label": "Over 2.5 total goals",
+              "type": "over_goals",
+              "line": 2.5
+            },
+            {
+              "label": "Both teams to score",
+              "type": "btts"
+            }
+          ],
+          "stake": 2709,
+          "odds": 2.15,
+          "oddsReal": false,
+          "result": "lost",
+          "returnAmount": 0,
+          "auto": true,
+          "curated": true
+        }
+      ]
     }
   ],
-  "run": 5
+  "run": 6
 }

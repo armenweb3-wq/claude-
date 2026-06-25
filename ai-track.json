@@ -4,7 +4,7 @@
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
   "status": "active",
-  "updatedAt": "2026-06-25T03:05:23.833Z",
+  "updatedAt": "2026-06-25T22:05:36.281Z",
   "bets": [
     {
       "leg": 1,
@@ -99,6 +99,26 @@
         }
       ],
       "stake": 1365,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 1911,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 6,
+      "date": "2026-06-25",
+      "match": "Tunisia vs Netherlands",
+      "kickoff": "2026-06-25T23:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 1911,
       "odds": 1.4,
       "oddsReal": false,
       "result": "pending",

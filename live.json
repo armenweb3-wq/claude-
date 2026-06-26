@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-26T19:25:23.867Z",
+  "updatedAt": "2026-06-26T19:30:36.050Z",
   "matches": [
     {
       "home": "New Zealand",
@@ -173,8 +173,8 @@
       "home": "Norway",
       "away": "France",
       "status": "LIVE",
-      "homeScore": 0,
-      "awayScore": 1,
+      "homeScore": 1,
+      "awayScore": 2,
       "utcDate": "2026-06-26T19:00:00Z"
     },
     {
@@ -266,8 +266,8 @@
       "utcDate": "2026-06-28T02:00:00Z"
     },
     {
-      "home": "South Africa",
-      "away": "Canada",
+      "home": "TBD",
+      "away": "TBD",
       "status": "TIMED",
       "homeScore": null,
       "awayScore": null,

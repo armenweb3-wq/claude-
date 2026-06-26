@@ -4,7 +4,7 @@
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
   "status": "active",
-  "updatedAt": "2026-06-26T04:10:28.519Z",
+  "updatedAt": "2026-06-26T21:05:21.737Z",
   "bets": [
     {
       "leg": 1,
@@ -159,6 +159,26 @@
         }
       ],
       "stake": 3745.56,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 5243.78,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 9,
+      "date": "2026-06-27",
+      "match": "Uruguay vs Spain",
+      "kickoff": "2026-06-27T00:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 5243.78,
       "odds": 1.4,
       "oddsReal": false,
       "result": "pending",

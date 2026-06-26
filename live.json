@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-26T00:25:22.033Z",
+  "updatedAt": "2026-06-26T00:30:32.417Z",
   "matches": [
     {
       "home": "New Zealand",
@@ -142,7 +142,7 @@
       "away": "Netherlands",
       "status": "IN_PLAY",
       "homeScore": 1,
-      "awayScore": 2,
+      "awayScore": 3,
       "utcDate": "2026-06-25T23:00:00Z"
     },
     {
@@ -150,7 +150,7 @@
       "away": "Sweden",
       "status": "IN_PLAY",
       "homeScore": 1,
-      "awayScore": 0,
+      "awayScore": 1,
       "utcDate": "2026-06-25T23:00:00Z"
     },
     {

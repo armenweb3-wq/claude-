@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-26T17:20:31.023Z",
+  "updatedAt": "2026-06-26T17:25:24.087Z",
   "matches": [
     {
       "home": "New Zealand",
@@ -266,8 +266,8 @@
       "utcDate": "2026-06-28T02:00:00Z"
     },
     {
-      "home": "South Africa",
-      "away": "Canada",
+      "home": "TBD",
+      "away": "TBD",
       "status": "TIMED",
       "homeScore": null,
       "awayScore": null,

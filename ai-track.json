@@ -4,7 +4,7 @@
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
   "status": "active",
-  "updatedAt": "2026-06-26T01:00:40.623Z",
+  "updatedAt": "2026-06-26T04:10:28.519Z",
   "bets": [
     {
       "leg": 1,
@@ -139,6 +139,26 @@
         }
       ],
       "stake": 2675.4,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 3745.56,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 8,
+      "date": "2026-06-26",
+      "match": "Norway vs France",
+      "kickoff": "2026-06-26T19:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 3745.56,
       "odds": 1.4,
       "oddsReal": false,
       "result": "pending",

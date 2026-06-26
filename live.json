@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-26T01:45:26.010Z",
+  "updatedAt": "2026-06-26T01:50:27.335Z",
   "matches": [
     {
       "home": "New Zealand",
@@ -124,33 +124,33 @@
     {
       "home": "Ecuador",
       "away": "Germany",
-      "status": "FINISHED",
-      "homeScore": 2,
-      "awayScore": 1,
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
       "utcDate": "2026-06-25T20:00:00Z"
     },
     {
       "home": "Curaçao",
       "away": "Ivory Coast",
-      "status": "FINISHED",
-      "homeScore": 0,
-      "awayScore": 2,
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
       "utcDate": "2026-06-25T20:00:00Z"
     },
     {
       "home": "Tunisia",
       "away": "Netherlands",
-      "status": "FINISHED",
-      "homeScore": 1,
-      "awayScore": 3,
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
       "utcDate": "2026-06-25T23:00:00Z"
     },
     {
       "home": "Japan",
       "away": "Sweden",
-      "status": "FINISHED",
-      "homeScore": 1,
-      "awayScore": 1,
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
       "utcDate": "2026-06-25T23:00:00Z"
     },
     {

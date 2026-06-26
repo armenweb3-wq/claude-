@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-26T04:00:35.740Z",
+  "updatedAt": "2026-06-26T04:05:21.372Z",
   "matches": [
     {
       "home": "New Zealand",
@@ -164,7 +164,7 @@
     {
       "home": "Paraguay",
       "away": "Australia",
-      "status": "IN_PLAY",
+      "status": "FINISHED",
       "homeScore": 0,
       "awayScore": 0,
       "utcDate": "2026-06-26T02:00:00Z"

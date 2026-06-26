@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-26T21:05:21.621Z",
+  "updatedAt": "2026-06-26T21:10:29.371Z",
   "matches": [
     {
       "home": "New Zealand",
@@ -180,7 +180,7 @@
     {
       "home": "Senegal",
       "away": "Iraq",
-      "status": "IN_PLAY",
+      "status": "FINISHED",
       "homeScore": 5,
       "awayScore": 0,
       "utcDate": "2026-06-26T19:00:00Z"

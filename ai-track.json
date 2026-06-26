@@ -4,7 +4,7 @@
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
   "status": "active",
-  "updatedAt": "2026-06-25T22:05:36.281Z",
+  "updatedAt": "2026-06-26T01:00:40.623Z",
   "bets": [
     {
       "leg": 1,
@@ -119,6 +119,26 @@
         }
       ],
       "stake": 1911,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 2675.4,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 7,
+      "date": "2026-06-26",
+      "match": "Turkey vs USA",
+      "kickoff": "2026-06-26T02:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 2675.4,
       "odds": 1.4,
       "oddsReal": false,
       "result": "pending",

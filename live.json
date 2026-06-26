@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-26T00:55:23.539Z",
+  "updatedAt": "2026-06-26T01:00:40.499Z",
   "matches": [
     {
       "home": "New Zealand",
@@ -140,7 +140,7 @@
     {
       "home": "Tunisia",
       "away": "Netherlands",
-      "status": "IN_PLAY",
+      "status": "FINISHED",
       "homeScore": 1,
       "awayScore": 3,
       "utcDate": "2026-06-25T23:00:00Z"

@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-06-27T05:05:22.107Z",
+  "updatedAt": "2026-06-27T23:00:38.539Z",
   "bets": [
     {
       "leg": 1,
@@ -359,6 +359,26 @@
         }
       ],
       "stake": 55.05,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 77.07,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 19,
+      "date": "2026-06-27",
+      "match": "Colombia vs Portugal",
+      "kickoff": "2026-06-27T23:30:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 57.25,
       "odds": 1.4,
       "oddsReal": false,
       "result": "pending",

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-27T23:35:21.354Z",
+  "updatedAt": "2026-06-27T23:40:25.960Z",
   "matches": [
     {
       "home": "Norway",
@@ -212,17 +212,17 @@
     {
       "home": "Colombia",
       "away": "Portugal",
-      "status": "TIMED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "LIVE",
+      "homeScore": 0,
+      "awayScore": 0,
       "utcDate": "2026-06-27T23:30:00Z"
     },
     {
       "home": "Congo DR",
       "away": "Uzbekistan",
-      "status": "TIMED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "LIVE",
+      "homeScore": 0,
+      "awayScore": 0,
       "utcDate": "2026-06-27T23:30:00Z"
     },
     {

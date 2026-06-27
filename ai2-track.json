@@ -3,14 +3,14 @@
   "startingBankroll": 500,
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
-  "status": "busted",
-  "updatedAt": "2026-06-27T23:00:38.537Z",
+  "status": "active",
+  "updatedAt": "2026-06-27T23:05:21.081Z",
   "bets": [
     {
       "leg": 1,
       "date": "2026-06-27",
-      "match": "New Zealand vs Belgium",
-      "kickoff": "2026-06-27T03:00:00Z",
+      "match": "Colombia vs Portugal",
+      "kickoff": "2026-06-27T23:30:00Z",
       "selections": [
         {
           "label": "Over 2.5 total goals",
@@ -19,29 +19,9 @@
         }
       ],
       "stake": 500,
-      "odds": 1.32,
+      "odds": 1.75,
       "oddsReal": true,
-      "result": "won",
-      "returnAmount": 660,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 2,
-      "date": "2026-06-27",
-      "match": "Panama vs England",
-      "kickoff": "2026-06-27T21:00:00Z",
-      "selections": [
-        {
-          "label": "Over 2.5 total goals",
-          "type": "over_goals",
-          "line": 2.5
-        }
-      ],
-      "stake": 660,
-      "odds": 1.44,
-      "oddsReal": true,
-      "result": "lost",
+      "result": "pending",
       "returnAmount": 0,
       "auto": true,
       "curated": false
@@ -412,7 +392,54 @@
           "curated": false
         }
       ]
+    },
+    {
+      "run": 7,
+      "wins": 1,
+      "peak": 660,
+      "bets": [
+        {
+          "leg": 1,
+          "date": "2026-06-27",
+          "match": "New Zealand vs Belgium",
+          "kickoff": "2026-06-27T03:00:00Z",
+          "selections": [
+            {
+              "label": "Over 2.5 total goals",
+              "type": "over_goals",
+              "line": 2.5
+            }
+          ],
+          "stake": 500,
+          "odds": 1.32,
+          "oddsReal": true,
+          "result": "won",
+          "returnAmount": 660,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 2,
+          "date": "2026-06-27",
+          "match": "Panama vs England",
+          "kickoff": "2026-06-27T21:00:00Z",
+          "selections": [
+            {
+              "label": "Over 2.5 total goals",
+              "type": "over_goals",
+              "line": 2.5
+            }
+          ],
+          "stake": 660,
+          "odds": 1.44,
+          "oddsReal": true,
+          "result": "lost",
+          "returnAmount": 0,
+          "auto": true,
+          "curated": false
+        }
+      ]
     }
   ],
-  "run": 7
+  "run": 8
 }

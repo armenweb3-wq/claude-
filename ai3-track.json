@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-06-26T21:05:21.740Z",
+  "updatedAt": "2026-06-27T02:10:28.228Z",
   "bets": [
     {
       "leg": 1,
@@ -319,6 +319,26 @@
         }
       ],
       "stake": 58.81,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "lost",
+      "returnAmount": 0,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 17,
+      "date": "2026-06-27",
+      "match": "New Zealand vs Belgium",
+      "kickoff": "2026-06-27T03:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 52.93,
       "odds": 1.4,
       "oddsReal": false,
       "result": "pending",

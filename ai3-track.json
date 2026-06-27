@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-06-27T02:10:28.228Z",
+  "updatedAt": "2026-06-27T05:05:22.107Z",
   "bets": [
     {
       "leg": 1,
@@ -339,6 +339,26 @@
         }
       ],
       "stake": 52.93,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 74.1,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 18,
+      "date": "2026-06-27",
+      "match": "Panama vs England",
+      "kickoff": "2026-06-27T21:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 55.05,
       "odds": 1.4,
       "oddsReal": false,
       "result": "pending",

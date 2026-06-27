@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-27T00:05:26.099Z",
+  "updatedAt": "2026-06-27T00:10:27.763Z",
   "matches": [
     {
       "home": "Norway",
@@ -164,17 +164,17 @@
     {
       "home": "Uruguay",
       "away": "Spain",
-      "status": "TIMED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "LIVE",
+      "homeScore": 0,
+      "awayScore": 0,
       "utcDate": "2026-06-27T00:00:00Z"
     },
     {
       "home": "Cape Verde",
       "away": "Saudi Arabia",
-      "status": "TIMED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "LIVE",
+      "homeScore": 0,
+      "awayScore": 0,
       "utcDate": "2026-06-27T00:00:00Z"
     },
     {

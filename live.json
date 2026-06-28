@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-28T06:50:28.076Z",
+  "updatedAt": "2026-06-28T06:55:21.166Z",
   "matches": [
     {
       "home": "Colombia",
@@ -156,17 +156,17 @@
     {
       "home": "Panama",
       "away": "England",
-      "status": "FINISHED",
-      "homeScore": 0,
-      "awayScore": 2,
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
       "utcDate": "2026-06-27T21:00:00Z"
     },
     {
       "home": "Croatia",
       "away": "Ghana",
-      "status": "FINISHED",
-      "homeScore": 2,
-      "awayScore": 1,
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
       "utcDate": "2026-06-27T21:00:00Z"
     },
     {
@@ -204,7 +204,7 @@
     {
       "home": "South Africa",
       "away": "Canada",
-      "status": "TIMED",
+      "status": "2026-06-29 19:00:00Z",
       "homeScore": null,
       "awayScore": null,
       "utcDate": "2026-06-28T19:00:00Z"
@@ -219,7 +219,7 @@
     },
     {
       "home": "Germany",
-      "away": "Paraguay",
+      "away": "TBD",
       "status": "TIMED",
       "homeScore": null,
       "awayScore": null,
@@ -235,15 +235,15 @@
     },
     {
       "home": "Ivory Coast",
-      "away": "Norway",
+      "away": "TBD",
       "status": "TIMED",
       "homeScore": null,
       "awayScore": null,
       "utcDate": "2026-06-30T17:00:00Z"
     },
     {
-      "home": "France",
-      "away": "Sweden",
+      "home": "TBD",
+      "away": "TBD",
       "status": "TIMED",
       "homeScore": null,
       "awayScore": null,

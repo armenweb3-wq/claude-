@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-28T02:55:23.098Z",
+  "updatedAt": "2026-06-28T03:00:38.362Z",
   "matches": [
     {
       "home": "Colombia",
@@ -188,7 +188,7 @@
     {
       "home": "Jordan",
       "away": "Argentina",
-      "status": "IN_PLAY",
+      "status": "PAUSED",
       "homeScore": 0,
       "awayScore": 2,
       "utcDate": "2026-06-28T02:00:00Z"

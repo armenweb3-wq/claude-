@@ -3,8 +3,8 @@
   "startingBankroll": 500,
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
-  "status": "active",
-  "updatedAt": "2026-06-27T23:00:38.536Z",
+  "status": "busted",
+  "updatedAt": "2026-06-28T01:35:23.661Z",
   "bets": [
     {
       "leg": 1,
@@ -61,7 +61,7 @@
       "stake": 980,
       "odds": 1.4,
       "oddsReal": false,
-      "result": "pending",
+      "result": "lost",
       "returnAmount": 0,
       "auto": true,
       "curated": false

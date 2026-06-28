@@ -3,14 +3,14 @@
   "startingBankroll": 500,
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
-  "status": "busted",
-  "updatedAt": "2026-06-28T21:05:21.579Z",
+  "status": "active",
+  "updatedAt": "2026-06-28T21:10:26.462Z",
   "bets": [
     {
       "leg": 1,
-      "date": "2026-06-28",
-      "match": "Jordan vs Argentina",
-      "kickoff": "2026-06-28T02:00:00Z",
+      "date": "2026-06-29",
+      "match": "Brazil vs Japan",
+      "kickoff": "2026-06-29T17:00:00Z",
       "selections": [
         {
           "label": "Over 2.5 total goals",
@@ -19,29 +19,9 @@
         }
       ],
       "stake": 500,
-      "odds": 1.51,
+      "odds": 2.06,
       "oddsReal": true,
-      "result": "won",
-      "returnAmount": 755,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 2,
-      "date": "2026-06-28",
-      "match": "South Africa vs Canada",
-      "kickoff": "2026-06-28T19:00:00Z",
-      "selections": [
-        {
-          "label": "Over 2.5 total goals",
-          "type": "over_goals",
-          "line": 2.5
-        }
-      ],
-      "stake": 755,
-      "odds": 2.3,
-      "oddsReal": true,
-      "result": "lost",
+      "result": "pending",
       "returnAmount": 0,
       "auto": true,
       "curated": false
@@ -486,7 +466,54 @@
           "curated": false
         }
       ]
+    },
+    {
+      "run": 9,
+      "wins": 1,
+      "peak": 755,
+      "bets": [
+        {
+          "leg": 1,
+          "date": "2026-06-28",
+          "match": "Jordan vs Argentina",
+          "kickoff": "2026-06-28T02:00:00Z",
+          "selections": [
+            {
+              "label": "Over 2.5 total goals",
+              "type": "over_goals",
+              "line": 2.5
+            }
+          ],
+          "stake": 500,
+          "odds": 1.51,
+          "oddsReal": true,
+          "result": "won",
+          "returnAmount": 755,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 2,
+          "date": "2026-06-28",
+          "match": "South Africa vs Canada",
+          "kickoff": "2026-06-28T19:00:00Z",
+          "selections": [
+            {
+              "label": "Over 2.5 total goals",
+              "type": "over_goals",
+              "line": 2.5
+            }
+          ],
+          "stake": 755,
+          "odds": 2.3,
+          "oddsReal": true,
+          "result": "lost",
+          "returnAmount": 0,
+          "auto": true,
+          "curated": false
+        }
+      ]
     }
   ],
-  "run": 9
+  "run": 10
 }

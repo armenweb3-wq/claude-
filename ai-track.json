@@ -3,14 +3,14 @@
   "startingBankroll": 500,
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
-  "status": "busted",
-  "updatedAt": "2026-06-28T01:35:23.661Z",
+  "status": "active",
+  "updatedAt": "2026-06-28T01:40:29.390Z",
   "bets": [
     {
       "leg": 1,
-      "date": "2026-06-27",
-      "match": "New Zealand vs Belgium",
-      "kickoff": "2026-06-27T03:00:00Z",
+      "date": "2026-06-28",
+      "match": "Jordan vs Argentina",
+      "kickoff": "2026-06-28T02:00:00Z",
       "selections": [
         {
           "label": "Over 1.5 total goals",
@@ -21,47 +21,7 @@
       "stake": 500,
       "odds": 1.4,
       "oddsReal": false,
-      "result": "won",
-      "returnAmount": 700,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 2,
-      "date": "2026-06-27",
-      "match": "Panama vs England",
-      "kickoff": "2026-06-27T21:00:00Z",
-      "selections": [
-        {
-          "label": "Over 1.5 total goals",
-          "type": "over_goals",
-          "line": 1.5
-        }
-      ],
-      "stake": 700,
-      "odds": 1.4,
-      "oddsReal": false,
-      "result": "won",
-      "returnAmount": 980,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 3,
-      "date": "2026-06-27",
-      "match": "Colombia vs Portugal",
-      "kickoff": "2026-06-27T23:30:00Z",
-      "selections": [
-        {
-          "label": "Over 1.5 total goals",
-          "type": "over_goals",
-          "line": 1.5
-        }
-      ],
-      "stake": 980,
-      "odds": 1.4,
-      "oddsReal": false,
-      "result": "lost",
+      "result": "pending",
       "returnAmount": 0,
       "auto": true,
       "curated": false
@@ -541,7 +501,74 @@
           "curated": false
         }
       ]
+    },
+    {
+      "run": 4,
+      "wins": 2,
+      "peak": 980,
+      "bets": [
+        {
+          "leg": 1,
+          "date": "2026-06-27",
+          "match": "New Zealand vs Belgium",
+          "kickoff": "2026-06-27T03:00:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 500,
+          "odds": 1.4,
+          "oddsReal": false,
+          "result": "won",
+          "returnAmount": 700,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 2,
+          "date": "2026-06-27",
+          "match": "Panama vs England",
+          "kickoff": "2026-06-27T21:00:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 700,
+          "odds": 1.4,
+          "oddsReal": false,
+          "result": "won",
+          "returnAmount": 980,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 3,
+          "date": "2026-06-27",
+          "match": "Colombia vs Portugal",
+          "kickoff": "2026-06-27T23:30:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 980,
+          "odds": 1.4,
+          "oddsReal": false,
+          "result": "lost",
+          "returnAmount": 0,
+          "auto": true,
+          "curated": false
+        }
+      ]
     }
   ],
-  "run": 4
+  "run": 5
 }

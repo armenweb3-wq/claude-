@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-06-28T04:05:26.425Z",
+  "updatedAt": "2026-06-28T21:05:21.581Z",
   "bets": [
     {
       "leg": 1,
@@ -421,6 +421,26 @@
       "stake": 53.58,
       "odds": 1.42,
       "oddsReal": true,
+      "result": "lost",
+      "returnAmount": 0,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 22,
+      "date": "2026-06-29",
+      "match": "Brazil vs Japan",
+      "kickoff": "2026-06-29T17:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 48.23,
+      "odds": 1.4,
+      "oddsReal": false,
       "result": "pending",
       "returnAmount": 0,
       "auto": true,

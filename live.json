@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-28T00:05:21.598Z",
+  "updatedAt": "2026-06-28T00:10:26.295Z",
   "matches": [
     {
       "home": "Colombia",
@@ -108,17 +108,17 @@
     {
       "home": "Norway",
       "away": "France",
-      "status": "TIMED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINISHED",
+      "homeScore": 1,
+      "awayScore": 4,
       "utcDate": "2026-06-26T19:00:00Z"
     },
     {
       "home": "Senegal",
       "away": "Iraq",
-      "status": "TIMED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINISHED",
+      "homeScore": 5,
+      "awayScore": 0,
       "utcDate": "2026-06-26T19:00:00Z"
     },
     {
@@ -150,7 +150,7 @@
       "away": "Iran",
       "status": "FINISHED",
       "homeScore": 1,
-      "awayScore": 2,
+      "awayScore": 1,
       "utcDate": "2026-06-27T03:00:00Z"
     },
     {
@@ -234,7 +234,7 @@
       "utcDate": "2026-06-30T01:00:00Z"
     },
     {
-      "home": "TBD",
+      "home": "Ivory Coast",
       "away": "TBD",
       "status": "TIMED",
       "homeScore": null,

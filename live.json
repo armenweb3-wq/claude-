@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-28T00:40:26.628Z",
+  "updatedAt": "2026-06-28T00:45:27.416Z",
   "matches": [
     {
       "home": "Colombia",
@@ -172,7 +172,7 @@
     {
       "home": "Colombia",
       "away": "Portugal",
-      "status": "PAUSED",
+      "status": "IN_PLAY",
       "homeScore": 0,
       "awayScore": 0,
       "utcDate": "2026-06-27T23:30:00Z"
@@ -180,7 +180,7 @@
     {
       "home": "Congo DR",
       "away": "Uzbekistan",
-      "status": "PAUSED",
+      "status": "IN_PLAY",
       "homeScore": 0,
       "awayScore": 1,
       "utcDate": "2026-06-27T23:30:00Z"

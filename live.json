@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-28T05:25:21.226Z",
+  "updatedAt": "2026-06-28T05:32:20.479Z",
   "matches": [
     {
       "home": "Colombia",
@@ -156,17 +156,17 @@
     {
       "home": "Panama",
       "away": "England",
-      "status": "FINISHED",
-      "homeScore": 0,
-      "awayScore": 2,
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
       "utcDate": "2026-06-27T21:00:00Z"
     },
     {
       "home": "Croatia",
       "away": "Ghana",
-      "status": "FINISHED",
-      "homeScore": 2,
-      "awayScore": 1,
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
       "utcDate": "2026-06-27T21:00:00Z"
     },
     {

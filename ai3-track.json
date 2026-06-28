@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-06-28T01:35:23.663Z",
+  "updatedAt": "2026-06-28T04:05:26.425Z",
   "bets": [
     {
       "leg": 1,
@@ -401,6 +401,26 @@
       "stake": 51.52,
       "odds": 1.4,
       "oddsReal": false,
+      "result": "won",
+      "returnAmount": 72.13,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 21,
+      "date": "2026-06-28",
+      "match": "South Africa vs Canada",
+      "kickoff": "2026-06-28T19:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 53.58,
+      "odds": 1.42,
+      "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,
       "auto": true,

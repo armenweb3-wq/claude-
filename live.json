@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-28T20:30:34.057Z",
+  "updatedAt": "2026-06-28T20:35:24.550Z",
   "matches": [
     {
       "home": "Colombia",
@@ -204,7 +204,7 @@
     {
       "home": "South Africa",
       "away": "Canada",
-      "status": "IN_PLAY",
+      "status": "PAUSED",
       "homeScore": 0,
       "awayScore": 0,
       "utcDate": "2026-06-28T19:00:00Z"

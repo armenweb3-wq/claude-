@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-29T17:00:32.916Z",
+  "updatedAt": "2026-06-29T17:05:21.379Z",
   "matches": [
     {
       "home": "Czechia",
@@ -172,9 +172,9 @@
     {
       "home": "Brazil",
       "away": "Japan",
-      "status": "TIMED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "IN_PLAY",
+      "homeScore": 0,
+      "awayScore": 0,
       "utcDate": "2026-06-29T17:00:00Z"
     },
     {

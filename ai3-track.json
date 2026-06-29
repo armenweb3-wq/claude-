@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-06-29T19:10:26.093Z",
+  "updatedAt": "2026-06-29T23:35:22.543Z",
   "bets": [
     {
       "leg": 1,
@@ -459,6 +459,26 @@
         }
       ],
       "stake": 50.15,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 70.21,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 24,
+      "date": "2026-06-30",
+      "match": "Netherlands vs Morocco",
+      "kickoff": "2026-06-30T01:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 52.16,
       "odds": 1.4,
       "oddsReal": false,
       "result": "pending",

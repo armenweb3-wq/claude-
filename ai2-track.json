@@ -4,7 +4,7 @@
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
   "status": "active",
-  "updatedAt": "2026-06-28T21:10:26.462Z",
+  "updatedAt": "2026-06-29T19:10:26.092Z",
   "bets": [
     {
       "leg": 1,
@@ -20,6 +20,26 @@
       ],
       "stake": 500,
       "odds": 2.06,
+      "oddsReal": true,
+      "result": "won",
+      "returnAmount": 1030,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 2,
+      "date": "2026-06-29",
+      "match": "Germany vs Paraguay",
+      "kickoff": "2026-06-29T20:30:00Z",
+      "selections": [
+        {
+          "label": "Over 2.5 total goals",
+          "type": "over_goals",
+          "line": 2.5
+        }
+      ],
+      "stake": 1030,
+      "odds": 1.76,
       "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,

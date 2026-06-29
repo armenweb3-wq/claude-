@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-29T22:30:31.869Z",
+  "updatedAt": "2026-06-29T22:35:19.639Z",
   "matches": [
     {
       "home": "Czechia",
@@ -180,7 +180,7 @@
     {
       "home": "Germany",
       "away": "Paraguay",
-      "status": "IN_PLAY",
+      "status": "PAUSED",
       "homeScore": 1,
       "awayScore": 1,
       "utcDate": "2026-06-29T20:30:00Z"

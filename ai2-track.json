@@ -4,7 +4,7 @@
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
   "status": "active",
-  "updatedAt": "2026-06-29T23:35:22.541Z",
+  "updatedAt": "2026-06-30T03:50:27.046Z",
   "bets": [
     {
       "leg": 1,
@@ -60,6 +60,26 @@
       ],
       "stake": 1812.8,
       "odds": 2.21,
+      "oddsReal": true,
+      "result": "won",
+      "returnAmount": 4006.29,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 4,
+      "date": "2026-06-30",
+      "match": "Ivory Coast vs Norway",
+      "kickoff": "2026-06-30T17:00:00Z",
+      "selections": [
+        {
+          "label": "Over 2.5 total goals",
+          "type": "over_goals",
+          "line": 2.5
+        }
+      ],
+      "stake": 4006.29,
+      "odds": 2.02,
       "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,

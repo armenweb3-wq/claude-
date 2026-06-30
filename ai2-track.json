@@ -4,7 +4,7 @@
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
   "status": "active",
-  "updatedAt": "2026-06-30T19:05:19.721Z",
+  "updatedAt": "2026-06-30T23:00:33.040Z",
   "bets": [
     {
       "leg": 1,
@@ -100,6 +100,26 @@
       ],
       "stake": 8092.71,
       "odds": 1.44,
+      "oddsReal": true,
+      "result": "won",
+      "returnAmount": 11653.5,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 6,
+      "date": "2026-07-01",
+      "match": "Mexico vs Ecuador",
+      "kickoff": "2026-07-01T01:00:00Z",
+      "selections": [
+        {
+          "label": "Over 2.5 total goals",
+          "type": "over_goals",
+          "line": 2.5
+        }
+      ],
+      "stake": 11653.5,
+      "odds": 3,
       "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,

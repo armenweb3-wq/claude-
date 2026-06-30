@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-30T22:55:18.518Z",
+  "updatedAt": "2026-06-30T23:00:32.919Z",
   "matches": [
     {
       "home": "Turkey",
@@ -156,7 +156,7 @@
     {
       "home": "France",
       "away": "Sweden",
-      "status": "IN_PLAY",
+      "status": "FINISHED",
       "homeScore": 3,
       "awayScore": 0,
       "utcDate": "2026-06-30T21:00:00Z"

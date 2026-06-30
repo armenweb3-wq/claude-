@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-06-30T03:50:27.048Z",
+  "updatedAt": "2026-06-30T19:05:19.722Z",
   "bets": [
     {
       "leg": 1,
@@ -499,6 +499,26 @@
         }
       ],
       "stake": 54.25,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 75.95,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 26,
+      "date": "2026-06-30",
+      "match": "France vs Sweden",
+      "kickoff": "2026-06-30T21:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 56.42,
       "odds": 1.4,
       "oddsReal": false,
       "result": "pending",

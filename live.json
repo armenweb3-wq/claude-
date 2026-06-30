@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-30T20:40:23.438Z",
+  "updatedAt": "2026-06-30T20:45:22.912Z",
   "matches": [
     {
       "home": "Turkey",
@@ -148,9 +148,9 @@
     {
       "home": "Ivory Coast",
       "away": "Norway",
-      "status": "FINISHED",
-      "homeScore": 1,
-      "awayScore": 2,
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
       "utcDate": "2026-06-30T17:00:00Z"
     },
     {

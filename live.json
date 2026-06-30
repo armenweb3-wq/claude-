@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-06-30T04:25:22.927Z",
+  "updatedAt": "2026-06-30T04:30:29.952Z",
   "matches": [
     {
       "home": "Turkey",
@@ -141,7 +141,7 @@
       "home": "Netherlands",
       "away": "Morocco",
       "status": "FINISHED",
-      "homeScore": 4,
+      "homeScore": 3,
       "awayScore": 4,
       "utcDate": "2026-06-30T01:00:00Z"
     },

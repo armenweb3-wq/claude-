@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-07-01T04:10:25.436Z",
+  "updatedAt": "2026-07-01T18:05:22.581Z",
   "bets": [
     {
       "leg": 1,
@@ -559,6 +559,26 @@
         }
       ],
       "stake": 62.49,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 87.49,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 29,
+      "date": "2026-07-01",
+      "match": "Belgium vs Senegal",
+      "kickoff": "2026-07-01T20:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 64.99,
       "odds": 1.4,
       "oddsReal": false,
       "result": "pending",

@@ -450,11 +450,12 @@
         <div class="stat"><div class="l">Starting balance</div><div class="v" id="d_start">—</div></div>
         <div class="stat"><div class="l">Balance</div><div class="v" id="d_wallet">—</div></div>
         <div class="stat"><div class="l">Equity</div><div class="v" id="d_equity">—</div></div>
-        <div class="stat"><div class="l">Total return</div><div class="v" id="d_totalret">—</div></div>
-        <div class="stat"><div class="l">Open P&amp;L</div><div class="v" id="d_pnl">—</div></div>
+        <div class="stat"><div class="l">Total return · closed ✓</div><div class="v" id="d_totalret">—</div></div>
+        <div class="stat"><div class="l">Open P&amp;L · floating</div><div class="v" id="d_pnl">—</div></div>
         <div class="stat"><div class="l">Open positions</div><div class="v" id="d_openpos">—</div></div>
       </div>
-      <div class="disc" id="d_realtoday" style="margin-top:8px"></div>
+      <div class="disc" style="margin-top:8px">✓ closed = banked, it's yours. Floating = open trades — it moves until they close.</div>
+      <div class="disc" id="d_realtoday" style="margin-top:4px"></div>
       <div style="margin-top:6px"><span class="link" id="d_setstart" onclick="setStartBalance()">Set starting balance</span></div>
       <div class="disc" id="d_insight" style="margin-top:2px;color:var(--green)"></div>
       <div class="banner flat hide" id="d_market"></div>
@@ -582,9 +583,15 @@
 <!-- PERFORMANCE (monthly) panel -->
 <div class="modal" id="monthlyPanel">
   <div class="modalbox">
-    <div class="panelhead"><h2 style="margin:0">Performance by month</h2><span class="link" onclick="backToMenu('monthlyPanel')">Close</span></div>
-    <p class="lead">Tap a month for a breakdown of its trades.</p>
-    <div id="monthlyList"></div>
+    <div class="panelhead"><h2 style="margin:0">Performance</h2><span class="link" onclick="backToMenu('monthlyPanel')">Close</span></div>
+    <h2 style="font-size:1rem;margin:0 0 4px">Forward test · week by week</h2>
+    <p class="disc" style="margin:0 0 8px">Realised results only (closed trades on live data). This is the evidence trail — judge the bot on weeks of this, not on single trades.</p>
+    <div id="trackRec"></div>
+    <div style="margin:16px 0 0;border-top:1px solid var(--line);padding-top:12px">
+      <h2 style="font-size:1rem;margin:0 0 4px">By month</h2>
+      <p class="disc" style="margin:0 0 8px">Tap a month for a breakdown of its trades.</p>
+      <div id="monthlyList"></div>
+    </div>
   </div>
 </div>
 
@@ -903,8 +910,27 @@ function openPanel(id){
   if(id==='profilePanel') fillProfile();
   if(id==='referralPanel') fillReferral();
   if(id==='tradePanel') fillTradeForm();
-  if(id==='monthlyPanel') fillMonthly();
+  if(id==='monthlyPanel'){ fillTrack(); fillMonthly(); }
   $(id).classList.add('show'); lockScroll();
+}
+async function fillTrack(){
+  const box=$('trackRec'); if(!box) return;
+  box.innerHTML='<div class="disc">Loading…</div>';
+  try{
+    const d=await api('/track'); const ws=d.weeks||[], t=d.totals||{};
+    if(!ws.length){ box.innerHTML='<div class="disc">No closed trades yet — the track record starts with the first close.</div>'; return; }
+    const tc=(t.pnl||0)>=0?'pos':'neg';
+    box.innerHTML=
+      '<div class="g2" style="margin-bottom:6px"><span>since <b>'+esc(d.since||'—')+'</b></span>'
+      +'<span>'+t.trades+' trades · win '+t.win_rate+'%</span>'
+      +'<span>net <b class="'+tc+'">'+signMoney(t.pnl)+'</b></span></div>'
+      +'<table><tr><th>Week</th><th>Trades</th><th>Win</th><th>P&amp;L</th><th>Cumulative</th></tr>'
+      +ws.slice().reverse().map(w=>{
+        const c=w.pnl>=0?'pos':'neg', cc=w.cum_pnl>=0?'pos':'neg';
+        return '<tr><td>'+esc(w.week)+'</td><td>'+w.trades+'</td><td>'+w.win_rate+'%</td>'
+          +'<td class="'+c+'">'+signMoney(w.pnl)+'</td><td class="'+cc+'">'+signMoney(w.cum_pnl)+'</td></tr>';
+      }).join('')+'</table>';
+  }catch(e){ box.innerHTML='<div class="disc">Could not load track record.</div>'; }
 }
 async function fillMonthly(){
   $('monthlyList').innerHTML='<div class="disc">Loading…</div>';

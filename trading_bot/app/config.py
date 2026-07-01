@@ -90,6 +90,10 @@ class Settings:
     max_open_positions: int = field(default_factory=lambda: _get_int("MAX_OPEN_POSITIONS", 3))
     max_trades_per_day: int = field(default_factory=lambda: _get_int("MAX_TRADES_PER_DAY", 20))
     stop_loss_pct: float = field(default_factory=lambda: _get_float("STOP_LOSS_PCT", 2.0))
+    # Bybit taker fee (one way). Used for the small-account fee floor: skip a
+    # trade when the round-trip fee would eat a meaningful slice of the risk.
+    taker_fee_rate: float = field(default_factory=lambda: _get_float("TAKER_FEE_RATE", 0.00055))
+    max_fee_risk_frac: float = field(default_factory=lambda: _get_float("MAX_FEE_RISK_FRAC", 0.10))
     take_profit_pct: float = field(default_factory=lambda: _get_float("TAKE_PROFIT_PCT", 4.0))
     daily_max_loss_pct: float = field(default_factory=lambda: _get_float("DAILY_MAX_LOSS_PCT", 5.0))
 

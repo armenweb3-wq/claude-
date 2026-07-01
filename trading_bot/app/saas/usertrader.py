@@ -222,6 +222,14 @@ class UserTrader:
                 if not plan.safe:  # liquidation would sit inside the stop — never trade it
                     out["signals"][s] = "skipped: unsafe (liquidation inside stop)"
                     continue
+                # Fee floor: on small accounts the round-trip fee can eat the
+                # edge. If fees would exceed a set fraction of the amount being
+                # risked, the trade is fee-dominated — skip it.
+                fee_est = plan.notional * settings.taker_fee_rate * 2
+                if fee_est > settings.max_fee_risk_frac * max(plan.risk_amount, 1e-9):
+                    out["signals"][s] = (f"skipped: fees (~{fee_est:.2f}) would eat "
+                                         f">{settings.max_fee_risk_frac:.0%} of the risk")
+                    continue
                 side = "Buy" if sig.action == "long" else "Sell"
                 # Full trade detail so copy-trading can mirror this open onto
                 # followers (entry/stop/TP ladder + the leverage and risk used).

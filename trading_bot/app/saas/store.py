@@ -369,6 +369,57 @@ class Store:
     def closed_by_month(self, uid: int, month: str) -> list[dict]:
         return [g for g in self.logical_trades(uid) if (g.get("closed_at") or "")[:7] == month]
 
+    def weekly_track(self, uid: int) -> dict:
+        """Forward-test track record: REALISED results bucketed by ISO week,
+        chronological, with a running cumulative P&L — the evidence trail for
+        judging the strategy on live data (weeks are the honest grain; a single
+        day proves nothing)."""
+        import datetime as _dt
+
+        weeks: dict[str, dict] = {}
+        first = None
+        total_pnl = 0.0
+        wins = losses = n = 0
+        for g in self.logical_trades(uid):
+            ca = g.get("closed_at") or ""
+            try:
+                d = _dt.datetime.fromisoformat(ca).date()
+            except ValueError:
+                continue
+            iso = d.isocalendar()
+            wk = f"{iso[0]}-W{iso[1]:02d}"
+            first = min(first, ca) if first else ca
+            b = weeks.setdefault(wk, {"trades": 0, "wins": 0, "losses": 0, "pnl": 0.0})
+            b["trades"] += 1
+            n += 1
+            pnl = g["pnl"]
+            total_pnl += pnl
+            if pnl > 0:
+                b["wins"] += 1
+                wins += 1
+            elif pnl < 0:
+                b["losses"] += 1
+                losses += 1
+            b["pnl"] += pnl
+        out = []
+        cum = 0.0
+        for wk in sorted(weeks):  # chronological so the cumulative line reads forward
+            b = weeks[wk]
+            cum += b["pnl"]
+            decided = b["wins"] + b["losses"]
+            out.append({"week": wk, "trades": b["trades"], "wins": b["wins"],
+                        "losses": b["losses"],
+                        "win_rate": round(b["wins"] / decided * 100, 1) if decided else 0.0,
+                        "pnl": round(b["pnl"], 4), "cum_pnl": round(cum, 4)})
+        decided = wins + losses
+        return {
+            "since": first[:10] if first else None,
+            "weeks": out,
+            "totals": {"trades": n, "wins": wins, "losses": losses,
+                       "win_rate": round(wins / decided * 100, 1) if decided else 0.0,
+                       "pnl": round(total_pnl, 4)},
+        }
+
     # Marketing figures are derived from users' own exchange data, which a
     # malicious user could try to game (a tiny self-trade at extreme leverage =
     # huge ROI%). Only count trades with a meaningful notional and a sane ROI%

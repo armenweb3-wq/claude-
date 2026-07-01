@@ -541,6 +541,23 @@ def monthly_trades(month: str, request: Request) -> dict:
     return {"trades": store().closed_by_month(user["id"], month)}
 
 
+@router.get("/api/track")
+def track_record(request: Request) -> dict:
+    """Forward-test track record: realised results by ISO week + cumulative —
+    the live-data evidence trail for judging whether the strategy earns."""
+    user = current_user(request)
+    st = store()
+    keys = st.get_keys(user["id"])
+    if keys:  # opportunistically sync the latest closes first
+        from . import live as live_mod
+        try:
+            data = live_mod.history_snapshot(user["id"], keys)
+            st.add_closed_trades(user["id"], data.get("raw", []))
+        except Exception:
+            pass
+    return st.weekly_track(user["id"])
+
+
 class RedeemIn(BaseModel):
     code: str
 

@@ -4,7 +4,7 @@
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
   "status": "active",
-  "updatedAt": "2026-06-30T23:00:33.038Z",
+  "updatedAt": "2026-07-01T04:10:25.433Z",
   "bets": [
     {
       "leg": 1,
@@ -121,6 +121,26 @@
       "stake": 2689.12,
       "odds": 1.65,
       "oddsReal": true,
+      "result": "won",
+      "returnAmount": 4437.05,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 7,
+      "date": "2026-07-01",
+      "match": "England vs Congo DR",
+      "kickoff": "2026-07-01T16:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 4437.05,
+      "odds": 1.4,
+      "oddsReal": false,
       "result": "pending",
       "returnAmount": 0,
       "auto": true,

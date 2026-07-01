@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-01T22:00:40.440Z",
+  "updatedAt": "2026-07-01T22:05:19.933Z",
   "matches": [
     {
       "home": "Uruguay",
@@ -148,7 +148,7 @@
     {
       "home": "Belgium",
       "away": "Senegal",
-      "status": "IN_PLAY",
+      "status": "PAUSED",
       "homeScore": 2,
       "awayScore": 2,
       "utcDate": "2026-07-01T20:00:00Z"

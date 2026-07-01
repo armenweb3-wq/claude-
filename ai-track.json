@@ -4,7 +4,7 @@
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
   "status": "active",
-  "updatedAt": "2026-07-01T18:05:22.578Z",
+  "updatedAt": "2026-07-01T22:55:19.469Z",
   "bets": [
     {
       "leg": 1,
@@ -159,6 +159,26 @@
         }
       ],
       "stake": 6211.87,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 8696.62,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 9,
+      "date": "2026-07-02",
+      "match": "USA vs Bosnia-H.",
+      "kickoff": "2026-07-02T00:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 8696.62,
       "odds": 1.4,
       "oddsReal": false,
       "result": "pending",

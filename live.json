@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-01T16:05:23.060Z",
+  "updatedAt": "2026-07-01T16:10:26.110Z",
   "matches": [
     {
       "home": "Uruguay",
@@ -140,9 +140,9 @@
     {
       "home": "England",
       "away": "Congo DR",
-      "status": "TIMED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "LIVE",
+      "homeScore": 0,
+      "awayScore": 0,
       "utcDate": "2026-07-01T16:00:00Z"
     },
     {

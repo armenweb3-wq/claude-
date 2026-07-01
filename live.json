@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-01T02:35:19.387Z",
+  "updatedAt": "2026-07-01T02:40:25.332Z",
   "matches": [
     {
       "home": "Uruguay",
@@ -116,9 +116,9 @@
     {
       "home": "Ivory Coast",
       "away": "Norway",
-      "status": "FINISHED",
-      "homeScore": 1,
-      "awayScore": 2,
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
       "utcDate": "2026-06-30T17:00:00Z"
     },
     {
@@ -133,7 +133,7 @@
       "home": "Mexico",
       "away": "Ecuador",
       "status": "LIVE",
-      "homeScore": 1,
+      "homeScore": 2,
       "awayScore": 0,
       "utcDate": "2026-07-01T01:00:00Z"
     },

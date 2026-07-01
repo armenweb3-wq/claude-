@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-01T02:30:28.761Z",
+  "updatedAt": "2026-07-01T02:35:19.387Z",
   "matches": [
     {
       "home": "Uruguay",
@@ -116,9 +116,9 @@
     {
       "home": "Ivory Coast",
       "away": "Norway",
-      "status": "TIMED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINISHED",
+      "homeScore": 1,
+      "awayScore": 2,
       "utcDate": "2026-06-30T17:00:00Z"
     },
     {

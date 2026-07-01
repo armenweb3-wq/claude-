@@ -79,16 +79,26 @@ class MultiUserRunner:
         self._stop.set()
 
     def _loop(self) -> None:
+        # Two cadences: the FULL cycle (signals + entries, slow, saas_loop_seconds)
+        # and a light manage pass (stop trailing only, saas_manage_seconds) in
+        # between — so a position is never left unprotected for a whole
+        # strategy interval after a TP fills.
+        last_full = 0.0
         while not self._stop.is_set():
             try:
-                self.run_cycle()
-                self.run_indices_cycle()
-                # Run the (blocking) Telegram broadcasts off the trading loop so a
-                # slow/hung send can never delay position & stop management.
-                threading.Thread(target=self._run_broadcasts, daemon=True).start()
+                if (time.time() - last_full) >= max(30, settings.saas_loop_seconds):
+                    self.run_cycle()
+                    self.run_indices_cycle()
+                    last_full = time.time()
+                    # Run the (blocking) Telegram broadcasts off the trading loop
+                    # so a slow/hung send can never delay position management.
+                    threading.Thread(target=self._run_broadcasts, daemon=True).start()
+                else:
+                    self.manage_cycle()
             except Exception:  # pragma: no cover
                 log.exception("runner cycle failed")
-            self._stop.wait(max(30, settings.saas_loop_seconds))
+            self._stop.wait(max(30, min(settings.saas_manage_seconds,
+                                        settings.saas_loop_seconds)))
 
     def _run_broadcasts(self) -> None:
         # Non-blocking lock: if the previous cycle's broadcast is still running,
@@ -438,6 +448,39 @@ class MultiUserRunner:
             res.pop("closed", None)
             res["ts"] = time.time()
             self.results[uid] = res
+
+    def manage_cycle(self) -> None:
+        """Fast pass between full cycles: trail/protect EXISTING positions and
+        persist fresh closes (so TP alerts arrive within minutes, not a whole
+        strategy interval). No signals, no new entries. Skipped in dry-run —
+        there are no bot-placed real positions to protect."""
+        if settings.saas_dry_run:
+            return
+        for user in self.store.list_users(include_admins=True):
+            uid = user["id"]
+            if not _is_active(user):
+                continue
+            cfg = self.store.get_settings(uid)
+            if not cfg["enabled"]:
+                continue
+            keys = self.store.get_keys(uid)
+            if not keys:
+                continue
+            try:
+                exchange = self._build_exchange(keys)
+                trader = UserTrader(
+                    exchange, None,  # no strategy needed for a manage-only pass
+                    risk_pct=cfg["risk_pct"],
+                    symbols=[s.strip() for s in cfg["symbols"].split(",") if s.strip()],
+                    dry=False)
+                res = trader.manage_once()
+                try:
+                    new_closed = self.store.add_closed_trades(uid, res.get("closed", []))
+                    self._alert(user, [], new_closed)
+                except Exception:  # pragma: no cover
+                    pass
+            except Exception as exc:  # one user must not break the rest
+                log.warning("manage user %s failed: %s", uid, exc)
 
     def run_indices_cycle(self) -> None:
         """Run the indices (MT5/Equiti via MetaApi) market for connected users.

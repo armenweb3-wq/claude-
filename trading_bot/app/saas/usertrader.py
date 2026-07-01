@@ -79,6 +79,27 @@ class UserTrader:
         self.max_open = max_open if max_open is not None else settings.max_open_positions
         self.dry = dry
 
+    def manage_once(self) -> dict:
+        """Lightweight position-management pass: trail stops on real fills only —
+        no signal generation, no new entries. Cheap enough to run every couple of
+        minutes, so protection isn't hostage to the slow strategy loop."""
+        out: dict = {"managed": 0, "closed": [], "error": None}
+        try:
+            closed = self.ex.closed_pnl(limit=100)
+        except Exception:
+            closed = []
+        out["closed"] = closed
+        for s in self.symbols:
+            try:
+                p = self.ex.get_position(s)
+                if p.side is not None:
+                    ot = getattr(p, "created_at", "") or ""
+                    manage_breakeven(self.ex, s, p, closed=closed, opened_at=ot)
+                    out["managed"] += 1
+            except Exception as exc:  # one symbol must not break the pass
+                log.warning("manage %s: %s", s, exc)
+        return out
+
     def run_once(self) -> dict:
         out: dict = {"signals": {}, "opened": [], "positions": 0, "error": None}
         try:

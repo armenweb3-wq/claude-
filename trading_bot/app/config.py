@@ -159,6 +159,15 @@ class Settings:
     saas_exec_enabled: bool = field(default_factory=lambda: _get_bool("SAAS_EXEC_ENABLED", False))
     saas_dry_run: bool = field(default_factory=lambda: _get_bool("SAAS_DRY_RUN", True))
     saas_loop_seconds: int = field(default_factory=lambda: _get_int("SAAS_LOOP_SECONDS", 900))
+    # Fast position-management pass between full strategy cycles: trails stops /
+    # break-even on real fills every couple of minutes, so protection is not
+    # hostage to the (slow) signal loop above.
+    saas_manage_seconds: int = field(default_factory=lambda: _get_int("SAAS_MANAGE_SECONDS", 120))
+    # Server-side break-even: on entry, arm a Bybit-native trailing stop that
+    # activates at TP1 with a trail equal to the entry->TP1 distance — the
+    # EXCHANGE moves the stop to ~break-even the instant TP1 trades, closing the
+    # window where a fast reversal beats our polling loop.
+    bybit_trailing_be: bool = field(default_factory=lambda: _get_bool("BYBIT_TRAILING_BE", True))
 
     # ── Copy trading (followers mirror the leader/admin's trades) ──────────
     # Off by default: when true, users who opted in (copy_enabled) mirror the

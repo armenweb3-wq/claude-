@@ -161,6 +161,28 @@ class BybitExchange(ExchangeAdapter):
             if not any(c in str(exc) for c in ("34040", "110043", "not modified")):
                 raise
 
+    def set_trailing_stop(self, symbol: str, trail_by: float, active_price: float) -> None:
+        """Exchange-native trailing stop: sits dormant until price reaches
+        ``active_price``, then trails the best price by ``trail_by`` (a price
+        distance). Armed with active=TP1 and trail=|entry−TP1|, the stop lands at
+        ~break-even the instant TP1 trades — enforced by Bybit itself, with no
+        dependence on our polling loop. Coexists with the fixed stopLoss;
+        whichever is tighter triggers first."""
+        tick = self.instrument_rules(symbol).tick_size
+        # Round the trail DOWN so the activated stop can only sit at/above
+        # break-even (long) or at/below it (short) — never on the losing side.
+        trail = round_price(trail_by, tick, direction="down")
+        active = round_price(active_price, tick)
+        log.warning("[LIVE] arm trailing stop %s trail=%s active=%s", symbol, trail, active)
+        try:
+            self._client.set_trading_stop(
+                category=self._category, symbol=symbol, positionIdx=0,
+                trailingStop=str(trail), activePrice=str(active),
+            )
+        except Exception as exc:  # pragma: no cover - benign "not modified" codes
+            if not any(c in str(exc) for c in ("34040", "110043", "not modified")):
+                raise
+
     def place_order(self, order: Order) -> Order:
         log.warning(
             "[LIVE] placing %s %s qty=%s price=%s reduce_only=%s",
@@ -362,6 +384,21 @@ class BybitExchange(ExchangeAdapter):
                 if pos.stop_loss <= 0:
                     warning = "stop-loss could not be confirmed on the exchange"
                     log.error("[LIVE] %s opened WITHOUT a confirmed stop-loss", symbol)
+            # Server-side break-even: arm a trailing stop that activates at TP1
+            # with a trail of |actual entry -> TP1|, so Bybit itself moves the
+            # stop to ~break-even the moment TP1 trades. Anchored to the REAL
+            # average fill (not the signal price) so slippage can't skew it.
+            if settings.bybit_trailing_be and take_profits:
+                try:
+                    entry_px = (pos.entry_price if pos and pos.side and pos.entry_price > 0
+                                else price)
+                    tp1 = float(take_profits[0].price or 0)
+                    trail = abs(tp1 - entry_px)
+                    if tp1 > 0 and trail > 0:
+                        self.set_trailing_stop(symbol, trail, tp1)
+                except Exception as exc:  # position stays protected by the fixed SL
+                    log.warning("trailing break-even failed for %s: %s", symbol, exc)
+                    warning = warning or "server-side break-even could not be armed"
         except Exception as exc:  # pragma: no cover
             warning = f"stop-loss not verified: {exc}"
             log.warning("SL verify failed for %s: %s", symbol, exc)

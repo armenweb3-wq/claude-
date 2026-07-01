@@ -1,0 +1,29 @@
+# Web framework
+fastapi>=0.110
+uvicorn[standard]>=0.29
+
+# Exchange + HTTP
+pybit>=5.7
+requests>=2.31
+
+# Data / indicators
+pandas>=2.0
+numpy>=1.26
+
+# Storage
+psycopg2-binary>=2.9
+
+# Multi-user beta: encrypt stored exchange keys at rest
+cryptography>=41.0
+
+# Config
+python-dotenv>=1.0
+
+# Notifications
+python-telegram-bot>=21.0
+Pillow>=10.0.0
+
+# Memecoins LIVE signing needs `solders` (Rust). It is imported lazily only when a
+# swap/withdraw actually executes, so it is NOT required to run the app — and it's
+# kept OUT of the default build because compiling it can stall/OOM small builders.
+# When you enable real memecoin trading, install a wheel build:  pip install solders

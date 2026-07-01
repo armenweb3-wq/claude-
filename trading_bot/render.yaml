@@ -1,0 +1,72 @@
+# Render blueprint for the crypto-trading-bot backend.
+# Connect this repo in the Render dashboard ("New > Blueprint").
+#
+# IMPORTANT: secrets (sync:false) are entered in the Render dashboard, never
+# committed. A paid plan is required for true 24/7 — free web services sleep
+# when idle, which would pause trading.
+services:
+  - type: web
+    name: crypto-trading-bot
+    runtime: docker
+    dockerfilePath: ./trading_bot/Dockerfile
+    dockerContext: ./trading_bot
+    plan: starter            # paid; needed so the loop never sleeps
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: TRADING_MODE
+        value: dry_run        # start safe; flip to "live" only when ready
+      - key: AUTO_START
+        value: "false"        # start the loop deliberately via the API at first
+      - key: BYBIT_TESTNET
+        value: "false"        # mainnet ($13 test); set true to use testnet
+      - key: BYBIT_CATEGORY
+        value: linear
+      - key: SYMBOLS
+        value: SOLUSDT,XRPUSDT,ADAUSDT,DOGEUSDT   # affordable at a small balance
+      - key: TIMEFRAME
+        value: "60"
+      - key: LOOP_INTERVAL_SECONDS
+        value: "3600"
+      - key: RISK_PER_TRADE_PCT
+        value: "5"
+      - key: MAX_LEVERAGE
+        value: "10"
+      # ── Multi-user SaaS engine (the actual product) ──
+      - key: SAAS_EXEC_ENABLED
+        value: "true"          # run the per-user trading engine
+      - key: SAAS_DRY_RUN
+        value: "true"          # START SAFE — flip to "false" only after testing
+      - key: SAAS_PAYMENT_REQUIRED
+        value: "false"         # friends activate by access code, not payment
+      # Secrets — set these in the dashboard, do NOT commit:
+      - key: BYBIT_API_KEY
+        sync: false
+      - key: BYBIT_API_SECRET
+        sync: false
+      - key: CONTROL_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: SAAS_SECRET_KEY        # encrypts users' exchange keys — REQUIRED, never change
+        sync: false
+      - key: SAAS_RECOVERY_KEY      # separate password-reset secret
+        sync: false
+      - key: SAAS_ADMIN_EMAIL       # your email -> admin panel
+        sync: false
+      - key: SAAS_ACCESS_CODE       # the code friends type to activate free
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_WEBHOOK_SECRET
+        sync: false
+      - key: TELEGRAM_CHANNEL_ID
+        sync: false
+      - key: TELEGRAM_BOT_USERNAME
+        sync: false
+      - key: COMMUNITY_LINK
+        sync: false
+
+databases:
+  - name: trading-bot-db
+    plan: basic-256mb         # managed Postgres; copy its URL into DATABASE_URL

@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-07-01T22:55:19.473Z",
+  "updatedAt": "2026-07-02T02:15:24.693Z",
   "bets": [
     {
       "leg": 1,
@@ -599,6 +599,26 @@
         }
       ],
       "stake": 67.59,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 94.63,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 31,
+      "date": "2026-07-02",
+      "match": "Spain vs Austria",
+      "kickoff": "2026-07-02T19:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 70.29,
       "odds": 1.4,
       "oddsReal": false,
       "result": "pending",

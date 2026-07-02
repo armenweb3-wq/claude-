@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-02T01:15:24.883Z",
+  "updatedAt": "2026-07-02T01:20:28.099Z",
   "matches": [
     {
       "home": "Jordan",
@@ -92,7 +92,7 @@
     {
       "home": "USA",
       "away": "Bosnia-H.",
-      "status": "PAUSED",
+      "status": "IN_PLAY",
       "homeScore": 1,
       "awayScore": 0,
       "utcDate": "2026-07-02T00:00:00Z"

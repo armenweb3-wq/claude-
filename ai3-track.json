@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-07-02T02:15:24.693Z",
+  "updatedAt": "2026-07-02T21:05:22.529Z",
   "bets": [
     {
       "leg": 1,
@@ -619,6 +619,26 @@
         }
       ],
       "stake": 70.29,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 98.41,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 32,
+      "date": "2026-07-02",
+      "match": "Portugal vs Croatia",
+      "kickoff": "2026-07-02T23:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 73.1,
       "odds": 1.4,
       "oddsReal": false,
       "result": "pending",

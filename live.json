@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-03T00:05:22.555Z",
+  "updatedAt": "2026-07-03T00:10:25.393Z",
   "matches": [
     {
       "home": "Brazil",
@@ -84,7 +84,7 @@
     {
       "home": "Portugal",
       "away": "Croatia",
-      "status": "PAUSED",
+      "status": "LIVE",
       "homeScore": 0,
       "awayScore": 0,
       "utcDate": "2026-07-02T23:00:00Z"

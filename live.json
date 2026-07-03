@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-03T18:05:19.173Z",
+  "updatedAt": "2026-07-03T18:10:27.606Z",
   "matches": [
     {
       "home": "Brazil",
@@ -100,7 +100,7 @@
     {
       "home": "Australia",
       "away": "Egypt",
-      "status": "LIVE",
+      "status": "IN_PLAY",
       "homeScore": 0,
       "awayScore": 0,
       "utcDate": "2026-07-03T18:00:00Z"

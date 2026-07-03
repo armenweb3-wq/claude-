@@ -4,7 +4,7 @@
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
   "status": "active",
-  "updatedAt": "2026-07-02T21:05:22.528Z",
+  "updatedAt": "2026-07-03T01:15:22.032Z",
   "bets": [
     {
       "leg": 1,
@@ -40,6 +40,26 @@
       ],
       "stake": 925,
       "odds": 1.78,
+      "oddsReal": true,
+      "result": "won",
+      "returnAmount": 1646.5,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 3,
+      "date": "2026-07-03",
+      "match": "Switzerland vs Algeria",
+      "kickoff": "2026-07-03T03:00:00Z",
+      "selections": [
+        {
+          "label": "Over 2.5 total goals",
+          "type": "over_goals",
+          "line": 2.5
+        }
+      ],
+      "stake": 1646.5,
+      "odds": 2.28,
       "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,

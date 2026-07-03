@@ -4,7 +4,7 @@
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
   "status": "active",
-  "updatedAt": "2026-07-03T05:05:19.821Z",
+  "updatedAt": "2026-07-03T21:00:39.255Z",
   "bets": [
     {
       "leg": 1,
@@ -261,6 +261,26 @@
       "stake": 33408.94,
       "odds": 1.62,
       "oddsReal": true,
+      "result": "won",
+      "returnAmount": 54122.48,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 14,
+      "date": "2026-07-03",
+      "match": "Argentina vs Cape Verde",
+      "kickoff": "2026-07-03T22:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 54122.48,
+      "odds": 1.4,
+      "oddsReal": false,
       "result": "pending",
       "returnAmount": 0,
       "auto": true,

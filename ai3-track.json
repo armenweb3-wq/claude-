@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-07-03T01:15:22.033Z",
+  "updatedAt": "2026-07-03T05:05:19.824Z",
   "bets": [
     {
       "leg": 1,
@@ -661,6 +661,26 @@
       "stake": 76.03,
       "odds": 1.4,
       "oddsReal": false,
+      "result": "won",
+      "returnAmount": 106.44,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 34,
+      "date": "2026-07-03",
+      "match": "Australia vs Egypt",
+      "kickoff": "2026-07-03T18:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 79.07,
+      "odds": 1.62,
+      "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,
       "auto": true,

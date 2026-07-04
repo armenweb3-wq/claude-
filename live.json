@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-04T22:35:19.423Z",
+  "updatedAt": "2026-07-04T22:40:26.651Z",
   "matches": [
     {
       "home": "Netherlands",
@@ -118,7 +118,7 @@
       "away": "France",
       "status": "IN_PLAY",
       "homeScore": 0,
-      "awayScore": 0,
+      "awayScore": 1,
       "utcDate": "2026-07-04T21:00:00Z"
     },
     {

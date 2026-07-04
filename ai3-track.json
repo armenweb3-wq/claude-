@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-07-04T03:40:25.397Z",
+  "updatedAt": "2026-07-04T16:08:29.423Z",
   "bets": [
     {
       "leg": 1,
@@ -721,8 +721,8 @@
       "stake": 87.33,
       "odds": 1.4,
       "oddsReal": false,
-      "result": "won",
-      "returnAmount": 122.26,
+      "result": "lost",
+      "returnAmount": 0,
       "auto": true,
       "curated": false
     },

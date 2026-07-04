@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-04T00:00:39.032Z",
+  "updatedAt": "2026-07-04T00:05:19.500Z",
   "matches": [
     {
       "home": "Netherlands",
@@ -92,7 +92,7 @@
     {
       "home": "Argentina",
       "away": "Cape Verde",
-      "status": "IN_PLAY",
+      "status": "PAUSED",
       "homeScore": 1,
       "awayScore": 1,
       "utcDate": "2026-07-03T22:00:00Z"

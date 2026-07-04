@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-04T06:10:29.901Z",
+  "updatedAt": "2026-07-04T06:15:22.920Z",
   "matches": [
     {
       "home": "Netherlands",
@@ -138,8 +138,8 @@
       "utcDate": "2026-07-06T00:00:00Z"
     },
     {
-      "home": "TBD",
-      "away": "TBD",
+      "home": "Portugal",
+      "away": "Spain",
       "status": "TIMED",
       "homeScore": null,
       "awayScore": null,

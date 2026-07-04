@@ -1,22 +1,6 @@
 {
-  "updatedAt": "2026-07-03T23:55:19.315Z",
+  "updatedAt": "2026-07-04T00:00:39.032Z",
   "matches": [
-    {
-      "home": "Brazil",
-      "away": "Japan",
-      "status": "FINISHED",
-      "homeScore": 2,
-      "awayScore": 1,
-      "utcDate": "2026-06-29T17:00:00Z"
-    },
-    {
-      "home": "Germany",
-      "away": "Paraguay",
-      "status": "FINISHED",
-      "homeScore": 4,
-      "awayScore": 5,
-      "utcDate": "2026-06-29T20:30:00Z"
-    },
     {
       "home": "Netherlands",
       "away": "Morocco",
@@ -152,6 +136,22 @@
       "homeScore": null,
       "awayScore": null,
       "utcDate": "2026-07-06T00:00:00Z"
+    },
+    {
+      "home": "TBD",
+      "away": "TBD",
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
+      "utcDate": "2026-07-06T19:00:00Z"
+    },
+    {
+      "home": "USA",
+      "away": "Belgium",
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
+      "utcDate": "2026-07-07T00:00:00Z"
     }
   ]
 }

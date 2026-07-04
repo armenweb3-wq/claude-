@@ -3,14 +3,14 @@
   "startingBankroll": 500,
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
-  "status": "busted",
-  "updatedAt": "2026-07-04T23:10:26.149Z",
+  "status": "active",
+  "updatedAt": "2026-07-04T23:15:22.053Z",
   "bets": [
     {
       "leg": 1,
-      "date": "2026-07-04",
-      "match": "Canada vs Morocco",
-      "kickoff": "2026-07-04T17:00:00Z",
+      "date": "2026-07-05",
+      "match": "Brazil vs Norway",
+      "kickoff": "2026-07-05T20:00:00Z",
       "selections": [
         {
           "label": "Over 1.5 total goals",
@@ -19,29 +19,9 @@
         }
       ],
       "stake": 500,
-      "odds": 1.38,
-      "oddsReal": true,
-      "result": "won",
-      "returnAmount": 690,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 2,
-      "date": "2026-07-04",
-      "match": "Paraguay vs France",
-      "kickoff": "2026-07-04T21:00:00Z",
-      "selections": [
-        {
-          "label": "Over 1.5 total goals",
-          "type": "over_goals",
-          "line": 1.5
-        }
-      ],
-      "stake": 690,
       "odds": 1.4,
       "oddsReal": false,
-      "result": "lost",
+      "result": "pending",
       "returnAmount": 0,
       "auto": true,
       "curated": false
@@ -962,7 +942,54 @@
           "curated": false
         }
       ]
+    },
+    {
+      "run": 7,
+      "wins": 1,
+      "peak": 690,
+      "bets": [
+        {
+          "leg": 1,
+          "date": "2026-07-04",
+          "match": "Canada vs Morocco",
+          "kickoff": "2026-07-04T17:00:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 500,
+          "odds": 1.38,
+          "oddsReal": true,
+          "result": "won",
+          "returnAmount": 690,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 2,
+          "date": "2026-07-04",
+          "match": "Paraguay vs France",
+          "kickoff": "2026-07-04T21:00:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 690,
+          "odds": 1.4,
+          "oddsReal": false,
+          "result": "lost",
+          "returnAmount": 0,
+          "auto": true,
+          "curated": false
+        }
+      ]
     }
   ],
-  "run": 7
+  "run": 8
 }

@@ -23,6 +23,26 @@ const matchFor = (name) => {
     norm(m.home).includes(p) || norm(m.away).includes(p) || p.includes(norm(m.home)) || p.includes(norm(m.away))));
 };
 
+// Self-healing: re-check already-settled bets against the current final score.
+// If the feed corrected a score (so a logged "won" is really "lost", or vice-versa),
+// fix it. Returns true if anything changed.
+function reVerify(bets) {
+  let ch = false;
+  for (const b of bets) {
+    if (b.result !== "won" && b.result !== "lost") continue;
+    const m = matchFor(b.match);
+    if (!m || m.status !== "FINISHED" || m.homeScore == null) continue;
+    const should = betResult(b.selections, m);
+    if (should && should !== b.result) {
+      b.result = should;
+      b.returnAmount = should === "won" ? Math.round(b.stake * b.odds * 100) / 100 : 0;
+      ch = true;
+      console.log(`  corrected ${b.match}: ${b.result === should ? "" : ""}-> ${should}`);
+    }
+  }
+  return ch;
+}
+
 // Real odds from odds.json (product of real single-market prices). Returns null if any
 // price is unavailable, so the curated estimate is used as a fallback.
 const oddsData = read("odds.json", { sports: {} });
@@ -76,6 +96,7 @@ function processTrack(trackFile, queueFile, fallbackOdds) {
     console.log(`${trackFile}: busted run archived -> starting run ${track.run}`);
   }
   const bets = track.bets || (track.bets = []);
+  if (reVerify(bets)) changed = true; // self-heal any feed-corrected results
 
   // 1) settle pending — a combo wins only if EVERY selection wins (tested in engine)
   const pending = bets.find((b) => b.result === "pending");
@@ -145,6 +166,7 @@ function processFlat(trackFile, queueFile, fallbackOdds) {
   const queue = (read(queueFile, { picks: [] }).picks) || [];
   const bets = track.bets || (track.bets = []);
   let changed = false;
+  if (reVerify(bets)) changed = true; // self-heal any feed-corrected results
 
   const pending = bets.find((b) => b.result === "pending");
   if (pending) {

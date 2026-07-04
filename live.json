@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-04T02:25:22.206Z",
+  "updatedAt": "2026-07-04T02:30:33.385Z",
   "matches": [
     {
       "home": "Netherlands",
@@ -100,7 +100,7 @@
     {
       "home": "Colombia",
       "away": "Ghana",
-      "status": "IN_PLAY",
+      "status": "PAUSED",
       "homeScore": 1,
       "awayScore": 0,
       "utcDate": "2026-07-04T01:30:00Z"

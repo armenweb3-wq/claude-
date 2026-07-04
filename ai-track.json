@@ -3,311 +3,11 @@
   "startingBankroll": 500,
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
-  "status": "busted",
-  "updatedAt": "2026-07-04T16:08:29.420Z",
+  "status": "active",
+  "updatedAt": "2026-07-04T16:10:27.187Z",
   "bets": [
     {
       "leg": 1,
-      "date": "2026-06-29",
-      "match": "Brazil vs Japan",
-      "kickoff": "2026-06-29T17:00:00Z",
-      "selections": [
-        {
-          "label": "Over 1.5 total goals",
-          "type": "over_goals",
-          "line": 1.5
-        }
-      ],
-      "stake": 500,
-      "odds": 1.4,
-      "oddsReal": false,
-      "result": "won",
-      "returnAmount": 700,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 2,
-      "date": "2026-06-29",
-      "match": "Germany vs Paraguay",
-      "kickoff": "2026-06-29T20:30:00Z",
-      "selections": [
-        {
-          "label": "Over 1.5 total goals",
-          "type": "over_goals",
-          "line": 1.5
-        }
-      ],
-      "stake": 700,
-      "odds": 1.4,
-      "oddsReal": false,
-      "result": "won",
-      "returnAmount": 980,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 3,
-      "date": "2026-06-30",
-      "match": "Netherlands vs Morocco",
-      "kickoff": "2026-06-30T01:00:00Z",
-      "selections": [
-        {
-          "label": "Over 1.5 total goals",
-          "type": "over_goals",
-          "line": 1.5
-        }
-      ],
-      "stake": 980,
-      "odds": 1.4,
-      "oddsReal": false,
-      "result": "won",
-      "returnAmount": 1372,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 4,
-      "date": "2026-06-30",
-      "match": "Ivory Coast vs Norway",
-      "kickoff": "2026-06-30T17:00:00Z",
-      "selections": [
-        {
-          "label": "Over 1.5 total goals",
-          "type": "over_goals",
-          "line": 1.5
-        }
-      ],
-      "stake": 1372,
-      "odds": 1.4,
-      "oddsReal": false,
-      "result": "won",
-      "returnAmount": 1920.8,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 5,
-      "date": "2026-06-30",
-      "match": "France vs Sweden",
-      "kickoff": "2026-06-30T21:00:00Z",
-      "selections": [
-        {
-          "label": "Over 1.5 total goals",
-          "type": "over_goals",
-          "line": 1.5
-        }
-      ],
-      "stake": 1920.8,
-      "odds": 1.4,
-      "oddsReal": false,
-      "result": "won",
-      "returnAmount": 2689.12,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 6,
-      "date": "2026-07-01",
-      "match": "Mexico vs Ecuador",
-      "kickoff": "2026-07-01T01:00:00Z",
-      "selections": [
-        {
-          "label": "Over 1.5 total goals",
-          "type": "over_goals",
-          "line": 1.5
-        }
-      ],
-      "stake": 2689.12,
-      "odds": 1.65,
-      "oddsReal": true,
-      "result": "won",
-      "returnAmount": 4437.05,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 7,
-      "date": "2026-07-01",
-      "match": "England vs Congo DR",
-      "kickoff": "2026-07-01T16:00:00Z",
-      "selections": [
-        {
-          "label": "Over 1.5 total goals",
-          "type": "over_goals",
-          "line": 1.5
-        }
-      ],
-      "stake": 4437.05,
-      "odds": 1.4,
-      "oddsReal": false,
-      "result": "won",
-      "returnAmount": 6211.87,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 8,
-      "date": "2026-07-01",
-      "match": "Belgium vs Senegal",
-      "kickoff": "2026-07-01T20:00:00Z",
-      "selections": [
-        {
-          "label": "Over 1.5 total goals",
-          "type": "over_goals",
-          "line": 1.5
-        }
-      ],
-      "stake": 6211.87,
-      "odds": 1.4,
-      "oddsReal": false,
-      "result": "won",
-      "returnAmount": 8696.62,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 9,
-      "date": "2026-07-02",
-      "match": "USA vs Bosnia-H.",
-      "kickoff": "2026-07-02T00:00:00Z",
-      "selections": [
-        {
-          "label": "Over 1.5 total goals",
-          "type": "over_goals",
-          "line": 1.5
-        }
-      ],
-      "stake": 8696.62,
-      "odds": 1.4,
-      "oddsReal": false,
-      "result": "won",
-      "returnAmount": 12175.27,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 10,
-      "date": "2026-07-02",
-      "match": "Spain vs Austria",
-      "kickoff": "2026-07-02T19:00:00Z",
-      "selections": [
-        {
-          "label": "Over 1.5 total goals",
-          "type": "over_goals",
-          "line": 1.5
-        }
-      ],
-      "stake": 12175.27,
-      "odds": 1.4,
-      "oddsReal": false,
-      "result": "won",
-      "returnAmount": 17045.38,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 11,
-      "date": "2026-07-02",
-      "match": "Portugal vs Croatia",
-      "kickoff": "2026-07-02T23:00:00Z",
-      "selections": [
-        {
-          "label": "Over 1.5 total goals",
-          "type": "over_goals",
-          "line": 1.5
-        }
-      ],
-      "stake": 17045.38,
-      "odds": 1.4,
-      "oddsReal": false,
-      "result": "won",
-      "returnAmount": 23863.53,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 12,
-      "date": "2026-07-03",
-      "match": "Switzerland vs Algeria",
-      "kickoff": "2026-07-03T03:00:00Z",
-      "selections": [
-        {
-          "label": "Over 1.5 total goals",
-          "type": "over_goals",
-          "line": 1.5
-        }
-      ],
-      "stake": 23863.53,
-      "odds": 1.4,
-      "oddsReal": false,
-      "result": "won",
-      "returnAmount": 33408.94,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 13,
-      "date": "2026-07-03",
-      "match": "Australia vs Egypt",
-      "kickoff": "2026-07-03T18:00:00Z",
-      "selections": [
-        {
-          "label": "Over 1.5 total goals",
-          "type": "over_goals",
-          "line": 1.5
-        }
-      ],
-      "stake": 33408.94,
-      "odds": 1.62,
-      "oddsReal": true,
-      "result": "won",
-      "returnAmount": 54122.48,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 14,
-      "date": "2026-07-03",
-      "match": "Argentina vs Cape Verde",
-      "kickoff": "2026-07-03T22:00:00Z",
-      "selections": [
-        {
-          "label": "Over 1.5 total goals",
-          "type": "over_goals",
-          "line": 1.5
-        }
-      ],
-      "stake": 54122.48,
-      "odds": 1.4,
-      "oddsReal": false,
-      "result": "won",
-      "returnAmount": 75771.47,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 15,
-      "date": "2026-07-04",
-      "match": "Colombia vs Ghana",
-      "kickoff": "2026-07-04T01:30:00Z",
-      "selections": [
-        {
-          "label": "Over 1.5 total goals",
-          "type": "over_goals",
-          "line": 1.5
-        }
-      ],
-      "stake": 75771.47,
-      "odds": 1.4,
-      "oddsReal": false,
-      "result": "lost",
-      "returnAmount": 0,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 16,
       "date": "2026-07-04",
       "match": "Canada vs Morocco",
       "kickoff": "2026-07-04T17:00:00Z",
@@ -318,8 +18,8 @@
           "line": 1.5
         }
       ],
-      "stake": 106080.06,
-      "odds": 1.37,
+      "stake": 500,
+      "odds": 1.38,
       "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,
@@ -915,7 +615,334 @@
           "curated": false
         }
       ]
+    },
+    {
+      "run": 6,
+      "wins": 14,
+      "peak": 75771.47,
+      "bets": [
+        {
+          "leg": 1,
+          "date": "2026-06-29",
+          "match": "Brazil vs Japan",
+          "kickoff": "2026-06-29T17:00:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 500,
+          "odds": 1.4,
+          "oddsReal": false,
+          "result": "won",
+          "returnAmount": 700,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 2,
+          "date": "2026-06-29",
+          "match": "Germany vs Paraguay",
+          "kickoff": "2026-06-29T20:30:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 700,
+          "odds": 1.4,
+          "oddsReal": false,
+          "result": "won",
+          "returnAmount": 980,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 3,
+          "date": "2026-06-30",
+          "match": "Netherlands vs Morocco",
+          "kickoff": "2026-06-30T01:00:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 980,
+          "odds": 1.4,
+          "oddsReal": false,
+          "result": "won",
+          "returnAmount": 1372,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 4,
+          "date": "2026-06-30",
+          "match": "Ivory Coast vs Norway",
+          "kickoff": "2026-06-30T17:00:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 1372,
+          "odds": 1.4,
+          "oddsReal": false,
+          "result": "won",
+          "returnAmount": 1920.8,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 5,
+          "date": "2026-06-30",
+          "match": "France vs Sweden",
+          "kickoff": "2026-06-30T21:00:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 1920.8,
+          "odds": 1.4,
+          "oddsReal": false,
+          "result": "won",
+          "returnAmount": 2689.12,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 6,
+          "date": "2026-07-01",
+          "match": "Mexico vs Ecuador",
+          "kickoff": "2026-07-01T01:00:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 2689.12,
+          "odds": 1.65,
+          "oddsReal": true,
+          "result": "won",
+          "returnAmount": 4437.05,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 7,
+          "date": "2026-07-01",
+          "match": "England vs Congo DR",
+          "kickoff": "2026-07-01T16:00:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 4437.05,
+          "odds": 1.4,
+          "oddsReal": false,
+          "result": "won",
+          "returnAmount": 6211.87,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 8,
+          "date": "2026-07-01",
+          "match": "Belgium vs Senegal",
+          "kickoff": "2026-07-01T20:00:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 6211.87,
+          "odds": 1.4,
+          "oddsReal": false,
+          "result": "won",
+          "returnAmount": 8696.62,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 9,
+          "date": "2026-07-02",
+          "match": "USA vs Bosnia-H.",
+          "kickoff": "2026-07-02T00:00:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 8696.62,
+          "odds": 1.4,
+          "oddsReal": false,
+          "result": "won",
+          "returnAmount": 12175.27,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 10,
+          "date": "2026-07-02",
+          "match": "Spain vs Austria",
+          "kickoff": "2026-07-02T19:00:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 12175.27,
+          "odds": 1.4,
+          "oddsReal": false,
+          "result": "won",
+          "returnAmount": 17045.38,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 11,
+          "date": "2026-07-02",
+          "match": "Portugal vs Croatia",
+          "kickoff": "2026-07-02T23:00:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 17045.38,
+          "odds": 1.4,
+          "oddsReal": false,
+          "result": "won",
+          "returnAmount": 23863.53,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 12,
+          "date": "2026-07-03",
+          "match": "Switzerland vs Algeria",
+          "kickoff": "2026-07-03T03:00:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 23863.53,
+          "odds": 1.4,
+          "oddsReal": false,
+          "result": "won",
+          "returnAmount": 33408.94,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 13,
+          "date": "2026-07-03",
+          "match": "Australia vs Egypt",
+          "kickoff": "2026-07-03T18:00:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 33408.94,
+          "odds": 1.62,
+          "oddsReal": true,
+          "result": "won",
+          "returnAmount": 54122.48,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 14,
+          "date": "2026-07-03",
+          "match": "Argentina vs Cape Verde",
+          "kickoff": "2026-07-03T22:00:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 54122.48,
+          "odds": 1.4,
+          "oddsReal": false,
+          "result": "won",
+          "returnAmount": 75771.47,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 15,
+          "date": "2026-07-04",
+          "match": "Colombia vs Ghana",
+          "kickoff": "2026-07-04T01:30:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 75771.47,
+          "odds": 1.4,
+          "oddsReal": false,
+          "result": "lost",
+          "returnAmount": 0,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 16,
+          "date": "2026-07-04",
+          "match": "Canada vs Morocco",
+          "kickoff": "2026-07-04T17:00:00Z",
+          "selections": [
+            {
+              "label": "Over 1.5 total goals",
+              "type": "over_goals",
+              "line": 1.5
+            }
+          ],
+          "stake": 106080.06,
+          "odds": 1.37,
+          "oddsReal": true,
+          "result": "pending",
+          "returnAmount": 0,
+          "auto": true,
+          "curated": false
+        }
+      ]
     }
   ],
-  "run": 6
+  "run": 7
 }

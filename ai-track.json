@@ -4,7 +4,7 @@
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
   "status": "active",
-  "updatedAt": "2026-07-03T21:00:39.255Z",
+  "updatedAt": "2026-07-04T00:50:26.007Z",
   "bets": [
     {
       "leg": 1,
@@ -279,6 +279,26 @@
         }
       ],
       "stake": 54122.48,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 75771.47,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 15,
+      "date": "2026-07-04",
+      "match": "Colombia vs Ghana",
+      "kickoff": "2026-07-04T01:30:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 75771.47,
       "odds": 1.4,
       "oddsReal": false,
       "result": "pending",

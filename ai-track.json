@@ -4,7 +4,7 @@
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
   "status": "active",
-  "updatedAt": "2026-07-04T16:10:27.187Z",
+  "updatedAt": "2026-07-04T19:10:26.823Z",
   "bets": [
     {
       "leg": 1,
@@ -21,6 +21,26 @@
       "stake": 500,
       "odds": 1.38,
       "oddsReal": true,
+      "result": "won",
+      "returnAmount": 690,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 2,
+      "date": "2026-07-04",
+      "match": "Paraguay vs France",
+      "kickoff": "2026-07-04T21:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 690,
+      "odds": 1.4,
+      "oddsReal": false,
       "result": "pending",
       "returnAmount": 0,
       "auto": true,

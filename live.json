@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-04T21:55:21.618Z",
+  "updatedAt": "2026-07-04T22:00:38.251Z",
   "matches": [
     {
       "home": "Netherlands",
@@ -116,7 +116,7 @@
     {
       "home": "Paraguay",
       "away": "France",
-      "status": "LIVE",
+      "status": "PAUSED",
       "homeScore": 0,
       "awayScore": 0,
       "utcDate": "2026-07-04T21:00:00Z"

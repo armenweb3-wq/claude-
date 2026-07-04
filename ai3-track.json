@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-07-04T00:50:26.010Z",
+  "updatedAt": "2026-07-04T03:40:25.397Z",
   "bets": [
     {
       "leg": 1,
@@ -721,6 +721,26 @@
       "stake": 87.33,
       "odds": 1.4,
       "oddsReal": false,
+      "result": "won",
+      "returnAmount": 122.26,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 37,
+      "date": "2026-07-04",
+      "match": "Canada vs Morocco",
+      "kickoff": "2026-07-04T17:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 90.82,
+      "odds": 1.37,
+      "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,
       "auto": true,

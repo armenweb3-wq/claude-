@@ -4,7 +4,7 @@
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
   "status": "active",
-  "updatedAt": "2026-07-04T23:15:22.056Z",
+  "updatedAt": "2026-07-05T22:10:30.396Z",
   "bets": [
     {
       "leg": 1,
@@ -20,6 +20,26 @@
       ],
       "stake": 500,
       "odds": 1.78,
+      "oddsReal": true,
+      "result": "won",
+      "returnAmount": 890,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 2,
+      "date": "2026-07-06",
+      "match": "Mexico vs England",
+      "kickoff": "2026-07-06T00:00:00Z",
+      "selections": [
+        {
+          "label": "Over 2.5 total goals",
+          "type": "over_goals",
+          "line": 2.5
+        }
+      ],
+      "stake": 890,
+      "odds": 2.56,
       "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-05T20:05:23.255Z",
+  "updatedAt": "2026-07-05T20:10:27.545Z",
   "matches": [
     {
       "home": "Mexico",
@@ -100,7 +100,7 @@
     {
       "home": "Brazil",
       "away": "Norway",
-      "status": "LIVE",
+      "status": "IN_PLAY",
       "homeScore": 0,
       "awayScore": 0,
       "utcDate": "2026-07-05T20:00:00Z"

@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-05T02:31:19.181Z",
-  "remaining": "466",
+  "updatedAt": "2026-07-05T13:18:06.354Z",
+  "remaining": "462",
   "sports": {
     "football": [
       {
@@ -11,46 +11,56 @@
         "commence": "2026-07-05T20:00:00Z",
         "best": {
           "Brazil": {
-            "price": 1.88,
-            "book": "Nordic Bet"
+            "price": 1.87,
+            "book": "1xBet"
           },
           "Norway": {
-            "price": 4.9,
-            "book": "Matchbook"
+            "price": 5,
+            "book": "Unibet (FR)"
           },
           "Draw": {
-            "price": 3.83,
-            "book": "1xBet"
+            "price": 3.85,
+            "book": "Unibet (FR)"
           }
         },
         "totals": {
-          "2.5": {
+          "3": {
             "over": {
-              "price": 1.76,
-              "book": "GTbets"
+              "price": 2.09,
+              "book": "MyBookie.ag"
             },
             "under": {
-              "price": 2.18,
+              "price": 1.75,
+              "book": "MyBookie.ag"
+            }
+          },
+          "2.5": {
+            "over": {
+              "price": 1.71,
+              "book": "1xBet"
+            },
+            "under": {
+              "price": 2.26,
               "book": "BetOnline.ag"
             }
           },
           "2.75": {
             "over": {
-              "price": 1.94,
+              "price": 1.9,
               "book": "Pinnacle"
             },
             "under": {
-              "price": 1.94,
+              "price": 2.01,
               "book": "Pinnacle"
             }
           },
           "3.5": {
             "over": {
-              "price": 2.85,
+              "price": 2.7,
               "book": "BetAnything"
             },
             "under": {
-              "price": 1.43,
+              "price": 1.45,
               "book": "BetAnything"
             }
           }
@@ -64,46 +74,56 @@
         "commence": "2026-07-06T00:00:00Z",
         "best": {
           "England": {
-            "price": 2.5,
+            "price": 2.53,
             "book": "1xBet"
           },
           "Mexico": {
-            "price": 3.35,
-            "book": "Matchbook"
+            "price": 3.3,
+            "book": "Unibet (FR)"
           },
           "Draw": {
-            "price": 3.3,
-            "book": "Winamax (DE)"
+            "price": 3.35,
+            "book": "Unibet (FR)"
           }
         },
         "totals": {
           "2": {
             "over": {
-              "price": 1.81,
-              "book": "Pinnacle"
+              "price": 1.72,
+              "book": "MyBookie.ag"
             },
             "under": {
-              "price": 2.1,
-              "book": "Pinnacle"
+              "price": 2.23,
+              "book": "BetOnline.ag"
             }
           },
           "2.5": {
             "over": {
-              "price": 2.5,
+              "price": 2.48,
               "book": "Matchbook"
             },
             "under": {
               "price": 1.67,
-              "book": "MyBookie.ag"
+              "book": "Matchbook"
+            }
+          },
+          "2.25": {
+            "over": {
+              "price": 2.09,
+              "book": "Pinnacle"
+            },
+            "under": {
+              "price": 1.83,
+              "book": "Pinnacle"
             }
           },
           "1.5": {
             "over": {
-              "price": 1.43,
+              "price": 1.42,
               "book": "BetAnything"
             },
             "under": {
-              "price": 2.8,
+              "price": 2.9,
               "book": "BetAnything"
             }
           }
@@ -125,28 +145,38 @@
             "book": "1xBet"
           },
           "Draw": {
-            "price": 3.79,
+            "price": 3.83,
             "book": "1xBet"
           }
         },
         "totals": {
           "2": {
             "over": {
-              "price": 1.37,
+              "price": 1.35,
               "book": "BetAnything"
             },
             "under": {
-              "price": 3.1,
+              "price": 3.15,
               "book": "BetAnything"
             }
           },
           "2.5": {
             "over": {
-              "price": 1.88,
+              "price": 1.81,
               "book": "Unibet (SE)"
             },
             "under": {
-              "price": 2.06,
+              "price": 2.12,
+              "book": "BetOnline.ag"
+            }
+          },
+          "2.75": {
+            "over": {
+              "price": 2.01,
+              "book": "Pinnacle"
+            },
+            "under": {
+              "price": 1.88,
               "book": "Pinnacle"
             }
           }
@@ -160,46 +190,56 @@
         "commence": "2026-07-07T00:00:00Z",
         "best": {
           "Belgium": {
-            "price": 2.75,
-            "book": "Unibet (SE)"
+            "price": 2.76,
+            "book": "Betfair"
           },
           "USA": {
-            "price": 2.85,
-            "book": "Unibet (SE)"
+            "price": 2.82,
+            "book": "Betfair"
           },
           "Draw": {
-            "price": 3.5,
-            "book": "Betfair"
+            "price": 3.54,
+            "book": "1xBet"
           }
         },
         "totals": {
-          "2.5": {
+          "3": {
             "over": {
-              "price": 1.82,
-              "book": "Matchbook"
+              "price": 2.06,
+              "book": "MyBookie.ag"
             },
             "under": {
-              "price": 2.18,
-              "book": "Matchbook"
+              "price": 1.68,
+              "book": "MyBookie.ag"
+            }
+          },
+          "2.5": {
+            "over": {
+              "price": 1.76,
+              "book": "Unibet (SE)"
+            },
+            "under": {
+              "price": 2.25,
+              "book": "BetOnline.ag"
             }
           },
           "2.75": {
             "over": {
-              "price": 2,
+              "price": 1.9,
               "book": "Pinnacle"
             },
             "under": {
-              "price": 1.89,
+              "price": 1.99,
               "book": "Pinnacle"
             }
           },
           "3.5": {
             "over": {
-              "price": 2.85,
+              "price": 2.7,
               "book": "BetAnything"
             },
             "under": {
-              "price": 1.43,
+              "price": 1.45,
               "book": "BetAnything"
             }
           }
@@ -217,12 +257,12 @@
             "book": "1xBet"
           },
           "Egypt": {
-            "price": 10.5,
-            "book": "Unibet (NL)"
+            "price": 11,
+            "book": "Matchbook"
           },
           "Draw": {
-            "price": 5.1,
-            "book": "Betfair"
+            "price": 5,
+            "book": "Unibet (FR)"
           }
         },
         "totals": {
@@ -242,17 +282,17 @@
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.89,
+              "price": 1.87,
               "book": "Matchbook"
             }
           },
           "2.25": {
             "over": {
-              "price": 1.82,
+              "price": 1.83,
               "book": "Pinnacle"
             },
             "under": {
-              "price": 2.08,
+              "price": 2.07,
               "book": "Pinnacle"
             }
           }
@@ -266,15 +306,15 @@
         "commence": "2026-07-07T20:00:00Z",
         "best": {
           "Colombia": {
-            "price": 2.31,
-            "book": "GTbets"
+            "price": 2.35,
+            "book": "1xBet"
           },
           "Switzerland": {
-            "price": 3.85,
+            "price": 3.75,
             "book": "Matchbook"
           },
           "Draw": {
-            "price": 3.3,
+            "price": 3.25,
             "book": "Unibet (FR)"
           }
         },
@@ -285,17 +325,17 @@
               "book": "Pinnacle"
             },
             "under": {
-              "price": 2.23,
-              "book": "Coolbet"
+              "price": 2.12,
+              "book": "Pinnacle"
             }
           },
           "2.5": {
             "over": {
-              "price": 2.5,
+              "price": 2.48,
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.65,
+              "price": 1.64,
               "book": "Matchbook"
             }
           }
@@ -313,22 +353,22 @@
             "book": "1xBet"
           },
           "Morocco": {
-            "price": 7,
-            "book": "Betfair"
+            "price": 7.2,
+            "book": "Matchbook"
           },
           "Draw": {
             "price": 4.1,
-            "book": "Unibet (NL)"
+            "book": "Unibet (FR)"
           }
         },
         "totals": {
           "2.5": {
             "over": {
-              "price": 1.99,
+              "price": 2.08,
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.9,
+              "price": 1.89,
               "book": "Matchbook"
             }
           }

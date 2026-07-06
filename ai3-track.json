@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-07-06T03:10:26.650Z",
+  "updatedAt": "2026-07-06T21:08:38.968Z",
   "bets": [
     {
       "leg": 1,
@@ -819,6 +819,26 @@
         }
       ],
       "stake": 80.01,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "lost",
+      "returnAmount": 0,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 42,
+      "date": "2026-07-07",
+      "match": "USA vs Belgium",
+      "kickoff": "2026-07-07T00:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 72.01,
       "odds": 1.4,
       "oddsReal": false,
       "result": "pending",

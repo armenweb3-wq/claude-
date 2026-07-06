@@ -3,14 +3,14 @@
   "startingBankroll": 500,
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
-  "status": "busted",
-  "updatedAt": "2026-07-06T21:08:38.966Z",
+  "status": "active",
+  "updatedAt": "2026-07-06T21:10:27.780Z",
   "bets": [
     {
       "leg": 1,
-      "date": "2026-07-05",
-      "match": "Brazil vs Norway",
-      "kickoff": "2026-07-05T20:00:00Z",
+      "date": "2026-07-07",
+      "match": "USA vs Belgium",
+      "kickoff": "2026-07-07T00:00:00Z",
       "selections": [
         {
           "label": "Over 2.5 total goals",
@@ -19,49 +19,9 @@
         }
       ],
       "stake": 500,
-      "odds": 1.78,
+      "odds": 1.7,
       "oddsReal": true,
-      "result": "won",
-      "returnAmount": 890,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 2,
-      "date": "2026-07-06",
-      "match": "Mexico vs England",
-      "kickoff": "2026-07-06T00:00:00Z",
-      "selections": [
-        {
-          "label": "Over 2.5 total goals",
-          "type": "over_goals",
-          "line": 2.5
-        }
-      ],
-      "stake": 890,
-      "odds": 2.56,
-      "oddsReal": true,
-      "result": "won",
-      "returnAmount": 2278.4,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 3,
-      "date": "2026-07-06",
-      "match": "Portugal vs Spain",
-      "kickoff": "2026-07-06T19:00:00Z",
-      "selections": [
-        {
-          "label": "Over 2.5 total goals",
-          "type": "over_goals",
-          "line": 2.5
-        }
-      ],
-      "stake": 2278.4,
-      "odds": 1.81,
-      "oddsReal": true,
-      "result": "lost",
+      "result": "pending",
       "returnAmount": 0,
       "auto": true,
       "curated": false
@@ -928,7 +888,74 @@
           "curated": false
         }
       ]
+    },
+    {
+      "run": 15,
+      "wins": 2,
+      "peak": 2278.4,
+      "bets": [
+        {
+          "leg": 1,
+          "date": "2026-07-05",
+          "match": "Brazil vs Norway",
+          "kickoff": "2026-07-05T20:00:00Z",
+          "selections": [
+            {
+              "label": "Over 2.5 total goals",
+              "type": "over_goals",
+              "line": 2.5
+            }
+          ],
+          "stake": 500,
+          "odds": 1.78,
+          "oddsReal": true,
+          "result": "won",
+          "returnAmount": 890,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 2,
+          "date": "2026-07-06",
+          "match": "Mexico vs England",
+          "kickoff": "2026-07-06T00:00:00Z",
+          "selections": [
+            {
+              "label": "Over 2.5 total goals",
+              "type": "over_goals",
+              "line": 2.5
+            }
+          ],
+          "stake": 890,
+          "odds": 2.56,
+          "oddsReal": true,
+          "result": "won",
+          "returnAmount": 2278.4,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 3,
+          "date": "2026-07-06",
+          "match": "Portugal vs Spain",
+          "kickoff": "2026-07-06T19:00:00Z",
+          "selections": [
+            {
+              "label": "Over 2.5 total goals",
+              "type": "over_goals",
+              "line": 2.5
+            }
+          ],
+          "stake": 2278.4,
+          "odds": 1.81,
+          "oddsReal": true,
+          "result": "lost",
+          "returnAmount": 0,
+          "auto": true,
+          "curated": false
+        }
+      ]
     }
   ],
-  "run": 15
+  "run": 16
 }

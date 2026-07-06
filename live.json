@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-06T00:55:21.379Z",
+  "updatedAt": "2026-07-06T01:00:37.594Z",
   "matches": [
     {
       "home": "USA",
@@ -84,7 +84,7 @@
     {
       "home": "Mexico",
       "away": "England",
-      "status": "2026-07-06 01:00:00Z",
+      "status": "TIMED",
       "homeScore": null,
       "awayScore": null,
       "utcDate": "2026-07-06T01:00:00Z"

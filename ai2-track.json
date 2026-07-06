@@ -4,7 +4,7 @@
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
   "status": "active",
-  "updatedAt": "2026-07-05T22:10:30.396Z",
+  "updatedAt": "2026-07-06T03:10:26.649Z",
   "bets": [
     {
       "leg": 1,
@@ -40,6 +40,26 @@
       ],
       "stake": 890,
       "odds": 2.56,
+      "oddsReal": true,
+      "result": "won",
+      "returnAmount": 2278.4,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 3,
+      "date": "2026-07-06",
+      "match": "Portugal vs Spain",
+      "kickoff": "2026-07-06T19:00:00Z",
+      "selections": [
+        {
+          "label": "Over 2.5 total goals",
+          "type": "over_goals",
+          "line": 2.5
+        }
+      ],
+      "stake": 2278.4,
+      "odds": 1.81,
       "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,

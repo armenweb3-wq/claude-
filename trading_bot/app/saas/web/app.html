@@ -1289,9 +1289,15 @@ async function loadSniperPanel(){
     const d=await api('/admin/sniper'), s=d.stats||{};
     snData=d;
     const beat=s.ts?(' · last cycle '+fmtAge(Math.max(0,Date.now()/1000-s.ts))+' ago'):'';
-    $('sn_state').textContent=d.enabled
+    // The worker writes a heartbeat (stats.ts) every cycle — that's the real
+    // "is it running" signal. d.enabled only reflects the WEB app's env, which
+    // won't have SNIPER_ENABLED (that's set on the worker), so don't rely on it.
+    const alive = s.ts && (Date.now()/1000 - s.ts) < 300;
+    $('sn_state').textContent = alive
       ? '✓ Worker running — watching pump.fun, paper-trading only'+beat+'.'
-      : 'Dormant — the sniper worker isn’t running yet (needs a Render background worker + SNIPER_ENABLED=true).';
+      : (s.ts
+         ? 'No recent heartbeat — worker last reported'+beat+' (it may be restarting).'
+         : 'Dormant — no worker heartbeat yet (needs a Render background worker + SNIPER_ENABLED=true).');
     $('sn_stats').innerHTML=
       '<div class="stat"><div class="l">Mints seen</div><div class="v">'+(s.mints_seen_total||0)+'</div></div>'
       +'<div class="stat"><div class="l">Checked</div><div class="v">'+(s.checked_total||0)+'</div></div>'

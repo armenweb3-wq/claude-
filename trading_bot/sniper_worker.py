@@ -21,8 +21,22 @@ from app.saas.store import Store
 log = logging.getLogger("sniper")
 
 
+# How many freshly-created tokens to keep subscribed to for TRADES at once.
+# subscribeNewToken only streams creations — without also subscribing to each
+# new token's trades the feed never gets a price, so nothing is ever screened.
+# We keep trade subscriptions for the most recent N mints (FIFO) so prices flow
+# while the memory/socket load stays bounded on a small worker.
+_TRADE_SUB_CAP = 150
+
+
 async def ws_loop(feed: PumpFeed) -> None:
-    """Keep a PumpPortal subscription alive forever (reconnect with backoff)."""
+    """Keep a PumpPortal subscription alive forever (reconnect with backoff).
+
+    Subscribes to new-token creations AND, dynamically, to the trades of each
+    newly-seen token (bounded to the most recent ``_TRADE_SUB_CAP``) so the feed
+    actually receives prices — otherwise every coin is skipped for lack of one.
+    """
+    import collections
     import websockets  # provided by uvicorn[standard]; worker-only dependency
 
     backoff = 1.0
@@ -38,11 +52,37 @@ async def ws_loop(feed: PumpFeed) -> None:
                 log.warning("PumpPortal connected (%d tracked wallets)",
                             len(settings.sniper_tracked_wallets))
                 backoff = 1.0
+                subbed: "collections.deque[str]" = collections.deque()
+                subbed_set: set[str] = set()
                 async for msg in ws:
                     try:
-                        feed.handle(json.loads(msg))
+                        data = json.loads(msg)
                     except Exception:  # one bad frame must not drop the socket
+                        continue
+                    try:
+                        feed.handle(data)
+                    except Exception:
                         log.debug("bad frame skipped", exc_info=True)
+                    # New token? Subscribe to its trades so we get a price.
+                    if isinstance(data, dict) and \
+                            (data.get("txType") or "").lower() == "create":
+                        mint = data.get("mint")
+                        if isinstance(mint, str) and mint and mint not in subbed_set:
+                            if len(subbed) >= _TRADE_SUB_CAP:
+                                old = subbed.popleft()
+                                subbed_set.discard(old)
+                                try:
+                                    await ws.send(json.dumps({
+                                        "method": "unsubscribeTokenTrade", "keys": [old]}))
+                                except Exception:
+                                    pass
+                            subbed.append(mint)
+                            subbed_set.add(mint)
+                            try:
+                                await ws.send(json.dumps({
+                                    "method": "subscribeTokenTrade", "keys": [mint]}))
+                            except Exception:
+                                pass
         except Exception as exc:
             log.warning("PumpPortal disconnected (%s) — retry in %.0fs", exc, backoff)
             await asyncio.sleep(backoff)

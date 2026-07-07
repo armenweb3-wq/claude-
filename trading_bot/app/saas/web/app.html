@@ -180,6 +180,21 @@
   .prodname{font-weight:700;font-size:1.05rem}
   .proddesc{color:var(--muted);font-size:.85rem;margin-top:6px;line-height:1.5}
   .prodstat{margin-top:8px;font-size:.85rem}
+  /* wallet hero + segmented tabs (memecoins / sniper) */
+  .mehero{text-align:center;padding:8px 0 4px}
+  .mebal{font-family:var(--mono);font-size:2.15rem;font-weight:600;letter-spacing:-.03em;line-height:1.1}
+  .mebal .u{font-size:.95rem;color:var(--muted);font-weight:500;margin-left:4px}
+  .mestatus{font-size:.72rem;color:var(--muted);margin-top:7px;display:flex;align-items:center;justify-content:center;gap:6px}
+  .seg{display:flex;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:12px;
+    padding:4px;margin:16px 0 2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .seg::-webkit-scrollbar{display:none}
+  .seg button{flex:1 0 auto;width:auto;margin:0;padding:9px 12px;font-size:.76rem;font-weight:600;
+    border:1px solid transparent;background:transparent;color:var(--muted);border-radius:9px;
+    white-space:nowrap;letter-spacing:0;text-align:center}
+  .seg button.on{background:var(--panel);color:var(--text);border-color:var(--line);box-shadow:0 1px 3px rgba(0,0,0,.35)}
+  .seg button:hover{opacity:1;color:var(--text)}
+  .mesec2{margin-top:16px}
+  .mesec2 .h{font-size:.9rem;font-weight:600;margin:0 0 4px}
 </style>
 </head>
 <body>
@@ -350,44 +365,43 @@
         <div class="msg" id="meme_createMsg"></div>
       </div>
       <div class="card" id="memePanel" style="display:none">
-        <h2 style="margin-top:0">Your memecoins wallet</h2>
-        <div class="stats">
-          <div class="stat"><div class="l">Wallet value (SOL)</div><div class="v" id="meme_sol">—</div></div>
-          <div class="stat"><div class="l">Status</div><div class="v sm" id="meme_status">—</div></div>
+        <div class="mehero">
+          <div class="mebal"><span id="meme_sol">—</span><span class="u">SOL</span></div>
+          <div class="mestatus"><span class="dot on"></span><span id="meme_status">Self-custody</span></div>
         </div>
-        <div class="metabs" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
-          <button class="ghost" id="metab_deposit" onclick="memeTab('deposit')">↓ Deposit</button>
-          <button class="ghost" id="metab_withdraw" onclick="memeTab('withdraw')">↑ Withdraw</button>
-          <button class="ghost" id="metab_trade" onclick="memeTab('trade')">Holdings</button>
-          <button class="ghost" id="metab_settings" onclick="memeTab('settings')">Settings</button>
+        <div class="seg">
+          <button id="metab_deposit" onclick="memeTab('deposit')">Deposit</button>
+          <button id="metab_withdraw" onclick="memeTab('withdraw')">Withdraw</button>
+          <button id="metab_trade" onclick="memeTab('trade')">Holdings</button>
+          <button id="metab_settings" onclick="memeTab('settings')">Settings</button>
         </div>
 
         <!-- DEPOSIT -->
-        <div class="mesec" id="mesec_deposit" style="display:none;margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
-          <h2 style="margin:0 0 6px;font-size:1rem">Deposit SOL</h2>
-          <div class="disc" style="margin:0 0 8px">Send SOL from any exchange or wallet to the address below. It shows up in your balance once the network confirms — usually under a minute.</div>
+        <div class="mesec2" id="mesec_deposit" style="display:none">
+          <div class="h">Deposit SOL</div>
+          <div class="disc" style="margin:0 0 10px">Send SOL from any exchange or wallet to the address below. It arrives in your balance once the network confirms — usually under a minute.</div>
           <label>Your deposit address</label>
           <div class="copy"><span id="meme_addr" style="word-break:break-all"></span><span class="link" onclick="copyMemeAddr()">copy</span></div>
         </div>
 
         <!-- WITHDRAW -->
-        <div class="mesec" id="mesec_withdraw" style="display:none;margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
-          <h2 style="margin:0 0 6px;font-size:1rem">Withdraw / cash out</h2>
-          <div class="disc" style="margin:0 0 8px">Send SOL from this trading wallet back to a wallet you control. Cash out profits regularly.</div>
+        <div class="mesec2" id="mesec_withdraw" style="display:none">
+          <div class="h">Withdraw / cash out</div>
+          <div class="disc" style="margin:0 0 10px">Send SOL from this wallet back to a wallet you control. Cash out profits regularly.</div>
           <label>Your main Solana wallet address</label><input id="meme_dest"/>
           <label>SOL amount (blank = all)</label><input id="meme_wdamt" type="number" step="0.01" min="0"/>
-          <button onclick="memeWithdraw()" style="margin-top:8px">Withdraw to my wallet</button>
+          <button onclick="memeWithdraw()">Withdraw to my wallet</button>
           <div class="msg" id="meme_wdmsg"></div>
         </div>
 
         <!-- HOLDINGS -->
-        <div class="mesec" id="mesec_trade" style="display:none;margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
-          <h2 style="margin:0 0 6px;font-size:1rem">Your holdings</h2>
-          <div class="disc" style="margin:0 0 8px">The tokens this wallet currently holds, read live from the Solana chain.</div>
+        <div class="mesec2" id="mesec_trade" style="display:none">
+          <div class="h">Your holdings</div>
+          <div class="disc" style="margin:0 0 10px">The tokens this wallet currently holds, read live from the Solana chain.</div>
           <div id="meme_holdings"></div>
-          <div style="margin-top:8px"><button class="ghost" onclick="memeRefreshHoldings()">Refresh holdings</button></div>
+          <div style="margin-top:10px"><button class="ghost" onclick="memeRefreshHoldings()">Refresh holdings</button></div>
           <!-- Manual override — operator only -->
-          <div id="meme_manual" class="hide" style="margin-top:14px;border-top:1px dashed var(--line);padding-top:14px">
+          <div id="meme_manual" class="hide" style="margin-top:16px;border-top:1px dashed var(--line);padding-top:14px">
             <div class="disc" style="margin:0 0 8px">Manual override (admin) — direct Jupiter swap. Start with tiny amounts.</div>
             <label>Token mint address</label><input id="meme_mint" placeholder="token mint (from Dexscreener / pump.fun)"/>
             <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:6px">
@@ -400,12 +414,12 @@
         </div>
 
         <!-- SETTINGS -->
-        <div class="mesec" id="mesec_settings" style="display:none;margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
-          <div class="banner flat" style="margin:0">🧪 <b>Automated trading — coming soon.</b> The strategy is running in shadow-test (paper only) while we gather evidence. Your wallet is <b>not</b> being traded live. We'll switch this on here once it's proven.</div>
-          <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
-            <div class="disc" style="margin:0 0 6px">Keep control: import this wallet's key into your own Solflare to monitor or withdraw at any time.</div>
+        <div class="mesec2" id="mesec_settings" style="display:none">
+          <div class="banner test" style="margin:0">🧪 <b>Automated trading — coming soon.</b> The strategy is in shadow-test (paper only) while we gather evidence. Your wallet is <b>not</b> being traded live. We'll switch it on here once it's proven.</div>
+          <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
+            <div class="disc" style="margin:0 0 8px">Keep control: import this wallet's key into your own Solflare to monitor or withdraw any time.</div>
             <span class="link" onclick="revealMemeKey()">Export private key for Solflare →</span>
-            <div class="banner down hide" id="meme_secret" style="margin-top:8px;word-break:break-all"></div>
+            <div class="banner down hide" id="meme_secret" style="margin-top:10px;word-break:break-all"></div>
           </div>
         </div>
       </div>
@@ -414,11 +428,11 @@
         <p class="disc" style="margin:0 0 8px">Watches new pump.fun mints and PAPER-trades them — no real money. Weeks of this ledger decide whether the sniper ever goes live.</p>
         <div class="banner flat" id="sn_state">Loading…</div>
         <div class="stats" id="sn_stats" style="margin-top:10px"></div>
-        <div class="metabs" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
-          <button class="ghost" id="sntab_activity" onclick="snTab('activity')">Activity</button>
-          <button class="ghost" id="sntab_paper" onclick="snTab('paper')">Bought · paper</button>
-          <button class="ghost" id="sntab_live" onclick="snTab('live')">Bought · live</button>
-          <button class="ghost" id="sntab_failed" onclick="snTab('failed')">Checked / failed</button>
+        <div class="seg" style="margin-top:12px">
+          <button id="sntab_activity" onclick="snTab('activity')">Activity</button>
+          <button id="sntab_paper" onclick="snTab('paper')">Bought · paper</button>
+          <button id="sntab_live" onclick="snTab('live')">Bought · live</button>
+          <button id="sntab_failed" onclick="snTab('failed')">Checked / failed</button>
         </div>
         <div id="sn_events" style="margin-top:10px"></div>
       </div>
@@ -1262,7 +1276,7 @@ function memeTab(name){
   ['deposit','withdraw','trade','settings'].forEach(function(t){
     var on=(t===name);
     show2('mesec_'+t,on);
-    var btn=$('metab_'+t); if(btn) btn.classList.toggle('ghost',!on);
+    var btn=$('metab_'+t); if(btn) btn.classList.toggle('on',on);
   });
   if(name==='trade'){ memeRefreshHoldings(); var mo=$('meme_manual'); if(mo) mo.classList.toggle('hide',!isAdmin()); }
 }
@@ -1304,7 +1318,7 @@ function _snRows(rows,kind){
 function snTab(name){
   snActiveTab=name;
   ['activity','paper','live','failed'].forEach(function(t){
-    var btn=$('sntab_'+t); if(btn) btn.classList.toggle('ghost',t!==name);
+    var btn=$('sntab_'+t); if(btn) btn.classList.toggle('on',t===name);
   });
   const box=$('sn_events'); if(!box||!snData) return;
   if(name==='paper') box.innerHTML=_snRows(snData.bought_paper,'paper');
@@ -1371,7 +1385,7 @@ async function revealMemeKey(){
 function copyMemeAddr(){ const a=$('meme_addr'); if(a&&navigator.clipboard) navigator.clipboard.writeText(a.textContent||''); }
 async function loadMemeBalance(){
   const el=$('meme_sol'); if(!el) return;
-  try{ const b=await api('/memecoins/balance'); el.textContent=b.ok?(Number(b.sol).toFixed(4)+' ◎'):'—'; }
+  try{ const b=await api('/memecoins/balance'); el.textContent=b.ok?Number(b.sol).toFixed(3):'—'; }
   catch(e){ el.textContent='—'; }
 }
 function renderIndices(){

@@ -3,14 +3,14 @@
   "startingBankroll": 500,
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
-  "status": "busted",
-  "updatedAt": "2026-07-07T22:10:30.283Z",
+  "status": "active",
+  "updatedAt": "2026-07-07T22:15:23.756Z",
   "bets": [
     {
       "leg": 1,
-      "date": "2026-07-07",
-      "match": "USA vs Belgium",
-      "kickoff": "2026-07-07T00:00:00Z",
+      "date": "2026-07-09",
+      "match": "France vs Morocco",
+      "kickoff": "2026-07-09T20:00:00Z",
       "selections": [
         {
           "label": "Over 2.5 total goals",
@@ -19,49 +19,9 @@
         }
       ],
       "stake": 500,
-      "odds": 1.7,
+      "odds": 2.04,
       "oddsReal": true,
-      "result": "won",
-      "returnAmount": 850,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 2,
-      "date": "2026-07-07",
-      "match": "Argentina vs Egypt",
-      "kickoff": "2026-07-07T16:00:00Z",
-      "selections": [
-        {
-          "label": "Over 2.5 total goals",
-          "type": "over_goals",
-          "line": 2.5
-        }
-      ],
-      "stake": 850,
-      "odds": 2.12,
-      "oddsReal": true,
-      "result": "won",
-      "returnAmount": 1802,
-      "auto": true,
-      "curated": false
-    },
-    {
-      "leg": 3,
-      "date": "2026-07-07",
-      "match": "Switzerland vs Colombia",
-      "kickoff": "2026-07-07T20:00:00Z",
-      "selections": [
-        {
-          "label": "Over 2.5 total goals",
-          "type": "over_goals",
-          "line": 2.5
-        }
-      ],
-      "stake": 1802,
-      "odds": 2.38,
-      "oddsReal": true,
-      "result": "lost",
+      "result": "pending",
       "returnAmount": 0,
       "auto": true,
       "curated": false
@@ -995,7 +955,74 @@
           "curated": false
         }
       ]
+    },
+    {
+      "run": 16,
+      "wins": 2,
+      "peak": 1802,
+      "bets": [
+        {
+          "leg": 1,
+          "date": "2026-07-07",
+          "match": "USA vs Belgium",
+          "kickoff": "2026-07-07T00:00:00Z",
+          "selections": [
+            {
+              "label": "Over 2.5 total goals",
+              "type": "over_goals",
+              "line": 2.5
+            }
+          ],
+          "stake": 500,
+          "odds": 1.7,
+          "oddsReal": true,
+          "result": "won",
+          "returnAmount": 850,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 2,
+          "date": "2026-07-07",
+          "match": "Argentina vs Egypt",
+          "kickoff": "2026-07-07T16:00:00Z",
+          "selections": [
+            {
+              "label": "Over 2.5 total goals",
+              "type": "over_goals",
+              "line": 2.5
+            }
+          ],
+          "stake": 850,
+          "odds": 2.12,
+          "oddsReal": true,
+          "result": "won",
+          "returnAmount": 1802,
+          "auto": true,
+          "curated": false
+        },
+        {
+          "leg": 3,
+          "date": "2026-07-07",
+          "match": "Switzerland vs Colombia",
+          "kickoff": "2026-07-07T20:00:00Z",
+          "selections": [
+            {
+              "label": "Over 2.5 total goals",
+              "type": "over_goals",
+              "line": 2.5
+            }
+          ],
+          "stake": 1802,
+          "odds": 2.38,
+          "oddsReal": true,
+          "result": "lost",
+          "returnAmount": 0,
+          "auto": true,
+          "curated": false
+        }
+      ]
     }
   ],
-  "run": 16
+  "run": 17
 }

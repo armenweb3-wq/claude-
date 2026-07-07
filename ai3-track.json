@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-07-07T18:10:30.180Z",
+  "updatedAt": "2026-07-07T22:10:30.286Z",
   "bets": [
     {
       "leg": 1,
@@ -881,6 +881,26 @@
       "stake": 77.88,
       "odds": 1.39,
       "oddsReal": true,
+      "result": "lost",
+      "returnAmount": 0,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 45,
+      "date": "2026-07-09",
+      "match": "France vs Morocco",
+      "kickoff": "2026-07-09T20:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 70.1,
+      "odds": 1.4,
+      "oddsReal": false,
       "result": "pending",
       "returnAmount": 0,
       "auto": true,

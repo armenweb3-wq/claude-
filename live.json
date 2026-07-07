@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-07T02:00:39.318Z",
+  "updatedAt": "2026-07-07T02:05:20.796Z",
   "matches": [
     {
       "home": "Switzerland",
@@ -76,9 +76,9 @@
     {
       "home": "USA",
       "away": "Belgium",
-      "status": "IN_PLAY",
+      "status": "FINISHED",
       "homeScore": 1,
-      "awayScore": 3,
+      "awayScore": 4,
       "utcDate": "2026-07-07T00:00:00Z"
     },
     {

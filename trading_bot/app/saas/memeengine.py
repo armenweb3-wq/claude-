@@ -25,7 +25,7 @@ class MemeEngine:
     def __init__(self, provider, executor, *, base_size_sol: float, max_size_sol: float,
                  max_open: int = 5, daily_loss_limit_sol: float = 0.0,
                  dry: bool = True, screen: SafetyScreen | None = None,
-                 manager: PositionManager | None = None) -> None:
+                 manager: PositionManager | None = None, on_check=None) -> None:
         self.provider = provider
         self.ex = executor
         self.base_size_sol = base_size_sol
@@ -35,6 +35,18 @@ class MemeEngine:
         self.dry = dry
         self.screen = screen or SafetyScreen()
         self.manager = manager or PositionManager()
+        # Optional observer(candidate, decision, reason) called for EVERY
+        # candidate screened — "buy", "reject" or "skip" — so a caller can log
+        # exactly which coins were checked and why each one failed or passed.
+        self.on_check = on_check
+
+    def _note(self, candidate, decision: str, reason: str) -> None:
+        if not self.on_check:
+            return
+        try:
+            self.on_check(candidate, decision, reason)
+        except Exception:  # observation must never break trading
+            log.debug("on_check observer raised", exc_info=True)
 
     def manage_open(self, positions: dict[str, Position]) -> list[dict]:
         """Run the exit logic over open positions. ``positions`` maps mint->Position
@@ -75,17 +87,21 @@ class MemeEngine:
                 continue
             ok, why = self.screen.check(c.safety, c.metrics)
             if not ok:
+                self._note(c, "reject", why or "failed safety screen")
                 continue
             plan = classify(c.metrics, base_size_sol=self.base_size_sol,
                             max_size_sol=self.max_size_sol)
             if plan.action != "buy":
+                self._note(c, "reject", f"not a buy signal ({plan.action})")
                 continue
             tokens = self._buy(c.mint, plan.size_sol, c.price_sol)
             if tokens <= 0:
+                self._note(c, "reject", "buy did not fill")
                 continue
             positions[c.mint] = Position(
                 mode=plan.mode, entry_price=c.price_sol, tokens=tokens,
                 cost_sol=plan.size_sol, peak_price=c.price_sol)
+            self._note(c, "buy", plan.mode)
             opened.append({"mint": c.mint, "symbol": c.symbol, "mode": plan.mode,
                            "size_sol": plan.size_sol, "score": plan.score})
         return opened

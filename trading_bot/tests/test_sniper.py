@@ -69,7 +69,8 @@ def test_without_enrichment_nothing_is_bought():
     svc = SniperService(st, SniperProvider(feed, min_age_s=30))  # default enricher
     stats = svc.cycle()
     assert stats["opened_now"] == 0 and svc.positions == {}
-    assert st.sniper_events() == []                    # no paper rows either
+    assert st.sniper_events(action="open") == []       # nothing BOUGHT
+    # (rejects ARE logged now — that's the visibility feature, tested separately)
 
 
 # ── paper open + exit + persistence ─────────────────────────
@@ -94,6 +95,39 @@ def test_enriched_token_opens_paper_position_and_derisks():
     actions = [r for r in st.sniper_events() if r["action"] == "sell_fraction"]
     assert actions and "de-risk" in actions[0]["reason"]
     assert svc2.positions["MintA"].recovered is True
+
+
+def test_rejected_coins_are_logged_with_reason():
+    # Default (no enricher) -> every checked coin is rejected and recorded so the
+    # operator can see WHICH coins failed and WHY.
+    feed = _feed_with_token(mint="MintA")
+    feed.handle({"txType": "create", "mint": "MintB", "symbol": "TWO"})
+    feed.mints["MintB"].first_seen = time.time() - 120
+    feed.handle({"txType": "buy", "mint": "MintB", "traderPublicKey": "r",
+                 "solAmount": 1.0, "tokenAmount": 1_000_000})
+    st = Store(path=":memory:")
+    svc = SniperService(st, SniperProvider(feed, min_age_s=30))
+    stats = svc.cycle()
+    rejects = st.sniper_events(action="reject")
+    mints = {r["mint"] for r in rejects}
+    assert {"MintA", "MintB"} <= mints
+    assert all(r["reason"] for r in rejects)      # every reject carries a reason
+    assert stats["checked_total"] >= 2
+    # Deduped: a second cycle must not re-log the same coins.
+    before = len(st.sniper_events(action="reject"))
+    svc.cycle()
+    assert len(st.sniper_events(action="reject")) == before
+
+
+def test_reject_ledger_is_pruned():
+    st = Store(path=":memory:")
+    for i in range(20):
+        st.add_sniper_event(f"M{i}", "reject", reason="x")
+    st.add_sniper_event("KeepOpen", "open", size_sol=0.1)
+    st.prune_sniper_rejects(keep=5)
+    rej = st.sniper_events(limit=999, action="reject")
+    assert len(rej) == 5                          # only newest 5 rejects kept
+    assert st.sniper_events(limit=999, action="open")  # opens never pruned
 
 
 def test_stale_position_is_swept():

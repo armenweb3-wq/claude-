@@ -743,8 +743,20 @@ class Store:
             (user_id, mint, symbol, action, mode, float(size_sol), float(price_sol),
              float(fraction), float(score), reason, time.time()))
 
-    def sniper_events(self, limit: int = 100) -> list[dict]:
+    def sniper_events(self, limit: int = 100, action: str | None = None) -> list[dict]:
+        if action:
+            return self._q("SELECT * FROM sniper_paper WHERE action=?"
+                           " ORDER BY id DESC LIMIT ?", (action, limit))
         return self._q("SELECT * FROM sniper_paper ORDER BY id DESC LIMIT ?", (limit,))
+
+    def prune_sniper_rejects(self, keep: int = 500) -> None:
+        """Cap the 'reject' rows to the newest ``keep`` — opens/exits are never
+        pruned (they're the actual paper evidence)."""
+        rows = self._q("SELECT id FROM sniper_paper WHERE action='reject'"
+                        " ORDER BY id DESC LIMIT 1 OFFSET ?", (keep,))
+        if rows:
+            self._q("DELETE FROM sniper_paper WHERE action='reject' AND id<=?",
+                    (rows[0]["id"],))
 
     # ── payments ────────────────────────────────────────────
     def add_payment(self, uid: int, tx_hash: str) -> None:

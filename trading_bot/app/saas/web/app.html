@@ -257,10 +257,6 @@
         <div class="prodtop"><span class="prodname">🚀 Memecoins</span><span class="pill off" id="memeStatus">Coming soon</span></div>
         <div class="proddesc">Curated memecoin strategies — on-chain, your own wallet.</div>
       </div>
-      <div class="prodcard soon" id="unlimCard">
-        <div class="prodtop"><span class="prodname">⚡ Unlimited Leverage</span><span class="pill off" id="unlimStatus">Coming soon</span></div>
-        <div class="proddesc">High-leverage trading — concept in progress.</div>
-      </div>
     </div>
 
     <!-- COPY TRADING (BITCOIN) PRODUCT -->
@@ -418,17 +414,13 @@
         <p class="disc" style="margin:0 0 8px">Watches new pump.fun mints and PAPER-trades them — no real money. Weeks of this ledger decide whether the sniper ever goes live.</p>
         <div class="banner flat" id="sn_state">Loading…</div>
         <div class="stats" id="sn_stats" style="margin-top:10px"></div>
+        <div class="metabs" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button class="ghost" id="sntab_activity" onclick="snTab('activity')">Activity</button>
+          <button class="ghost" id="sntab_paper" onclick="snTab('paper')">Bought · paper</button>
+          <button class="ghost" id="sntab_live" onclick="snTab('live')">Bought · live</button>
+          <button class="ghost" id="sntab_failed" onclick="snTab('failed')">Checked / failed</button>
+        </div>
         <div id="sn_events" style="margin-top:10px"></div>
-      </div>
-    </div>
-
-    <!-- UNLIMITED LEVERAGE PRODUCT (concept placeholder) -->
-    <div id="unlimitedView" class="hide">
-      <div style="margin:0 0 10px"><span class="link" onclick="backToHub()">← Markets</span></div>
-      <div class="card">
-        <h2 style="margin-top:0">⚡ Unlimited Leverage <span class="pill off">Preview</span></h2>
-        <p class="lead">A high-leverage trading product — the concept is being defined.</p>
-        <div class="banner flat">🚧 Coming soon — structure to be designed.</div>
       </div>
     </div>
 
@@ -1147,7 +1139,7 @@ function render(){
   showHub();
 }
 // ── market views (one "inside" per hub tile) ────────────────
-const MARKET_VIEWS=['cryptoView','copyView','indicesView','memecoinsView','unlimitedView'];
+const MARKET_VIEWS=['cryptoView','copyView','indicesView','memecoinsView'];
 function hideMarkets(){ MARKET_VIEWS.forEach(v=>{ if($(v)) show(v,false); }); }
 function showHub(){ show('hubView',true); hideMarkets(); }
 function openMarket(id){ show('hubView',false); hideMarkets(); show(id,true); }
@@ -1164,7 +1156,6 @@ function openMemecoins(){
   if(!(memeAvailable||isAdmin())) return;
   openMarket('memecoinsView'); renderMeme();
 }
-function openUnlimited(){ if(isAdmin()) openMarket('unlimitedView'); }
 function backToHub(){ showHub(); const hh=$('hubCryptoStat'); if(hh) hh.textContent=''; }
 
 // ── copy trading (follower opt-in) + market tile states ─────
@@ -1205,8 +1196,6 @@ function updateTiles(){
   if(memeAvailable) _setTile(mc,ms,true,'openMemecoins()',memeWallet?'Wallet':'Start',memeWallet);
   else if(isAdmin()) _setTile(mc,ms,true,'openMemecoins()','Preview',false);
   else _setTile(mc,ms,false,'','Coming soon',false);
-  // Unlimited Leverage: structural preview, admin-only for now.
-  _setTile($('unlimCard'),$('unlimStatus'),isAdmin(),'openUnlimited()',isAdmin()?'Preview':'Coming soon',false);
   loadKill();
 }
 // ── global kill switch (admin only) ─────────────────────────
@@ -1277,31 +1266,61 @@ function memeTab(name){
   });
   if(name==='trade'){ memeRefreshHoldings(); var mo=$('meme_manual'); if(mo) mo.classList.toggle('hide',!isAdmin()); }
 }
+var snData=null, snActiveTab='activity';
 async function loadSniperPanel(){
   const box=$('sniperPanel'); if(!box) return;
   if(!isAdmin()){ box.style.display='none'; return; }
   box.style.display='';
   try{
     const d=await api('/admin/sniper'), s=d.stats||{};
+    snData=d;
     const beat=s.ts?(' · last cycle '+fmtAge(Math.max(0,Date.now()/1000-s.ts))+' ago'):'';
     $('sn_state').textContent=d.enabled
       ? '✓ Worker running — watching pump.fun, paper-trading only'+beat+'.'
       : 'Dormant — the sniper worker isn’t running yet (needs a Render background worker + SNIPER_ENABLED=true).';
     $('sn_stats').innerHTML=
       '<div class="stat"><div class="l">Mints seen</div><div class="v">'+(s.mints_seen_total||0)+'</div></div>'
-      +'<div class="stat"><div class="l">Tracking now</div><div class="v">'+(s.mints_tracked||0)+'</div></div>'
-      +'<div class="stat"><div class="l">Candidates</div><div class="v">'+(s.last_candidates||0)+'</div></div>'
+      +'<div class="stat"><div class="l">Checked</div><div class="v">'+(s.checked_total||0)+'</div></div>'
+      +'<div class="stat"><div class="l">Bought (paper)</div><div class="v">'+((d.bought_paper||[]).length)+'</div></div>'
       +'<div class="stat"><div class="l">Paper positions</div><div class="v">'+(s.open_positions||0)+'</div></div>';
-    const ev=d.events||[];
-    $('sn_events').innerHTML = ev.length
+    snTab(snActiveTab);
+  }catch(e){ $('sn_state').textContent='Could not load sniper status.'; }
+}
+function _snRows(rows,kind){
+  if(!rows||!rows.length){
+    if(kind==='failed') return '<div class="disc">Nothing rejected yet. With no safety-data (Helius) key wired, every checked coin is rejected by default — that\'s the correct safe behaviour until the enricher is connected.</div>';
+    if(kind==='live') return '<div class="disc">No live buys — live memecoin trading isn\'t switched on. This fills once a real per-user buy happens.</div>';
+    if(kind==='paper') return '<div class="disc">No paper buys yet. The screen hasn\'t cleared a coin to buy (expected until the safety enricher is wired).</div>';
+    return '<div class="disc">No activity yet.</div>';
+  }
+  const buy=(kind==='paper'||kind==='live');
+  return '<table><tr><th>When</th><th>Token</th><th>'+(buy?'Size · mode':'Reason')+'</th></tr>'
+    +rows.slice(0,25).map(e=>{
+      const t=e.created_at?new Date(e.created_at*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—';
+      const det=buy?(Number(e.size_sol||0).toFixed(3)+' ◎ · '+esc(e.mode||'')):esc(e.reason||'');
+      return '<tr><td>'+t+'</td><td>'+esc(String(e.symbol||e.mint||'').slice(0,12))+'</td><td>'+det+'</td></tr>';
+    }).join('')+'</table>';
+}
+function snTab(name){
+  snActiveTab=name;
+  ['activity','paper','live','failed'].forEach(function(t){
+    var btn=$('sntab_'+t); if(btn) btn.classList.toggle('ghost',t!==name);
+  });
+  const box=$('sn_events'); if(!box||!snData) return;
+  if(name==='paper') box.innerHTML=_snRows(snData.bought_paper,'paper');
+  else if(name==='live') box.innerHTML=_snRows(snData.bought_live,'live');
+  else if(name==='failed') box.innerHTML=_snRows(snData.checked,'failed');
+  else {
+    const ev=(snData.events||[]);
+    box.innerHTML = ev.length
       ? '<table><tr><th>When</th><th>Action</th><th>Token</th><th>Detail</th></tr>'
-        +ev.slice(0,15).map(e=>{
+        +ev.slice(0,20).map(e=>{
           const t=e.created_at?new Date(e.created_at*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—';
           const det=e.action==='open'?(Number(e.size_sol).toFixed(3)+' ◎ · '+esc(e.mode)):esc(e.reason||'');
           return '<tr><td>'+t+'</td><td>'+esc(e.action)+'</td><td>'+esc(String(e.symbol||e.mint).slice(0,10))+'</td><td>'+det+'</td></tr>';
         }).join('')+'</table>'
-      : '<div class="disc">No paper decisions yet — with no safety-data key every token is rejected by default (that\'s correct until the enricher is wired).</div>';
-  }catch(e){ $('sn_state').textContent='Could not load sniper status.'; }
+      : '<div class="disc">No decisions yet — the worker logs opens, exits and rejects here as it runs.</div>';
+  }
 }
 async function memeBuy(){
   const m=$('meme_trademsg'); if(m) m.textContent='Submitting…';

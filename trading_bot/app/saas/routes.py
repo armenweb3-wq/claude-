@@ -1367,8 +1367,15 @@ def admin_sniper(admin: dict = Depends(require_admin)) -> dict:
         stats = _json.loads(st.get_meta("sniper_stats") or "{}")
     except Exception:
         stats = {}
+    opens = st.sniper_events(limit=200, action="open")
+    # Paper = the global shadow portfolio (no user_id). Live = a real per-user
+    # buy (user_id set) — none today, but the split is ready for when it goes live.
+    bought_paper = [e for e in opens if not e.get("user_id")]
+    bought_live = [e for e in opens if e.get("user_id")]
     return {"enabled": settings.sniper_enabled, "stats": stats,
-            "events": st.sniper_events(limit=100)}
+            "events": st.sniper_events(limit=100),
+            "checked": st.sniper_events(limit=100, action="reject"),
+            "bought_paper": bought_paper, "bought_live": bought_live}
 
 
 @router.get("/api/admin/kill")

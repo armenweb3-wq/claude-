@@ -170,9 +170,27 @@ class SniperService:
             max_size_sol=settings.meme_max_sol_per_trade,
             max_open=settings.meme_max_open, dry=True)
         assert self.engine.dry, "sniper runs SHADOW MODE only — engine must be dry"
+        # Observe every screening decision so the operator can see which coins
+        # were checked and why each failed/passed. Buys are already logged as
+        # "open"; here we persist the REJECTs (deduped per mint, in-memory).
+        self.engine.on_check = self._record_check
+        self._checked: set[str] = set()   # distinct mints screened this run
         self.positions: dict[str, Position] = {}
         self.opened_at: dict[str, float] = {}
         self._load_positions()
+
+    def _record_check(self, candidate, decision: str, reason: str) -> None:
+        mint = getattr(candidate, "mint", "")
+        if not mint or mint in self._checked:
+            return                        # one row per coin, not one per cycle
+        self._checked.add(mint)
+        if decision == "reject":          # buys are persisted as "open" already
+            try:
+                self.store.add_sniper_event(
+                    mint, "reject", symbol=getattr(candidate, "symbol", ""),
+                    price_sol=getattr(candidate, "price_sol", 0.0), reason=reason)
+            except Exception:             # logging must never break a cycle
+                log.debug("reject log failed", exc_info=True)
 
     # ── persistence (survives worker restarts) ──────────────
     def _load_positions(self) -> None:
@@ -230,10 +248,18 @@ class SniperService:
                 self.positions.pop(mint, None)
                 self.opened_at.pop(mint, None)
 
+        # Keep the reject ledger bounded — with no enricher every coin fails the
+        # same way, so old rows add volume, not insight.
+        try:
+            self.store.prune_sniper_rejects(keep=500)
+        except Exception:  # best-effort housekeeping
+            pass
+
         self._save_positions()
         stats = {"ts": now, "mints_tracked": len(self.provider.feed.mints),
                  "mints_seen_total": self.provider.feed.seen_total,
                  "last_candidates": self.provider.last_batch,
+                 "checked_total": len(self._checked),
                  "open_positions": len(self.positions),
                  "opened_now": len(opened), "exits_now": len(actions)}
         try:

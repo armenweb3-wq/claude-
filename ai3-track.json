@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-07-07T02:05:20.912Z",
+  "updatedAt": "2026-07-07T18:10:30.180Z",
   "bets": [
     {
       "leg": 1,
@@ -861,6 +861,26 @@
       "stake": 74.89,
       "odds": 1.4,
       "oddsReal": false,
+      "result": "won",
+      "returnAmount": 104.85,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 44,
+      "date": "2026-07-07",
+      "match": "Switzerland vs Colombia",
+      "kickoff": "2026-07-07T20:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 77.88,
+      "odds": 1.39,
+      "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,
       "auto": true,

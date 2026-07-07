@@ -13,6 +13,10 @@ RUN pip install -r requirements.txt
 
 COPY app ./app
 COPY scripts ./scripts
+# Standalone sniper worker (run as a separate Render Background Worker via a
+# Docker Command override: `python sniper_worker.py`). Harmless to the web
+# image — the default CMD still launches the web app.
+COPY sniper_worker.py .
 
 # Platforms inject $PORT; default to 8000 locally.
 ENV PORT=8000

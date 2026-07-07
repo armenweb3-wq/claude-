@@ -338,6 +338,19 @@ class Store:
         self._q("INSERT INTO meta (k, v) VALUES (?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v",
                 (key, value))
 
+    # ── global kill switch ──────────────────────────────────
+    # A persisted flag (meta table, so it survives restarts and is shared by
+    # the web app and any worker) that halts opening NEW positions for every
+    # user. Managing/closing existing positions is intentionally NOT gated —
+    # a halt must never strand an open trade without its stop/break-even.
+    def trading_halted(self) -> bool:
+        return (self.get_meta("trading_halted") or "0") == "1"
+
+    def set_trading_halted(self, on: bool, by: str = "") -> None:
+        self.set_meta("trading_halted", "1" if on else "0")
+        self.set_meta("trading_halted_at", str(time.time()))
+        self.set_meta("trading_halted_by", by or "")
+
     def count_closed(self, uid: int) -> int:
         return int(self._q("SELECT COUNT(*) AS c FROM closed_trades WHERE user_id=?", (uid,))[0]["c"])
 

@@ -228,6 +228,17 @@
 
     <!-- PRODUCT HUB -->
     <div id="hubView">
+      <!-- Admin-only global kill switch: halts NEW entries for every user. -->
+      <div class="card hide" id="killCard" style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <div>
+            <div style="font-weight:700" id="kill_title">Trading: active</div>
+            <div class="disc" id="kill_sub" style="margin:2px 0 0">All users' bots can open new positions.</div>
+          </div>
+          <button id="kill_btn" onclick="toggleKill()">Halt all trading</button>
+        </div>
+        <div class="msg" id="kill_msg"></div>
+      </div>
       <h2 style="margin:2px 0 12px">Choose a market</h2>
       <div class="prodcard" onclick="openProduct('crypto')">
         <div class="prodtop"><span class="prodname">📈 Crypto</span><span class="pill on" id="hubCryptoStatus">—</span></div>
@@ -1200,6 +1211,40 @@ function updateTiles(){
   else _setTile(mc,ms,false,'','Coming soon',false);
   // Unlimited Leverage: structural preview, admin-only for now.
   _setTile($('unlimCard'),$('unlimStatus'),isAdmin(),'openUnlimited()',isAdmin()?'Preview':'Coming soon',false);
+  loadKill();
+}
+// ── global kill switch (admin only) ─────────────────────────
+function renderKill(halted){
+  const card=$('killCard'); if(!card) return;
+  card.classList.toggle('hide',!isAdmin());
+  if(!isAdmin()) return;
+  const t=$('kill_title'), s=$('kill_sub'), b=$('kill_btn');
+  if(halted){
+    card.style.borderColor='#e5484d';
+    if(t) t.textContent='⛔ Trading HALTED';
+    if(s) s.textContent='No new positions are being opened for any user. Open trades are still managed (stops/break-even).';
+    if(b){ b.textContent='Resume trading'; b.className='ghost'; }
+  } else {
+    card.style.borderColor='';
+    if(t) t.textContent='✓ Trading active';
+    if(s) s.textContent='All users’ bots can open new positions. Tap to halt instantly in an emergency.';
+    if(b){ b.textContent='Halt all trading'; b.className=''; }
+  }
+}
+async function loadKill(){
+  if(!isAdmin()){ const c=$('killCard'); if(c) c.classList.add('hide'); return; }
+  try{ const d=await api('/admin/kill'); renderKill(!!d.halted); }
+  catch(e){ /* leave hidden on error */ }
+}
+async function toggleKill(){
+  const d=await api('/admin/kill').catch(()=>({halted:false}));
+  const next=!d.halted;
+  if(next && !confirm('Halt ALL trading for every user? No new positions will open until you resume. Existing positions keep their stops.')) return;
+  const m=$('kill_msg'); if(m) m.textContent='…';
+  try{ const r=await api('/admin/kill','POST',{halted:next});
+    renderKill(!!r.halted);
+    if(m) m.textContent=r.halted?'Halted.':'Resumed.';
+  }catch(e){ if(m) m.textContent=e.message||'failed'; }
 }
 async function refreshMeme(){
   try{ memeCfg=await api('/memecoins'); memeAvailable=!!memeCfg.available; memeWallet=!!memeCfg.wallet; }

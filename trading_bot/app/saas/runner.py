@@ -65,6 +65,7 @@ class MultiUserRunner:
         self._last_channel_day = store.get_meta("last_channel_day")
         self._bcast_lock = threading.Lock()  # serialises the broadcast thread
         self.indices_results: dict[int, dict] = {}  # user_id -> last indices run
+        self._halt_logged = False  # log the kill-switch skip once, not every cycle
 
     def start(self) -> None:
         if self._thread and self._thread.is_alive():
@@ -406,6 +407,15 @@ class MultiUserRunner:
         return None
 
     def run_cycle(self) -> None:
+        # Global kill switch: halt NEW entries for everyone. Existing positions
+        # keep being managed by manage_cycle (stops/break-even) — a halt caps
+        # new risk, it doesn't abandon open trades.
+        if self.store.trading_halted():
+            if not self._halt_logged:
+                log.warning("TRADING HALTED (kill switch) — skipping entry cycles")
+                self._halt_logged = True
+            return
+        self._halt_logged = False
         users = self.store.list_users(include_admins=True)
         copy_on = settings.copy_trading_enabled
         # The leader (admin) is created first, so iterating in created_at order
@@ -486,6 +496,8 @@ class MultiUserRunner:
         """Run the indices (MT5/Equiti via MetaApi) market for connected users.
         Independent of the crypto loop — own keys, settings and enable switch."""
         if not settings.indices_enabled:
+            return
+        if self.store.trading_halted():   # kill switch halts indices entries too
             return
         from ..strategy.confluence import ConfluenceStrategy
         from .indices import IndicesTrader

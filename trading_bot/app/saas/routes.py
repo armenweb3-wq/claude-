@@ -6,6 +6,7 @@ so it cannot affect the existing live bot.
 from __future__ import annotations
 
 import datetime as dt
+import logging
 import pathlib
 
 import time
@@ -19,6 +20,7 @@ from . import security
 from .keycheck import verify_bybit_key
 from .store import Store
 
+log = logging.getLogger(__name__)
 router = APIRouter(prefix="/app")
 _WEB = pathlib.Path(__file__).parent / "web"
 
@@ -129,6 +131,10 @@ class SettingsIn(BaseModel):
 
 class CopyToggleIn(BaseModel):
     enabled: bool
+
+
+class HaltIn(BaseModel):
+    halted: bool
 
 
 class CopyUserIn(BaseModel):
@@ -1363,6 +1369,28 @@ def admin_sniper(admin: dict = Depends(require_admin)) -> dict:
         stats = {}
     return {"enabled": settings.sniper_enabled, "stats": stats,
             "events": st.sniper_events(limit=100)}
+
+
+@router.get("/api/admin/kill")
+def admin_kill_status(admin: dict = Depends(require_admin)) -> dict:
+    """Global kill switch state: whether new-entry cycles are halted, and when/
+    by whom it was last flipped."""
+    st = store()
+    at = st.get_meta("trading_halted_at")
+    return {"halted": st.trading_halted(),
+            "at": float(at) if at else None,
+            "by": st.get_meta("trading_halted_by") or ""}
+
+
+@router.post("/api/admin/kill")
+def admin_kill_set(body: HaltIn, admin: dict = Depends(require_admin)) -> dict:
+    """Flip the global kill switch. When halted, the runner opens NO new
+    positions for any user (existing positions keep being managed/protected)."""
+    st = store()
+    st.set_trading_halted(body.halted, by=(admin.get("email") or ""))
+    log.warning("kill switch %s by %s",
+                "ENGAGED" if body.halted else "released", admin.get("email"))
+    return {"ok": True, "halted": body.halted}
 
 
 @router.get("/api/admin/members")

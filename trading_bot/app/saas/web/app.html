@@ -340,8 +340,8 @@
     <div id="memecoinsView" class="hide">
       <div style="margin:0 0 10px"><span class="link" onclick="backToHub()">← Markets</span></div>
       <div class="card">
-        <h2 style="margin-top:0">🚀 Memecoins</h2>
-        <p class="lead">Automated Solana memecoin trading from a <b>dedicated wallet the bot manages for you</b>. Fund it with only what you want to trade — your main wallet is never touched.</p>
+        <h2 style="margin-top:0">🚀 Memecoins <span class="pill off">Testing</span></h2>
+        <p class="lead">A <b>dedicated Solana wallet you fully control</b> — separate from your main wallet, funded with only what you choose. Deposit, hold, and withdraw on-chain today. <b>Automated strategies are still in shadow-testing</b> and are not trading live yet.</p>
         <div class="banner flat" id="memeState">Loading…</div>
       </div>
       <div class="card" id="memeCreate" style="display:none">
@@ -356,7 +356,7 @@
       <div class="card" id="memePanel" style="display:none">
         <h2 style="margin-top:0">Your memecoins wallet</h2>
         <div class="stats">
-          <div class="stat"><div class="l">Balance (SOL)</div><div class="v" id="meme_sol">—</div></div>
+          <div class="stat"><div class="l">Wallet value (SOL)</div><div class="v" id="meme_sol">—</div></div>
           <div class="stat"><div class="l">Status</div><div class="v sm" id="meme_status">—</div></div>
         </div>
         <div class="metabs" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
@@ -387,7 +387,7 @@
         <!-- HOLDINGS -->
         <div class="mesec" id="mesec_trade" style="display:none;margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
           <h2 style="margin:0 0 6px;font-size:1rem">Your holdings</h2>
-          <div class="disc" style="margin:0 0 8px">The bot trades this wallet automatically — you don't need to buy or sell by hand. This is what it currently holds.</div>
+          <div class="disc" style="margin:0 0 8px">The tokens this wallet currently holds, read live from the Solana chain.</div>
           <div id="meme_holdings"></div>
           <div style="margin-top:8px"><button class="ghost" onclick="memeRefreshHoldings()">Refresh holdings</button></div>
           <!-- Manual override — operator only -->
@@ -405,11 +405,7 @@
 
         <!-- SETTINGS -->
         <div class="mesec" id="mesec_settings" style="display:none;margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
-          <label>Risk per trade (%)</label><input id="meme_risk" type="number" step="1" min="1" max="25"/>
-          <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;margin-top:8px">
-            <input id="meme_enabled" type="checkbox" style="width:auto"/> <span style="font-size:.8rem;color:var(--muted)">Enable automated memecoin trading on this wallet</span></label>
-          <button onclick="saveMeme()" style="margin-top:10px">Save settings</button>
-          <div class="msg" id="meme_msg"></div>
+          <div class="banner flat" style="margin:0">🧪 <b>Automated trading — coming soon.</b> The strategy is running in shadow-test (paper only) while we gather evidence. Your wallet is <b>not</b> being traded live. We'll switch this on here once it's proven.</div>
           <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
             <div class="disc" style="margin:0 0 6px">Keep control: import this wallet's key into your own Solflare to monitor or withdraw at any time.</div>
             <span class="link" onclick="revealMemeKey()">Export private key for Solflare →</span>
@@ -1262,13 +1258,11 @@ function renderMeme(){
     if(st) st.textContent='Create your dedicated Solana trading wallet to begin.';
     show2('memeCreate',true); show2('memePanel',false); return;
   }
-  if(st) st.textContent='✓ Dedicated wallet ready. Fund it and enable trading.';
+  if(st) st.textContent='✓ Your wallet is ready. Deposit, hold and withdraw on-chain. Automated trading is in testing — not live yet.';
   show2('memeCreate',false); show2('memePanel',true);
-  const w=memeCfg||{}, cfg=w.settings||{};
+  const w=memeCfg||{};
   if($('meme_addr')) $('meme_addr').textContent=(w.wallet&&w.wallet.address)||'';
-  if($('meme_risk')) $('meme_risk').value=cfg.risk_pct||5;
-  if($('meme_enabled')) $('meme_enabled').checked=!!cfg.enabled;
-  if($('meme_status')) $('meme_status').textContent=cfg.enabled?'trading':'paused';
+  if($('meme_status')) $('meme_status').textContent='Self-custody';
   const sec=$('meme_secret'); if(sec){ sec.classList.add('hide'); sec.textContent=''; }
   memeTab(memeActiveTab);
   loadMemeBalance(); memeRefreshHoldings(); loadSniperPanel();
@@ -1347,12 +1341,6 @@ async function createMemeWallet(){
   try{ await api('/memecoins/wallet','POST',{agreed:true}); await refreshMeme(); renderMeme(); }
   catch(e){ if(msg) msg.textContent=e.message||'Could not create wallet'; }
   if(btn) btn.disabled=false;
-}
-async function saveMeme(){
-  const msg=$('meme_msg'); if(msg) msg.textContent='';
-  try{ await api('/memecoins/settings','POST',{risk_pct:parseFloat($('meme_risk').value)||5,enabled:$('meme_enabled').checked,agreed:true});
-    if(msg) msg.textContent='Saved.'; await refreshMeme();
-  }catch(e){ if(msg) msg.textContent=e.message||'Could not save'; }
 }
 async function revealMemeKey(){
   if(!confirm('Show your private key? Anyone who sees it controls this wallet. Only do this to import it into your own Solflare.')) return;

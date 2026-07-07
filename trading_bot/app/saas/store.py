@@ -80,6 +80,13 @@ def _schema(d: str) -> list[str]:
           user_id INTEGER PRIMARY KEY, address TEXT NOT NULL, enc_secret TEXT NOT NULL,
           risk_pct REAL NOT NULL DEFAULT 5.0, enabled INTEGER NOT NULL DEFAULT 0,
           agreed INTEGER NOT NULL DEFAULT 0, created_at {_TS[d]} NOT NULL)""",
+        # Sniper SHADOW ledger: every paper decision the sniper worker makes
+        # (opens, partial exits, closes) — the evidence trail for whether the
+        # pump.fun strategy has any edge, gathered before a lamport moves.
+        f"""CREATE TABLE IF NOT EXISTS sniper_paper (
+          id {_PK[d]}, user_id INTEGER, mint TEXT NOT NULL, symbol TEXT,
+          action TEXT NOT NULL, mode TEXT, size_sol {_TS[d]}, price_sol {_TS[d]},
+          fraction {_TS[d]}, score {_TS[d]}, reason TEXT, created_at {_TS[d]} NOT NULL)""",
     ]
 
 
@@ -188,6 +195,8 @@ class Store:
             f"ALTER TABLE closed_trades ADD COLUMN qty {_flt}",
             # Copy-trading opt-in for existing settings rows (idempotent).
             "ALTER TABLE settings ADD COLUMN copy_enabled INTEGER NOT NULL DEFAULT 0",
+            # Sniper opt-in (future live phase; shadow mode is global).
+            "ALTER TABLE settings ADD COLUMN sniper_enabled INTEGER NOT NULL DEFAULT 0",
         ):
             try:
                 if self._pg:
@@ -708,6 +717,21 @@ class Store:
                                enabled: bool, agreed: bool) -> None:
         self._q("UPDATE memecoin_wallets SET risk_pct=?, enabled=?, agreed=? WHERE user_id=?",
                 (risk_pct, 1 if enabled else 0, 1 if agreed else 0, uid))
+
+    # ── sniper shadow ledger ────────────────────────────────
+    def add_sniper_event(self, mint: str, action: str, *, symbol: str = "",
+                         mode: str = "", size_sol: float = 0.0, price_sol: float = 0.0,
+                         fraction: float = 0.0, score: float = 0.0, reason: str = "",
+                         user_id: int | None = None) -> None:
+        self._q(
+            "INSERT INTO sniper_paper (user_id, mint, symbol, action, mode, size_sol,"
+            " price_sol, fraction, score, reason, created_at)"
+            " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            (user_id, mint, symbol, action, mode, float(size_sol), float(price_sol),
+             float(fraction), float(score), reason, time.time()))
+
+    def sniper_events(self, limit: int = 100) -> list[dict]:
+        return self._q("SELECT * FROM sniper_paper ORDER BY id DESC LIMIT ?", (limit,))
 
     # ── payments ────────────────────────────────────────────
     def add_payment(self, uid: int, tx_hash: str) -> None:

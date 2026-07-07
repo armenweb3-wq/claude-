@@ -1351,6 +1351,20 @@ def admin_indices_probe(request: Request, symbol: str = "US500",
         return {"ok": False, "error": str(exc), "trace": traceback.format_exc()[-400:]}
 
 
+@router.get("/api/admin/sniper")
+def admin_sniper(admin: dict = Depends(require_admin)) -> dict:
+    """Sniper shadow-test dashboard: worker heartbeat/stats + the latest paper
+    decisions from the sniper_paper ledger."""
+    import json as _json
+    st = store()
+    try:
+        stats = _json.loads(st.get_meta("sniper_stats") or "{}")
+    except Exception:
+        stats = {}
+    return {"enabled": settings.sniper_enabled, "stats": stats,
+            "events": st.sniper_events(limit=100)}
+
+
 @router.get("/api/admin/members")
 def admin_members(request: Request, admin: dict = Depends(require_admin)) -> dict:
     """Per-member health from the last run — keys, bot, copy, equity, last-run

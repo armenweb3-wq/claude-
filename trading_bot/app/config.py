@@ -216,6 +216,20 @@ class Settings:
     meme_base_size_sol: float = field(default_factory=lambda: _get_float("MEME_BASE_SIZE_SOL", 0.2))
     meme_max_open: int = field(default_factory=lambda: _get_int("MEME_MAX_OPEN", 5))
 
+    # ── Sniper worker (pump.fun, SHADOW MODE ONLY) ─────────────────────────
+    # A separate background process (sniper_worker.py) that listens to
+    # PumpPortal for new mints, screens them (reject-by-default) and paper-
+    # trades the survivors through MemeEngine. No live trading in this phase.
+    sniper_enabled: bool = field(default_factory=lambda: _get_bool("SNIPER_ENABLED", False))
+    pumpportal_ws_url: str = field(default_factory=lambda: _get(
+        "PUMPPORTAL_WS_URL", "wss://pumpportal.fun/api/data"))
+    # Comma-separated Solana wallet addresses whose buys count as smart money.
+    # NOTE: base58 is case-sensitive — do not upper-case (unlike _get_list).
+    sniper_tracked_wallets: list[str] = field(default_factory=lambda: [
+        w.strip() for w in _get("SNIPER_WALLETS").split(",") if w.strip()])
+    sniper_cycle_seconds: int = field(default_factory=lambda: _get_int("SNIPER_CYCLE_SECONDS", 10))
+    helius_api_key: str = field(default_factory=lambda: _get("HELIUS_API_KEY"))
+
     @property
     def auth_enabled(self) -> bool:
         return bool(self.control_api_key)

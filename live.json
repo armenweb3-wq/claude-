@@ -1,30 +1,6 @@
 {
-  "updatedAt": "2026-07-06T23:55:22.133Z",
+  "updatedAt": "2026-07-07T00:00:37.585Z",
   "matches": [
-    {
-      "home": "USA",
-      "away": "Bosnia-H.",
-      "status": "FINISHED",
-      "homeScore": 2,
-      "awayScore": 0,
-      "utcDate": "2026-07-02T00:00:00Z"
-    },
-    {
-      "home": "Spain",
-      "away": "Austria",
-      "status": "FINISHED",
-      "homeScore": 3,
-      "awayScore": 0,
-      "utcDate": "2026-07-02T19:00:00Z"
-    },
-    {
-      "home": "Portugal",
-      "away": "Croatia",
-      "status": "FINISHED",
-      "homeScore": 2,
-      "awayScore": 1,
-      "utcDate": "2026-07-02T23:00:00Z"
-    },
     {
       "home": "Switzerland",
       "away": "Algeria",
@@ -120,6 +96,14 @@
       "homeScore": null,
       "awayScore": null,
       "utcDate": "2026-07-07T20:00:00Z"
+    },
+    {
+      "home": "France",
+      "away": "Morocco",
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
+      "utcDate": "2026-07-09T20:00:00Z"
     }
   ]
 }

@@ -348,39 +348,62 @@
           <div class="stat"><div class="l">Balance (SOL)</div><div class="v" id="meme_sol">—</div></div>
           <div class="stat"><div class="l">Status</div><div class="v sm" id="meme_status">—</div></div>
         </div>
-        <label style="margin-top:10px">Deposit address — send SOL here to fund trading</label>
-        <div class="copy"><span id="meme_addr" style="word-break:break-all"></span><span class="link" onclick="copyMemeAddr()">copy</span></div>
-        <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
-          <h2 style="margin:0 0 6px;font-size:1rem">Trade terminal</h2>
-          <div class="disc" style="margin:0 0 8px">Live on-chain swaps via Jupiter — start with tiny amounts to verify.</div>
-          <div id="meme_holdings"></div>
-          <label>Token mint address</label><input id="meme_mint" placeholder="token mint (from Dexscreener / pump.fun)"/>
-          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:6px">
-            <div style="flex:1;min-width:120px"><label>Buy with SOL</label><input id="meme_buyamt" type="number" step="0.01" min="0"/></div>
-            <button onclick="memeBuy()">Buy</button>
-            <button class="ghost" onclick="memeSell()">Sell 100%</button>
-          </div>
-          <div class="msg" id="meme_trademsg"></div>
-          <div style="margin-top:8px"><span class="link" onclick="memeRefreshHoldings()">Refresh holdings</span></div>
+        <div class="metabs" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+          <button class="ghost" id="metab_deposit" onclick="memeTab('deposit')">↓ Deposit</button>
+          <button class="ghost" id="metab_withdraw" onclick="memeTab('withdraw')">↑ Withdraw</button>
+          <button class="ghost" id="metab_trade" onclick="memeTab('trade')">Holdings</button>
+          <button class="ghost" id="metab_settings" onclick="memeTab('settings')">Settings</button>
         </div>
-        <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
-          <h2 style="margin:0 0 6px;font-size:1rem">Cash out</h2>
+
+        <!-- DEPOSIT -->
+        <div class="mesec" id="mesec_deposit" style="display:none;margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
+          <h2 style="margin:0 0 6px;font-size:1rem">Deposit SOL</h2>
+          <div class="disc" style="margin:0 0 8px">Send SOL from any exchange or wallet to the address below. It shows up in your balance once the network confirms — usually under a minute.</div>
+          <label>Your deposit address</label>
+          <div class="copy"><span id="meme_addr" style="word-break:break-all"></span><span class="link" onclick="copyMemeAddr()">copy</span></div>
+        </div>
+
+        <!-- WITHDRAW -->
+        <div class="mesec" id="mesec_withdraw" style="display:none;margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
+          <h2 style="margin:0 0 6px;font-size:1rem">Withdraw / cash out</h2>
+          <div class="disc" style="margin:0 0 8px">Send SOL from this trading wallet back to a wallet you control. Cash out profits regularly.</div>
           <label>Your main Solana wallet address</label><input id="meme_dest"/>
           <label>SOL amount (blank = all)</label><input id="meme_wdamt" type="number" step="0.01" min="0"/>
           <button onclick="memeWithdraw()" style="margin-top:8px">Withdraw to my wallet</button>
           <div class="msg" id="meme_wdmsg"></div>
         </div>
-        <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
+
+        <!-- HOLDINGS -->
+        <div class="mesec" id="mesec_trade" style="display:none;margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
+          <h2 style="margin:0 0 6px;font-size:1rem">Your holdings</h2>
+          <div class="disc" style="margin:0 0 8px">The bot trades this wallet automatically — you don't need to buy or sell by hand. This is what it currently holds.</div>
+          <div id="meme_holdings"></div>
+          <div style="margin-top:8px"><button class="ghost" onclick="memeRefreshHoldings()">Refresh holdings</button></div>
+          <!-- Manual override — operator only -->
+          <div id="meme_manual" class="hide" style="margin-top:14px;border-top:1px dashed var(--line);padding-top:14px">
+            <div class="disc" style="margin:0 0 8px">Manual override (admin) — direct Jupiter swap. Start with tiny amounts.</div>
+            <label>Token mint address</label><input id="meme_mint" placeholder="token mint (from Dexscreener / pump.fun)"/>
+            <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:6px">
+              <div style="flex:1;min-width:120px"><label>Buy with SOL</label><input id="meme_buyamt" type="number" step="0.01" min="0"/></div>
+              <button onclick="memeBuy()">Buy</button>
+              <button class="ghost" onclick="memeSell()">Sell 100%</button>
+            </div>
+            <div class="msg" id="meme_trademsg"></div>
+          </div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div class="mesec" id="mesec_settings" style="display:none;margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
           <label>Risk per trade (%)</label><input id="meme_risk" type="number" step="1" min="1" max="25"/>
           <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;margin-top:8px">
             <input id="meme_enabled" type="checkbox" style="width:auto"/> <span style="font-size:.8rem;color:var(--muted)">Enable automated memecoin trading on this wallet</span></label>
           <button onclick="saveMeme()" style="margin-top:10px">Save settings</button>
           <div class="msg" id="meme_msg"></div>
-        </div>
-        <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
-          <div class="disc" style="margin:0 0 6px">Keep control: import this wallet's key into your own Solflare to monitor or withdraw at any time.</div>
-          <span class="link" onclick="revealMemeKey()">Export private key for Solflare →</span>
-          <div class="banner down hide" id="meme_secret" style="margin-top:8px;word-break:break-all"></div>
+          <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
+            <div class="disc" style="margin:0 0 6px">Keep control: import this wallet's key into your own Solflare to monitor or withdraw at any time.</div>
+            <span class="link" onclick="revealMemeKey()">Export private key for Solflare →</span>
+            <div class="banner down hide" id="meme_secret" style="margin-top:8px;word-break:break-all"></div>
+          </div>
         </div>
       </div>
       <div class="card" id="sniperPanel" style="display:none">
@@ -1202,7 +1225,18 @@ function renderMeme(){
   if($('meme_enabled')) $('meme_enabled').checked=!!cfg.enabled;
   if($('meme_status')) $('meme_status').textContent=cfg.enabled?'trading':'paused';
   const sec=$('meme_secret'); if(sec){ sec.classList.add('hide'); sec.textContent=''; }
+  memeTab(memeActiveTab);
   loadMemeBalance(); memeRefreshHoldings(); loadSniperPanel();
+}
+var memeActiveTab='deposit';
+function memeTab(name){
+  memeActiveTab=name;
+  ['deposit','withdraw','trade','settings'].forEach(function(t){
+    var on=(t===name);
+    show2('mesec_'+t,on);
+    var btn=$('metab_'+t); if(btn) btn.classList.toggle('ghost',!on);
+  });
+  if(name==='trade'){ memeRefreshHoldings(); var mo=$('meme_manual'); if(mo) mo.classList.toggle('hide',!isAdmin()); }
 }
 async function loadSniperPanel(){
   const box=$('sniperPanel'); if(!box) return;

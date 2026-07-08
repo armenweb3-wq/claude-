@@ -1298,11 +1298,17 @@ async function loadSniperPanel(){
       : (s.ts
          ? 'No recent heartbeat — worker last reported'+beat+' (it may be restarting).'
          : 'Dormant — no worker heartbeat yet (needs a Render background worker + SNIPER_ENABLED=true).');
+    const p=s.pnl||{}, closed=p.closed||0, wins=p.wins||0;
+    const wr=closed?Math.round(wins/closed*100):0;
+    const real=Number(p.realized_sol||0);
+    const realCls=real>0?'pos':(real<0?'neg':'');
     $('sn_stats').innerHTML=
       '<div class="stat"><div class="l">Mints seen</div><div class="v">'+(s.mints_seen_total||0)+'</div></div>'
       +'<div class="stat"><div class="l">Checked</div><div class="v">'+(s.checked_total||0)+'</div></div>'
       +'<div class="stat"><div class="l">Bought (paper)</div><div class="v">'+((d.bought_paper||[]).length)+'</div></div>'
-      +'<div class="stat"><div class="l">Paper positions</div><div class="v">'+(s.open_positions||0)+'</div></div>';
+      +'<div class="stat"><div class="l">Open positions</div><div class="v">'+(s.open_positions||0)+'</div></div>'
+      +'<div class="stat"><div class="l">Realized (paper ◎)</div><div class="v sm '+realCls+'">'+real.toFixed(4)+'</div></div>'
+      +'<div class="stat"><div class="l">Closed · win rate</div><div class="v sm">'+closed+' · '+wr+'%</div></div>';
     snTab(snActiveTab);
   }catch(e){ $('sn_state').textContent='Could not load sniper status.'; }
 }

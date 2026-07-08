@@ -233,6 +233,11 @@ class Settings:
     # "" = reject-by-default (no enrichment); "rugcheck" = RugCheck public API.
     meme_enricher: str = field(default_factory=lambda: _get("MEME_ENRICHER"))
     sol_price_usd: float = field(default_factory=lambda: _get_float("SOL_PRICE_USD", 150.0))
+    # Buy-score threshold for the sniper. The full model peaks near 45 only when
+    # smart-money-wallet and social signals are present; with just safety +
+    # momentum (the shadow default) it tops out ~44, so a lower bar is needed to
+    # ever paper-buy. Raise it (or add SNIPER_WALLETS) once richer signals feed in.
+    meme_min_score: float = field(default_factory=lambda: _get_float("MEME_MIN_SCORE", 30.0))
 
     @property
     def auth_enabled(self) -> bool:

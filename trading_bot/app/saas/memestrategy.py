@@ -131,6 +131,8 @@ class Position:
     recovered: bool = False   # have we sold enough to get our money back?
     rungs_hit: int = 0        # moonbag ladder rungs already taken
     age_minutes: float = 0.0
+    init_cost_sol: float = 0.0  # SOL spent at entry (fixed — for realized P&L)
+    proceeds_sol: float = 0.0   # SOL received from sells so far (accumulates)
 
 
 @dataclass

@@ -25,7 +25,8 @@ class MemeEngine:
     def __init__(self, provider, executor, *, base_size_sol: float, max_size_sol: float,
                  max_open: int = 5, daily_loss_limit_sol: float = 0.0,
                  dry: bool = True, screen: SafetyScreen | None = None,
-                 manager: PositionManager | None = None, on_check=None) -> None:
+                 manager: PositionManager | None = None, on_check=None,
+                 min_score: float = 45.0) -> None:
         self.provider = provider
         self.ex = executor
         self.base_size_sol = base_size_sol
@@ -33,6 +34,7 @@ class MemeEngine:
         self.max_open = max_open
         self.daily_loss_limit_sol = daily_loss_limit_sol
         self.dry = dry
+        self.min_score = min_score
         self.screen = screen or SafetyScreen()
         self.manager = manager or PositionManager()
         # Optional observer(candidate, decision, reason) called for EVERY
@@ -63,7 +65,8 @@ class MemeEngine:
             if act.kind == "sell_all":
                 self._sell(mint, pos, 1.0, price)
                 positions.pop(mint, None)
-                actions.append({"mint": mint, "action": "sell_all", "reason": act.reason})
+                actions.append({"mint": mint, "action": "sell_all", "reason": act.reason,
+                                "realized_sol": pos.proceeds_sol - pos.init_cost_sol})
             elif act.kind == "sell_fraction":
                 self._sell(mint, pos, act.fraction, price)
                 if act.reason.startswith("de-risk"):
@@ -90,7 +93,7 @@ class MemeEngine:
                 self._note(c, "reject", why or "failed safety screen")
                 continue
             plan = classify(c.metrics, base_size_sol=self.base_size_sol,
-                            max_size_sol=self.max_size_sol)
+                            max_size_sol=self.max_size_sol, min_score=self.min_score)
             if plan.action != "buy":
                 self._note(c, "reject", f"not a buy signal ({plan.action})")
                 continue
@@ -100,7 +103,8 @@ class MemeEngine:
                 continue
             positions[c.mint] = Position(
                 mode=plan.mode, entry_price=c.price_sol, tokens=tokens,
-                cost_sol=plan.size_sol, peak_price=c.price_sol)
+                cost_sol=plan.size_sol, peak_price=c.price_sol,
+                init_cost_sol=plan.size_sol)
             self._note(c, "buy", plan.mode)
             opened.append({"mint": c.mint, "symbol": c.symbol, "mode": plan.mode,
                            "size_sol": plan.size_sol, "score": plan.score})
@@ -120,6 +124,7 @@ class MemeEngine:
 
     def _sell(self, mint: str, pos: Position, fraction: float, price: float) -> None:
         sold = pos.tokens * fraction
+        pos.proceeds_sol += sold * price       # realized SOL from this sale
         pos.tokens = max(0.0, pos.tokens - sold)
         if self.dry:
             return

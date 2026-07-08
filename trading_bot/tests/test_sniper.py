@@ -130,6 +130,48 @@ def test_reject_ledger_is_pruned():
     assert st.sniper_events(limit=999, action="open")  # opens never pruned
 
 
+def test_enrichment_is_cached_per_mint():
+    # Same coin appears every cycle — it must be enriched ONCE (TTL cache), not
+    # re-fetched each time (which would hammer the data API / stall the worker).
+    feed = _feed_with_token()
+    calls = {"n": 0}
+
+    def counting(mint, state):
+        calls["n"] += 1
+        return TokenSafety(), {}
+
+    prov = SniperProvider(feed, enricher=counting, min_age_s=30)
+    prov.discover()
+    prov.discover()
+    assert calls["n"] == 1
+
+
+def _safe_no_social(mint, state):
+    # Passes safety but supplies no social -> classify picks FLIP mode.
+    return (TokenSafety(can_sell=True, mint_renounced=True, freeze_revoked=True,
+                        lp_locked_or_burned=True, top_holder_pct=8,
+                        dev_holder_pct=2, rug_score=85),
+            {"liquidity_sol": 20.0})
+
+
+def test_paper_pnl_scoreboard_tracks_realized():
+    feed = _feed_with_token()
+    st = Store(path=":memory:")
+    svc = SniperService(st, SniperProvider(feed, enricher=_safe_no_social, min_age_s=30))
+    svc.cycle()
+    assert "MintA" in svc.positions and svc.positions["MintA"].mode == "flip"
+    # Price jumps well past the flip target -> sell_all at a profit.
+    feed.handle({"txType": "buy", "mint": "MintA", "traderPublicKey": "r",
+                 "solAmount": 5.0, "tokenAmount": 1_000_000})
+    svc.cycle()
+    assert "MintA" not in svc.positions
+    assert svc.pnl["closed"] == 1 and svc.pnl["wins"] == 1
+    assert svc.pnl["realized_sol"] > 0
+    # Scoreboard survives a restart (persisted to the store).
+    svc2 = SniperService(st, SniperProvider(feed, enricher=_safe_no_social, min_age_s=30))
+    assert svc2.pnl["closed"] == 1 and svc2.pnl["realized_sol"] > 0
+
+
 def test_stale_position_is_swept():
     feed = _feed_with_token()
     st = Store(path=":memory:")

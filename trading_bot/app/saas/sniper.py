@@ -39,6 +39,7 @@ log = logging.getLogger(__name__)
 
 _POSITIONS_KEY = "sniper_positions"
 _STATS_KEY = "sniper_stats"
+_PNL_KEY = "sniper_pnl"
 _STALE_POSITION_MIN = 24 * 60   # drop a paper position with no exit after 24h
 
 
@@ -122,11 +123,32 @@ def no_enrichment(mint: str, state: MintState) -> tuple[TokenSafety, dict]:
 
 
 class SniperProvider(MemeDataProvider):
-    def __init__(self, feed: PumpFeed, enricher=None, min_age_s: float = 30.0) -> None:
+    def __init__(self, feed: PumpFeed, enricher=None, min_age_s: float = 30.0,
+                 enrich_ttl_s: float = 300.0) -> None:
         self.feed = feed
         self.enricher = enricher or no_enrichment
         self.min_age_s = min_age_s
+        self.enrich_ttl_s = enrich_ttl_s
+        # Cache enrichment per mint — safety data barely changes, and without
+        # this the same coins are re-fetched every ~10s cycle, hammering the
+        # data API (429s) and, since the call is blocking, stalling the worker.
+        self._cache: dict[str, tuple[float, TokenSafety, dict]] = {}
         self.last_batch = 0   # candidates produced on the latest discover()
+
+    def _enrich(self, mint: str, st) -> tuple[TokenSafety, dict]:
+        now = time.time()
+        hit = self._cache.get(mint)
+        if hit and (now - hit[0]) < self.enrich_ttl_s:
+            return hit[1], hit[2]
+        try:
+            safety, extra = self.enricher(mint, st)
+        except Exception:                     # enrichment failure = unknown = reject
+            safety, extra = TokenSafety(), {}
+        self._cache[mint] = (now, safety, extra or {})
+        if len(self._cache) > 4000:           # bound memory; drop oldest half
+            for m in sorted(self._cache, key=lambda k: self._cache[k][0])[:2000]:
+                self._cache.pop(m, None)
+        return safety, extra
 
     def discover(self, limit: int = 20) -> list[Candidate]:
         now = time.time()
@@ -139,10 +161,7 @@ class SniperProvider(MemeDataProvider):
                 continue                      # no trades yet -> no price -> skip
             if (now - st.first_seen) < self.min_age_s:
                 continue                      # let a few trades accrue first
-            try:
-                safety, extra = self.enricher(mint, st)
-            except Exception:                 # enrichment failure = unknown = reject
-                safety, extra = TokenSafety(), {}
+            safety, extra = self._enrich(mint, st)
             kw = dict(age_minutes=(now - st.first_seen) / 60.0,
                       volume_5m_sol=st.vol_sol, buys_5m=st.buys, sells_5m=st.sells,
                       smart_money_buys=st.smart_buys)
@@ -168,7 +187,8 @@ class SniperService:
             provider, None,  # no executor — dry mode never places orders
             base_size_sol=settings.meme_base_size_sol,
             max_size_sol=settings.meme_max_sol_per_trade,
-            max_open=settings.meme_max_open, dry=True)
+            max_open=settings.meme_max_open, dry=True,
+            min_score=settings.meme_min_score)
         assert self.engine.dry, "sniper runs SHADOW MODE only — engine must be dry"
         # Observe every screening decision so the operator can see which coins
         # were checked and why each failed/passed. Buys are already logged as
@@ -177,7 +197,30 @@ class SniperService:
         self._checked: set[str] = set()   # distinct mints screened this run
         self.positions: dict[str, Position] = {}
         self.opened_at: dict[str, float] = {}
+        self.pnl = self._load_pnl()       # cumulative paper scoreboard
         self._load_positions()
+
+    # ── paper scoreboard (realized, survives restarts) ──────
+    def _load_pnl(self) -> dict:
+        try:
+            d = json.loads(self.store.get_meta(_PNL_KEY) or "{}")
+        except Exception:
+            d = {}
+        return {"realized_sol": float(d.get("realized_sol", 0.0)),
+                "wins": int(d.get("wins", 0)), "losses": int(d.get("losses", 0)),
+                "closed": int(d.get("closed", 0))}
+
+    def _record_close(self, realized_sol: float) -> None:
+        self.pnl["realized_sol"] = round(self.pnl["realized_sol"] + realized_sol, 6)
+        self.pnl["closed"] += 1
+        if realized_sol > 0:
+            self.pnl["wins"] += 1
+        elif realized_sol < 0:
+            self.pnl["losses"] += 1
+        try:
+            self.store.set_meta(_PNL_KEY, json.dumps(self.pnl))
+        except Exception:  # scoreboard is best-effort
+            pass
 
     def _record_check(self, candidate, decision: str, reason: str) -> None:
         mint = getattr(candidate, "mint", "")
@@ -234,17 +277,22 @@ class SniperService:
         for a in actions:
             self.store.add_sniper_event(
                 a["mint"], a["action"], fraction=a.get("fraction", 0.0),
-                price_sol=self.provider.price(a["mint"]), reason=a.get("reason", ""))
+                price_sol=self.provider.price(a["mint"]), reason=a.get("reason", ""),
+                size_sol=a.get("realized_sol", 0.0))
             if a["action"] == "sell_all":
+                self._record_close(a.get("realized_sol", 0.0))
                 self.opened_at.pop(a["mint"], None)
 
         # Zombie sweep: a paper position whose feed died can never exit via
-        # price — close it out so the portfolio can't silt up.
+        # price — close it out so the portfolio can't silt up. Whatever it had
+        # already realized (via de-risk sells) counts; the rest is a loss.
         for mint, pos in list(self.positions.items()):
             if pos.age_minutes >= _STALE_POSITION_MIN:
+                realized = pos.proceeds_sol - pos.init_cost_sol
                 self.store.add_sniper_event(
                     mint, "sell_all", price_sol=self.provider.price(mint),
-                    reason="stale — no price feed for 24h")
+                    size_sol=realized, reason="stale — no price feed for 24h")
+                self._record_close(realized)
                 self.positions.pop(mint, None)
                 self.opened_at.pop(mint, None)
 
@@ -261,7 +309,8 @@ class SniperService:
                  "last_candidates": self.provider.last_batch,
                  "checked_total": len(self._checked),
                  "open_positions": len(self.positions),
-                 "opened_now": len(opened), "exits_now": len(actions)}
+                 "opened_now": len(opened), "exits_now": len(actions),
+                 "pnl": self.pnl}
         try:
             self.store.set_meta(_STATS_KEY, json.dumps(stats))
         except Exception:  # stats are best-effort

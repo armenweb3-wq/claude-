@@ -93,7 +93,9 @@ async def strategy_loop(service: SniperService, feed: PumpFeed) -> None:
     while True:
         try:
             feed.prune()
-            stats = service.cycle()
+            # cycle() does blocking HTTP (enrichment) — run it OFF the event loop
+            # so it can never stall the websocket read in ws_loop.
+            stats = await asyncio.to_thread(service.cycle)
             if stats["opened_now"] or stats["exits_now"]:
                 log.warning("cycle: %s", stats)
         except Exception:  # a bad cycle must not kill the worker

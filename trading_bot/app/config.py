@@ -229,6 +229,10 @@ class Settings:
         w.strip() for w in _get("SNIPER_WALLETS").split(",") if w.strip()])
     sniper_cycle_seconds: int = field(default_factory=lambda: _get_int("SNIPER_CYCLE_SECONDS", 10))
     helius_api_key: str = field(default_factory=lambda: _get("HELIUS_API_KEY"))
+    # Safety-data source that lets the screen APPROVE (not just reject) coins.
+    # "" = reject-by-default (no enrichment); "rugcheck" = RugCheck public API.
+    meme_enricher: str = field(default_factory=lambda: _get("MEME_ENRICHER"))
+    sol_price_usd: float = field(default_factory=lambda: _get_float("SOL_PRICE_USD", 150.0))
 
     @property
     def auth_enabled(self) -> bool:

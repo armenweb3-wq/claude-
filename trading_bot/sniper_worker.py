@@ -107,9 +107,12 @@ def main() -> int:
     if not settings.sniper_enabled:
         log.warning("SNIPER_ENABLED is not set — sniper worker exiting (dormant).")
         return 0
+    from app.saas.enricher import make_enricher
+    enricher = make_enricher(settings)
     feed = PumpFeed(tracked_wallets=settings.sniper_tracked_wallets)
-    service = SniperService(Store(), SniperProvider(feed))
-    log.warning("sniper worker starting — SHADOW MODE (paper ledger only)")
+    service = SniperService(Store(), SniperProvider(feed, enricher=enricher))
+    log.warning("sniper worker starting — SHADOW MODE (paper ledger only) — "
+                "enricher=%s", settings.meme_enricher or "none (reject-by-default)")
 
     async def _run() -> None:
         await asyncio.gather(ws_loop(feed), strategy_loop(service, feed))

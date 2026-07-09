@@ -9,6 +9,7 @@ import threading
 import time
 
 from . import security
+from ..strategy.trailing import TP_LADDER_PCTS
 
 _POS_TTL = 8.0    # seconds — open positions / equity (kept low so it tracks Bybit)
 _HIST_TTL = 60.0  # seconds — closed-trade history
@@ -17,8 +18,8 @@ _lock = threading.Lock()
 _pos_cache: dict[int, tuple[float, dict]] = {}
 _hist_cache: dict[int, tuple[float, dict]] = {}
 
-# Same ladder/stop defaults the strategy uses, so the dashboard can draw levels.
-_LADDER = [(6.0, 0.40), (15.0, 0.30), (50.0, 0.30)]
+# Draw the dashboard's TP levels from the strategy's single source of truth, so
+# the card shows exactly the take-profits the bot actually uses (now one).
 _STOP_PCT = 3.0
 
 
@@ -36,7 +37,7 @@ def _detail(pos) -> dict:
     is_long = (pos.side or "").lower() in ("buy", "long")
     sign = 1.0 if is_long else -1.0
     entry = pos.entry_price
-    tps = [round(entry * (1 + sign * p / 100), 6) for p, _ in _LADDER]
+    tps = [round(entry * (1 + sign * p / 100), 6) for p in TP_LADDER_PCTS]
     sl = pos.stop_loss if pos.stop_loss else round(entry * (1 - sign * _STOP_PCT / 100), 6)
     at_be = (sl >= entry) if is_long else (0 < sl <= entry)
     notional = pos.size * entry

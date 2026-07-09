@@ -303,9 +303,11 @@ class SniperService:
         except Exception:  # best-effort housekeeping
             pass
 
+        priced = sum(1 for st in self.provider.feed.mints.values() if st.last_price > 0)
         self._save_positions()
         stats = {"ts": now, "mints_tracked": len(self.provider.feed.mints),
                  "mints_seen_total": self.provider.feed.seen_total,
+                 "priced_now": priced,          # mints with a live price (trades flowing)
                  "last_candidates": self.provider.last_batch,
                  "checked_total": len(self._checked),
                  "open_positions": len(self.positions),

@@ -1293,39 +1293,55 @@ async function loadSniperPanel(){
     // "is it running" signal. d.enabled only reflects the WEB app's env, which
     // won't have SNIPER_ENABLED (that's set on the worker), so don't rely on it.
     const alive = s.ts && (Date.now()/1000 - s.ts) < 300;
-    $('sn_state').textContent = alive
+    const bp=(d.bought_paper||[]).length;
+    const mainline = alive
       ? '✓ Worker running — watching pump.fun, paper-trading only'+beat+'.'
       : (s.ts
          ? 'No recent heartbeat — worker last reported'+beat+' (it may be restarting).'
-         : 'Dormant — no worker heartbeat yet (needs a Render background worker + SNIPER_ENABLED=true).');
+         : 'Dormant — no worker heartbeat yet (redeploy the worker with SNIPER_ENABLED=true).');
+    // Auto-diagnose where the funnel stops so it's obvious what to fix.
+    let hint='';
+    if(alive){
+      if(!s.priced_now) hint='⚠ No coin has a live price yet — trade data isn’t flowing. Redeploy the worker so it subscribes to each new coin’s trades.';
+      else if(!s.checked_total) hint='Coins are priced — screening should start within a minute.';
+      else if(!bp) hint='Screening coins but none have passed. Open “Checked / failed” to see why (usually safety, or “not a buy signal”).';
+    }
+    $('sn_state').innerHTML = esc(mainline)+(hint?'<div class="disc" style="margin-top:8px">'+esc(hint)+'</div>':'');
     const p=s.pnl||{}, closed=p.closed||0, wins=p.wins||0;
     const wr=closed?Math.round(wins/closed*100):0;
     const real=Number(p.realized_sol||0);
     const realCls=real>0?'pos':(real<0?'neg':'');
+    const tile=(l,v,c)=>'<div class="stat"><div class="l">'+l+'</div><div class="v sm'+(c?' '+c:'')+'">'+v+'</div></div>';
+    // The funnel: Seen -> Priced -> Checked -> Bought. Where it stops = the problem.
     $('sn_stats').innerHTML=
-      '<div class="stat"><div class="l">Mints seen</div><div class="v">'+(s.mints_seen_total||0)+'</div></div>'
-      +'<div class="stat"><div class="l">Checked</div><div class="v">'+(s.checked_total||0)+'</div></div>'
-      +'<div class="stat"><div class="l">Bought (paper)</div><div class="v">'+((d.bought_paper||[]).length)+'</div></div>'
-      +'<div class="stat"><div class="l">Open positions</div><div class="v">'+(s.open_positions||0)+'</div></div>'
-      +'<div class="stat"><div class="l">Realized (paper ◎)</div><div class="v sm '+realCls+'">'+real.toFixed(4)+'</div></div>'
-      +'<div class="stat"><div class="l">Closed · win rate</div><div class="v sm">'+closed+' · '+wr+'%</div></div>';
+      tile('Seen', s.mints_seen_total||0)
+      +tile('Priced', s.priced_now||0)
+      +tile('Checked', s.checked_total||0)
+      +tile('Bought · paper', bp)
+      +tile('Realized ◎', real.toFixed(4), realCls)
+      +tile('Closed · win', closed+' · '+wr+'%');
     snTab(snActiveTab);
   }catch(e){ $('sn_state').textContent='Could not load sniper status.'; }
 }
-function _snRows(rows,kind){
+function _snBuys(rows,kind){
   if(!rows||!rows.length){
-    if(kind==='failed') return '<div class="disc">Nothing rejected yet. Coins are screened by RugCheck (no key needed); any that fail safety show here with the reason. If this stays empty while Checked climbs, the worker may not be redeployed with the enricher on (MEME_ENRICHER=rugcheck).</div>';
     if(kind==='live') return '<div class="disc">No live buys — live memecoin trading isn\'t switched on. This fills once a real per-user buy happens.</div>';
-    if(kind==='paper') return '<div class="disc">No paper buys yet. The screen hasn\'t cleared a coin to buy (expected until the safety enricher is wired).</div>';
-    return '<div class="disc">No activity yet.</div>';
+    return '<div class="disc">No paper buys yet. Check the “Checked / failed” tab to see why coins aren\'t passing.</div>';
   }
-  const buy=(kind==='paper'||kind==='live');
-  return '<table><tr><th>When</th><th>Token</th><th>'+(buy?'Size · mode':'Reason')+'</th></tr>'
+  return '<table><tr><th>When</th><th>Token</th><th>Size · mode</th></tr>'
     +rows.slice(0,25).map(e=>{
       const t=e.created_at?new Date(e.created_at*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—';
-      const det=buy?(Number(e.size_sol||0).toFixed(3)+' ◎ · '+esc(e.mode||'')):esc(e.reason||'');
-      return '<tr><td>'+t+'</td><td>'+esc(String(e.symbol||e.mint||'').slice(0,12))+'</td><td>'+det+'</td></tr>';
+      return '<tr><td>'+t+'</td><td>'+esc(String(e.symbol||e.mint||'').slice(0,12))+'</td><td>'+Number(e.size_sol||0).toFixed(3)+' ◎ · '+esc(e.mode||'')+'</td></tr>';
     }).join('')+'</table>';
+}
+function _snFailed(){
+  const b=(snData.reject_breakdown)||[];
+  if(!b.length) return '<div class="disc">Nothing rejected yet. Coins are screened by RugCheck (no key). If this stays empty while “Checked” climbs, the worker isn’t redeployed with MEME_ENRICHER=rugcheck.</div>';
+  const total=b.reduce((a,r)=>a+(r.count||0),0);
+  return '<div class="disc" style="margin:0 0 8px"><b>Why coins were rejected</b> · '+total+' recent, most common first</div>'
+    +'<table><tr><th>Reason</th><th>#</th></tr>'
+    +b.slice(0,14).map(r=>'<tr><td>'+esc(r.reason)+'</td><td>'+(r.count||0)+'</td></tr>').join('')
+    +'</table>';
 }
 function snTab(name){
   snActiveTab=name;
@@ -1333,9 +1349,9 @@ function snTab(name){
     var btn=$('sntab_'+t); if(btn) btn.classList.toggle('on',t===name);
   });
   const box=$('sn_events'); if(!box||!snData) return;
-  if(name==='paper') box.innerHTML=_snRows(snData.bought_paper,'paper');
-  else if(name==='live') box.innerHTML=_snRows(snData.bought_live,'live');
-  else if(name==='failed') box.innerHTML=_snRows(snData.checked,'failed');
+  if(name==='paper') box.innerHTML=_snBuys(snData.bought_paper,'paper');
+  else if(name==='live') box.innerHTML=_snBuys(snData.bought_live,'live');
+  else if(name==='failed') box.innerHTML=_snFailed();
   else {
     const ev=(snData.events||[]);
     box.innerHTML = ev.length

@@ -1372,9 +1372,18 @@ def admin_sniper(admin: dict = Depends(require_admin)) -> dict:
     # buy (user_id set) — none today, but the split is ready for when it goes live.
     bought_paper = [e for e in opens if not e.get("user_id")]
     bought_live = [e for e in opens if e.get("user_id")]
+    # Aggregate WHY coins are being rejected — the fastest way to see where the
+    # funnel dies (safety vs "not a buy signal" vs data gaps).
+    rejects = st.sniper_events(limit=500, action="reject")
+    counts: dict[str, int] = {}
+    for e in rejects:
+        key = (e.get("reason") or "").strip() or "unknown"
+        counts[key] = counts.get(key, 0) + 1
+    breakdown = sorted(({"reason": k, "count": v} for k, v in counts.items()),
+                       key=lambda x: -x["count"])
     return {"enabled": settings.sniper_enabled, "stats": stats,
             "events": st.sniper_events(limit=100),
-            "checked": st.sniper_events(limit=100, action="reject"),
+            "checked": rejects[:100], "reject_breakdown": breakdown,
             "bought_paper": bought_paper, "bought_live": bought_live}
 
 

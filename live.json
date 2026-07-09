@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-09T20:55:23.051Z",
+  "updatedAt": "2026-07-09T21:00:41.335Z",
   "matches": [
     {
       "home": "Brazil",
@@ -52,7 +52,7 @@
     {
       "home": "France",
       "away": "Morocco",
-      "status": "IN_PLAY",
+      "status": "PAUSED",
       "homeScore": 0,
       "awayScore": 0,
       "utcDate": "2026-07-09T20:00:00Z"

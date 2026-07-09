@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-07-07T22:50:30.018Z",
+  "updatedAt": "2026-07-09T22:10:30.383Z",
   "bets": [
     {
       "leg": 1,
@@ -899,6 +899,26 @@
         }
       ],
       "stake": 70.1,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "won",
+      "returnAmount": 98.14,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 46,
+      "date": "2026-07-10",
+      "match": "Spain vs Belgium",
+      "kickoff": "2026-07-10T19:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 83.72,
       "odds": 1.4,
       "oddsReal": false,
       "result": "pending",

@@ -51,6 +51,20 @@ def test_feed_parses_create_and_trades_and_smart_money():
     assert st.vol_sol == 23.0
 
 
+def test_price_comes_from_bonding_curve_on_create():
+    # A pump.fun create event carries the bonding-curve reserves — the coin must
+    # get a price immediately, WITHOUT waiting for any separate trade event.
+    feed = PumpFeed()
+    feed.handle({"txType": "create", "mint": "M", "symbol": "X",
+                 "vSolInBondingCurve": 30.0, "vTokensInBondingCurve": 1_000_000.0})
+    st = feed.mints["M"]
+    assert abs(st.last_price - 3e-5) < 1e-9      # 30 / 1,000,000
+    assert st.liquidity_sol == 30.0
+    # A later trade event with only solAmount/tokenAmount still updates price.
+    feed.handle({"txType": "buy", "mint": "M", "solAmount": 2.0, "tokenAmount": 40_000.0})
+    assert abs(st.last_price - 5e-5) < 1e-9      # 2 / 40,000
+
+
 def test_feed_survives_malformed_events_and_prunes():
     feed = PumpFeed()
     for bad in ({}, {"mint": 5}, {"txType": "buy"}, {"mint": "X", "txType": "buy",

@@ -48,11 +48,19 @@ class MintState:
     symbol: str = ""
     creator: str = ""
     first_seen: float = 0.0      # time.time() when the create event arrived
-    last_price: float = 0.0      # SOL per token, from the trade stream
+    last_price: float = 0.0      # SOL per token (from bonding-curve reserves)
+    liquidity_sol: float = 0.0   # SOL in the bonding curve (vSolInBondingCurve)
     buys: int = 0
     sells: int = 0
     vol_sol: float = 0.0
     smart_buys: int = 0          # buys from tracked (curated) wallets
+
+
+def _f(x) -> float:
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 class PumpFeed:
@@ -70,6 +78,23 @@ class PumpFeed:
         self.mints: dict[str, MintState] = {}
         self.seen_total = 0
 
+    @staticmethod
+    def _apply_price(st: MintState, event: dict) -> None:
+        """Set price from the bonding-curve reserves that pump.fun puts on EVERY
+        event (create and trades) — vSolInBondingCurve / vTokensInBondingCurve.
+        Falls back to a single trade's solAmount/tokenAmount. This is why a coin
+        gets a price the instant it's created, without needing a trade stream."""
+        vsol = _f(event.get("vSolInBondingCurve"))
+        vtok = _f(event.get("vTokensInBondingCurve"))
+        if vsol > 0 and vtok > 0:
+            st.last_price = vsol / vtok
+            st.liquidity_sol = vsol
+            return
+        sol = _f(event.get("solAmount"))
+        tok = _f(event.get("tokenAmount"))
+        if sol > 0 and tok > 0:
+            st.last_price = sol / tok
+
     def handle(self, event: dict) -> None:
         try:
             mint = event.get("mint")
@@ -83,15 +108,15 @@ class PumpFeed:
                         symbol=str(event.get("symbol") or "")[:16],
                         creator=str(event.get("traderPublicKey") or ""),
                         first_seen=time.time())
+                self._apply_price(self.mints[mint], event)
                 self._cap()
                 return
             st = self.mints.get(mint)
             if st is None or tx not in ("buy", "sell"):
                 return
-            sol = float(event.get("solAmount") or 0)
-            tokens = float(event.get("tokenAmount") or 0)
-            if sol > 0 and tokens > 0:
-                st.last_price = sol / tokens
+            self._apply_price(st, event)
+            sol = _f(event.get("solAmount"))
+            if sol > 0:
                 st.vol_sol += sol
             if tx == "buy":
                 st.buys += 1
@@ -163,6 +188,7 @@ class SniperProvider(MemeDataProvider):
                 continue                      # let a few trades accrue first
             safety, extra = self._enrich(mint, st)
             kw = dict(age_minutes=(now - st.first_seen) / 60.0,
+                      liquidity_sol=st.liquidity_sol,
                       volume_5m_sol=st.vol_sol, buys_5m=st.buys, sells_5m=st.sells,
                       smart_money_buys=st.smart_buys)
             kw.update(extra or {})

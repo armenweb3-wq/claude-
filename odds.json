@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-09T14:42:49.606Z",
-  "remaining": "430",
+  "updatedAt": "2026-07-09T19:28:32.099Z",
+  "remaining": "428",
   "sports": {
     "football": [
       {
@@ -15,32 +15,32 @@
             "book": "Matchbook"
           },
           "Morocco": {
-            "price": 7,
-            "book": "Unibet (FR)"
+            "price": 7.22,
+            "book": "1xBet"
           },
           "Draw": {
-            "price": 4,
-            "book": "Winamax (FR)"
+            "price": 4.11,
+            "book": "1xBet"
           }
         },
         "totals": {
           "3": {
             "over": {
-              "price": 2.85,
+              "price": 2.5,
               "book": "BetAnything"
             },
             "under": {
-              "price": 1.43,
+              "price": 1.56,
               "book": "BetAnything"
             }
           },
           "2.5": {
             "over": {
-              "price": 2.1,
+              "price": 1.97,
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.89,
+              "price": 2.04,
               "book": "1xBet"
             }
           }
@@ -54,16 +54,16 @@
         "commence": "2026-07-10T19:00:00Z",
         "best": {
           "Belgium": {
-            "price": 5.9,
-            "book": "Unibet (FR)"
+            "price": 6,
+            "book": "Unibet (SE)"
           },
           "Spain": {
-            "price": 1.7,
-            "book": "Matchbook"
+            "price": 1.69,
+            "book": "1xBet"
           },
           "Draw": {
-            "price": 4.1,
-            "book": "Matchbook"
+            "price": 4.15,
+            "book": "Unibet (FR)"
           }
         },
         "totals": {
@@ -89,7 +89,7 @@
           },
           "2.5": {
             "over": {
-              "price": 1.88,
+              "price": 1.87,
               "book": "Matchbook"
             },
             "under": {
@@ -115,7 +115,7 @@
             "book": "Betfair"
           },
           "Draw": {
-            "price": 3.9,
+            "price": 3.85,
             "book": "Unibet (FR)"
           }
         },
@@ -133,11 +133,11 @@
           "2.5": {
             "over": {
               "price": 1.78,
-              "book": "BetOnline.ag"
+              "book": "Nordic Bet"
             },
             "under": {
               "price": 2.15,
-              "book": "Nordic Bet"
+              "book": "BetOnline.ag"
             }
           },
           "2.75": {
@@ -161,22 +161,22 @@
         "best": {
           "Argentina": {
             "price": 1.75,
-            "book": "Nordic Bet"
+            "book": "1xBet"
           },
           "Switzerland": {
-            "price": 6.2,
-            "book": "Matchbook"
+            "price": 6,
+            "book": "Unibet (NL)"
           },
           "Draw": {
-            "price": 3.7,
+            "price": 3.75,
             "book": "Unibet (FR)"
           }
         },
         "totals": {
           "2": {
             "over": {
-              "price": 1.69,
-              "book": "BetOnline.ag"
+              "price": 1.7,
+              "book": "Coolbet"
             },
             "under": {
               "price": 2.27,

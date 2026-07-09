@@ -3,14 +3,14 @@
   "startingBankroll": 500,
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
-  "status": "busted",
-  "updatedAt": "2026-07-09T22:10:30.380Z",
+  "status": "active",
+  "updatedAt": "2026-07-09T22:15:25.876Z",
   "bets": [
     {
       "leg": 1,
-      "date": "2026-07-09",
-      "match": "France vs Morocco",
-      "kickoff": "2026-07-09T20:00:00Z",
+      "date": "2026-07-10",
+      "match": "Spain vs Belgium",
+      "kickoff": "2026-07-10T19:00:00Z",
       "selections": [
         {
           "label": "Over 2.5 total goals",
@@ -19,9 +19,9 @@
         }
       ],
       "stake": 500,
-      "odds": 2.04,
+      "odds": 1.87,
       "oddsReal": true,
-      "result": "lost",
+      "result": "pending",
       "returnAmount": 0,
       "auto": true,
       "curated": false
@@ -1022,7 +1022,34 @@
           "curated": false
         }
       ]
+    },
+    {
+      "run": 17,
+      "wins": 0,
+      "peak": 500,
+      "bets": [
+        {
+          "leg": 1,
+          "date": "2026-07-09",
+          "match": "France vs Morocco",
+          "kickoff": "2026-07-09T20:00:00Z",
+          "selections": [
+            {
+              "label": "Over 2.5 total goals",
+              "type": "over_goals",
+              "line": 2.5
+            }
+          ],
+          "stake": 500,
+          "odds": 2.04,
+          "oddsReal": true,
+          "result": "lost",
+          "returnAmount": 0,
+          "auto": true,
+          "curated": false
+        }
+      ]
     }
   ],
-  "run": 17
+  "run": 18
 }

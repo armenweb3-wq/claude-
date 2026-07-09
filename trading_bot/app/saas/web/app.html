@@ -1314,7 +1314,7 @@ async function loadSniperPanel(){
 }
 function _snRows(rows,kind){
   if(!rows||!rows.length){
-    if(kind==='failed') return '<div class="disc">Nothing rejected yet. With no safety-data (Helius) key wired, every checked coin is rejected by default — that\'s the correct safe behaviour until the enricher is connected.</div>';
+    if(kind==='failed') return '<div class="disc">Nothing rejected yet. Coins are screened by RugCheck (no key needed); any that fail safety show here with the reason. If this stays empty while Checked climbs, the worker may not be redeployed with the enricher on (MEME_ENRICHER=rugcheck).</div>';
     if(kind==='live') return '<div class="disc">No live buys — live memecoin trading isn\'t switched on. This fills once a real per-user buy happens.</div>';
     if(kind==='paper') return '<div class="disc">No paper buys yet. The screen hasn\'t cleared a coin to buy (expected until the safety enricher is wired).</div>';
     return '<div class="disc">No activity yet.</div>';

@@ -156,14 +156,17 @@ class _ManageEx:
         self.stops.append((symbol, price))
 
 
-def test_manage_once_trails_stop_without_trading():
+def test_manage_once_surfaces_fills_without_trading():
+    # Single TP (+6%) closes the full position via the reduce-only order. The
+    # manage pass must NOT trail (nothing left) and must NOT market-close on top
+    # of the fill — it just surfaces the closed fill for persistence.
     from app.saas.usertrader import UserTrader
     ex = _ManageEx()
     t = UserTrader(ex, None, risk_pct=2.0, symbols=["BTCUSDT"], dry=False)
     out = t.manage_once()
     assert out["managed"] == 1
-    assert ex.stops and ex.stops[0][1] >= 100.0   # stop moved to >= break-even
-    assert out["closed"]                           # fills surfaced for persistence
+    assert ex.stops == []        # single TP = no trailing
+    assert out["closed"]         # fills surfaced for persistence
 
 
 def test_manage_cycle_skips_in_dry_run():

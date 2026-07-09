@@ -43,8 +43,10 @@ class StrategyConfig:
     ema_fast: int = 50
     ema_slow: int = 200
     stop_pct: float = 3.0
+    # Single take-profit: close the ENTIRE position at TP1 (+6% price move).
+    # (Was a 3-rung ladder 40/30/30 at +6/+15/+50.)
     tp_ladder: list[tuple[float, float]] = field(
-        default_factory=lambda: [(6.0, 0.40), (15.0, 0.30), (50.0, 0.30)]
+        default_factory=lambda: [(6.0, 1.0)]
     )
     confidence_threshold: float = 0.70
     # Only trade when the market is actually trending (ADX gate) — a trend

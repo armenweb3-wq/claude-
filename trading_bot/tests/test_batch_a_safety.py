@@ -60,12 +60,11 @@ def test_tp_hits_match_prices_not_unrelated_closes():
 def test_fills_path_does_not_force_close_on_final_tp():
     ex = _FX()
     pos = Position("BTCUSDT", "Buy", 0.3, 100.0, 0.0, 0.0)
-    tps = [106.0, 115.0, 150.0]   # new ladder (+6 / +15 / +50%)
-    closed = [{"symbol": "BTCUSDT", "exit_price": p, "closed_at": "2026-06-19T10:00:00+00:00"}
-              for p in tps]
+    # single TP (+6%), full close — the reduce-only order closes it on the exchange
+    closed = [{"symbol": "BTCUSDT", "exit_price": 106.0, "closed_at": "2026-06-19T10:00:00+00:00"}]
     manage_breakeven(ex, "BTCUSDT", pos, closed=closed, opened_at="2026-06-19T09:00:00+00:00")
-    assert ex.closed == []                 # exchange ladder closes TP3, not us
-    assert ex.stops and ex.stops[-1] >= 106.0  # stop trailed up
+    assert ex.closed == []   # must NOT market-close on top of the reduce-only TP fill
+    assert ex.stops == []    # single TP = nothing left to trail
 
 
 def test_unrelated_close_does_not_trail_stop():

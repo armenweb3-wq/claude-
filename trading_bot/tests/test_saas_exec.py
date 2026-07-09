@@ -80,12 +80,12 @@ def test_skips_when_already_in_position():
     assert out["positions"] == 1
 
 
-def test_breakeven_moves_stop_after_tp1():
-    # long entry 100, price 110 (>+6% TP1) → stop should move to ~break-even
-    ex = FakeExchange()
+def test_no_action_below_single_tp():
+    # +4%, below the single +6% TP — nothing to do (stop still protects downside).
+    ex = _FX(104.0)
     pos = Position("BTCUSDT", "Buy", 0.5, 100.0, 0.0, 0.0)
     manage_breakeven(ex, "BTCUSDT", pos)
-    assert ex.stops and ex.stops[0][1] >= 100.0
+    assert not ex.closed and not ex.stops
 
 
 class _FX:
@@ -96,12 +96,12 @@ class _FX:
     def close_position(self, s): self.closed.append(s)
 
 
-def test_trailing_stop_tp2_moves_to_tp1():
-    ex = _FX(120.0)  # past TP2 (115), below TP3 (150)
+def test_single_tp_closes_full_position_at_target():
+    ex = _FX(106.0)  # at the single TP (+6%) — the only, final rung
     pos = Position("BTCUSDT", "Buy", 0.3, 100.0, 0.0, 0.0)
     manage_breakeven(ex, "BTCUSDT", pos)
-    assert ex.stops and abs(ex.stops[-1] - 106.0) < 1e-6  # SL -> TP1 (+6%)
-    assert not ex.closed
+    assert ex.closed == ["BTCUSDT"]  # full position closes at TP1
+    assert not ex.stops
 
 
 def test_trailing_stop_final_tp_closes_position():

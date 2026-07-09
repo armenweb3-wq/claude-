@@ -75,11 +75,12 @@ def test_tps_hit_ignores_stop_and_prior_closes():
 # ── TP-level labelling for profit alerts ────────────────────
 def test_tp_level_labels_profit_closes():
     from app.saas.runner import _tp_level
-    # ladder is +6 / +15 / +50%
+    # single TP at +6% (full close) — only TP1 exists now
     assert _tp_level({"entry_price": 100, "exit_price": 106, "side": "Buy"}) == 1
-    assert _tp_level({"entry_price": 100, "exit_price": 115, "side": "Buy"}) == 2
-    assert _tp_level({"entry_price": 100, "exit_price": 150, "side": "Buy"}) == 3
     # short: +6% move down = TP1
     assert _tp_level({"entry_price": 100, "exit_price": 94, "side": "Sell"}) == 1
+    # moves beyond the single TP are not additional ladder rungs
+    assert _tp_level({"entry_price": 100, "exit_price": 115, "side": "Buy"}) is None
+    assert _tp_level({"entry_price": 100, "exit_price": 150, "side": "Buy"}) is None
     # a stop-out (against the position) is NOT a TP
     assert _tp_level({"entry_price": 100, "exit_price": 97, "side": "Buy"}) is None

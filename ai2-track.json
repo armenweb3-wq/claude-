@@ -4,7 +4,7 @@
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
   "status": "active",
-  "updatedAt": "2026-07-09T22:15:25.876Z",
+  "updatedAt": "2026-07-10T21:05:21.692Z",
   "bets": [
     {
       "leg": 1,
@@ -20,6 +20,26 @@
       ],
       "stake": 500,
       "odds": 1.87,
+      "oddsReal": true,
+      "result": "won",
+      "returnAmount": 935,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 2,
+      "date": "2026-07-11",
+      "match": "Norway vs England",
+      "kickoff": "2026-07-11T21:00:00Z",
+      "selections": [
+        {
+          "label": "Over 2.5 total goals",
+          "type": "over_goals",
+          "line": 2.5
+        }
+      ],
+      "stake": 935,
+      "odds": 1.78,
       "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,

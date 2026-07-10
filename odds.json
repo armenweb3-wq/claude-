@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-10T02:24:57.929Z",
-  "remaining": "426",
+  "updatedAt": "2026-07-10T09:24:04.638Z",
+  "remaining": "424",
   "sports": {
     "football": [
       {
@@ -11,16 +11,16 @@
         "commence": "2026-07-10T19:00:00Z",
         "best": {
           "Belgium": {
-            "price": 6,
+            "price": 6.4,
             "book": "Unibet (FR)"
           },
           "Spain": {
-            "price": 1.69,
-            "book": "1xBet"
+            "price": 1.68,
+            "book": "Matchbook"
           },
           "Draw": {
-            "price": 4.1,
-            "book": "Unibet (FR)"
+            "price": 4.12,
+            "book": "1xBet"
           }
         },
         "totals": {
@@ -36,17 +36,17 @@
           },
           "2.75": {
             "over": {
-              "price": 2.05,
+              "price": 2.03,
               "book": "Pinnacle"
             },
             "under": {
-              "price": 1.84,
+              "price": 1.88,
               "book": "Pinnacle"
             }
           },
           "2.5": {
             "over": {
-              "price": 1.86,
+              "price": 1.85,
               "book": "Matchbook"
             },
             "under": {
@@ -64,8 +64,8 @@
         "commence": "2026-07-11T21:00:00Z",
         "best": {
           "England": {
-            "price": 1.93,
-            "book": "GTbets"
+            "price": 1.94,
+            "book": "Matchbook"
           },
           "Norway": {
             "price": 4.4,
@@ -89,8 +89,8 @@
           },
           "2.5": {
             "over": {
-              "price": 1.76,
-              "book": "GTbets"
+              "price": 1.78,
+              "book": "Nordic Bet"
             },
             "under": {
               "price": 2.15,
@@ -118,11 +118,11 @@
         "best": {
           "Argentina": {
             "price": 1.74,
-            "book": "Matchbook"
+            "book": "1xBet"
           },
           "Switzerland": {
             "price": 6.4,
-            "book": "Unibet (NL)"
+            "book": "Matchbook"
           },
           "Draw": {
             "price": 3.75,
@@ -142,7 +142,7 @@
           },
           "3": {
             "over": {
-              "price": 3.45,
+              "price": 3.4,
               "book": "BetAnything"
             },
             "under": {
@@ -162,7 +162,7 @@
           },
           "2.25": {
             "over": {
-              "price": 1.99,
+              "price": 1.98,
               "book": "Pinnacle"
             },
             "under": {

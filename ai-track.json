@@ -4,7 +4,7 @@
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
   "status": "active",
-  "updatedAt": "2026-07-10T21:05:21.690Z",
+  "updatedAt": "2026-07-11T23:55:23.739Z",
   "bets": [
     {
       "leg": 1,
@@ -61,6 +61,26 @@
       "stake": 980,
       "odds": 1.4,
       "oddsReal": false,
+      "result": "won",
+      "returnAmount": 1372,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 4,
+      "date": "2026-07-12",
+      "match": "Argentina vs Switzerland",
+      "kickoff": "2026-07-12T01:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 1372,
+      "odds": 1.41,
+      "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,
       "auto": true,

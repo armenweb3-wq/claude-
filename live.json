@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-11T23:50:33.223Z",
+  "updatedAt": "2026-07-11T23:55:23.626Z",
   "matches": [
     {
       "home": "USA",
@@ -44,7 +44,7 @@
     {
       "home": "Norway",
       "away": "England",
-      "status": "PAUSED",
+      "status": "FINISHED",
       "homeScore": 1,
       "awayScore": 2,
       "utcDate": "2026-07-11T21:00:00Z"

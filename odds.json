@@ -1,41 +1,8 @@
 {
-  "updatedAt": "2026-07-10T19:19:34.606Z",
-  "remaining": "420",
+  "updatedAt": "2026-07-11T02:03:06.347Z",
+  "remaining": "418",
   "sports": {
     "football": [
-      {
-        "id": "fca257de4583bd4bc592e8b2a8f24ad7",
-        "sportKey": "soccer_fifa_world_cup",
-        "home": "Spain",
-        "away": "Belgium",
-        "commence": "2026-07-10T19:00:00Z",
-        "best": {
-          "Belgium": {
-            "price": 6,
-            "book": "Matchbook"
-          },
-          "Spain": {
-            "price": 1.73,
-            "book": "Matchbook"
-          },
-          "Draw": {
-            "price": 3.95,
-            "book": "Betfair"
-          }
-        },
-        "totals": {
-          "2.5": {
-            "over": {
-              "price": 2.06,
-              "book": "Unibet (SE)"
-            },
-            "under": {
-              "price": 1.97,
-              "book": "Matchbook"
-            }
-          }
-        }
-      },
       {
         "id": "e66e4478b739fa0657a7a11235e1fcee",
         "sportKey": "soccer_fifa_world_cup",
@@ -44,8 +11,8 @@
         "commence": "2026-07-11T21:00:00Z",
         "best": {
           "England": {
-            "price": 1.96,
-            "book": "Coolbet"
+            "price": 1.95,
+            "book": "1xBet"
           },
           "Norway": {
             "price": 4.3,
@@ -67,14 +34,24 @@
               "book": "BetAnything"
             }
           },
-          "2.5": {
+          "3": {
             "over": {
-              "price": 1.78,
-              "book": "Nordic Bet"
+              "price": 2.17,
+              "book": "Coolbet"
             },
             "under": {
-              "price": 2.16,
+              "price": 1.74,
               "book": "Coolbet"
+            }
+          },
+          "2.5": {
+            "over": {
+              "price": 1.76,
+              "book": "GTbets"
+            },
+            "under": {
+              "price": 2.17,
+              "book": "Unibet (SE)"
             }
           },
           "2.75": {
@@ -112,8 +89,8 @@
         "totals": {
           "2": {
             "over": {
-              "price": 1.69,
-              "book": "BetOnline.ag"
+              "price": 1.71,
+              "book": "Coolbet"
             },
             "under": {
               "price": 2.27,
@@ -132,22 +109,55 @@
           },
           "2.5": {
             "over": {
-              "price": 2.25,
+              "price": 2.28,
               "book": "Unibet (SE)"
             },
             "under": {
-              "price": 1.71,
-              "book": "Coolbet"
+              "price": 1.7,
+              "book": "GTbets"
             }
           },
           "2.25": {
             "over": {
-              "price": 1.98,
+              "price": 1.99,
               "book": "Pinnacle"
             },
             "under": {
-              "price": 1.91,
+              "price": 1.9,
               "book": "Pinnacle"
+            }
+          }
+        }
+      },
+      {
+        "id": "f9aa13a662d1658e5a02cfc06d6a2d73",
+        "sportKey": "soccer_fifa_world_cup",
+        "home": "France",
+        "away": "Spain",
+        "commence": "2026-07-14T19:00:00Z",
+        "best": {
+          "France": {
+            "price": 2.46,
+            "book": "1xBet"
+          },
+          "Spain": {
+            "price": 3.6,
+            "book": "Unibet (NL)"
+          },
+          "Draw": {
+            "price": 3.45,
+            "book": "Unibet (NL)"
+          }
+        },
+        "totals": {
+          "2.5": {
+            "over": {
+              "price": 2.04,
+              "book": "Matchbook"
+            },
+            "under": {
+              "price": 1.94,
+              "book": "Matchbook"
             }
           }
         }

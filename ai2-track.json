@@ -4,7 +4,7 @@
   "targetLegs": 10,
   "targetMultiplierPerLeg": 2,
   "status": "active",
-  "updatedAt": "2026-07-11T23:55:23.741Z",
+  "updatedAt": "2026-07-12T03:55:21.330Z",
   "bets": [
     {
       "leg": 1,
@@ -60,6 +60,26 @@
       ],
       "stake": 1664.3,
       "odds": 2.35,
+      "oddsReal": true,
+      "result": "won",
+      "returnAmount": 3911.11,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 4,
+      "date": "2026-07-14",
+      "match": "France vs Spain",
+      "kickoff": "2026-07-14T19:00:00Z",
+      "selections": [
+        {
+          "label": "Over 2.5 total goals",
+          "type": "over_goals",
+          "line": 2.5
+        }
+      ],
+      "stake": 3911.11,
+      "odds": 1.99,
       "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,

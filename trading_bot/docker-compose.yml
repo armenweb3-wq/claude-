@@ -1,0 +1,30 @@
+# Local PostgreSQL for crypto-trading-bot.
+#   docker compose up -d        # start the DB
+#   docker compose down         # stop (data persists in the named volume)
+#   docker compose down -v      # stop and wipe data
+#
+# Matches the default DATABASE_URL in .env.example:
+#   postgresql://postgres:postgres@localhost:5432/trading_bot
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: trading_bot_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: trading_bot
+    ports:
+      - "5432:5432"
+    volumes:
+      - trading_bot_pgdata:/var/lib/postgresql/data
+      # Schema is applied automatically on first init of an empty volume.
+      - ./app/storage/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d trading_bot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  trading_bot_pgdata:

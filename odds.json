@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-13T02:08:31.323Z",
-  "remaining": "402",
+  "updatedAt": "2026-07-13T08:56:34.468Z",
+  "remaining": "400",
   "sports": {
     "football": [
       {
@@ -26,11 +26,11 @@
         "totals": {
           "2": {
             "over": {
-              "price": 1.41,
+              "price": 1.38,
               "book": "BetAnything"
             },
             "under": {
-              "price": 2.95,
+              "price": 3,
               "book": "BetAnything"
             }
           },
@@ -54,46 +54,46 @@
         "commence": "2026-07-15T19:00:00Z",
         "best": {
           "Argentina": {
-            "price": 3.15,
-            "book": "Unibet (SE)"
+            "price": 3.2,
+            "book": "Betfair"
           },
           "England": {
-            "price": 2.76,
+            "price": 2.74,
             "book": "Betfair"
           },
           "Draw": {
-            "price": 3.05,
+            "price": 3.1,
             "book": "Unibet (FR)"
           }
         },
         "totals": {
           "2": {
             "over": {
-              "price": 1.76,
-              "book": "BetOnline.ag"
+              "price": 1.72,
+              "book": "Coolbet"
             },
             "under": {
-              "price": 2.17,
-              "book": "Coolbet"
+              "price": 2.23,
+              "book": "BetOnline.ag"
             }
           },
           "2.25": {
             "over": {
-              "price": 2.08,
+              "price": 2.02,
               "book": "Pinnacle"
             },
             "under": {
-              "price": 1.83,
+              "price": 1.88,
               "book": "Pinnacle"
             }
           },
           "2.5": {
             "over": {
-              "price": 2.4,
+              "price": 2.44,
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.69,
+              "price": 1.68,
               "book": "Matchbook"
             }
           },

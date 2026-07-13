@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-13T08:56:34.468Z",
-  "remaining": "400",
+  "updatedAt": "2026-07-13T14:17:33.901Z",
+  "remaining": "398",
   "sports": {
     "football": [
       {
@@ -16,11 +16,11 @@
           },
           "Spain": {
             "price": 3.4,
-            "book": "Unibet (FR)"
+            "book": "Unibet (NL)"
           },
           "Draw": {
             "price": 3.35,
-            "book": "Betclic (FR)"
+            "book": "Matchbook"
           }
         },
         "totals": {
@@ -36,11 +36,11 @@
           },
           "2.5": {
             "over": {
-              "price": 1.95,
-              "book": "William Hill"
+              "price": 1.96,
+              "book": "Matchbook"
             },
             "under": {
-              "price": 2.04,
+              "price": 2.02,
               "book": "Matchbook"
             }
           }
@@ -58,12 +58,12 @@
             "book": "Betfair"
           },
           "England": {
-            "price": 2.74,
-            "book": "Betfair"
+            "price": 2.76,
+            "book": "Matchbook"
           },
           "Draw": {
-            "price": 3.1,
-            "book": "Unibet (FR)"
+            "price": 3.08,
+            "book": "1xBet"
           }
         },
         "totals": {
@@ -79,21 +79,21 @@
           },
           "2.25": {
             "over": {
-              "price": 2.02,
+              "price": 2.06,
               "book": "Pinnacle"
             },
             "under": {
-              "price": 1.88,
+              "price": 1.84,
               "book": "Pinnacle"
             }
           },
           "2.5": {
             "over": {
-              "price": 2.44,
+              "price": 2.42,
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.68,
+              "price": 1.69,
               "book": "Matchbook"
             }
           },

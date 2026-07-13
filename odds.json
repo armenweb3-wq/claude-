@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-13T14:17:33.901Z",
-  "remaining": "398",
+  "updatedAt": "2026-07-13T19:16:45.274Z",
+  "remaining": "396",
   "sports": {
     "football": [
       {
@@ -11,16 +11,16 @@
         "commence": "2026-07-14T19:00:00Z",
         "best": {
           "France": {
-            "price": 2.42,
+            "price": 2.5,
             "book": "Matchbook"
           },
           "Spain": {
-            "price": 3.4,
-            "book": "Unibet (NL)"
+            "price": 3.38,
+            "book": "MyBookie.ag"
           },
           "Draw": {
             "price": 3.35,
-            "book": "Matchbook"
+            "book": "Unibet (FR)"
           }
         },
         "totals": {
@@ -36,11 +36,11 @@
           },
           "2.5": {
             "over": {
-              "price": 1.96,
+              "price": 1.98,
               "book": "Matchbook"
             },
             "under": {
-              "price": 2.02,
+              "price": 2,
               "book": "Matchbook"
             }
           }
@@ -54,12 +54,12 @@
         "commence": "2026-07-15T19:00:00Z",
         "best": {
           "Argentina": {
-            "price": 3.2,
-            "book": "Betfair"
+            "price": 3.15,
+            "book": "BetOnline.ag"
           },
           "England": {
-            "price": 2.76,
-            "book": "Matchbook"
+            "price": 2.78,
+            "book": "Betfair"
           },
           "Draw": {
             "price": 3.08,
@@ -89,11 +89,11 @@
           },
           "2.5": {
             "over": {
-              "price": 2.42,
+              "price": 2.46,
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.69,
+              "price": 1.67,
               "book": "Matchbook"
             }
           },

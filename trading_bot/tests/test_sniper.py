@@ -111,6 +111,37 @@ def test_enriched_token_opens_paper_position_and_derisks():
     assert svc2.positions["MintA"].recovered is True
 
 
+def test_relaxed_holder_gate_lets_new_mint_buy():
+    # A fresh mint concentrated at 60% top-holder is rejected by the default 20%
+    # screen but ALLOWED once the shadow config relaxes the holder gate (rug
+    # vectors still pass). Confirms the config threshold reaches the screen.
+    import app.config as _cfg
+    from app.saas.memestrategy import SafetyScreen, TokenMetrics
+    prev = settings.meme_max_top_holder_pct
+    targets = [settings] if settings is _cfg.settings else [settings, _cfg.settings]
+    for t in targets:
+        object.__setattr__(t, "meme_max_top_holder_pct", 90.0)
+    try:
+        feed = _feed_with_token()
+
+        def concentrated(mint, state):
+            return (TokenSafety(can_sell=True, mint_renounced=True, freeze_revoked=True,
+                                lp_locked_or_burned=True, top_holder_pct=60.0,
+                                dev_holder_pct=2.0, rug_score=85),
+                    {"liquidity_sol": 20.0})
+
+        st = Store(path=":memory:")
+        svc = SniperService(st, SniperProvider(feed, enricher=concentrated, min_age_s=30))
+        # sanity: the strict default screen WOULD reject 60%
+        assert SafetyScreen().check(concentrated("M", None)[0],
+                                    TokenMetrics(liquidity_sol=20.0))[0] is False
+        svc.cycle()
+        assert "MintA" in svc.positions   # relaxed screen bought it
+    finally:
+        for t in targets:
+            object.__setattr__(t, "meme_max_top_holder_pct", prev)
+
+
 def test_rejected_coins_are_logged_with_reason():
     # Default (no enricher) -> every checked coin is rejected and recorded so the
     # operator can see WHICH coins failed and WHY.

@@ -33,7 +33,7 @@ from dataclasses import dataclass, field
 from ..config import settings
 from .memeengine import MemeEngine
 from .memeproviders import Candidate, MemeDataProvider
-from .memestrategy import Position, TokenMetrics, TokenSafety
+from .memestrategy import Position, SafetyScreen, TokenMetrics, TokenSafety
 
 log = logging.getLogger(__name__)
 
@@ -214,7 +214,10 @@ class SniperService:
             base_size_sol=settings.meme_base_size_sol,
             max_size_sol=settings.meme_max_sol_per_trade,
             max_open=settings.meme_max_open, dry=True,
-            min_score=settings.meme_min_score)
+            min_score=settings.meme_min_score,
+            # New pump.fun mints are inherently concentrated — relax the holder
+            # gate (config) while keeping the rug-vector gates strict.
+            screen=SafetyScreen(max_top_holder_pct=settings.meme_max_top_holder_pct))
         assert self.engine.dry, "sniper runs SHADOW MODE only — engine must be dry"
         # Observe every screening decision so the operator can see which coins
         # were checked and why each failed/passed. Buys are already logged as

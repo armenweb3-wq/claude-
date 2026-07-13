@@ -238,6 +238,14 @@ class Settings:
     # momentum (the shadow default) it tops out ~44, so a lower bar is needed to
     # ever paper-buy. Raise it (or add SNIPER_WALLETS) once richer signals feed in.
     meme_min_score: float = field(default_factory=lambda: _get_float("MEME_MIN_SCORE", 30.0))
+    # Max top-holder % the safety screen allows. The generic default (20%) is for
+    # ESTABLISHED tokens; a seconds-old pump.fun mint is inherently concentrated
+    # (bonding curve + first buyers hold ~everything), so 20% rejects nearly all
+    # new coins. 90% (shadow default) still blocks single-wallet 99–100% grabs
+    # while letting early-distribution coins through the OTHER gates (mint/freeze/
+    # LP/can-sell stay strict). Tighten as the strategy proves out.
+    meme_max_top_holder_pct: float = field(
+        default_factory=lambda: _get_float("MEME_MAX_TOP_HOLDER_PCT", 90.0))
 
     @property
     def auth_enabled(self) -> bool:

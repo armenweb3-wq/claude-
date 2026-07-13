@@ -197,6 +197,8 @@ class Store:
             "ALTER TABLE settings ADD COLUMN copy_enabled INTEGER NOT NULL DEFAULT 0",
             # Sniper opt-in (future live phase; shadow mode is global).
             "ALTER TABLE settings ADD COLUMN sniper_enabled INTEGER NOT NULL DEFAULT 0",
+            # Which shadow strategy a paper row belongs to ('fresh' | 'migration').
+            "ALTER TABLE sniper_paper ADD COLUMN strategy TEXT",
         ):
             try:
                 if self._pg:
@@ -735,19 +737,29 @@ class Store:
     def add_sniper_event(self, mint: str, action: str, *, symbol: str = "",
                          mode: str = "", size_sol: float = 0.0, price_sol: float = 0.0,
                          fraction: float = 0.0, score: float = 0.0, reason: str = "",
-                         user_id: int | None = None) -> None:
+                         user_id: int | None = None, strategy: str = "fresh") -> None:
         self._q(
             "INSERT INTO sniper_paper (user_id, mint, symbol, action, mode, size_sol,"
-            " price_sol, fraction, score, reason, created_at)"
-            " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            " price_sol, fraction, score, reason, strategy, created_at)"
+            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
             (user_id, mint, symbol, action, mode, float(size_sol), float(price_sol),
-             float(fraction), float(score), reason, time.time()))
+             float(fraction), float(score), reason, strategy, time.time()))
 
-    def sniper_events(self, limit: int = 100, action: str | None = None) -> list[dict]:
+    def sniper_events(self, limit: int = 100, action: str | None = None,
+                      strategy: str | None = None) -> list[dict]:
+        # NULL strategy (rows written before the column existed) counts as 'fresh'.
+        where, args = [], []
         if action:
-            return self._q("SELECT * FROM sniper_paper WHERE action=?"
-                           " ORDER BY id DESC LIMIT ?", (action, limit))
-        return self._q("SELECT * FROM sniper_paper ORDER BY id DESC LIMIT ?", (limit,))
+            where.append("action=?"); args.append(action)
+        if strategy:
+            if strategy == "fresh":
+                where.append("(strategy=? OR strategy IS NULL)"); args.append("fresh")
+            else:
+                where.append("strategy=?"); args.append(strategy)
+        clause = (" WHERE " + " AND ".join(where)) if where else ""
+        args.append(limit)
+        return self._q(f"SELECT * FROM sniper_paper{clause} ORDER BY id DESC LIMIT ?",
+                       tuple(args))
 
     def prune_sniper_rejects(self, keep: int = 500) -> None:
         """Cap the 'reject' rows to the newest ``keep`` — opens/exits are never

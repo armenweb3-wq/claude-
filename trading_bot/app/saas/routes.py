@@ -1360,31 +1360,36 @@ def admin_indices_probe(request: Request, symbol: str = "US500",
 @router.get("/api/admin/sniper")
 def admin_sniper(admin: dict = Depends(require_admin)) -> dict:
     """Sniper shadow-test dashboard: worker heartbeat/stats + the latest paper
-    decisions from the sniper_paper ledger."""
+    decisions, split per strategy ('fresh' new-mint sniper vs 'migration')."""
     import json as _json
     st = store()
-    try:
-        stats = _json.loads(st.get_meta("sniper_stats") or "{}")
-    except Exception:
-        stats = {}
-    opens = st.sniper_events(limit=200, action="open")
-    # Paper = the global shadow portfolio (no user_id). Live = a real per-user
-    # buy (user_id set) — none today, but the split is ready for when it goes live.
-    bought_paper = [e for e in opens if not e.get("user_id")]
-    bought_live = [e for e in opens if e.get("user_id")]
-    # Aggregate WHY coins are being rejected — the fastest way to see where the
-    # funnel dies (safety vs "not a buy signal" vs data gaps).
-    rejects = st.sniper_events(limit=500, action="reject")
-    counts: dict[str, int] = {}
-    for e in rejects:
-        key = (e.get("reason") or "").strip() or "unknown"
-        counts[key] = counts.get(key, 0) + 1
-    breakdown = sorted(({"reason": k, "count": v} for k, v in counts.items()),
-                       key=lambda x: -x["count"])
-    return {"enabled": settings.sniper_enabled, "stats": stats,
-            "events": st.sniper_events(limit=100),
-            "checked": rejects[:100], "reject_breakdown": breakdown,
-            "bought_paper": bought_paper, "bought_live": bought_live}
+
+    def _strategy_block(strategy: str, stats_key: str) -> dict:
+        try:
+            stats = _json.loads(st.get_meta(stats_key) or "{}")
+        except Exception:
+            stats = {}
+        opens = st.sniper_events(limit=200, action="open", strategy=strategy)
+        rejects = st.sniper_events(limit=500, action="reject", strategy=strategy)
+        counts: dict[str, int] = {}
+        for e in rejects:
+            k = (e.get("reason") or "").strip() or "unknown"
+            counts[k] = counts.get(k, 0) + 1
+        breakdown = sorted(({"reason": k, "count": v} for k, v in counts.items()),
+                           key=lambda x: -x["count"])
+        return {"stats": stats,
+                "events": st.sniper_events(limit=100, strategy=strategy),
+                "checked": rejects[:100], "reject_breakdown": breakdown,
+                "bought_paper": [e for e in opens if not e.get("user_id")],
+                "bought_live": [e for e in opens if e.get("user_id")]}
+
+    fresh = _strategy_block("fresh", "sniper_stats")
+    out = {"enabled": settings.sniper_enabled,
+           "migration_enabled": settings.sniper_migration_enabled,
+           "fresh": fresh, "migration": _strategy_block("migration", "sniper_stats:migration")}
+    # Back-compat: keep the top-level 'fresh' fields flat so older clients work.
+    out.update(fresh)
+    return out
 
 
 @router.get("/api/admin/kill")

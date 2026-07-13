@@ -142,6 +142,37 @@ def test_relaxed_holder_gate_lets_new_mint_buy():
             object.__setattr__(t, "meme_max_top_holder_pct", prev)
 
 
+def test_migration_event_flags_mint_and_prices_it():
+    feed = PumpFeed()
+    feed.handle({"txType": "migrate", "mint": "M", "symbol": "G",
+                 "vSolInBondingCurve": 85.0, "vTokensInBondingCurve": 1_000_000.0})
+    st = feed.mints["M"]
+    assert st.migrated is True and abs(st.last_price - 85e-6) < 1e-9
+    # a 'pool: raydium' marker (no txType) is also treated as a migration
+    feed.handle({"mint": "N", "pool": "raydium",
+                 "vSolInBondingCurve": 90.0, "vTokensInBondingCurve": 1_000_000.0})
+    assert feed.mints["N"].migrated is True
+
+
+def test_strategies_keep_separate_ledgers():
+    # fresh and migration write to separate scoreboards / event tags.
+    st = Store(path=":memory:")
+    feed_a = _feed_with_token(mint="FreshA")
+    feed_b = _feed_with_token(mint="MigB")
+    fresh = SniperService(st, SniperProvider(feed_a, enricher=good_enricher, min_age_s=30),
+                          strategy="fresh")
+    mig = SniperService(st, SniperProvider(feed_b, enricher=good_enricher, min_age_s=30),
+                        strategy="migration")
+    fresh.cycle()
+    mig.cycle()
+    fresh_opens = st.sniper_events(action="open", strategy="fresh")
+    mig_opens = st.sniper_events(action="open", strategy="migration")
+    assert [e["mint"] for e in fresh_opens] == ["FreshA"]
+    assert [e["mint"] for e in mig_opens] == ["MigB"]
+    # separate persisted state keys
+    assert fresh._pnl_key == "sniper_pnl" and mig._pnl_key == "sniper_pnl:migration"
+
+
 def test_rejected_coins_are_logged_with_reason():
     # Default (no enricher) -> every checked coin is rejected and recorded so the
     # operator can see WHICH coins failed and WHY.

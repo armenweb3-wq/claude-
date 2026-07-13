@@ -54,6 +54,7 @@ class MintState:
     sells: int = 0
     vol_sol: float = 0.0
     smart_buys: int = 0          # buys from tracked (curated) wallets
+    migrated: bool = False       # graduated from the bonding curve to a DEX
 
 
 def _f(x) -> float:
@@ -101,13 +102,20 @@ class PumpFeed:
             if not mint or not isinstance(mint, str):
                 return
             tx = (event.get("txType") or "").lower()
-            if tx == "create":
+            # A migration/graduation event registers (or flags) the mint. Used by
+            # the migration feed; PumpPortal's exact shape is confirmed on deploy,
+            # so we accept several markers defensively.
+            is_migration = ("migrat" in tx) or bool(event.get("migration")) \
+                or (str(event.get("pool") or "").lower() in ("raydium", "pump-amm", "pumpswap"))
+            if tx == "create" or is_migration:
                 if mint not in self.mints:
                     self.seen_total += 1
                     self.mints[mint] = MintState(
                         symbol=str(event.get("symbol") or "")[:16],
                         creator=str(event.get("traderPublicKey") or ""),
                         first_seen=time.time())
+                if is_migration:
+                    self.mints[mint].migrated = True
                 self._apply_price(self.mints[mint], event)
                 self._cap()
                 return
@@ -206,18 +214,26 @@ class SniperService:
     """One shadow-portfolio cycle: discover -> screen -> paper-open -> manage
     exits, with every decision persisted and positions restart-safe."""
 
-    def __init__(self, store, provider: SniperProvider, engine: MemeEngine | None = None) -> None:
+    def __init__(self, store, provider: SniperProvider, engine: MemeEngine | None = None,
+                 strategy: str = "fresh", screen: SafetyScreen | None = None) -> None:
         self.store = store
         self.provider = provider
+        self.strategy = strategy
+        # Namespace persisted state per strategy so 'fresh' and 'migration' keep
+        # SEPARATE portfolios and scoreboards (fresh keeps the original keys).
+        sfx = "" if strategy == "fresh" else f":{strategy}"
+        self._pos_key = _POSITIONS_KEY + sfx
+        self._stats_key = _STATS_KEY + sfx
+        self._pnl_key = _PNL_KEY + sfx
+        # Default screen: relaxed holder gate for fresh mints (inherently
+        # concentrated). A caller passes a STRICT screen for migration.
+        screen = screen or SafetyScreen(max_top_holder_pct=settings.meme_max_top_holder_pct)
         self.engine = engine or MemeEngine(
             provider, None,  # no executor — dry mode never places orders
             base_size_sol=settings.meme_base_size_sol,
             max_size_sol=settings.meme_max_sol_per_trade,
             max_open=settings.meme_max_open, dry=True,
-            min_score=settings.meme_min_score,
-            # New pump.fun mints are inherently concentrated — relax the holder
-            # gate (config) while keeping the rug-vector gates strict.
-            screen=SafetyScreen(max_top_holder_pct=settings.meme_max_top_holder_pct))
+            min_score=settings.meme_min_score, screen=screen)
         assert self.engine.dry, "sniper runs SHADOW MODE only — engine must be dry"
         # Observe every screening decision so the operator can see which coins
         # were checked and why each failed/passed. Buys are already logged as
@@ -232,7 +248,7 @@ class SniperService:
     # ── paper scoreboard (realized, survives restarts) ──────
     def _load_pnl(self) -> dict:
         try:
-            d = json.loads(self.store.get_meta(_PNL_KEY) or "{}")
+            d = json.loads(self.store.get_meta(self._pnl_key) or "{}")
         except Exception:
             d = {}
         return {"realized_sol": float(d.get("realized_sol", 0.0)),
@@ -247,7 +263,7 @@ class SniperService:
         elif realized_sol < 0:
             self.pnl["losses"] += 1
         try:
-            self.store.set_meta(_PNL_KEY, json.dumps(self.pnl))
+            self.store.set_meta(self._pnl_key, json.dumps(self.pnl))
         except Exception:  # scoreboard is best-effort
             pass
 
@@ -260,14 +276,15 @@ class SniperService:
             try:
                 self.store.add_sniper_event(
                     mint, "reject", symbol=getattr(candidate, "symbol", ""),
-                    price_sol=getattr(candidate, "price_sol", 0.0), reason=reason)
+                    price_sol=getattr(candidate, "price_sol", 0.0), reason=reason,
+                    strategy=self.strategy)
             except Exception:             # logging must never break a cycle
                 log.debug("reject log failed", exc_info=True)
 
     # ── persistence (survives worker restarts) ──────────────
     def _load_positions(self) -> None:
         try:
-            raw = json.loads(self.store.get_meta(_POSITIONS_KEY) or "{}")
+            raw = json.loads(self.store.get_meta(self._pos_key) or "{}")
         except Exception:
             raw = {}
         for mint, d in raw.items():
@@ -284,7 +301,7 @@ class SniperService:
             d = dataclasses.asdict(pos)
             d["opened_at"] = self.opened_at.get(mint, time.time())
             raw[mint] = d
-        self.store.set_meta(_POSITIONS_KEY, json.dumps(raw))
+        self.store.set_meta(self._pos_key, json.dumps(raw))
 
     # ── one cycle ───────────────────────────────────────────
     def cycle(self) -> dict:
@@ -300,14 +317,14 @@ class SniperService:
                 o["mint"], "open", symbol=o.get("symbol", ""), mode=o.get("mode", ""),
                 size_sol=o.get("size_sol", 0.0),
                 price_sol=self.positions[o["mint"]].entry_price,
-                score=o.get("score", 0.0), reason="paper open")
+                score=o.get("score", 0.0), reason="paper open", strategy=self.strategy)
 
         actions = self.engine.manage_open(self.positions)
         for a in actions:
             self.store.add_sniper_event(
                 a["mint"], a["action"], fraction=a.get("fraction", 0.0),
                 price_sol=self.provider.price(a["mint"]), reason=a.get("reason", ""),
-                size_sol=a.get("realized_sol", 0.0))
+                size_sol=a.get("realized_sol", 0.0), strategy=self.strategy)
             if a["action"] == "sell_all":
                 self._record_close(a.get("realized_sol", 0.0))
                 self.opened_at.pop(a["mint"], None)
@@ -320,7 +337,8 @@ class SniperService:
                 realized = pos.proceeds_sol - pos.init_cost_sol
                 self.store.add_sniper_event(
                     mint, "sell_all", price_sol=self.provider.price(mint),
-                    size_sol=realized, reason="stale — no price feed for 24h")
+                    size_sol=realized, reason="stale — no price feed for 24h",
+                    strategy=self.strategy)
                 self._record_close(realized)
                 self.positions.pop(mint, None)
                 self.opened_at.pop(mint, None)
@@ -342,8 +360,9 @@ class SniperService:
                  "open_positions": len(self.positions),
                  "opened_now": len(opened), "exits_now": len(actions),
                  "pnl": self.pnl}
+        stats["strategy"] = self.strategy
         try:
-            self.store.set_meta(_STATS_KEY, json.dumps(stats))
+            self.store.set_meta(self._stats_key, json.dumps(stats))
         except Exception:  # stats are best-effort
             pass
         return stats

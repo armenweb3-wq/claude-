@@ -246,6 +246,11 @@ class Settings:
     # LP/can-sell stay strict). Tighten as the strategy proves out.
     meme_max_top_holder_pct: float = field(
         default_factory=lambda: _get_float("MEME_MAX_TOP_HOLDER_PCT", 90.0))
+    # Run the parallel "migration" shadow strategy (buy coins as they graduate to
+    # a DEX) alongside the fresh-mint one, with its OWN ledger/scoreboard and a
+    # STRICT holder screen (migrated tokens are distributed, so we can demand it).
+    sniper_migration_enabled: bool = field(
+        default_factory=lambda: _get_bool("SNIPER_MIGRATION_ENABLED", True))
 
     @property
     def auth_enabled(self) -> bool:

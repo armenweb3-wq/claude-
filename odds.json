@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-13T19:16:45.274Z",
-  "remaining": "396",
+  "updatedAt": "2026-07-14T01:54:18.471Z",
+  "remaining": "394",
   "sports": {
     "football": [
       {
@@ -11,16 +11,16 @@
         "commence": "2026-07-14T19:00:00Z",
         "best": {
           "France": {
-            "price": 2.5,
+            "price": 2.52,
             "book": "Matchbook"
           },
           "Spain": {
-            "price": 3.38,
-            "book": "MyBookie.ag"
-          },
-          "Draw": {
             "price": 3.35,
             "book": "Unibet (FR)"
+          },
+          "Draw": {
+            "price": 3.3,
+            "book": "William Hill"
           }
         },
         "totals": {
@@ -54,11 +54,11 @@
         "commence": "2026-07-15T19:00:00Z",
         "best": {
           "Argentina": {
-            "price": 3.15,
-            "book": "BetOnline.ag"
+            "price": 3.2,
+            "book": "Betfair"
           },
           "England": {
-            "price": 2.78,
+            "price": 2.76,
             "book": "Betfair"
           },
           "Draw": {
@@ -89,17 +89,17 @@
           },
           "2.5": {
             "over": {
-              "price": 2.46,
+              "price": 2.42,
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.67,
+              "price": 1.68,
               "book": "Matchbook"
             }
           },
           "1.5": {
             "over": {
-              "price": 1.4,
+              "price": 1.38,
               "book": "BetAnything"
             },
             "under": {

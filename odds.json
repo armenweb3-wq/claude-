@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-14T13:19:13.326Z",
-  "remaining": "390",
+  "updatedAt": "2026-07-14T19:09:09.004Z",
+  "remaining": "388",
   "sports": {
     "football": [
       {
@@ -11,37 +11,37 @@
         "commence": "2026-07-14T19:00:00Z",
         "best": {
           "France": {
-            "price": 2.5,
+            "price": 2.76,
             "book": "Matchbook"
           },
           "Spain": {
-            "price": 3.4,
-            "book": "Matchbook"
+            "price": 3.35,
+            "book": "1xBet"
           },
           "Draw": {
-            "price": 3.3,
-            "book": "William Hill"
+            "price": 3.2,
+            "book": "888sport"
           }
         },
         "totals": {
           "2": {
             "over": {
-              "price": 1.43,
+              "price": 1.38,
               "book": "BetAnything"
             },
             "under": {
-              "price": 2.8,
+              "price": 3,
               "book": "BetAnything"
             }
           },
           "2.5": {
             "over": {
-              "price": 2.02,
-              "book": "Matchbook"
+              "price": 2.05,
+              "book": "Unibet (NL)"
             },
             "under": {
-              "price": 1.96,
-              "book": "Matchbook"
+              "price": 2.03,
+              "book": "1xBet"
             }
           }
         }
@@ -54,26 +54,26 @@
         "commence": "2026-07-15T19:00:00Z",
         "best": {
           "Argentina": {
-            "price": 3.2,
+            "price": 3.15,
             "book": "Betfair"
           },
           "England": {
-            "price": 2.8,
-            "book": "Matchbook"
+            "price": 2.86,
+            "book": "Betfair"
           },
           "Draw": {
-            "price": 3.06,
-            "book": "Marathon Bet"
+            "price": 3.04,
+            "book": "GTbets"
           }
         },
         "totals": {
           "2": {
             "over": {
-              "price": 1.72,
+              "price": 1.74,
               "book": "BetOnline.ag"
             },
             "under": {
-              "price": 2.22,
+              "price": 2.2,
               "book": "BetOnline.ag"
             }
           },
@@ -89,11 +89,11 @@
           },
           "2.5": {
             "over": {
-              "price": 2.46,
+              "price": 2.5,
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.67,
+              "price": 1.65,
               "book": "Matchbook"
             }
           },

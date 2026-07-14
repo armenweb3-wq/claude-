@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-07-12T03:55:21.332Z",
+  "updatedAt": "2026-07-14T21:05:24.606Z",
   "bets": [
     {
       "leg": 1,
@@ -981,6 +981,26 @@
       "stake": 94.27,
       "odds": 1.4,
       "oddsReal": false,
+      "result": "won",
+      "returnAmount": 131.98,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 50,
+      "date": "2026-07-15",
+      "match": "England vs Argentina",
+      "kickoff": "2026-07-15T19:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 98.04,
+      "odds": 1.38,
+      "oddsReal": true,
       "result": "pending",
       "returnAmount": 0,
       "auto": true,

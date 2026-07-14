@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-14T07:52:17.134Z",
-  "remaining": "392",
+  "updatedAt": "2026-07-14T13:19:13.326Z",
+  "remaining": "390",
   "sports": {
     "football": [
       {
@@ -11,12 +11,12 @@
         "commence": "2026-07-14T19:00:00Z",
         "best": {
           "France": {
-            "price": 2.52,
-            "book": "Betfair"
+            "price": 2.5,
+            "book": "Matchbook"
           },
           "Spain": {
-            "price": 3.3,
-            "book": "Betclic (FR)"
+            "price": 3.4,
+            "book": "Matchbook"
           },
           "Draw": {
             "price": 3.3,
@@ -26,21 +26,21 @@
         "totals": {
           "2": {
             "over": {
-              "price": 1.38,
+              "price": 1.43,
               "book": "BetAnything"
             },
             "under": {
-              "price": 3,
+              "price": 2.8,
               "book": "BetAnything"
             }
           },
           "2.5": {
             "over": {
-              "price": 2,
+              "price": 2.02,
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.98,
+              "price": 1.96,
               "book": "Matchbook"
             }
           }
@@ -55,15 +55,15 @@
         "best": {
           "Argentina": {
             "price": 3.2,
-            "book": "Unibet (SE)"
-          },
-          "England": {
-            "price": 2.78,
             "book": "Betfair"
           },
+          "England": {
+            "price": 2.8,
+            "book": "Matchbook"
+          },
           "Draw": {
-            "price": 3.08,
-            "book": "1xBet"
+            "price": 3.06,
+            "book": "Marathon Bet"
           }
         },
         "totals": {

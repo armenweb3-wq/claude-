@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-14T01:54:18.471Z",
-  "remaining": "394",
+  "updatedAt": "2026-07-14T07:52:17.134Z",
+  "remaining": "392",
   "sports": {
     "football": [
       {
@@ -12,11 +12,11 @@
         "best": {
           "France": {
             "price": 2.52,
-            "book": "Matchbook"
+            "book": "Betfair"
           },
           "Spain": {
-            "price": 3.35,
-            "book": "Unibet (FR)"
+            "price": 3.3,
+            "book": "Betclic (FR)"
           },
           "Draw": {
             "price": 3.3,
@@ -36,11 +36,11 @@
           },
           "2.5": {
             "over": {
-              "price": 1.98,
+              "price": 2,
               "book": "Matchbook"
             },
             "under": {
-              "price": 2,
+              "price": 1.98,
               "book": "Matchbook"
             }
           }
@@ -55,10 +55,10 @@
         "best": {
           "Argentina": {
             "price": 3.2,
-            "book": "Betfair"
+            "book": "Unibet (SE)"
           },
           "England": {
-            "price": 2.76,
+            "price": 2.78,
             "book": "Betfair"
           },
           "Draw": {
@@ -70,30 +70,30 @@
           "2": {
             "over": {
               "price": 1.72,
-              "book": "Coolbet"
+              "book": "BetOnline.ag"
             },
             "under": {
-              "price": 2.23,
+              "price": 2.22,
               "book": "BetOnline.ag"
             }
           },
           "2.25": {
             "over": {
-              "price": 2.06,
+              "price": 2.07,
               "book": "Pinnacle"
             },
             "under": {
-              "price": 1.84,
+              "price": 1.83,
               "book": "Pinnacle"
             }
           },
           "2.5": {
             "over": {
-              "price": 2.42,
+              "price": 2.46,
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.68,
+              "price": 1.67,
               "book": "Matchbook"
             }
           },

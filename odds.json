@@ -1,51 +1,8 @@
 {
-  "updatedAt": "2026-07-14T19:09:09.004Z",
-  "remaining": "388",
+  "updatedAt": "2026-07-15T01:50:38.451Z",
+  "remaining": "386",
   "sports": {
     "football": [
-      {
-        "id": "f9aa13a662d1658e5a02cfc06d6a2d73",
-        "sportKey": "soccer_fifa_world_cup",
-        "home": "France",
-        "away": "Spain",
-        "commence": "2026-07-14T19:00:00Z",
-        "best": {
-          "France": {
-            "price": 2.76,
-            "book": "Matchbook"
-          },
-          "Spain": {
-            "price": 3.35,
-            "book": "1xBet"
-          },
-          "Draw": {
-            "price": 3.2,
-            "book": "888sport"
-          }
-        },
-        "totals": {
-          "2": {
-            "over": {
-              "price": 1.38,
-              "book": "BetAnything"
-            },
-            "under": {
-              "price": 3,
-              "book": "BetAnything"
-            }
-          },
-          "2.5": {
-            "over": {
-              "price": 2.05,
-              "book": "Unibet (NL)"
-            },
-            "under": {
-              "price": 2.03,
-              "book": "1xBet"
-            }
-          }
-        }
-      },
       {
         "id": "ced22494ae0bbb8cc4f7108bf6f493df",
         "sportKey": "soccer_fifa_world_cup",
@@ -58,7 +15,7 @@
             "book": "Betfair"
           },
           "England": {
-            "price": 2.86,
+            "price": 2.84,
             "book": "Betfair"
           },
           "Draw": {
@@ -69,41 +26,41 @@
         "totals": {
           "2": {
             "over": {
-              "price": 1.74,
+              "price": 1.78,
               "book": "BetOnline.ag"
             },
             "under": {
-              "price": 2.2,
-              "book": "BetOnline.ag"
+              "price": 2.15,
+              "book": "Coolbet"
             }
           },
           "2.25": {
             "over": {
-              "price": 2.07,
+              "price": 2.11,
               "book": "Pinnacle"
             },
             "under": {
-              "price": 1.83,
+              "price": 1.8,
               "book": "Pinnacle"
             }
           },
           "2.5": {
             "over": {
-              "price": 2.5,
+              "price": 2.58,
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.65,
-              "book": "Matchbook"
+              "price": 1.62,
+              "book": "GTbets"
             }
           },
           "1.5": {
             "over": {
-              "price": 1.38,
+              "price": 1.43,
               "book": "BetAnything"
             },
             "under": {
-              "price": 3,
+              "price": 2.85,
               "book": "BetAnything"
             }
           }

@@ -4,7 +4,7 @@
   "targetLegs": 17,
   "targetMultiplierPerLeg": 1.4,
   "status": "active",
-  "updatedAt": "2026-07-14T21:05:24.603Z",
+  "updatedAt": "2026-07-15T21:10:09.889Z",
   "bets": [
     {
       "leg": 1,
@@ -121,8 +121,8 @@
       "stake": 2708.33,
       "odds": 1.38,
       "oddsReal": true,
-      "result": "pending",
-      "returnAmount": 0,
+      "result": "won",
+      "returnAmount": 3737.5,
       "auto": true,
       "curated": false
     }

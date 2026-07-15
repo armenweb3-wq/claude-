@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-15T20:20:34.509Z",
+  "updatedAt": "2026-07-15T20:25:20.577Z",
   "matches": [
     {
       "home": "Norway",
@@ -29,7 +29,7 @@
       "home": "England",
       "away": "Argentina",
       "status": "IN_PLAY",
-      "homeScore": 0,
+      "homeScore": 1,
       "awayScore": 0,
       "utcDate": "2026-07-15T19:00:00Z"
     }

@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-15T01:50:38.451Z",
-  "remaining": "386",
+  "updatedAt": "2026-07-15T07:56:03.470Z",
+  "remaining": "384",
   "sports": {
     "football": [
       {
@@ -26,41 +26,31 @@
         "totals": {
           "2": {
             "over": {
-              "price": 1.78,
+              "price": 1.83,
+              "book": "Pinnacle"
+            },
+            "under": {
+              "price": 2.12,
               "book": "BetOnline.ag"
-            },
-            "under": {
-              "price": 2.15,
-              "book": "Coolbet"
-            }
-          },
-          "2.25": {
-            "over": {
-              "price": 2.11,
-              "book": "Pinnacle"
-            },
-            "under": {
-              "price": 1.8,
-              "book": "Pinnacle"
             }
           },
           "2.5": {
             "over": {
-              "price": 2.58,
+              "price": 2.56,
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.62,
-              "book": "GTbets"
+              "price": 1.63,
+              "book": "Matchbook"
             }
           },
           "1.5": {
             "over": {
-              "price": 1.43,
+              "price": 1.42,
               "book": "BetAnything"
             },
             "under": {
-              "price": 2.85,
+              "price": 2.9,
               "book": "BetAnything"
             }
           }

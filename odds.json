@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-16T02:01:09.505Z",
-  "remaining": "378",
+  "updatedAt": "2026-07-16T08:01:45.042Z",
+  "remaining": "376",
   "sports": {
     "football": [
       {
@@ -12,55 +12,55 @@
         "best": {
           "England": {
             "price": 3.9,
-            "book": "Unibet (SE)"
+            "book": "Matchbook"
           },
           "France": {
-            "price": 2.08,
+            "price": 2.05,
             "book": "Nordic Bet"
           },
           "Draw": {
-            "price": 3.85,
-            "book": "Betfair"
+            "price": 3.95,
+            "book": "Matchbook"
           }
         },
         "totals": {
           "3": {
             "over": {
-              "price": 1.89,
-              "book": "Coolbet"
+              "price": 1.69,
+              "book": "MyBookie.ag"
             },
             "under": {
-              "price": 1.99,
-              "book": "Coolbet"
+              "price": 2.05,
+              "book": "MyBookie.ag"
             }
           },
           "3.5": {
             "over": {
-              "price": 2.35,
-              "book": "Unibet (SE)"
+              "price": 2.24,
+              "book": "Matchbook"
             },
             "under": {
-              "price": 1.67,
-              "book": "1xBet"
+              "price": 1.78,
+              "book": "Matchbook"
             }
           },
           "2.5": {
             "over": {
-              "price": 1.55,
+              "price": 1.49,
               "book": "Nordic Bet"
             },
             "under": {
-              "price": 2.52,
+              "price": 2.7,
               "book": "Nordic Bet"
             }
           },
           "3.25": {
             "over": {
-              "price": 2.06,
+              "price": 1.96,
               "book": "Pinnacle"
             },
             "under": {
-              "price": 1.83,
+              "price": 1.93,
               "book": "Pinnacle"
             }
           }
@@ -75,7 +75,7 @@
         "best": {
           "Argentina": {
             "price": 3.85,
-            "book": "Betfair"
+            "book": "Matchbook"
           },
           "Spain": {
             "price": 2.39,
@@ -89,31 +89,31 @@
         "totals": {
           "2": {
             "over": {
-              "price": 1.82,
+              "price": 1.71,
               "book": "Coolbet"
             },
             "under": {
-              "price": 2.09,
+              "price": 2.25,
               "book": "Coolbet"
             }
           },
           "2.5": {
             "over": {
-              "price": 2.43,
-              "book": "Unibet (SE)"
+              "price": 2.4,
+              "book": "Matchbook"
             },
             "under": {
-              "price": 1.67,
+              "price": 1.7,
               "book": "Matchbook"
             }
           },
           "2.25": {
             "over": {
-              "price": 2.1,
+              "price": 2.05,
               "book": "Pinnacle"
             },
             "under": {
-              "price": 1.81,
+              "price": 1.85,
               "book": "Pinnacle"
             }
           }

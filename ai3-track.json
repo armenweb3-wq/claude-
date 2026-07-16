@@ -4,7 +4,7 @@
   "mode": "flat",
   "stakePct": 0.1,
   "status": "active",
-  "updatedAt": "2026-07-15T21:10:09.893Z",
+  "updatedAt": "2026-07-16T00:00:46.568Z",
   "bets": [
     {
       "leg": 1,
@@ -1003,6 +1003,26 @@
       "oddsReal": true,
       "result": "won",
       "returnAmount": 135.3,
+      "auto": true,
+      "curated": false
+    },
+    {
+      "leg": 51,
+      "date": "2026-07-18",
+      "match": "France vs TBD",
+      "kickoff": "2026-07-18T21:00:00Z",
+      "selections": [
+        {
+          "label": "Over 1.5 total goals",
+          "type": "over_goals",
+          "line": 1.5
+        }
+      ],
+      "stake": 101.77,
+      "odds": 1.4,
+      "oddsReal": false,
+      "result": "pending",
+      "returnAmount": 0,
       "auto": true,
       "curated": false
     }

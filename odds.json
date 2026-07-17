@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-17T02:04:53.846Z",
-  "remaining": "370",
+  "updatedAt": "2026-07-17T07:58:44.880Z",
+  "remaining": "368",
   "sports": {
     "football": [
       {
@@ -19,7 +19,7 @@
             "book": "GTbets"
           },
           "Draw": {
-            "price": 4.08,
+            "price": 4.03,
             "book": "1xBet"
           }
         },
@@ -36,7 +36,7 @@
           },
           "3.5": {
             "over": {
-              "price": 2.18,
+              "price": 2.22,
               "book": "Matchbook"
             },
             "under": {
@@ -46,21 +46,21 @@
           },
           "2.5": {
             "over": {
-              "price": 1.46,
+              "price": 1.48,
               "book": "Nordic Bet"
             },
             "under": {
-              "price": 2.82,
+              "price": 2.75,
               "book": "Nordic Bet"
             }
           },
           "3.25": {
             "over": {
-              "price": 1.88,
+              "price": 1.96,
               "book": "Pinnacle"
             },
             "under": {
-              "price": 2.01,
+              "price": 1.93,
               "book": "Pinnacle"
             }
           }
@@ -74,12 +74,12 @@
         "commence": "2026-07-19T19:00:00Z",
         "best": {
           "Argentina": {
-            "price": 3.85,
-            "book": "Unibet (SE)"
+            "price": 3.8,
+            "book": "Betfair"
           },
           "Spain": {
-            "price": 2.38,
-            "book": "Matchbook"
+            "price": 2.36,
+            "book": "Betfair"
           },
           "Draw": {
             "price": 3.15,
@@ -89,21 +89,21 @@
         "totals": {
           "2.5": {
             "over": {
-              "price": 2.4,
+              "price": 2.38,
               "book": "Matchbook"
             },
             "under": {
               "price": 1.71,
-              "book": "1xBet"
+              "book": "Matchbook"
             }
           },
           "2.25": {
             "over": {
-              "price": 1.97,
+              "price": 1.98,
               "book": "Pinnacle"
             },
             "under": {
-              "price": 1.92,
+              "price": 1.91,
               "book": "Pinnacle"
             }
           },

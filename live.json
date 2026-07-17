@@ -1,14 +1,6 @@
 {
-  "updatedAt": "2026-07-16T23:55:23.062Z",
+  "updatedAt": "2026-07-17T00:00:45.364Z",
   "matches": [
-    {
-      "home": "Argentina",
-      "away": "Switzerland",
-      "status": "FINISHED",
-      "homeScore": 3,
-      "awayScore": 1,
-      "utcDate": "2026-07-12T01:00:00Z"
-    },
     {
       "home": "France",
       "away": "Spain",
@@ -32,6 +24,14 @@
       "homeScore": null,
       "awayScore": null,
       "utcDate": "2026-07-18T21:00:00Z"
+    },
+    {
+      "home": "Spain",
+      "away": "Argentina",
+      "status": "TIMED",
+      "homeScore": null,
+      "awayScore": null,
+      "utcDate": "2026-07-19T19:00:00Z"
     }
   ]
 }

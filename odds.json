@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-16T19:00:56.739Z",
-  "remaining": "372",
+  "updatedAt": "2026-07-17T02:04:53.846Z",
+  "remaining": "370",
   "sports": {
     "football": [
       {
@@ -11,15 +11,15 @@
         "commence": "2026-07-18T21:00:00Z",
         "best": {
           "England": {
-            "price": 4,
-            "book": "Betclic (FR)"
+            "price": 4.05,
+            "book": "1xBet"
           },
           "France": {
             "price": 1.99,
             "book": "GTbets"
           },
           "Draw": {
-            "price": 4.05,
+            "price": 4.08,
             "book": "1xBet"
           }
         },
@@ -40,7 +40,7 @@
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.8,
+              "price": 1.81,
               "book": "Matchbook"
             }
           },
@@ -56,11 +56,11 @@
           },
           "3.25": {
             "over": {
-              "price": 1.92,
+              "price": 1.88,
               "book": "Pinnacle"
             },
             "under": {
-              "price": 1.97,
+              "price": 2.01,
               "book": "Pinnacle"
             }
           }
@@ -74,8 +74,8 @@
         "commence": "2026-07-19T19:00:00Z",
         "best": {
           "Argentina": {
-            "price": 3.8,
-            "book": "Betfair"
+            "price": 3.85,
+            "book": "Unibet (SE)"
           },
           "Spain": {
             "price": 2.38,
@@ -87,33 +87,23 @@
           }
         },
         "totals": {
-          "2": {
-            "over": {
-              "price": 1.73,
-              "book": "Coolbet"
-            },
-            "under": {
-              "price": 2.22,
-              "book": "Coolbet"
-            }
-          },
           "2.5": {
             "over": {
-              "price": 2.38,
+              "price": 2.4,
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.7,
-              "book": "Matchbook"
+              "price": 1.71,
+              "book": "1xBet"
             }
           },
           "2.25": {
             "over": {
-              "price": 2.01,
+              "price": 1.97,
               "book": "Pinnacle"
             },
             "under": {
-              "price": 1.88,
+              "price": 1.92,
               "book": "Pinnacle"
             }
           },

@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-17T07:58:44.880Z",
-  "remaining": "368",
+  "updatedAt": "2026-07-17T13:14:18.314Z",
+  "remaining": "366",
   "sports": {
     "football": [
       {
@@ -11,7 +11,7 @@
         "commence": "2026-07-18T21:00:00Z",
         "best": {
           "England": {
-            "price": 4.05,
+            "price": 4.03,
             "book": "1xBet"
           },
           "France": {
@@ -19,7 +19,7 @@
             "book": "GTbets"
           },
           "Draw": {
-            "price": 4.03,
+            "price": 4.05,
             "book": "1xBet"
           }
         },
@@ -36,27 +36,27 @@
           },
           "3.5": {
             "over": {
-              "price": 2.22,
+              "price": 2.18,
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.81,
+              "price": 1.82,
               "book": "Matchbook"
             }
           },
           "2.5": {
             "over": {
-              "price": 1.48,
+              "price": 1.46,
               "book": "Nordic Bet"
             },
             "under": {
-              "price": 2.75,
+              "price": 2.82,
               "book": "Nordic Bet"
             }
           },
           "3.25": {
             "over": {
-              "price": 1.96,
+              "price": 1.95,
               "book": "Pinnacle"
             },
             "under": {
@@ -78,12 +78,12 @@
             "book": "Betfair"
           },
           "Spain": {
-            "price": 2.36,
-            "book": "Betfair"
+            "price": 2.38,
+            "book": "Matchbook"
           },
           "Draw": {
-            "price": 3.15,
-            "book": "Unibet (FR)"
+            "price": 3.16,
+            "book": "1xBet"
           }
         },
         "totals": {
@@ -109,11 +109,11 @@
           },
           "1.5": {
             "over": {
-              "price": 1.38,
+              "price": 1.36,
               "book": "BetAnything"
             },
             "under": {
-              "price": 3.05,
+              "price": 3.15,
               "book": "BetAnything"
             }
           }

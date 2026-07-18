@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-18T01:53:40.229Z",
-  "remaining": "362",
+  "updatedAt": "2026-07-18T07:39:22.516Z",
+  "remaining": "360",
   "sports": {
     "football": [
       {
@@ -12,10 +12,10 @@
         "best": {
           "England": {
             "price": 4,
-            "book": "Unibet (SE)"
+            "book": "Betclic (FR)"
           },
           "France": {
-            "price": 1.93,
+            "price": 1.95,
             "book": "1xBet"
           },
           "Draw": {
@@ -26,7 +26,7 @@
         "totals": {
           "3.5": {
             "over": {
-              "price": 2.22,
+              "price": 2.24,
               "book": "Matchbook"
             },
             "under": {
@@ -36,7 +36,7 @@
           },
           "2.5": {
             "over": {
-              "price": 1.47,
+              "price": 1.49,
               "book": "Nordic Bet"
             },
             "under": {
@@ -46,11 +46,11 @@
           },
           "3.25": {
             "over": {
-              "price": 1.92,
+              "price": 1.96,
               "book": "Pinnacle"
             },
             "under": {
-              "price": 1.97,
+              "price": 1.94,
               "book": "Pinnacle"
             }
           }
@@ -72,8 +72,8 @@
             "book": "Matchbook"
           },
           "Draw": {
-            "price": 3.15,
-            "book": "Betfair"
+            "price": 3.2,
+            "book": "Unibet (FR)"
           }
         },
         "totals": {
@@ -89,11 +89,11 @@
           },
           "2.5": {
             "over": {
-              "price": 2.36,
+              "price": 2.38,
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.72,
+              "price": 1.7,
               "book": "Matchbook"
             }
           },
@@ -113,7 +113,7 @@
               "book": "BetAnything"
             },
             "under": {
-              "price": 3,
+              "price": 3.05,
               "book": "BetAnything"
             }
           }

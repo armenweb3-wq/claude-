@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-18T07:39:22.516Z",
-  "remaining": "360",
+  "updatedAt": "2026-07-18T13:00:02.498Z",
+  "remaining": "358",
   "sports": {
     "football": [
       {
@@ -15,28 +15,28 @@
             "book": "Betclic (FR)"
           },
           "France": {
-            "price": 1.95,
-            "book": "1xBet"
+            "price": 1.93,
+            "book": "Matchbook"
           },
           "Draw": {
-            "price": 4.2,
-            "book": "Matchbook"
+            "price": 4.23,
+            "book": "1xBet"
           }
         },
         "totals": {
           "3.5": {
             "over": {
-              "price": 2.24,
+              "price": 2.22,
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.79,
+              "price": 1.8,
               "book": "Matchbook"
             }
           },
           "2.5": {
             "over": {
-              "price": 1.49,
+              "price": 1.46,
               "book": "Nordic Bet"
             },
             "under": {
@@ -46,11 +46,11 @@
           },
           "3.25": {
             "over": {
-              "price": 1.96,
+              "price": 1.94,
               "book": "Pinnacle"
             },
             "under": {
-              "price": 1.94,
+              "price": 1.96,
               "book": "Pinnacle"
             }
           }
@@ -68,8 +68,8 @@
             "book": "Betfair"
           },
           "Spain": {
-            "price": 2.38,
-            "book": "Matchbook"
+            "price": 2.36,
+            "book": "Betfair"
           },
           "Draw": {
             "price": 3.2,
@@ -89,11 +89,11 @@
           },
           "2.5": {
             "over": {
-              "price": 2.38,
+              "price": 2.4,
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.7,
+              "price": 1.71,
               "book": "Matchbook"
             }
           },

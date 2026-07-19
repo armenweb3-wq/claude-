@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-07-19T13:02:21.628Z",
-  "remaining": "350",
+  "updatedAt": "2026-07-19T18:57:19.401Z",
+  "remaining": "348",
   "sports": {
     "football": [
       {
@@ -8,15 +8,15 @@
         "sportKey": "soccer_fifa_world_cup",
         "home": "Spain",
         "away": "Argentina",
-        "commence": "2026-07-19T19:00:00Z",
+        "commence": "2026-07-19T19:05:00Z",
         "best": {
           "Argentina": {
-            "price": 3.8,
+            "price": 3.85,
             "book": "Betfair"
           },
           "Spain": {
-            "price": 2.38,
-            "book": "Marathon Bet"
+            "price": 2.36,
+            "book": "Matchbook"
           },
           "Draw": {
             "price": 3.15,
@@ -26,31 +26,31 @@
         "totals": {
           "2": {
             "over": {
-              "price": 1.75,
-              "book": "BetOnline.ag"
+              "price": 1.73,
+              "book": "Coolbet"
             },
             "under": {
-              "price": 2.17,
-              "book": "BetOnline.ag"
+              "price": 2.22,
+              "book": "MyBookie.ag"
             }
           },
           "2.5": {
             "over": {
-              "price": 2.44,
+              "price": 2.38,
               "book": "Matchbook"
             },
             "under": {
-              "price": 1.68,
+              "price": 1.71,
               "book": "Matchbook"
             }
           },
           "2.25": {
             "over": {
-              "price": 2.08,
+              "price": 2.07,
               "book": "Pinnacle"
             },
             "under": {
-              "price": 1.84,
+              "price": 1.85,
               "book": "Pinnacle"
             }
           },

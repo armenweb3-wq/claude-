@@ -1,72 +1,8 @@
 {
-  "updatedAt": "2026-07-19T18:57:19.401Z",
+  "updatedAt": "2026-07-20T08:47:07.533Z",
   "remaining": "348",
   "sports": {
-    "football": [
-      {
-        "id": "fb30113e43d113f1ace48b8563ba1ee9",
-        "sportKey": "soccer_fifa_world_cup",
-        "home": "Spain",
-        "away": "Argentina",
-        "commence": "2026-07-19T19:05:00Z",
-        "best": {
-          "Argentina": {
-            "price": 3.85,
-            "book": "Betfair"
-          },
-          "Spain": {
-            "price": 2.36,
-            "book": "Matchbook"
-          },
-          "Draw": {
-            "price": 3.15,
-            "book": "Unibet (FR)"
-          }
-        },
-        "totals": {
-          "2": {
-            "over": {
-              "price": 1.73,
-              "book": "Coolbet"
-            },
-            "under": {
-              "price": 2.22,
-              "book": "MyBookie.ag"
-            }
-          },
-          "2.5": {
-            "over": {
-              "price": 2.38,
-              "book": "Matchbook"
-            },
-            "under": {
-              "price": 1.71,
-              "book": "Matchbook"
-            }
-          },
-          "2.25": {
-            "over": {
-              "price": 2.07,
-              "book": "Pinnacle"
-            },
-            "under": {
-              "price": 1.85,
-              "book": "Pinnacle"
-            }
-          },
-          "1.5": {
-            "over": {
-              "price": 1.4,
-              "book": "BetAnything"
-            },
-            "under": {
-              "price": 3,
-              "book": "BetAnything"
-            }
-          }
-        }
-      }
-    ],
+    "football": [],
     "tennis": [],
     "basketball": [],
     "nfl": [],

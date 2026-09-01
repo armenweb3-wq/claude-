@@ -37,3 +37,20 @@ Output is written to `trading/Weekly-5-Asset-Risk-Cycle.pdf`.
   already sized to risk 1%.
 
 This is an educational risk framework, not financial advice.
+
+---
+
+## Simple-Plan-2M.pdf
+
+A four-page worked example on a $2,000,000 balance at 1% ($20,000) risk per
+trade, built by `generate_simple_plan.py`. Two scenarios — a week with two
+stop-outs and three winners (+9R), and a week where stops are moved to entry so
+four trades scratch and one runs to 1:5 (+5R) — plus monthly totals, a
+twelve-month compounded table, and growth charts.
+
+```bash
+python3 trading/generate_simple_plan.py
+```
+
+Inputs live at the top of the script (`BALANCE`, `RISK_PCT`, `WEEK_A`,
+`WEEK_B`, `WEEKS_PER_MONTH`); everything else is derived, including the charts.

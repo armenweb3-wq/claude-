@@ -59,20 +59,15 @@ Inputs live at the top of the script (`BALANCE`, `RISK_PCT`, `WEEK_A`,
 
 ## Trade-Boxes.pdf
 
-A per-asset trade record built by `generate_trade_boxes.py`: one box per asset
-holding entry, volume, margin, both levels, R:R, whether the stop was moved to
-entry, the close price and the result. Page 1 works the supplied WTIUSD trade
-through in full; page 2 is the blank sheet for a cycle; page 3 is the cycle
-total plus contract values.
+A one-page weekly trade sheet built by `generate_trade_boxes.py`: one box per
+asset holding entry, volume, margin, both levels, R:R, whether the stop was
+moved to entry, the close price and the result, plus a cycle total.
 
 ```bash
 python3 trading/generate_trade_boxes.py
 ```
 
-The trade lives in the `WTI` dict at the top of the script and every figure on
-page 1 is derived by `derive()` — nothing is typed in twice. `ASSETS` carries
-the per-lot value and leverage used for the blank boxes.
-
-**1R is 1% of free margin, not of balance.** `BALANCE`, `FREE_MARGIN` and the
-derived `ONE_R` sit at the top of the script; page 4's sizing table is computed
-from `ONE_R`, so changing the free-margin figure redraws it.
+1R is 1% of **free margin**, not of balance. `BALANCE`, `FREE_MARGIN` and the
+derived `ONE_R` sit at the top of the script. `ASSETS` carries the per-lot
+value and leverage printed in each box header; `FILLED` holds any trades
+already entered.

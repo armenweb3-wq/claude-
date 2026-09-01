@@ -106,28 +106,14 @@ def page(canvas, doc):
     canvas.saveState()
     canvas.setFillColor(colors.white)
     canvas.rect(0, 0, PAGE_W, PAGE_H, stroke=0, fill=1)
-    canvas.setFillColor(NAVY)
-    canvas.rect(0, PAGE_H - 10 * mm, PAGE_W, 10 * mm, stroke=0, fill=1)
-    canvas.setFillColor(GOLD)
-    canvas.rect(0, PAGE_H - 10 * mm - 1.5, PAGE_W, 1.5, stroke=0, fill=1)
-    canvas.setFont("Helvetica-Bold", 7.4)
-    canvas.setFillColor(GOLDL)
-    canvas.drawString(MARGIN, PAGE_H - 6.7 * mm, "TRADE BOXES")
-    canvas.setFont("Helvetica", 7.4)
-    canvas.drawRightString(PAGE_W - MARGIN, PAGE_H - 6.7 * mm,
-                           "One box per asset  |  one cycle per sheet")
     canvas.setStrokeColor(RULE)
     canvas.setLineWidth(0.6)
     canvas.line(MARGIN, 11 * mm, PAGE_W - MARGIN, 11 * mm)
     canvas.setFont("Helvetica", 6.8)
     canvas.setFillColor(SLATE)
     canvas.drawString(MARGIN, 7.6 * mm,
-                      "Cycle beginning ____ / ____ / ______        "
-                      "Free margin at open $______________        "
-                      "1R = 1% of that = $____________")
-    canvas.setFont("Helvetica-Bold", 6.8)
-    canvas.setFillColor(NAVY)
-    canvas.drawRightString(PAGE_W - MARGIN, 7.6 * mm, "%d" % doc.page)
+                      "R:R must read at least 1:3 before the trade is taken.  "
+                      "Round the lot size down, never up.")
     canvas.restoreState()
 
 
@@ -254,210 +240,51 @@ def rule():
 # =================================================================== story ==
 story = []
 
-# --------------------------------------------------------------- PAGE 1 ----
-story.append(Paragraph("THE BOX, WORKED THROUGH", Kick))
-story.append(Paragraph("Your Oil Trade", H1))
+story.append(Paragraph(
+    "<font size='15' color='#16233A'><b>Weekly Trade Sheet</b></font>"
+    "&nbsp;&nbsp;&nbsp;"
+    "<font size='8.4' color='#5A6678'>Week ____ / ____"
+    "&nbsp;&nbsp;&bull;&nbsp;&nbsp;Free margin $__________"
+    "&nbsp;&nbsp;&bull;&nbsp;&nbsp;</font>"
+    "<font size='8.4' color='#2F6F4F'><b>1R = 1% = $2,450</b></font>",
+    st("hdr", fontName="Helvetica", fontSize=15, leading=19)))
+story.append(Spacer(1, 3))
 story.append(rule())
-story.append(Spacer(1, 9))
-
-story.append(box("WTIUSD", "CRUDE OIL", 1000.0, "$1.00 move", 100, filled=dict(
-    entry="88.41", volume="2.8 lots", margin=usd(W["margin"]),
-    stop="87.56", target="91.20",
-    rr="1 : %.2f" % W["rr"], rr_col=GREEN,
-    risk=usd(W["risk"]), risk_sub="0.97% of free margin",
-    moved="YES", closed="__________",
-    result="__________", result_r="________"), height=48))
 story.append(Spacer(1, 10))
 
-story.append(Paragraph("Where every number comes from", H2))
-calc_rows = [
-    ["Stop distance", "88.41 - 87.56", "<b>0.85</b>", "How far price must go against you."],
-    ["Target distance", "91.20 - 88.41", "<b>2.79</b>", "How far it must go for you."],
-    ["<b>Risk (1R)</b>", "0.85 x 2.8 x $1,000",
-     "<b>%s</b>" % usd(W["risk"]), "What a stop-out costs."],
-    ["<b>Reward at target</b>", "2.79 x 2.8 x $1,000",
-     "<b>%s</b>" % usd(W["reward"]), "What the take profit pays."],
-    ["<b>R : R</b>", "2.79 / 0.85",
-     "<font color='#2F6F4F'><b>1 : 3.28</b></font>",
-     "<font color='#2F6F4F'>Inside the 1:3 to 1:5 band.</font>"],
-    ["Notional", "2.8 x 1,000 x 88.41", "$247,548", "The position's face value."],
-    ["Margin at 100:1", "$247,548 / 100",
-     "<b>$2,475</b>", "<font color='#2F6F4F'>Matches the $2,475 you quoted.</font>"],
-]
-story.append(table(["", "CALCULATION", "RESULT", "WHAT IT IS"],
-                   [[Paragraph(c, TD) for c in r] for r in calc_rows],
-                   [102, 122, 78, CW - 302]))
-story.append(Spacer(1, 5))
-story.append(Paragraph(
-    "The margin figure is the proof the rest is right: 2.8 lots of 1,000 "
-    "barrels at 100:1 gives $2,475.48, which is what your platform shows. So "
-    "the contract size and the leverage are confirmed, and every other number "
-    "above follows from them.", Small))
+FILLED = {"WTIUSD": dict(
+    entry="88.41", volume="2.8 lots", margin="$2,475", stop="87.56",
+    target="91.20",
+    rr="1 : 3.28", rr_col=GREEN, risk="$2,380", moved="YES",
+    closed="__________", result="__________", result_r="________")}
 
-story.append(Paragraph("What each close price pays", H2))
-out_rows = []
-for label, px, tag in (("Take profit hit", 91.20, GREEN),
-                       ("Stop at entry - scratched", 88.41, SLATE),
-                       ("Original stop hit", 87.56, RED)):
-    pl = (px - W["entry"]) * W["volume"] * W["vpu"]
-    hexc = "#" + tag.hexval()[2:]
-    out_rows.append([
-        Paragraph("<b>%.2f</b>" % px, TD),
-        Paragraph("<font color='%s'>%s</font>" % (hexc, label), TD),
-        Paragraph("<font color='%s'><b>%+.2fR</b></font>" % (hexc, pl / W["risk"]), TD),
-        Paragraph("<font color='%s'><b>%s</b></font>" % (hexc, usd(pl, sign=True)), TD)])
-story.append(table(["CLOSE PRICE", "OUTCOME", "R", "PROFIT / LOSS"],
-                   out_rows, [88, 214, 70, CW - 372]))
-story.append(Spacer(1, 5))
-story.append(note("FOR ANY OTHER CLOSE PRICE",
-    "<b>P/L = (close - 88.41) x 2.8 x $1,000</b>, which is $2,800 for every "
-    "1.00 the price moves, or $28 for every 0.01. Closed at 90.00 that is "
-    "<b>+$4,452 (+1.87R)</b>. Because the stop is at entry, the worst case is "
-    "now $0 rather than -$2,380 - minus spread and commission, which a "
-    "scratched trade still pays.", tint=GOLDL, bar=GOLD))
-story.append(PageBreak())
-
-# --------------------------------------------------------------- PAGE 2 ----
-story.append(Paragraph("ONE SHEET PER CYCLE", Kick))
-story.append(Paragraph("The Five Boxes", H1))
-story.append(rule())
-story.append(Spacer(1, 8))
-story.append(Paragraph(
-    "Fill in entry, volume and both levels when you open. Write the price in "
-    "SL MOVED TO ENTRY when you move the stop, and the close price when you "
-    "are out. R:R must read at least 1:3 before the trade is taken.", Small))
-story.append(Spacer(1, 6))
 for a, n, vpu, unit, lev in ASSETS:
-    story.append(box(a, n, vpu, unit, lev, height=44))
-    story.append(Spacer(1, 8))
-story.append(PageBreak())
+    story.append(box(a, n, vpu, unit, lev, filled=FILLED.get(a), height=42))
+    story.append(Spacer(1, 9))
 
-# --------------------------------------------------------------- PAGE 3 ----
-story.append(Paragraph("CLOSING THE WEEK", Kick))
-story.append(Paragraph("Cycle Total", H1))
-story.append(rule())
-story.append(Spacer(1, 9))
-
-tot_rows = [[Paragraph("<b>%s</b>" % a, TD)] + [""] * 4 for a, _, _, _, _ in ASSETS]
-tot_rows.append([Paragraph("<b>TOTAL</b>", TDb), "", "", "", ""])
-tt = table(["ASSET", "CLOSED AT", "OUTCOME  (TP / SL / ENTRY)", "RESULT (R)",
-            "PROFIT / LOSS"],
-           tot_rows, [66, 84, 168, 78, CW - 396], zebra=False)
-tt.setStyle(TableStyle([
-    ("INNERGRID", (0, 0), (-1, -1), 0.5, RULE),
-    ("TOPPADDING", (0, 1), (-1, -1), 12),
-    ("BOTTOMPADDING", (0, 1), (-1, -1), 12),
-    ("BACKGROUND", (0, 6), (-1, 6), GOLDL),
-    ("LINEABOVE", (0, 6), (-1, 6), 1.1, NAVY)]))
-story.append(tt)
-
-story.append(Paragraph("Contract values - the only numbers you need to size", H2))
-ref_rows = []
-for a, n, vpu, unit, lev in ASSETS:
-    ref_rows.append([
-        Paragraph("<b>%s</b> <font size='7' color='#5A6678'>%s</font>" % (a, n), TD),
-        Paragraph("%s per %s, per 1.00 lot" % (usd(vpu), unit), TD),
-        Paragraph("<b>%d:1</b>" % lev, TD),
-        Paragraph("volume = 1R / (stop distance x %s)" % usd(vpu), TD)])
-story.append(table(["ASSET", "VALUE PER LOT", "LEVERAGE", "VOLUME FOR 1R"],
-                   ref_rows, [116, 158, 60, CW - 334]))
-story.append(Spacer(1, 5))
-story.append(Paragraph(
-    "Silver and the Dow vary most between brokers - check both against your "
-    "platform once, the way the $2,475 margin confirmed oil.", Small))
-
-story.append(Paragraph("The account these boxes are sized from", H2))
-acct_rows = [[
-    Paragraph("<b>%s</b>" % usd(BALANCE), TD),
-    Paragraph("<b>%s</b>" % usd(FREE_MARGIN), TD),
-    Paragraph(usd(USED_MARGIN), TD),
-    Paragraph("%.0f%%" % (BALANCE / USED_MARGIN * 100), TD),
-    Paragraph("<font color='#2F6F4F'><b>%s</b></font>" % usd(ONE_R), TD)]]
-story.append(table(
-    ["BALANCE", "FREE MARGIN", "USED MARGIN", "MARGIN LEVEL",
-     "1R = 1% OF FREE MARGIN"],
-    acct_rows, [88, 92, 92, 88, CW - 360]))
-story.append(Spacer(1, 5))
-story.append(Paragraph(
-    "Used margin is what the balance and free margin imply, so it assumes no "
-    "floating profit or loss. At a 232% margin level there is comfortable "
-    "room; brokers force-close near 50%.", Small))
-
-story.append(Spacer(1, 8))
-story.append(note("THE OIL TRADE CHECKS OUT",
-    "1% of $245,000 is <b>$2,450</b>, which needs <b>2.882 lots</b> at a 0.85 "
-    "stop. You traded <b>2.8</b>, so the risk was <b>$2,380 = 0.97%</b> of free "
-    "margin - a rounded-down lot size, and correctly sized. Note how much "
-    "smaller this basis is than the alternative: 1% of the $430,000 "
-    "<i>balance</i> would be $4,300, a position 76% bigger. Sizing off free "
-    "margin is the conservative choice of the two.",
-    tint=GREENL, bar=GREEN))
-story.append(PageBreak())
-
-# --------------------------------------------------------------- PAGE 4 ----
-story.append(Paragraph("PRE-FILLED FOR $2,450", Kick))
-story.append(Paragraph("Volume for 1R", H1))
-story.append(rule())
-story.append(Spacer(1, 9))
-story.append(Paragraph(
-    "<b>volume = $2,450 / (stop distance x value per lot)</b>. Two example "
-    "stop distances per asset, with what the resulting position costs in "
-    "margin. Round the lot size <i>down</i>, the way you did on oil - never up.",
-    Body))
 story.append(Spacer(1, 3))
-
-PRICE = {"XAUUSD": 3412.0, "WTIUSD": 88.41, "XAGUSD": 38.90,
-         "BTCUSD": 92400.0, "DJIUSD": 44150.0}
-STOPS = {"XAUUSD": [(10, "$10.00"), (20, "$20.00")],
-         "WTIUSD": [(0.85, "$0.85"), (1.50, "$1.50")],
-         "XAGUSD": [(0.50, "$0.50"), (1.00, "$1.00")],
-         "BTCUSD": [(1000, "$1,000"), (2000, "$2,000")],
-         "DJIUSD": [(200, "200 pts"), (400, "400 pts")]}
-size_rows = []
-for a, n, vpu, unit, lev in ASSETS:
-    for k, (sd, label) in enumerate(STOPS[a]):
-        vol = ONE_R / (sd * vpu)
-        marg = vol * vpu * PRICE[a] / lev
-        share = marg / FREE_MARGIN * 100
-        hot = share > 8
-        hexc = "#9B3535" if hot else "#101826"
-        size_rows.append([
-            Paragraph("<b>%s</b>" % a if k == 0 else "", TD),
-            Paragraph(label, TD),
-            Paragraph("<b>%.3f</b> <font size='7' color='#5A6678'>%s</font>"
-                      % (vol, "BTC" if a == "BTCUSD" else "lots"), TD),
-            Paragraph(usd(ONE_R), TD),
-            Paragraph("<font color='%s'>%s</font>" % (hexc, usd(marg)), TD),
-            Paragraph("<font color='%s'><b>%.1f%%</b></font>" % (hexc, share), TD)])
-story.append(table(
-    ["ASSET", "IF THE STOP IS", "VOLUME", "RISK", "MARGIN IT USES",
-     "% OF FREE MARGIN"],
-    size_rows, [64, 80, 92, 62, 92, CW - 390]))
-story.append(Spacer(1, 5))
-story.append(Paragraph(
-    "Prices used for the margin column are indicative. Everything else is "
-    "exact.", Small))
-
-story.append(Spacer(1, 8))
-story.append(note("BITCOIN IS THE ONE TO WATCH ON THIS ACCOUNT",
-    "At 5:1, a bitcoin position risking the same $2,450 as gold uses "
-    "<b>$45,276</b> of margin against gold's $8,359 - <b>18.5% of your free "
-    "margin for one trade</b>, and 23% if the stop is $800. Gold, oil, silver "
-    "and the Dow each take between 0.6% and 3.4%. If bitcoin is in the cycle, "
-    "open it and see what free margin is left before sizing anything else.",
-    tint=REDL, bar=RED))
-
-story.append(Spacer(1, 8))
-story.append(note("FIX 1R ON MONDAY - DO NOT RECALCULATE IT PER TRADE",
-    "Free margin falls every time you open a position, so if you recompute 1% "
-    "before each trade, each one is smaller than the last. Open all five in the "
-    "order gold, oil, silver, bitcoin, Dow and 1R drifts from <b>$2,450 down to "
-    "$1,922</b> by the fifth - the Dow ends up risking 22% less than gold did, "
-    "for no reason other than being last in the queue. Worse, changing the "
-    "order changes every position size. <b>Take free margin once at the start "
-    "of the cycle, fix 1R at 1% of it, and use that same number on all five "
-    "trades.</b>", tint=GOLDL, bar=GOLD))
-
+tot = Table([[
+    Paragraph("<font size='8' color='#5A6678'><b>CYCLE TOTAL</b></font>", TD),
+    Paragraph("<font size='7' color='#5A6678'>RESULT (R)</font><br/>"
+              "<font size='12'><b>__________</b></font>",
+              st("t1", fontName="Helvetica", fontSize=7, leading=16)),
+    Paragraph("<font size='7' color='#5A6678'>PROFIT / LOSS</font><br/>"
+              "<font size='12'><b>________________</b></font>",
+              st("t2", fontName="Helvetica", fontSize=7, leading=16)),
+    Paragraph("<font size='7' color='#5A6678'>FREE MARGIN AT CLOSE</font><br/>"
+              "<font size='12'><b>________________</b></font>",
+              st("t3", fontName="Helvetica", fontSize=7, leading=16)),
+]], colWidths=[CW * 0.22, CW * 0.20, CW * 0.29, CW * 0.29])
+tot.setStyle(TableStyle([
+    ("BACKGROUND", (0, 0), (-1, -1), GOLDL),
+    ("BOX", (0, 0), (-1, -1), 0.9, NAVY),
+    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+    ("LINEAFTER", (0, 0), (-2, -1), 0.5, RULE),
+    ("LEFTPADDING", (0, 0), (-1, -1), 9),
+    ("TOPPADDING", (0, 0), (-1, -1), 7),
+    ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+]))
+story.append(tot)
 
 # =================================================================== build ==
 doc = BaseDocTemplate(OUT, pagesize=A4, leftMargin=MARGIN, rightMargin=MARGIN,
@@ -467,7 +294,7 @@ doc = BaseDocTemplate(OUT, pagesize=A4, leftMargin=MARGIN, rightMargin=MARGIN,
                               "worked through")
 doc.addPageTemplates([PageTemplate(
     id="content",
-    frames=[Frame(MARGIN, 13 * mm, CW, PAGE_H - 13 * mm - 13 * mm, id="c",
+    frames=[Frame(MARGIN, 13 * mm, CW, PAGE_H - 13 * mm - 15 * mm, id="c",
                   leftPadding=0, rightPadding=0, topPadding=0, bottomPadding=0)],
     onPage=page)])
 doc.build(story)

@@ -54,3 +54,21 @@ python3 trading/generate_simple_plan.py
 
 Inputs live at the top of the script (`BALANCE`, `RISK_PCT`, `WEEK_A`,
 `WEEK_B`, `WEEKS_PER_MONTH`); everything else is derived, including the charts.
+
+---
+
+## Trade-Boxes.pdf
+
+A per-asset trade record built by `generate_trade_boxes.py`: one box per asset
+holding entry, volume, margin, both levels, R:R, whether the stop was moved to
+entry, the close price and the result. Page 1 works the supplied WTIUSD trade
+through in full; page 2 is the blank sheet for a cycle; page 3 is the cycle
+total plus contract values.
+
+```bash
+python3 trading/generate_trade_boxes.py
+```
+
+The trade lives in the `WTI` dict at the top of the script and every figure on
+page 1 is derived by `derive()` — nothing is typed in twice. `ASSETS` carries
+the per-lot value and leverage used for the blank boxes.

@@ -59,15 +59,13 @@ Inputs live at the top of the script (`BALANCE`, `RISK_PCT`, `WEEK_A`,
 
 ## Trade-Boxes.pdf
 
-A one-page weekly trade sheet built by `generate_trade_boxes.py`: one box per
-asset holding entry, volume, margin, both levels, R:R, whether the stop was
-moved to entry, the close price and the result, plus a cycle total.
+One box: five assets, one row each, one cycle per sheet (landscape A4).
 
 ```bash
 python3 trading/generate_trade_boxes.py
 ```
 
-1R is 1% of **free margin**, not of balance. `BALANCE`, `FREE_MARGIN` and the
-derived `ONE_R` sit at the top of the script. `ASSETS` carries the per-lot
-value and leverage printed in each box header; `FILLED` holds any trades
-already entered.
+Add a trade to the `TRADES` dict at the top of the script and re-run. Any
+field you omit prints blank; any asset you omit leaves the whole row blank.
+Risk, R:R and both result columns are computed from entry/stop/volume/target
+and the `closed` price — never typed in. 1R is 1% of `FREE_MARGIN`.

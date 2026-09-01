@@ -32,7 +32,7 @@ ASSETS = [("XAUUSD", "GOLD", 100.0), ("WTIUSD", "OIL", 1000.0),
 TRADES = {
     "WTIUSD": dict(side="BUY", entry=88.41, volume=2.8, margin=2475.0,
                    stop=87.56, target=91.20, moved_to_entry=True,
-                   closed=89.93),
+                   current=90.80),          # still open - mark-to-market
     "XAGUSD": dict(side="SELL", entry=64.31, volume=0.66, stop=65.00,
                    target=62.00, leverage=100),
 }
@@ -84,7 +84,9 @@ def row(asset, name, vpl):
     side = t.get("side")
     entry, stop = t.get("entry"), t.get("stop")
     target, vol = t.get("target"), t.get("volume")
-    closed = t.get("closed")
+    closed, current = t.get("closed"), t.get("current")
+    mark = closed if closed is not None else current
+    floating = closed is None and current is not None
     short = side == "SELL"
 
     margin = t.get("margin")
@@ -96,8 +98,8 @@ def row(asset, name, vpl):
         risk = abs(entry - stop) * vol * vpl
         if target is not None:
             rr = abs(target - entry) / abs(entry - stop)
-        if closed is not None:
-            res_cash = (entry - closed if short else closed - entry) * vol * vpl
+        if mark is not None:
+            res_cash = (entry - mark if short else mark - entry) * vol * vpl
             res_r = res_cash / risk
 
     col = INK
@@ -116,10 +118,11 @@ def row(asset, name, vpl):
         cellp(usd(risk) if risk is not None else ""),
         cellp("1 : %.2f" % rr if rr is not None else "", col=GREEN),
         cellp("YES" if moved else ("" if moved is None else "NO")),
-        cellp("%.2f" % closed if closed is not None else ""),
+        cellp("%.2f" % mark if mark is not None else "",
+              col=SLATE if floating else INK),
         cellp(usd(res_cash, sign=True) if res_cash is not None else "", col=col),
         cellp("%+.2fR" % res_r if res_r is not None else "", col=col),
-    ], res_cash, res_r
+    ], res_cash, res_r, floating
 
 
 # ------------------------------------------------------------------- build --
@@ -140,27 +143,33 @@ story.append(hr)
 story.append(Spacer(1, 14))
 
 HEAD = ["ASSET", "DIR", "ENTRY", "VOLUME", "MARGIN", "STOP LOSS", "TAKE PROFIT",
-        "RISK (1R)", "R : R", "SL AT ENTRY", "CLOSED AT", "RESULT ($)",
+        "RISK (1R)", "R : R", "SL AT ENTRY", "CLOSED / NOW", "RESULT ($)",
         "RESULT (R)"]
 data = [[Paragraph(h, TH) for h in HEAD]]
-tot_cash = tot_r = 0.0
+real_cash = real_r = flt_cash = flt_r = 0.0
 for a, n, vpl in ASSETS:
-    cells, rc, rr_ = row(a, n, vpl)
+    cells, rc, rr_, flt = row(a, n, vpl)
     data.append(cells)
-    if rc is not None:
-        tot_cash += rc
-        tot_r += rr_
+    if rc is None:
+        continue
+    if flt:
+        flt_cash += rc; flt_r += rr_
+    else:
+        real_cash += rc; real_r += rr_
 
-tcol = GREEN if tot_cash > 0 else (RED if tot_cash < 0 else SLATE)
-data.append([Paragraph("<font size='9'><b>CYCLE TOTAL</b></font>", TD)]
+def total_row(label, cash, r, muted=False):
+    c = SLATE if muted else (GREEN if cash > 0 else (RED if cash < 0 else SLATE))
+    return ([Paragraph("<font size='8.6'><b>%s</b></font>" % label, TD)]
             + [Paragraph("", TD)] * 10
-            + [cellp(usd(tot_cash, sign=True), col=tcol),
-               cellp("%+.2fR" % tot_r, col=tcol)])
+            + [cellp(usd(cash, sign=True), col=c), cellp("%+.2fR" % r, col=c)])
+
+data.append(total_row("OPEN P/L", flt_cash, flt_r, muted=False))
+data.append(total_row("CLOSED THIS CYCLE", real_cash, real_r))
 
 W = [72, 40, 52, 50, 56, 56, 60, 60, 54, 58, 56, 68, 0]
 assert len(W) == len(HEAD), (len(W), len(HEAD))
 W[-1] = CW - sum(W[:-1])
-t = Table(data, colWidths=W, rowHeights=[22] + [42] * 5 + [34])
+t = Table(data, colWidths=W, rowHeights=[22] + [42] * 5 + [30, 30])
 t.setStyle(TableStyle([
     ("BACKGROUND", (0, 0), (-1, 0), NAVY),
     ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -172,6 +181,10 @@ t.setStyle(TableStyle([
     ("LINEABOVE", (0, 6), (-1, 6), 1.2, NAVY),
 ] + [("BACKGROUND", (0, i), (-1, i), ZEBRA) for i in (2, 4)]))
 story.append(t)
+story.append(Spacer(1, 5))
+story.append(Paragraph(
+    "Prices in <b>CLOSED / NOW</b> shown in grey are live marks on open "
+    "positions, so the result beside them is floating, not realised.", FOOT))
 
 story.append(Spacer(1, 10))
 story.append(Paragraph(

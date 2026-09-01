@@ -30,7 +30,8 @@ TRADE = dict(
     side="LONG", leverage=100, value_per_lot=1000.0,
     entry=88.41, volume=2.8, margin=2475.0,
     stop=87.56, target=91.20, moved_to_entry=True,
-    closed=89.93,                    # set to None while the position is open
+    closed=None,                     # exit price once the position is closed
+    current=90.80,                   # live mark while it is still open
     date="1 SEP 2026", time="—",
 )
 
@@ -43,8 +44,11 @@ def derive(t):
     d["risk"] = d["stop_dist"] * t["volume"] * t["value_per_lot"]
     d["reward"] = d["tp_dist"] * t["volume"] * t["value_per_lot"]
     d["rr"] = d["tp_dist"] / d["stop_dist"]
-    if t.get("closed") is not None:
-        d["move"] = (t["closed"] - t["entry"]) * sgn
+    mark = t.get("closed") if t.get("closed") is not None else t.get("current")
+    d["mark"] = mark
+    d["floating"] = t.get("closed") is None and t.get("current") is not None
+    if mark is not None:
+        d["move"] = (mark - t["entry"]) * sgn
         d["pnl"] = d["move"] * t["volume"] * t["value_per_lot"]
         d["pnl_r"] = d["pnl"] / d["risk"]
         d["roi"] = d["pnl"] / t["margin"] * 100.0
@@ -152,10 +156,22 @@ if CLOSED:
     hl_note = "on %s margin" % usd(TRADE["margin"])
     hl_good = good
     status = "CLOSED"
+elif T["floating"]:
+    good = T["pnl"] >= 0
+    rows = [
+        (G_ARROW, "OPEN PRICE", "%.2f" % T["entry"], "", "val"),
+        (G_TARGET, "CURRENT PRICE", "%.2f" % T["mark"], "", "good" if good else "bad"),
+    ]
+    hl_label = "OPEN PROFIT" if good else "OPEN LOSS"
+    hl_big = usd(T["pnl"], sign=True)
+    hl_sub = "%+.2f%%" % T["roi"]
+    hl_note = "unrealised &nbsp;·&nbsp; on %s margin" % usd(TRADE["margin"])
+    hl_good = good
+    status = "OPEN"
 else:
     rows = [
         (G_ARROW, "OPEN PRICE", "%.2f" % T["entry"], "", "val"),
-        (G_TARGET, "CLOSE PRICE", "--", "position still open", "val"),
+        (G_TARGET, "CURRENT PRICE", "--", "no mark supplied", "val"),
     ]
     hl_label = "PROFIT AT TARGET"
     hl_big = usd(T["reward"], sign=True)

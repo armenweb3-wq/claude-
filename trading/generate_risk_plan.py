@@ -247,7 +247,8 @@ story.append(Spacer(1, 22 * mm))
 story.append(Paragraph(
     "Gold &bull; Oil &bull; Silver &bull; Bitcoin &bull; Dow Jones<br/>"
     "One percent of capital per asset. Five positions per cycle.<br/>"
-    "Nothing taken below a 1:3 reward-to-risk ratio.", CoverSub))
+    "Nothing taken below a 1:3 reward-to-risk ratio.<br/>"
+    "<font size='10.4'>Margined at 100:1, and at 5:1 on bitcoin.</font>", CoverSub))
 story.append(Spacer(1, 14 * mm))
 cover_facts = Table([[
     Paragraph("<font color='#C2963F' size='16'><b>1%</b></font><br/>"
@@ -276,9 +277,9 @@ story.append(PageBreak())
 # ------------------------------------------------ 1. THE RULES (one page) --
 story += section(
     "01", "The Constitution",
-    "Nine rules. If a trade breaks any one of them it does not get taken, "
+    "Ten rules. If a trade breaks any one of them it does not get taken, "
     "however good it looks. Everything else in this document exists only to "
-    "make these nine rules mechanical.")
+    "make these ten rules mechanical.")
 
 rules = [
     ("R1", "One percent, no exceptions",
@@ -292,7 +293,7 @@ rules = [
     ("R3", "Maximum heat is 5%",
      "With all five slots filled, total capital at risk is 5.00%. That is the "
      "ceiling for the account, and it is reduced by the correlation caps in "
-     "Section 06."),
+     "Section 07."),
     ("R4", "Minimum 1:3, target 1:5",
      "The stop is placed where the idea is proven wrong; the target is placed "
      "at the next real structural level. If the distance between them is not "
@@ -313,12 +314,18 @@ rules = [
      "new equity high."),
     ("R9", "Unjournalled trade, invalid trade",
      "Every position is logged with its R multiple and its grade before the "
-     "next one is opened. The log in Section 08 is the scoreboard."),
+     "next one is opened. The log in Section 09 is the scoreboard."),
+    ("R10", "Margin is the second ceiling",
+     "Leverage never changes the 1% risk, but it decides what the account can "
+     "hold. Total margin committed across all open positions stays at or below "
+     "30% of equity, no single position takes more than 20%, and the bitcoin "
+     "stop is never tighter than 1.0% of price. Section 04 shows why bitcoin "
+     "is the only one of the five where this binds."),
 ]
 rule_rows = [[Paragraph("<b>%s</b>" % n, TDb),
               Paragraph("<b>%s</b><br/><font size='7.6' color='#5A6678'>%s</font>"
                         % (t, d), TD)] for n, t, d in rules]
-story.append(data_table(["", "RULE"], rule_rows, [26, CONTENT_W - 26]))
+story.append(data_table(["", "RULE"], rule_rows, [32, CONTENT_W - 32]))
 story.append(Spacer(1, 9))
 story.append(callout("READ THE BRIEF THIS WAY", bullets([
     "<b>1R = 1% of equity = the loss taken if the stop is hit.</b> Every number "
@@ -431,26 +438,32 @@ story.append(Paragraph(
     "in every position you take afterwards.", Body))
 spec_rows = [
     ["<b>XAUUSD</b><br/><font size='7.2' color='#5A6678'>Gold</font>",
-     "100 troy oz", "USD per $1.00 move", "$100.00", "0.01",
+     "100 troy oz", "USD per $1.00 move", "$100.00",
+     "<b>100:1</b><br/><font size='7' color='#5A6678'>1.00% margin</font>",
      "________"],
     ["<b>WTIUSD</b><br/><font size='7.2' color='#5A6678'>Crude oil</font>",
-     "1,000 barrels", "USD per $1.00 move", "$1,000.00", "0.01",
+     "1,000 barrels", "USD per $1.00 move", "$1,000.00",
+     "<b>100:1</b><br/><font size='7' color='#5A6678'>1.00% margin</font>",
      "________"],
     ["<b>XAGUSD</b><br/><font size='7.2' color='#5A6678'>Silver</font>",
-     "5,000 troy oz", "USD per $1.00 move", "$5,000.00", "0.001",
+     "5,000 troy oz", "USD per $1.00 move", "$5,000.00",
+     "<b>100:1</b><br/><font size='7' color='#5A6678'>1.00% margin</font>",
      "________"],
     ["<b>BTCUSD</b><br/><font size='7.2' color='#5A6678'>Bitcoin</font>",
-     "1 BTC", "USD per $1.00 move", "$1.00", "0.01",
+     "1 BTC", "USD per $1.00 move", "$1.00",
+     "<font color='#9B3535'><b>5:1</b></font>"
+     "<br/><font size='7' color='#5A6678'>20.00% margin</font>",
      "________"],
     ["<b>DJIUSD</b><br/><font size='7.2' color='#5A6678'>Dow Jones 30</font>",
-     "1 index point", "USD per 1.0 point", "$1.00 to $10.00", "0.10",
+     "1 index point", "USD per 1.0 point", "$1.00 to $10.00",
+     "<b>100:1</b><br/><font size='7' color='#5A6678'>1.00% margin</font>",
      "________"],
 ]
 spec_rows = [[Paragraph(c, TD) for c in r] for r in spec_rows]
 story.append(data_table(
     ["INSTRUMENT", "STANDARD LOT (1.00)", "QUOTED IN",
-     "TYPICAL VALUE / LOT", "MIN. STEP", "YOUR BROKER"],
-    spec_rows, [72, 82, 86, 86, 46, CONTENT_W - 372]))
+     "TYPICAL VALUE / LOT", "YOUR LEVERAGE", "YOUR BROKER"],
+    spec_rows, [72, 82, 86, 86, 74, CONTENT_W - 400]))
 story.append(Spacer(1, 4))
 story.append(Paragraph(
     "The Dow is deliberately shown as a range. Some brokers quote $1 per point "
@@ -460,33 +473,57 @@ story.append(Paragraph(
 story.append(PageBreak())
 story.append(Paragraph("Worked cycle - $10,000 account, $100 risk per asset", H2))
 work = [
-    ("XAUUSD", "$3,412.00", "$3,400.00", "$12.00", 100.0, "lots"),
-    ("WTIUSD", "$78.40", "$77.20", "$1.20", 1000.0, "lots"),
-    ("XAGUSD", "$38.90", "$38.30", "$0.60", 5000.0, "lots"),
-    ("BTCUSD", "$92,400", "$90,600", "$1,800", 1.0, "BTC"),
-    ("DJIUSD", "44,150", "43,850", "300 pts", 1.0, "lots @ $1/pt"),
+    ("XAUUSD", "$3,412.00", "$3,400.00", "$12.00", 3412.0, 100.0, 100, "lots"),
+    ("WTIUSD", "$78.40", "$77.20", "$1.20", 78.40, 1000.0, 100, "lots"),
+    ("XAGUSD", "$38.90", "$38.30", "$0.60", 38.90, 5000.0, 100, "lots"),
+    ("BTCUSD", "$92,400", "$90,600", "$1,800", 92400.0, 1.0, 5, "BTC"),
+    ("DJIUSD", "44,150", "43,850", "300 pts", 44150.0, 1.0, 100, "lots"),
 ]
 work_rows = []
-for name, entry, stop, dist, vpu, unit in work:
+tot_notional = tot_margin = 0.0
+for name, entry, stop, dist, px, vpu, lev, unit in work:
     d = float(dist.replace("$", "").replace(",", "").replace(" pts", ""))
     size = 100.0 / (d * vpu)
+    notional = size * vpu * px
+    margin = notional / lev
+    tot_notional += notional
+    tot_margin += margin
+    hot = lev < 20
     work_rows.append([
         Paragraph("<b>%s</b>" % name, TD), entry, stop, dist,
-        Paragraph("$%s" % ("{:,.2f}".format(vpu)), TD),
         Paragraph("<b>%.3f</b> <font size='7' color='#5A6678'>%s</font>"
                   % (size, unit), TD),
-        Paragraph("<b>$100</b>", TD)])
-story.append(data_table(
-    ["ASSET", "ENTRY", "STOP", "STOP DIST.", "VALUE / UNIT", "POSITION SIZE",
-     "RISK"],
-    work_rows,
-    [58, 62, 62, 60, 66, CONTENT_W - 348 - 40, 40]))
+        Paragraph("<b>$100</b>", TD),
+        Paragraph("${:,.0f}".format(notional), TD),
+        Paragraph("%d:1" % lev, TD),
+        Paragraph("<font color='%s'><b>$%s</b></font>"
+                  % ("#9B3535" if hot else "#101826",
+                     "{:,.0f}".format(margin)), TD)])
+work_rows.append([
+    Paragraph("<b>TOTAL</b>", TDb), "", "", "", "",
+    Paragraph("<b>$500</b>", TDb),
+    Paragraph("<b>${:,.0f}</b>".format(tot_notional), TDb),
+    Paragraph("<b>%.1f:1</b>" % (tot_notional / 10000.0), TDb),
+    Paragraph("<b>${:,.0f}</b>".format(tot_margin), TDb)])
+wkw = [54, 58, 58, 54, 68, 38, 60, 44]
+wkw.append(CONTENT_W - sum(wkw))
+wt = data_table(
+    ["ASSET", "ENTRY", "STOP", "STOP DIST.", "POSITION SIZE", "RISK",
+     "NOTIONAL", "LEV.", "MARGIN"],
+    work_rows, wkw)
+wt.setStyle(TableStyle([
+    ("BACKGROUND", (0, len(work_rows)), (-1, len(work_rows)), GOLD_LT),
+    ("LINEABOVE", (0, len(work_rows)), (-1, len(work_rows)), 1.0, NAVY),
+]))
+story.append(wt)
 story.append(Spacer(1, 4))
 story.append(Paragraph(
-    "Prices above are illustrative placeholders for the arithmetic. Note what "
-    "the table demonstrates: five completely different instruments, five wildly "
-    "different position sizes, and identical risk on every one. That is the "
-    "entire point of the method.", Small))
+    "Prices above are illustrative placeholders for the arithmetic. Note the "
+    "two things the table demonstrates. First, five completely different "
+    "instruments, five wildly different position sizes, and identical risk on "
+    "every one - that is the point of the method. Second, the bitcoin row: the "
+    "same $100 of risk as gold, but $1,027 of margin against gold's $284, "
+    "because of the 5:1. Section 04 takes that apart.", Small))
 
 story.append(Paragraph("The 1% in cash, by account size", H2))
 sz_rows = []
@@ -516,33 +553,203 @@ story.append(Paragraph(
     "The last column is the only check that matters: every row must read the "
     "same number.", Body))
 ws_rows = []
-for a in ["XAUUSD", "WTIUSD", "XAGUSD", "BTCUSD", "DJIUSD"]:
-    ws_rows.append([Paragraph("<b>%s</b>" % a, TD)] + [""] * 6)
-wsw = [58, 62, 62, 62, 66, 82]
+for a, lev in [("XAUUSD", "100:1"), ("WTIUSD", "100:1"), ("XAGUSD", "100:1"),
+               ("BTCUSD", "5:1"), ("DJIUSD", "100:1")]:
+    ws_rows.append([Paragraph("<b>%s</b>" % a, TD)] + [""] * 4
+                   + [Paragraph("<font size='7.4'>%s</font>" % lev, TD), "", ""])
+wsw = [54, 56, 56, 56, 70, 36, 62]
 wsw.append(CONTENT_W - sum(wsw))
 ws = data_table(
-    ["ASSET", "ENTRY", "STOP", "STOP DIST.", "VALUE / UNIT", "POSITION SIZE",
-     "RISK = 1R?"],
+    ["ASSET", "ENTRY", "STOP", "STOP DIST.", "POSITION SIZE", "LEV.",
+     "RISK = 1R?", "MARGIN"],
     ws_rows, wsw, zebra=False)
 ws.setStyle(TableStyle([
     ("INNERGRID", (0, 0), (-1, -1), 0.5, RULE),
-    ("TOPPADDING", (0, 1), (-1, -1), 12),
-    ("BOTTOMPADDING", (0, 1), (-1, -1), 12),
+    ("TOPPADDING", (0, 1), (-1, -1), 7),
+    ("BOTTOMPADDING", (0, 1), (-1, -1), 7),
 ]))
 story.append(ws)
 story.append(Spacer(1, 8))
 story.append(callout("THE SANITY CHECK THAT CATCHES EVERY SIZING ERROR", [Paragraph(
-    "Once the size is calculated, multiply it back out: <b>position size x stop "
-    "distance x value per unit</b>. If that does not come back to 1R in cash, "
-    "the value-per-unit figure is wrong for your broker - and it will be wrong "
-    "on every trade you place in this instrument until you fix it. This is the "
-    "single most common way a disciplined 1% plan quietly becomes a 3% one.",
-    Body)]))
+    "Multiply the size back out: <b>position size x stop distance x value per "
+    "unit</b>. If it does not come back to 1R in cash, the value-per-unit "
+    "figure is wrong for your broker - and it will stay wrong on every trade "
+    "in that instrument until you fix it.", Body)]))
 story.append(PageBreak())
 
-# ------------------------------------------------ 4. STOPS AND TARGETS ----
+# ------------------------------------------------ 4. LEVERAGE / MARGIN ----
 story += section(
-    "04", "Placing the Stop and the Target",
+    "04", "Leverage, Margin, and What They Do Not Change",
+    "Leverage does not change what you risk. The stop sets the loss and the 1% "
+    "rule sets the size; that arithmetic is identical at 5:1 and at 100:1. What "
+    "leverage decides is how much cash the broker holds against the position - "
+    "and therefore whether you can hold all five slots at once.")
+
+story.append(callout("THE DISTINCTION THE WHOLE SECTION RESTS ON", [Paragraph(
+    "<b>Risk is stop distance times position size.</b> It is 1% of equity on "
+    "every trade in this plan, at any leverage. <b>Margin is notional divided "
+    "by leverage.</b> It is money set aside, not money at risk - you get it "
+    "back when the position closes. Raising leverage from 20:1 to 100:1 does "
+    "not make a trade more dangerous under these rules. It frees up cash. The "
+    "danger is what people do with the freed-up cash.", Body)]))
+
+story.append(Paragraph("Your leverage, asset by asset", H2))
+lev_rows = [
+    ["<b>XAUUSD</b>", "100:1", "1.00%", "$100", "Never binding"],
+    ["<b>WTIUSD</b>", "100:1", "1.00%", "$100", "Never binding"],
+    ["<b>XAGUSD</b>", "100:1", "1.00%", "$100", "Never binding"],
+    ["<b>DJIUSD</b>", "100:1", "1.00%", "$100", "Never binding"],
+    ["<b>BTCUSD</b>", "<font color='#9B3535'><b>5:1</b></font>", "20.00%", "$5",
+     "<font color='#9B3535'><b>The binding constraint</b></font>"],
+]
+story.append(data_table(
+    ["ASSET", "LEVERAGE", "MARGIN RATE", "NOTIONAL PER $1 OF MARGIN",
+     "EFFECT ON THIS PLAN"],
+    [[Paragraph(c, TD) for c in r] for r in lev_rows],
+    [66, 70, 76, 148, CONTENT_W - 360]))
+story.append(Spacer(1, 3))
+story.append(Paragraph(
+    "Bitcoin is margined twenty times harder than the rest of the basket. That "
+    "is the only thing leverage changes about this plan.", Small))
+
+story.append(Paragraph("The margin formula", H2))
+story.append(formula_box(
+    "MARGIN USED (% of equity)  =  100  /  (Stop % of price  x  Leverage)",
+    "For a position already sized to risk exactly 1%. Stop % of price is the "
+    "stop distance divided by the entry price - for example a $12 stop on "
+    "$3,412 gold is 0.352%."))
+story.append(Spacer(1, 8))
+story.append(Paragraph(
+    "It says something counter-intuitive: <b>the tighter your stop, the more "
+    "margin the trade consumes.</b> A tight stop means a large position for "
+    "the same 1% risk, and a large position is a large notional to margin. At "
+    "100:1 that never matters; at 5:1 it decides whether the trade exists.",
+    Body))
+
+story.append(Paragraph("What a 1%-risk position costs in margin", H2))
+mm_rows = []
+for stop_pct in (0.25, 0.50, 0.75, 1.00, 1.50, 2.00, 3.00):
+    m100 = 100.0 / (stop_pct * 100)
+    m5 = 100.0 / (stop_pct * 5)
+    if m5 > 30:
+        cell5 = "<font color='#9B3535'><b>%.2f%%</b></font>" % m5
+        verdict = ("<font color='#9B3535'>Breaks the 30% margin ceiling. "
+                   "Not tradeable.</font>")
+    elif m5 > 20:
+        cell5 = "<font color='#9B3535'>%.2f%%</font>" % m5
+        verdict = ("<font color='#9B3535'>Over the 20% single-position cap. "
+                   "Widen the stop or skip.</font>")
+    else:
+        cell5 = "<font color='#2F6F4F'>%.2f%%</font>" % m5
+        verdict = "<font color='#2F6F4F'>Within both caps.</font>"
+    mm_rows.append([Paragraph("<b>%.2f%%</b>" % stop_pct, TD),
+                    Paragraph("%.2f%%" % m100, TD),
+                    Paragraph(cell5, TD),
+                    Paragraph(verdict, TD)])
+story.append(data_table(
+    ["STOP AS % OF PRICE", "MARGIN AT 100:1", "MARGIN AT 5:1 (BTC)",
+     "BITCOIN VERDICT"],
+    mm_rows, [96, 92, 104, CONTENT_W - 292]))
+story.append(Spacer(1, 4))
+story.append(Paragraph(
+    "Read the two middle columns against each other. At 100:1 the margin never "
+    "passes 4% however you place the stop; at 5:1, a quarter-percent stop on "
+    "bitcoin demands 80% of the account for the same $100 of risk.", Small))
+story.append(PageBreak())
+
+story.append(Paragraph("The bitcoin stop floor", H2))
+story.append(Paragraph(
+    "Rearranging the formula gives the tightest bitcoin stop that stays inside "
+    "a chosen margin budget. This is the number to carry in your head:", Body))
+OTHER_FOUR = 5.61   # margin the other four positions need in the Section 03 cycle
+btc_rows = []
+for cap in (10, 15, 20, 25):
+    min_stop = 100.0 / (cap * 5)
+    left = 30.0 - cap
+    if left >= OTHER_FOUR * 1.5:
+        verdict = ("<font color='#2F6F4F'>Leaves %.0f%% for the other four. "
+                   "Comfortable.</font>" % left)
+    elif left >= OTHER_FOUR:
+        verdict = ("Leaves %.0f%% for the other four, which need about %.1f%%. "
+                   "Workable." % (left, OTHER_FOUR))
+    else:
+        verdict = ("<font color='#9B3535'>Leaves only %.0f%% for the other "
+                   "four, which need about %.1f%%. Breaks Rule 10.</font>"
+                   % (left, OTHER_FOUR))
+    btc_rows.append([
+        Paragraph("<b>%d%% of equity</b>" % cap, TD),
+        Paragraph("<b>%.2f%%</b> of price" % min_stop, TD),
+        Paragraph("about $%s on a $92,400 bitcoin"
+                  % "{:,.0f}".format(92400 * min_stop / 100), TD),
+        Paragraph(verdict, TD)])
+story.append(data_table(
+    ["IF BITCOIN MARGIN IS CAPPED AT", "MINIMUM STOP", "IN CASH TERMS",
+     "WHAT IT LEAVES FOR THE OTHER FOUR"],
+    btc_rows, [126, 84, 140, CONTENT_W - 350]))
+story.append(Spacer(1, 6))
+story.append(callout("RULE 10, IN ONE LINE", [Paragraph(
+    "<b>Never take a bitcoin trade with a stop tighter than 1.0% of price.</b> "
+    "At 5:1 that is the point where a single 1%-risk position starts eating a "
+    "fifth of the account in margin. Bitcoin's daily range is wide enough that "
+    "a stop below 1% was usually too tight on its own merits anyway - the "
+    "leverage constraint and the volatility constraint happen to agree here, "
+    "which is convenient. Follow it whichever reason you prefer.", Body)]))
+
+story.append(callout("THE NUMBER TO TAKE AWAY FROM THIS SECTION", [Paragraph(
+    "Look back at the margin column of the worked cycle in Section 03. Across "
+    "all five positions it totals $1,588 on a $10,000 account - 15.9% of "
+    "equity, against $61,300 of notional, an effective account leverage of "
+    "6.1:1. <b>Bitcoin is 8% of that notional and 65% of that margin.</b> It "
+    "carries exactly the same $100 of risk as gold and ties up three and a "
+    "half times the cash of the other four positions combined. Nothing is "
+    "wrong with that - it is what 5:1 means - but it is the position to drop "
+    "first when margin gets tight, and the reason bitcoin should never be the "
+    "trade you size last.", Body)]))
+story.append(Spacer(1, 4))
+
+story.append(Paragraph("Two things margin does genuinely put at risk", H2))
+story.append(Table([[
+    [Paragraph("1. THE MARGIN CALL", H3),
+     Paragraph("Margin level is equity divided by used margin. At the 15.88% "
+               "above it opens at 630%, and brokers typically warn near 100% "
+               "and force-close near 50%. Even at the full 30% ceiling in Rule "
+               "10, the account would have to fall roughly 85% before a "
+               "forced liquidation - which the circuit breakers in Rule 8 stop "
+               "long before. Keep margin under 30% and this risk stays "
+               "theoretical.", Body)],
+    [Paragraph("2. FINANCING ON NOTIONAL", H3),
+     Paragraph("Overnight financing is charged on <b>notional, not margin</b>. "
+               "The cycle above carries $61,300 of notional on a $10,000 "
+               "account, so at a 4% annual blended rate that is roughly $6.70 "
+               "a night, or about 0.07R per night across the five positions. "
+               "Over a four-day hold that is a quarter of an R - a real bite "
+               "out of a 3R target. Check your actual swap rates; on some "
+               "instruments and directions they are positive.", Body)],
+]], colWidths=[CONTENT_W / 2.0] * 2, hAlign="LEFT",
+    style=TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (0, 0), 0),
+        ("RIGHTPADDING", (-1, 0), (-1, 0), 0),
+        ("LEFTPADDING", (1, 0), (-1, 0), 12),
+        ("RIGHTPADDING", (0, 0), (-2, 0), 12),
+        ("LINEBEFORE", (1, 0), (-1, 0), 0.7, RULE),
+    ])))
+
+story.append(Spacer(1, 10))
+story.append(callout("WHAT LEVERAGE TEMPTS YOU TO DO", [Paragraph(
+    "At 100:1 a $10,000 account can open a million dollars of gold. The 1% "
+    "rule means you will open about $28,000 of it. That gap - between what the "
+    "broker permits and what the plan permits - is where almost every blown "
+    "retail account lives. Leverage is not what empties an account; it is what "
+    "makes it possible to empty one in an afternoon. The only defence is Rule "
+    "6: size is an output of the stop, never a function of what the margin "
+    "calculator says you could afford.",
+    Body)], tint=colors.HexColor("#FBF1F1"), bar=RED))
+story.append(PageBreak())
+
+# ------------------------------------------------ 5. STOPS AND TARGETS ----
+story += section(
+    "05", "Placing the Stop and the Target",
     "The 1:3 floor is only honest if the stop is placed where the trade is "
     "genuinely wrong. A stop tightened purely to manufacture a 1:5 ratio is not "
     "a better trade, it is a worse one with better arithmetic on paper.")
@@ -621,9 +828,9 @@ story.append(callout("THE ONE THING THIS STRUCTURE COSTS YOU", [Paragraph(
     "harder.", Body)]))
 story.append(PageBreak())
 
-# -------------------------------------------------- 5. ASSET PLAYBOOK -----
+# -------------------------------------------------- 6. ASSET PLAYBOOK -----
 story += section(
-    "05", "The Five Assets",
+    "06", "The Five Assets",
     "Same 1% on each, but they do not behave the same way. Each profile below "
     "is the reason a stop on one instrument cannot be reasoned about using the "
     "habits of another.")
@@ -711,9 +918,9 @@ for tick, name, character, hours, drivers, warning in assets:
     story.append(KeepTogether([head, grid, warn, Spacer(1, 9)]))
 story.append(PageBreak())
 
-# ---------------------------------------------- 6. CORRELATION / HEAT -----
+# ---------------------------------------------- 7. CORRELATION / HEAT -----
 story += section(
-    "06", "Correlation: Why 5% Is Not Really 5%",
+    "07", "Correlation: Why 5% Is Not Really 5%",
     "Five positions of 1% each are only five independent risks if the five "
     "assets are independent. These five are not. Gold and silver are close to "
     "the same trade, and the Dow, oil and bitcoin all lean on the same "
@@ -774,9 +981,9 @@ story.append(callout("THE PRACTICAL VERSION", [Paragraph(
     "quietly stopped protecting you.", Body)]))
 story.append(PageBreak())
 
-# ------------------------------------------------- 7. THE WEEKLY CYCLE ----
+# ------------------------------------------------- 8. THE WEEKLY CYCLE ----
 story += section(
-    "07", "The Cycle",
+    "08", "The Cycle",
     "One week, one pass through the five assets. The work is front-loaded into "
     "the weekend so that execution during the week is mechanical rather than "
     "improvised.")
@@ -856,9 +1063,9 @@ story.append(data_table(["METRIC", "THIS CYCLE", "READING"],
                         sc_rows, [160, 96, CONTENT_W - 256]))
 story.append(PageBreak())
 
-# ----------------------------------------------------- 8. TRADE LOG ------
+# ----------------------------------------------------- 9. TRADE LOG ------
 story += section(
-    "08", "Cycle Log",
+    "09", "Cycle Log",
     "One row per asset per week. Print it, or rebuild it in a spreadsheet - "
     "but Rule 9 means an unlogged trade did not happen.")
 
@@ -909,9 +1116,9 @@ story.append(callout("GRADE THE PROCESS, NOT THE PROFIT", [Paragraph(
     "honestly and read down it before every new cycle.", Body)]))
 story.append(PageBreak())
 
-# ------------------------------------------------- 9. CHECKLISTS ---------
+# ------------------------------------------------- 10. CHECKLISTS ---------
 story += section(
-    "09", "Pre-Flight Checks",
+    "10", "Pre-Flight Checks",
     "Run these in order. Any unticked box on the pre-trade list means the "
     "order does not get placed.")
 
@@ -927,6 +1134,9 @@ left += checklist("BEFORE THE ORDER", [
     "Correlation caps C1 to C4 still satisfied after this fill.",
     "No tier-one data release inside the trade's expected horizon.",
     "Total open heat after this fill is 5R or less.",
+    "Margin for this fill keeps total committed margin at or under 30% of "
+    "equity, and this position under 20%.",
+    "If bitcoin: the stop is at least 1.0% of price.",
 ], colw=CONTENT_W / 2 - 8)
 left.append(Spacer(1, 8))
 left += checklist("WHILE IT IS OPEN", [
@@ -949,6 +1159,7 @@ right.append(Spacer(1, 8))
 right += checklist("CIRCUIT BREAKERS - CHECK EVERY DAY", [
     "Cycle drawdown is better than -3R.",
     "Month-to-date drawdown is better than -6R.",
+    "Margin level is comfortably above 300%.",
     "If -6R is breached: size is halved to 0.5% until a new equity high.",
     "Fewer than three consecutive losing weeks.",
     "If three: stop and audit the system before risking more capital.",
@@ -974,7 +1185,7 @@ fails = [
      "ceiling becomes a 5% expected loss."),
     ("Treating correlated positions as diversified", "Long gold and long "
      "silver into the same dollar move is a 2% bet on one idea, not two 1% "
-     "bets on two. Section 06 exists because this is the failure that arrives "
+     "bets on two. Section 07 exists because this is the failure that arrives "
      "disguised as good discipline."),
 ]
 fr = [[Paragraph("<b>%s</b>" % a, TD), Paragraph(b, TD)] for a, b in fails]

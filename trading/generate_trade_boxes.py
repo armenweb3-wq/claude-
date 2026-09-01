@@ -33,8 +33,8 @@ TRADES = {
     "WTIUSD": dict(side="BUY", entry=88.41, volume=2.8, margin=2475.0,
                    stop=87.56, target=91.20, moved_to_entry=True,
                    closed=89.93),
-    # entry not supplied yet - risk, R:R and the result stay blank until it is
-    "XAGUSD": dict(side="SELL", volume=0.66, stop=65.00, target=62.00),
+    "XAGUSD": dict(side="SELL", entry=64.31, volume=0.66, stop=65.00,
+                   target=62.00, leverage=100),
 }
 
 # ----------------------------------------------------------------- palette --
@@ -87,6 +87,10 @@ def row(asset, name, vpl):
     closed = t.get("closed")
     short = side == "SELL"
 
+    margin = t.get("margin")
+    if margin is None and entry is not None and vol and t.get("leverage"):
+        margin = vol * vpl * entry / t["leverage"]
+
     risk = rr = res_cash = res_r = None
     if None not in (entry, stop, vol):
         risk = abs(entry - stop) * vol * vpl
@@ -106,7 +110,7 @@ def row(asset, name, vpl):
         cellp(side or "", col=GREEN if side == "BUY" else RED, size=8.6),
         cellp("%.2f" % entry if entry is not None else ""),
         cellp("%g" % vol if vol is not None else ""),
-        cellp(usd(t["margin"]) if t.get("margin") is not None else ""),
+        cellp(usd(margin) if margin is not None else ""),
         cellp("%.2f" % stop if stop is not None else ""),
         cellp("%.2f" % target if target is not None else ""),
         cellp(usd(risk) if risk is not None else ""),

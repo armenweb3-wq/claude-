@@ -69,3 +69,26 @@ Add a trade to the `TRADES` dict at the top of the script and re-run. Any
 field you omit prints blank; any asset you omit leaves the whole row blank.
 Risk, R:R and both result columns are computed from entry/stop/volume/target
 and the `closed` price — never typed in. 1R is 1% of `FREE_MARGIN`.
+
+---
+
+## card/trader-tok-card.png
+
+A shareable Trader Tok performance card (1080x1350, rendered at 2x), built by
+`generate_card.py` via headless Chromium.
+
+```bash
+pip install playwright        # chromium is already on the image
+python3 trading/generate_card.py
+```
+
+The trade lives in the `TRADE` dict. Leave `closed` as `None` and the card
+shows the position as it stands — risk:reward as the hero, levels, and the
+money at target. Set `closed` to the exit price and it becomes a PnL card:
+realised profit/loss, R multiple, and ROI on margin, with a marker on the
+ladder where the trade closed. `TAKEN` drives the cycle strip
+(`open` / `win` / `loss` per asset).
+
+`generate_card.py` also writes the `.html` it screenshotted, so the layout can
+be tweaked in a browser before re-rendering. To use a real logo file, replace
+the inline `LOGO` SVG with an `<img>` pointing at it.

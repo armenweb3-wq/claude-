@@ -1,0 +1,160 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { width:1080px; height:1350px; background:#080B10; overflow:hidden;
+        font-family:"Liberation Sans","DejaVu Sans",sans-serif;
+        -webkit-font-smoothing:antialiased; }
+.card { position:relative; width:1080px; height:1350px;
+  background:
+    radial-gradient(1100px 620px at 78% -6%, rgba(194,150,63,.20), transparent 62%),
+    radial-gradient(900px 700px at 8% 108%, rgba(20,184,125,.12), transparent 60%),
+    linear-gradient(168deg,#0C1119 0%,#0A0E14 46%,#080B10 100%);
+  overflow:hidden; }
+.grid { position:absolute; inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.030) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.030) 1px,transparent 1px);
+  background-size:60px 60px; }
+.candles { position:absolute; left:0; right:0; bottom:236px; height:600px;
+  opacity:.17; filter:blur(.4px);
+  -webkit-mask-image:linear-gradient(to top,#000 8%,rgba(0,0,0,.55) 55%,transparent 96%); }
+.glow { position:absolute; left:50%; top:512px; transform:translateX(-50%);
+  width:760px; height:300px; border-radius:50%;
+  background:radial-gradient(ellipse at center,#E8C173 0%,transparent 68%);
+  opacity:.16; filter:blur(28px); }
+.inner { position:relative; padding:64px 66px 56px; height:100%;
+  display:flex; flex-direction:column; }
+
+.top { display:flex; align-items:center; justify-content:space-between; }
+.brand { display:flex; align-items:center; gap:16px; }
+.wm { font-size:26px; font-weight:700; letter-spacing:6.5px; color:#F2F5F9; }
+.wm span { color:#C2963F; }
+.tag { font-size:11.5px; letter-spacing:4.2px; color:#6B7A90; font-weight:700;
+        margin-top:5px; }
+.badge { font-size:12px; font-weight:700; letter-spacing:2.6px;
+  padding:9px 18px; border-radius:999px; }
+.badge.open { color:#E8C173; border:1.5px solid rgba(232,193,115,.42);
+  background:rgba(232,193,115,.09); }
+.badge.closed { color:#14B87D; border:1.5px solid rgba(20,184,125,.45);
+  background:rgba(20,184,125,.10); }
+
+.rule { height:1px; margin:44px 0 46px;
+  background:linear-gradient(90deg,rgba(194,150,63,.55),rgba(255,255,255,.07) 55%,transparent); }
+
+.pair { display:flex; align-items:baseline; gap:20px; flex-wrap:wrap; }
+.sym { font-size:54px; font-weight:700; color:#fff; letter-spacing:-.5px; }
+.name { font-size:15px; letter-spacing:3.4px; color:#77869C; font-weight:700; }
+.pills { display:flex; gap:11px; margin-top:20px; }
+.pill { font-size:13px; font-weight:700; letter-spacing:1.9px; padding:8px 15px;
+  border-radius:8px; color:#AFBDCE; background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.09); }
+.pill.side { color:#14B87D; background:rgba(20,184,125,.12);
+  border-color:rgba(20,184,125,.30); }
+
+.hero { margin-top:52px; }
+.hlabel { font-size:12.5px; letter-spacing:4.6px; color:#6B7A90; font-weight:700; }
+.hval { font-size:132px; line-height:1.02; font-weight:700; color:#E8C173;
+  letter-spacing:-3px; margin-top:12px; }
+.hsub { margin-top:20px; display:flex; align-items:baseline; gap:18px; }
+.pnl { font-size:42px; font-weight:700; letter-spacing:-.6px; }
+.pnl.up { color:#14B87D; } .pnl.dn { color:#E2495B; }
+.pnl-r { font-size:19px; color:#8695AB; font-weight:700; letter-spacing:1.2px; }
+
+.cycle { margin-top:auto; }
+.clabel { font-size:11.5px; letter-spacing:4.2px; color:#5E6D83; font-weight:700; }
+.chips { display:flex; gap:13px; margin-top:18px; }
+.chip { flex:1; text-align:center; padding:19px 0 17px; border-radius:13px;
+  font-size:21px; font-weight:700; letter-spacing:2.4px;
+  color:#3E4A5C; background:rgba(255,255,255,.035);
+  border:1.5px solid rgba(255,255,255,.055); }
+.chip.live { color:#0B0E13; background:linear-gradient(160deg,#E8C173,#C2963F);
+  border-color:#E8C173; box-shadow:0 0 34px rgba(232,193,115,.30); }
+.chip.win { color:#14B87D; background:rgba(20,184,125,.13);
+  border-color:rgba(20,184,125,.42); }
+.chip.loss { color:#E2495B; background:rgba(226,73,91,.11);
+  border-color:rgba(226,73,91,.38); }
+.ladder { margin-top:58px; margin-bottom:0; }
+.track { position:relative; height:12px; border-radius:999px;
+  background:rgba(255,255,255,.07); overflow:visible; }
+.seg { position:absolute; top:0; height:12px; }
+.seg.risk { background:linear-gradient(90deg,rgba(226,73,91,.35),rgba(226,73,91,.85));
+  border-radius:999px 0 0 999px; }
+.seg.rew { background:linear-gradient(90deg,rgba(20,184,125,.85),rgba(20,184,125,.35));
+  border-radius:0 999px 999px 0; }
+.tick { position:absolute; top:-9px; width:3px; height:30px; background:#EDF1F6;
+  border-radius:2px; transform:translateX(-50%); box-shadow:0 0 14px rgba(255,255,255,.5); }
+.closemark { position:absolute; top:-15px; width:22px; height:42px;
+  border:3px solid #E8C173; border-radius:8px; transform:translateX(-50%);
+  box-shadow:0 0 20px rgba(232,193,115,.55); }
+.lbls { position:relative; height:52px; margin-top:20px; }
+.l { position:absolute; }
+.l b { display:block; font-size:23px; font-weight:700; color:#EDF1F6; }
+.l span { display:block; font-size:10.5px; letter-spacing:2.6px; color:#67768C;
+  font-weight:700; margin-top:5px; }
+.l.c { transform:translateX(-50%); text-align:center; }
+.l.r { right:0; text-align:right; }
+.stats { margin-top:56px; display:grid; grid-template-columns:repeat(3,1fr);
+  gap:1px; background:rgba(255,255,255,.075);
+  border:1px solid rgba(255,255,255,.075); border-radius:16px; overflow:hidden; }
+.stat { background:rgba(10,14,20,.72); padding:22px 24px 20px; }
+.k { font-size:11px; letter-spacing:2.6px; color:#67768C; font-weight:700; }
+.v { font-size:29px; font-weight:700; color:#EDF1F6; margin-top:9px;
+      letter-spacing:-.3px; }
+.s { font-size:12px; color:#6E7D93; margin-top:5px; letter-spacing:.4px; }
+
+.foot { margin-top:30px; display:flex; align-items:center;
+  justify-content:space-between; }
+.handle { font-size:17px; font-weight:700; color:#C2963F; letter-spacing:2.6px; }
+.date { font-size:13px; color:#5E6D83; letter-spacing:2px; font-weight:700; }
+</style></head><body>
+<div class="card">
+  <div class="grid"></div>
+  <div class="candles"><svg viewBox="0 0 1080 560" width="1080" height="560" preserveAspectRatio="none"><line x1="11.7" y1="268.4" x2="11.7" y2="335.0" stroke="#E2495B" stroke-width="2.2"/><rect x="5.4" y="279.6" width="12.7" height="22.3" fill="#E2495B" rx="1.5"/><line x1="35.2" y1="273.8" x2="35.2" y2="382.1" stroke="#E2495B" stroke-width="2.2"/><rect x="28.9" y="301.9" width="12.7" height="59.6" fill="#E2495B" rx="1.5"/><line x1="58.7" y1="334.7" x2="58.7" y2="427.6" stroke="#E2495B" stroke-width="2.2"/><rect x="52.4" y="361.5" width="12.7" height="59.9" fill="#E2495B" rx="1.5"/><line x1="82.2" y1="412.7" x2="82.2" y2="429.9" stroke="#14B87D" stroke-width="2.2"/><rect x="75.8" y="420.4" width="12.7" height="2.5" fill="#14B87D" rx="1.5"/><line x1="105.7" y1="378.2" x2="105.7" y2="430.4" stroke="#14B87D" stroke-width="2.2"/><rect x="99.3" y="419.0" width="12.7" height="2.5" fill="#14B87D" rx="1.5"/><line x1="129.1" y1="387.0" x2="129.1" y2="493.7" stroke="#E2495B" stroke-width="2.2"/><rect x="122.8" y="419.0" width="12.7" height="28.5" fill="#E2495B" rx="1.5"/><line x1="152.6" y1="397.2" x2="152.6" y2="494.9" stroke="#14B87D" stroke-width="2.2"/><rect x="146.3" y="419.2" width="12.7" height="28.4" fill="#14B87D" rx="1.5"/><line x1="176.1" y1="377.0" x2="176.1" y2="490.0" stroke="#E2495B" stroke-width="2.2"/><rect x="169.7" y="419.2" width="12.7" height="53.5" fill="#E2495B" rx="1.5"/><line x1="199.6" y1="462.9" x2="199.6" y2="528.0" stroke="#E2495B" stroke-width="2.2"/><rect x="193.2" y="472.7" width="12.7" height="37.2" fill="#E2495B" rx="1.5"/><line x1="223.0" y1="428.6" x2="223.0" y2="540.0" stroke="#14B87D" stroke-width="2.2"/><rect x="216.7" y="441.1" width="12.7" height="68.8" fill="#14B87D" rx="1.5"/><line x1="246.5" y1="378.7" x2="246.5" y2="469.7" stroke="#14B87D" stroke-width="2.2"/><rect x="240.2" y="399.7" width="12.7" height="41.5" fill="#14B87D" rx="1.5"/><line x1="270.0" y1="392.4" x2="270.0" y2="462.0" stroke="#E2495B" stroke-width="2.2"/><rect x="263.7" y="399.7" width="12.7" height="48.7" fill="#E2495B" rx="1.5"/><line x1="293.5" y1="377.0" x2="293.5" y2="466.7" stroke="#14B87D" stroke-width="2.2"/><rect x="287.1" y="400.4" width="12.7" height="48.0" fill="#14B87D" rx="1.5"/><line x1="317.0" y1="343.3" x2="317.0" y2="418.1" stroke="#14B87D" stroke-width="2.2"/><rect x="310.6" y="367.7" width="12.7" height="32.7" fill="#14B87D" rx="1.5"/><line x1="340.4" y1="267.8" x2="340.4" y2="383.0" stroke="#14B87D" stroke-width="2.2"/><rect x="334.1" y="303.0" width="12.7" height="64.7" fill="#14B87D" rx="1.5"/><line x1="363.9" y1="246.2" x2="363.9" y2="346.0" stroke="#14B87D" stroke-width="2.2"/><rect x="357.6" y="273.9" width="12.7" height="29.2" fill="#14B87D" rx="1.5"/><line x1="387.4" y1="204.4" x2="387.4" y2="321.4" stroke="#14B87D" stroke-width="2.2"/><rect x="381.1" y="221.6" width="12.7" height="52.2" fill="#14B87D" rx="1.5"/><line x1="410.9" y1="198.7" x2="410.9" y2="304.4" stroke="#E2495B" stroke-width="2.2"/><rect x="404.5" y="221.6" width="12.7" height="45.0" fill="#E2495B" rx="1.5"/><line x1="434.3" y1="240.6" x2="434.3" y2="314.3" stroke="#E2495B" stroke-width="2.2"/><rect x="428.0" y="266.6" width="12.7" height="41.4" fill="#E2495B" rx="1.5"/><line x1="457.8" y1="232.2" x2="457.8" y2="337.7" stroke="#14B87D" stroke-width="2.2"/><rect x="451.5" y="270.3" width="12.7" height="37.7" fill="#14B87D" rx="1.5"/><line x1="481.3" y1="183.7" x2="481.3" y2="305.4" stroke="#14B87D" stroke-width="2.2"/><rect x="475.0" y="202.1" width="12.7" height="68.2" fill="#14B87D" rx="1.5"/><line x1="504.8" y1="149.9" x2="504.8" y2="226.7" stroke="#14B87D" stroke-width="2.2"/><rect x="498.4" y="179.9" width="12.7" height="22.2" fill="#14B87D" rx="1.5"/><line x1="528.3" y1="75.4" x2="528.3" y2="205.3" stroke="#14B87D" stroke-width="2.2"/><rect x="521.9" y="121.3" width="12.7" height="58.6" fill="#14B87D" rx="1.5"/><line x1="551.7" y1="85.1" x2="551.7" y2="156.7" stroke="#14B87D" stroke-width="2.2"/><rect x="545.4" y="92.4" width="12.7" height="29.0" fill="#14B87D" rx="1.5"/><line x1="575.2" y1="20.0" x2="575.2" y2="133.0" stroke="#14B87D" stroke-width="2.2"/><rect x="568.9" y="68.1" width="12.7" height="24.3" fill="#14B87D" rx="1.5"/><line x1="598.7" y1="46.6" x2="598.7" y2="136.5" stroke="#E2495B" stroke-width="2.2"/><rect x="592.4" y="68.1" width="12.7" height="34.5" fill="#E2495B" rx="1.5"/><line x1="622.2" y1="77.8" x2="622.2" y2="191.9" stroke="#E2495B" stroke-width="2.2"/><rect x="615.8" y="102.6" width="12.7" height="77.4" fill="#E2495B" rx="1.5"/><line x1="645.7" y1="172.8" x2="645.7" y2="282.4" stroke="#E2495B" stroke-width="2.2"/><rect x="639.3" y="179.9" width="12.7" height="64.2" fill="#E2495B" rx="1.5"/><line x1="669.1" y1="228.7" x2="669.1" y2="329.6" stroke="#E2495B" stroke-width="2.2"/><rect x="662.8" y="244.2" width="12.7" height="63.8" fill="#E2495B" rx="1.5"/><line x1="692.6" y1="248.5" x2="692.6" y2="332.2" stroke="#14B87D" stroke-width="2.2"/><rect x="686.3" y="256.6" width="12.7" height="51.3" fill="#14B87D" rx="1.5"/><line x1="716.1" y1="213.3" x2="716.1" y2="297.2" stroke="#E2495B" stroke-width="2.2"/><rect x="709.7" y="256.6" width="12.7" height="2.5" fill="#E2495B" rx="1.5"/><line x1="739.6" y1="191.5" x2="739.6" y2="279.5" stroke="#14B87D" stroke-width="2.2"/><rect x="733.2" y="208.3" width="12.7" height="48.4" fill="#14B87D" rx="1.5"/><line x1="763.0" y1="165.0" x2="763.0" y2="286.1" stroke="#E2495B" stroke-width="2.2"/><rect x="756.7" y="208.3" width="12.7" height="31.2" fill="#E2495B" rx="1.5"/><line x1="786.5" y1="227.2" x2="786.5" y2="318.2" stroke="#E2495B" stroke-width="2.2"/><rect x="780.2" y="239.5" width="12.7" height="63.9" fill="#E2495B" rx="1.5"/><line x1="810.0" y1="277.6" x2="810.0" y2="384.6" stroke="#E2495B" stroke-width="2.2"/><rect x="803.7" y="303.4" width="12.7" height="50.8" fill="#E2495B" rx="1.5"/><line x1="833.5" y1="349.5" x2="833.5" y2="423.0" stroke="#E2495B" stroke-width="2.2"/><rect x="827.1" y="354.2" width="12.7" height="45.8" fill="#E2495B" rx="1.5"/><line x1="857.0" y1="370.6" x2="857.0" y2="474.7" stroke="#E2495B" stroke-width="2.2"/><rect x="850.6" y="400.0" width="12.7" height="28.4" fill="#E2495B" rx="1.5"/><line x1="880.4" y1="378.2" x2="880.4" y2="460.0" stroke="#14B87D" stroke-width="2.2"/><rect x="874.1" y="405.4" width="12.7" height="23.0" fill="#14B87D" rx="1.5"/><line x1="903.9" y1="376.4" x2="903.9" y2="449.4" stroke="#14B87D" stroke-width="2.2"/><rect x="897.6" y="383.4" width="12.7" height="22.0" fill="#14B87D" rx="1.5"/><line x1="927.4" y1="300.8" x2="927.4" y2="423.0" stroke="#14B87D" stroke-width="2.2"/><rect x="921.1" y="343.7" width="12.7" height="39.7" fill="#14B87D" rx="1.5"/><line x1="950.9" y1="321.6" x2="950.9" y2="372.2" stroke="#E2495B" stroke-width="2.2"/><rect x="944.5" y="343.7" width="12.7" height="19.4" fill="#E2495B" rx="1.5"/><line x1="974.3" y1="335.4" x2="974.3" y2="370.6" stroke="#14B87D" stroke-width="2.2"/><rect x="968.0" y="342.7" width="12.7" height="20.4" fill="#14B87D" rx="1.5"/><line x1="997.8" y1="331.0" x2="997.8" y2="406.6" stroke="#E2495B" stroke-width="2.2"/><rect x="991.5" y="342.7" width="12.7" height="44.4" fill="#E2495B" rx="1.5"/><line x1="1021.3" y1="382.5" x2="1021.3" y2="465.1" stroke="#E2495B" stroke-width="2.2"/><rect x="1015.0" y="387.1" width="12.7" height="66.8" fill="#E2495B" rx="1.5"/><line x1="1044.8" y1="433.4" x2="1044.8" y2="516.7" stroke="#E2495B" stroke-width="2.2"/><rect x="1038.4" y="453.9" width="12.7" height="57.1" fill="#E2495B" rx="1.5"/><line x1="1068.3" y1="413.4" x2="1068.3" y2="522.1" stroke="#14B87D" stroke-width="2.2"/><rect x="1061.9" y="444.9" width="12.7" height="66.1" fill="#14B87D" rx="1.5"/></svg></div>
+  <div class="glow"></div>
+  <div class="inner">
+    <div class="top">
+      <div class="brand">
+<svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+  <rect x="1.4" y="1.4" width="49.2" height="49.2" rx="14"
+        stroke="#C2963F" stroke-width="2.6"/>
+  <line x1="16" y1="12" x2="16" y2="40" stroke="#14B87D" stroke-width="3"/>
+  <rect x="12" y="18" width="8" height="15" rx="2" fill="#14B87D"/>
+  <line x1="26" y1="16" x2="26" y2="44" stroke="#E8C173" stroke-width="3"/>
+  <rect x="22" y="24" width="8" height="13" rx="2" fill="#E8C173"/>
+  <line x1="36" y1="9" x2="36" y2="36" stroke="#14B87D" stroke-width="3"/>
+  <rect x="32" y="14" width="8" height="17" rx="2" fill="#14B87D"/>
+</svg>
+        <div><div class="wm">TRADER<span>TOK</span></div>
+             <div class="tag">PERFORMANCE</div></div></div>
+      <div class="badge open">OPEN</div>
+    </div>
+    <div class="rule"></div>
+    <div class="pair"><div class="sym">WTIUSD</div><div class="name">CRUDE OIL</div></div>
+    <div class="pills">
+      <div class="pill side">LONG</div>
+      <div class="pill">100x</div>
+      <div class="pill">1% RISK</div>
+    </div>
+    <div class="hero">
+      <div class="hlabel">RISK : REWARD</div>
+      <div class="hval">1 : 3.28</div>
+      <div class="hsub"><span class="pnl up">+$7,812</span><span class="pnl-r">at target</span></div>
+    </div>
+    <div class="cycle"><div class="clabel">THIS CYCLE</div><div class="chips"><div class="chip idle">XAU</div><div class="chip live">WTI</div><div class="chip idle">XAG</div><div class="chip idle">BTC</div><div class="chip idle">DJI</div></div></div>
+    
+<div class="ladder">
+  <div class="track">
+    <div class="seg risk" style="left:0; width:23.35%"></div>
+    <div class="seg rew"  style="left:23.35%; width:76.65%"></div>
+    <div class="tick" style="left:23.35%"></div>
+    
+  </div>
+  <div class="lbls">
+    <div class="l"><b>87.56</b><span>STOP</span></div>
+    <div class="l c" style="left:23.35%"><b>88.41</b><span>ENTRY</span></div>
+    <div class="l r"><b>91.20</b><span>TARGET</span></div>
+  </div>
+</div>
+    <div class="stats"><div class="stat"><div class="k">ENTRY</div><div class="v">88.41</div><div class="s">&nbsp;</div></div><div class="stat"><div class="k">STOP LOSS</div><div class="v">87.56</div><div class="s">at entry</div></div><div class="stat"><div class="k">TAKE PROFIT</div><div class="v">91.20</div><div class="s">&nbsp;</div></div><div class="stat"><div class="k">VOLUME</div><div class="v">2.8 lots</div><div class="s">$2,475 margin</div></div><div class="stat"><div class="k">RISK</div><div class="v">$2,380</div><div class="s">1% of free margin</div></div><div class="stat"><div class="k">CLOSED AT</div><div class="v">--</div><div class="s">&nbsp;</div></div></div>
+    <div class="foot"><div class="handle">@tradertok</div>
+      <div class="date">1 SEP 2026</div></div>
+  </div>
+</div></body></html>

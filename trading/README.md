@@ -67,8 +67,10 @@ python3 trading/generate_trade_boxes.py
 
 Add a trade to the `TRADES` dict at the top of the script and re-run. Any
 field you omit prints blank; any asset you omit leaves the whole row blank.
-Risk, R:R and both result columns are computed from entry/stop/volume/target
-and the `closed` price — never typed in. 1R is 1% of `FREE_MARGIN`.
+Risk, R:R, both result columns and the cycle total are computed from
+`side`/`entry`/`stop`/`volume`/`target` and the `closed` price — never typed
+in. Shorts (`side="SELL"`) invert the result calculation. 1R is 1% of
+`FREE_MARGIN`.
 
 ---
 

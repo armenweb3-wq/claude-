@@ -30,8 +30,11 @@ ASSETS = [("XAUUSD", "GOLD", 100.0), ("WTIUSD", "OIL", 1000.0),
 # Trades taken. Omit a field and it prints blank; omit an asset entirely and
 # the whole row is blank. "closed" fills the result columns automatically.
 TRADES = {
-    "WTIUSD": dict(entry=88.41, volume=2.8, margin=2475.0,
-                   stop=87.56, target=91.20, moved_to_entry=True),
+    "WTIUSD": dict(side="BUY", entry=88.41, volume=2.8, margin=2475.0,
+                   stop=87.56, target=91.20, moved_to_entry=True,
+                   closed=89.93),
+    # entry not supplied yet - risk, R:R and the result stay blank until it is
+    "XAGUSD": dict(side="SELL", volume=0.66, stop=65.00, target=62.00),
 }
 
 # ----------------------------------------------------------------- palette --
@@ -67,7 +70,7 @@ def usd(v, sign=False):
     return ("+" + s) if (sign and round(v)) else s
 
 
-def cellp(text, bold=True, col=INK, size=10):
+def cellp(text, bold=True, col=INK, size=10):  # noqa: D401
     if text in (None, ""):
         return Paragraph("", TD)
     return Paragraph("<font size='%s' color='%s'>%s%s%s</font>"
@@ -76,10 +79,13 @@ def cellp(text, bold=True, col=INK, size=10):
 
 
 def row(asset, name, vpl):
+    """One table row. Anything that cannot be derived is left blank."""
     t = TRADES.get(asset, {})
+    side = t.get("side")
     entry, stop = t.get("entry"), t.get("stop")
     target, vol = t.get("target"), t.get("volume")
     closed = t.get("closed")
+    short = side == "SELL"
 
     risk = rr = res_cash = res_r = None
     if None not in (entry, stop, vol):
@@ -87,18 +93,17 @@ def row(asset, name, vpl):
         if target is not None:
             rr = abs(target - entry) / abs(entry - stop)
         if closed is not None:
-            long = target is None or target > entry
-            res_cash = (closed - entry) * vol * vpl * (1 if long else -1)
+            res_cash = (entry - closed if short else closed - entry) * vol * vpl
             res_r = res_cash / risk
 
     col = INK
     if res_cash is not None:
         col = GREEN if res_cash > 0 else (RED if res_cash < 0 else SLATE)
-
     moved = t.get("moved_to_entry")
     return [
         Paragraph("<font size='10.5'><b>%s</b></font>&nbsp; "
                   "<font size='6.6' color='#5A6678'>%s</font>" % (asset, name), TD),
+        cellp(side or "", col=GREEN if side == "BUY" else RED, size=8.6),
         cellp("%.2f" % entry if entry is not None else ""),
         cellp("%g" % vol if vol is not None else ""),
         cellp(usd(t["margin"]) if t.get("margin") is not None else ""),
@@ -110,7 +115,7 @@ def row(asset, name, vpl):
         cellp("%.2f" % closed if closed is not None else ""),
         cellp(usd(res_cash, sign=True) if res_cash is not None else "", col=col),
         cellp("%+.2fR" % res_r if res_r is not None else "", col=col),
-    ]
+    ], res_cash, res_r
 
 
 # ------------------------------------------------------------------- build --
@@ -130,19 +135,28 @@ hr.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), GOLD)]))
 story.append(hr)
 story.append(Spacer(1, 14))
 
-HEAD = ["ASSET", "ENTRY", "VOLUME", "MARGIN", "STOP LOSS", "TAKE PROFIT",
+HEAD = ["ASSET", "DIR", "ENTRY", "VOLUME", "MARGIN", "STOP LOSS", "TAKE PROFIT",
         "RISK (1R)", "R : R", "SL AT ENTRY", "CLOSED AT", "RESULT ($)",
         "RESULT (R)"]
 data = [[Paragraph(h, TH) for h in HEAD]]
+tot_cash = tot_r = 0.0
 for a, n, vpl in ASSETS:
-    data.append(row(a, n, vpl))
+    cells, rc, rr_ = row(a, n, vpl)
+    data.append(cells)
+    if rc is not None:
+        tot_cash += rc
+        tot_r += rr_
 
+tcol = GREEN if tot_cash > 0 else (RED if tot_cash < 0 else SLATE)
 data.append([Paragraph("<font size='9'><b>CYCLE TOTAL</b></font>", TD)]
-            + [Paragraph("", TD)] * 11)
+            + [Paragraph("", TD)] * 10
+            + [cellp(usd(tot_cash, sign=True), col=tcol),
+               cellp("%+.2fR" % tot_r, col=tcol)])
 
-W = [78, 54, 54, 60, 60, 66, 62, 58, 62, 60, 72, 60]
+W = [72, 40, 52, 50, 56, 56, 60, 60, 54, 58, 56, 68, 0]
+assert len(W) == len(HEAD), (len(W), len(HEAD))
 W[-1] = CW - sum(W[:-1])
-t = Table(data, colWidths=W, rowHeights=[22] + [40] * 5 + [34])
+t = Table(data, colWidths=W, rowHeights=[22] + [42] * 5 + [34])
 t.setStyle(TableStyle([
     ("BACKGROUND", (0, 0), (-1, 0), NAVY),
     ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),

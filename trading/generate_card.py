@@ -105,17 +105,25 @@ def candles(n=46, width=W, height=560, seed=7):
             % (width, height, width, height, "".join(parts)))
 
 
-LOGO = '''
-<svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-  <rect x="1.4" y="1.4" width="49.2" height="49.2" rx="14"
-        stroke="#C2963F" stroke-width="2.6"/>
-  <line x1="16" y1="12" x2="16" y2="40" stroke="#14B87D" stroke-width="3"/>
-  <rect x="12" y="18" width="8" height="15" rx="2" fill="#14B87D"/>
-  <line x1="26" y1="16" x2="26" y2="44" stroke="#E8C173" stroke-width="3"/>
-  <rect x="22" y="24" width="8" height="13" rx="2" fill="#E8C173"/>
-  <line x1="36" y1="9" x2="36" y2="36" stroke="#14B87D" stroke-width="3"/>
-  <rect x="32" y="14" width="8" height="17" rx="2" fill="#14B87D"/>
-</svg>'''
+LOGO = """
+<svg width="60" height="60" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="au" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F3D99B"/><stop offset="48%" stop-color="#D9AC58"/>
+      <stop offset="100%" stop-color="#A87C2E"/></linearGradient>
+    <linearGradient id="auv" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F7E3B0"/><stop offset="100%" stop-color="#C2963F"/></linearGradient>
+    <linearGradient id="gr" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2BE39B"/><stop offset="100%" stop-color="#0E9663"/></linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="29" fill="#0B0F16" stroke="url(#au)" stroke-width="2.6"/>
+  <rect x="16" y="18.5" width="32" height="5.6" rx="1.7" fill="url(#auv)"/>
+  <rect x="29.2" y="24.1" width="5.6" height="22" rx="1.5" fill="url(#auv)"/>
+  <rect x="31.2" y="10" width="1.6" height="9.5" rx=".8" fill="url(#gr)"/>
+  <rect x="31.2" y="45" width="1.6" height="9" rx=".8" fill="url(#gr)"/>
+  <rect x="20.5" y="33" width="4.4" height="12" rx="1.2" fill="url(#gr)" opacity=".9"/>
+  <rect x="39.2" y="28" width="4.4" height="17" rx="1.2" fill="url(#gr)" opacity=".9"/>
+</svg>"""
 
 
 # ------------------------------------------------------------------- build --
@@ -211,11 +219,12 @@ body {{ width:{W}px; height:{H}px; background:#080B10; overflow:hidden;
   display:flex; flex-direction:column; }}
 
 .top {{ display:flex; align-items:center; justify-content:space-between; }}
-.brand {{ display:flex; align-items:center; gap:16px; }}
-.wm {{ font-size:26px; font-weight:700; letter-spacing:6.5px; color:#F2F5F9; }}
-.wm span {{ color:#C2963F; }}
-.tag {{ font-size:11.5px; letter-spacing:4.2px; color:#6B7A90; font-weight:700;
-        margin-top:5px; }}
+.brand {{ display:flex; align-items:center; gap:19px; }}
+.wm {{ font-size:28px; font-weight:700; letter-spacing:5.4px; color:#F2F5F9; }}
+.wm span {{ color:#D9AC58; }}
+.tagrule {{ height:1px; margin:9px 0 8px; width:100%;
+  background:linear-gradient(90deg,rgba(217,172,88,.75),rgba(217,172,88,.06)); }}
+.tag {{ font-size:11px; letter-spacing:5.4px; color:#6B7A90; font-weight:700; }}
 .badge {{ font-size:12px; font-weight:700; letter-spacing:2.6px;
   padding:9px 18px; border-radius:999px; }}
 .badge.open {{ color:#E8C173; border:1.5px solid rgba(232,193,115,.42);
@@ -300,6 +309,7 @@ body {{ width:{W}px; height:{H}px; background:#080B10; overflow:hidden;
     <div class="top">
       <div class="brand">{LOGO}
         <div><div class="wm">TRADER<span>TOK</span></div>
+             <div class="tagrule"></div>
              <div class="tag">PERFORMANCE</div></div></div>
       <div class="badge {BADGE_CLS}">{BADGE}</div>
     </div>

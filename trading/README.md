@@ -74,13 +74,22 @@ and the `closed` price — never typed in. 1R is 1% of `FREE_MARGIN`.
 
 ## card/trader-tok-card.png
 
-A shareable Trader Tok performance card (1080x1350, rendered at 2x), built by
+A shareable TraderTok performance card (1080x1350, rendered at 2x), built by
 `generate_card.py` via headless Chromium.
 
 ```bash
-pip install playwright        # chromium is already on the image
+pip install playwright segno     # chromium is already on the image
 python3 trading/generate_card.py
 ```
+
+Brand assets:
+
+- `tradertok-logo.png` — the real lockup, lifted from tradertok.com and keyed
+  to transparency. Brand red is `#BF3C35`, sampled from the same source.
+- `qr-tradertok.png` — a real QR for `https://tradertok.com` (segno, error
+  level Q). It decodes off the finished card down to 540px wide, so it still
+  scans after a messaging app recompresses it. Regenerate it if the URL
+  changes; don't scale the card below about a third or the modules break down.
 
 The trade lives in the `TRADE` dict. Leave `closed` as `None` and the card
 shows the position as it stands — risk:reward as the hero, levels, and the
@@ -90,5 +99,4 @@ ladder where the trade closed. `TAKEN` drives the cycle strip
 (`open` / `win` / `loss` per asset).
 
 `generate_card.py` also writes the `.html` it screenshotted, so the layout can
-be tweaked in a browser before re-rendering. To use a real logo file, replace
-the inline `LOGO` SVG with an `<img>` pointing at it.
+be tweaked in a browser before re-rendering.

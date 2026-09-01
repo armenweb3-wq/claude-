@@ -18,11 +18,12 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 CHROME = "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"
+BRAND = "#BF3C35"          # sampled from tradertok.com
+BRAND_HI = "#E24A3F"
 OUTDIR = Path("trading/card")
 W, H = 1080, 1350
 
-BRAND = "TRADER TOK"
-HANDLE = "@tradertok"
+HANDLE = "tradertok.com"
 
 FREE_MARGIN = 245_000.0
 ONE_R = FREE_MARGIN * 0.01
@@ -92,7 +93,7 @@ def candles(n=46, width=W, height=560, seed=7):
     for i, (o, hi, lo, c) in enumerate(series):
         x = i * step + step / 2.0
         up = c >= o
-        col = "#14B87D" if up else "#E2495B"
+        col = "#14B87D" if up else "#BF3C35"
         parts.append(
             '<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" '
             'stroke-width="2.2"/>' % (x, y(hi), x, y(lo), col))
@@ -105,32 +106,14 @@ def candles(n=46, width=W, height=560, seed=7):
             % (width, height, width, height, "".join(parts)))
 
 
-LOGO = """
-<svg width="60" height="60" viewBox="0 0 64 64" fill="none">
-  <defs>
-    <linearGradient id="au" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#F3D99B"/><stop offset="48%" stop-color="#D9AC58"/>
-      <stop offset="100%" stop-color="#A87C2E"/></linearGradient>
-    <linearGradient id="auv" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#F7E3B0"/><stop offset="100%" stop-color="#C2963F"/></linearGradient>
-    <linearGradient id="gr" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#2BE39B"/><stop offset="100%" stop-color="#0E9663"/></linearGradient>
-  </defs>
-  <circle cx="32" cy="32" r="29" fill="#0B0F16" stroke="url(#au)" stroke-width="2.6"/>
-  <rect x="16" y="18.5" width="32" height="5.6" rx="1.7" fill="url(#auv)"/>
-  <rect x="29.2" y="24.1" width="5.6" height="22" rx="1.5" fill="url(#auv)"/>
-  <rect x="31.2" y="10" width="1.6" height="9.5" rx=".8" fill="url(#gr)"/>
-  <rect x="31.2" y="45" width="1.6" height="9" rx=".8" fill="url(#gr)"/>
-  <rect x="20.5" y="33" width="4.4" height="12" rx="1.2" fill="url(#gr)" opacity=".9"/>
-  <rect x="39.2" y="28" width="4.4" height="17" rx="1.2" fill="url(#gr)" opacity=".9"/>
-</svg>"""
+LOGO = '<img class="mark" src="tradertok-logo.png">'
 
 
 # ------------------------------------------------------------------- build --
 closed = T["closed"] is not None
 if closed:
     pos = T["pnl"] >= 0
-    hero_col = "#14B87D" if pos else "#E2495B"
+    hero_col = "#14B87D" if pos else "#E24A3F"
     hero = "%+.2f%%" % T["roi"]
     hero_label = "ROI ON MARGIN"
     sub = ('<span class="pnl %s">%s</span><span class="pnl-r">%+.2fR</span>'
@@ -138,7 +121,7 @@ if closed:
     badge = "CLOSED"
     badge_cls = "closed"
 else:
-    hero_col = "#E8C173"
+    hero_col = "#F2F3F5"
     hero = "1 : %.2f" % T["rr"]
     hero_label = "RISK : REWARD"
     sub = ('<span class="pnl up">%s</span><span class="pnl-r">at target</span>'
@@ -195,14 +178,14 @@ stat_html = "".join(
 
 HTML = """<!doctype html><html><head><meta charset="utf-8"><style>
 * {{ margin:0; padding:0; box-sizing:border-box; }}
-body {{ width:{W}px; height:{H}px; background:#080B10; overflow:hidden;
+body {{ width:{W}px; height:{H}px; background:#060607; overflow:hidden;
         font-family:"Liberation Sans","DejaVu Sans",sans-serif;
         -webkit-font-smoothing:antialiased; }}
 .card {{ position:relative; width:{W}px; height:{H}px;
   background:
-    radial-gradient(1100px 620px at 78% -6%, rgba(194,150,63,.20), transparent 62%),
-    radial-gradient(900px 700px at 8% 108%, rgba(20,184,125,.12), transparent 60%),
-    linear-gradient(168deg,#0C1119 0%,#0A0E14 46%,#080B10 100%);
+    radial-gradient(1150px 640px at 80% -8%, rgba(191,60,53,.30), transparent 63%),
+    radial-gradient(900px 720px at 4% 106%, rgba(191,60,53,.13), transparent 62%),
+    linear-gradient(168deg,#131011 0%,#0B0A0B 46%,#060607 100%);
   overflow:hidden; }}
 .grid {{ position:absolute; inset:0;
   background-image:linear-gradient(rgba(255,255,255,.030) 1px,transparent 1px),
@@ -214,26 +197,25 @@ body {{ width:{W}px; height:{H}px; background:#080B10; overflow:hidden;
 .glow {{ position:absolute; left:50%; top:512px; transform:translateX(-50%);
   width:760px; height:300px; border-radius:50%;
   background:radial-gradient(ellipse at center,{HG} 0%,transparent 68%);
-  opacity:.16; filter:blur(28px); }}
+  opacity:.10; filter:blur(28px); }}
 .inner {{ position:relative; padding:64px 66px 56px; height:100%;
   display:flex; flex-direction:column; }}
 
-.top {{ display:flex; align-items:center; justify-content:space-between; }}
-.brand {{ display:flex; align-items:center; gap:19px; }}
-.wm {{ font-size:28px; font-weight:700; letter-spacing:5.4px; color:#F2F5F9; }}
-.wm span {{ color:#D9AC58; }}
-.tagrule {{ height:1px; margin:9px 0 8px; width:100%;
-  background:linear-gradient(90deg,rgba(217,172,88,.75),rgba(217,172,88,.06)); }}
-.tag {{ font-size:11px; letter-spacing:5.4px; color:#6B7A90; font-weight:700; }}
-.badge {{ font-size:12px; font-weight:700; letter-spacing:2.6px;
-  padding:9px 18px; border-radius:999px; }}
-.badge.open {{ color:#E8C173; border:1.5px solid rgba(232,193,115,.42);
-  background:rgba(232,193,115,.09); }}
-.badge.closed {{ color:#14B87D; border:1.5px solid rgba(20,184,125,.45);
-  background:rgba(20,184,125,.10); }}
+.top {{ display:flex; align-items:flex-start; justify-content:space-between; }}
+.brand {{ display:flex; flex-direction:column; gap:14px; }}
+.mark {{ width:322px; height:auto; display:block; }}
+.tag {{ font-size:11.5px; letter-spacing:6.2px; color:#6E7480; font-weight:700;
+  padding-left:3px; }}
+.qr {{ background:#fff; padding:9px; border-radius:14px; line-height:0;
+  box-shadow:0 0 0 1.5px rgba(191,60,53,.55), 0 10px 40px rgba(0,0,0,.6); }}
+.qr img {{ width:126px; height:126px; display:block; border-radius:5px; }}
+.badge.open {{ color:#E24A3F; background:rgba(191,60,53,.14);
+  border-color:rgba(226,74,63,.45); }}
+.badge.closed {{ color:#14B87D; background:rgba(20,184,125,.12);
+  border-color:rgba(20,184,125,.42); }}
 
-.rule {{ height:1px; margin:44px 0 46px;
-  background:linear-gradient(90deg,rgba(194,150,63,.55),rgba(255,255,255,.07) 55%,transparent); }}
+.rule {{ height:1px; margin:40px 0 44px;
+  background:linear-gradient(90deg,rgba(191,60,53,.85),rgba(255,255,255,.07) 58%,transparent); }}
 
 .pair {{ display:flex; align-items:baseline; gap:20px; flex-wrap:wrap; }}
 .sym {{ font-size:54px; font-weight:700; color:#fff; letter-spacing:-.5px; }}
@@ -244,6 +226,7 @@ body {{ width:{W}px; height:{H}px; background:#080B10; overflow:hidden;
   border:1px solid rgba(255,255,255,.09); }}
 .pill.side {{ color:#14B87D; background:rgba(20,184,125,.12);
   border-color:rgba(20,184,125,.30); }}
+.pill.badge {{ font-size:13px; }}
 
 .hero {{ margin-top:52px; }}
 .hlabel {{ font-size:12.5px; letter-spacing:4.6px; color:#6B7A90; font-weight:700; }}
@@ -251,7 +234,7 @@ body {{ width:{W}px; height:{H}px; background:#080B10; overflow:hidden;
   letter-spacing:-3px; margin-top:12px; }}
 .hsub {{ margin-top:20px; display:flex; align-items:baseline; gap:18px; }}
 .pnl {{ font-size:42px; font-weight:700; letter-spacing:-.6px; }}
-.pnl.up {{ color:#14B87D; }} .pnl.dn {{ color:#E2495B; }}
+.pnl.up {{ color:#14B87D; }} .pnl.dn {{ color:#E24A3F; }}
 .pnl-r {{ font-size:19px; color:#8695AB; font-weight:700; letter-spacing:1.2px; }}
 
 .cycle {{ margin-top:auto; }}
@@ -261,25 +244,25 @@ body {{ width:{W}px; height:{H}px; background:#080B10; overflow:hidden;
   font-size:21px; font-weight:700; letter-spacing:2.4px;
   color:#3E4A5C; background:rgba(255,255,255,.035);
   border:1.5px solid rgba(255,255,255,.055); }}
-.chip.live {{ color:#0B0E13; background:linear-gradient(160deg,#E8C173,#C2963F);
-  border-color:#E8C173; box-shadow:0 0 34px rgba(232,193,115,.30); }}
+.chip.live {{ color:#fff; background:linear-gradient(160deg,#D6473E,#A8322C);
+  border-color:#E24A3F; box-shadow:0 0 34px rgba(226,74,63,.34); }}
 .chip.win {{ color:#14B87D; background:rgba(20,184,125,.13);
   border-color:rgba(20,184,125,.42); }}
-.chip.loss {{ color:#E2495B; background:rgba(226,73,91,.11);
-  border-color:rgba(226,73,91,.38); }}
+.chip.loss {{ color:#E24A3F; background:rgba(191,60,53,.13);
+  border-color:rgba(226,74,63,.40); }}
 .ladder {{ margin-top:58px; margin-bottom:0; }}
 .track {{ position:relative; height:12px; border-radius:999px;
   background:rgba(255,255,255,.07); overflow:visible; }}
 .seg {{ position:absolute; top:0; height:12px; }}
-.seg.risk {{ background:linear-gradient(90deg,rgba(226,73,91,.35),rgba(226,73,91,.85));
+.seg.risk {{ background:linear-gradient(90deg,rgba(191,60,53,.35),rgba(226,74,63,.95));
   border-radius:999px 0 0 999px; }}
 .seg.rew {{ background:linear-gradient(90deg,rgba(20,184,125,.85),rgba(20,184,125,.35));
   border-radius:0 999px 999px 0; }}
 .tick {{ position:absolute; top:-9px; width:3px; height:30px; background:#EDF1F6;
   border-radius:2px; transform:translateX(-50%); box-shadow:0 0 14px rgba(255,255,255,.5); }}
 .closemark {{ position:absolute; top:-15px; width:22px; height:42px;
-  border:3px solid #E8C173; border-radius:8px; transform:translateX(-50%);
-  box-shadow:0 0 20px rgba(232,193,115,.55); }}
+  border:3px solid #E24A3F; border-radius:8px; transform:translateX(-50%);
+  box-shadow:0 0 20px rgba(226,74,63,.6); }}
 .lbls {{ position:relative; height:52px; margin-top:20px; }}
 .l {{ position:absolute; }}
 .l b {{ display:block; font-size:23px; font-weight:700; color:#EDF1F6; }}
@@ -298,7 +281,7 @@ body {{ width:{W}px; height:{H}px; background:#080B10; overflow:hidden;
 
 .foot {{ margin-top:30px; display:flex; align-items:center;
   justify-content:space-between; }}
-.handle {{ font-size:17px; font-weight:700; color:#C2963F; letter-spacing:2.6px; }}
+.handle {{ font-size:17px; font-weight:700; color:#C9CDD4; letter-spacing:2.2px; }}
 .date {{ font-size:13px; color:#5E6D83; letter-spacing:2px; font-weight:700; }}
 </style></head><body>
 <div class="card">
@@ -307,11 +290,8 @@ body {{ width:{W}px; height:{H}px; background:#080B10; overflow:hidden;
   <div class="glow"></div>
   <div class="inner">
     <div class="top">
-      <div class="brand">{LOGO}
-        <div><div class="wm">TRADER<span>TOK</span></div>
-             <div class="tagrule"></div>
-             <div class="tag">PERFORMANCE</div></div></div>
-      <div class="badge {BADGE_CLS}">{BADGE}</div>
+      <div class="brand">{LOGO}<div class="tag">PERFORMANCE</div></div>
+      <div class="qr"><img src="qr-tradertok.png"></div>
     </div>
     <div class="rule"></div>
     <div class="pair"><div class="sym">{SYM}</div><div class="name">{NAME}</div></div>
@@ -319,6 +299,7 @@ body {{ width:{W}px; height:{H}px; background:#080B10; overflow:hidden;
       <div class="pill side">{SIDE}</div>
       <div class="pill">{LEV}x</div>
       <div class="pill">1% RISK</div>
+      <div class="pill badge {BADGE_CLS}">{BADGE}</div>
     </div>
     <div class="hero">
       <div class="hlabel">{HLABEL}</div>

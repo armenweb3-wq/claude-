@@ -30,7 +30,7 @@ TRADE = dict(
     side="LONG", leverage=100, value_per_lot=1000.0,
     entry=88.41, volume=2.8, margin=2475.0,
     stop=87.56, target=91.20, moved_to_entry=True,
-    closed=None,                     # set the exit price to make it a result card
+    closed=91.27,                    # set to None while the position is open
     date="1 SEP 2026", time="—",
 )
 
@@ -141,32 +141,26 @@ G_TAG = ('<path d="M20.5 12.7 12.8 20.4a2 2 0 0 1-2.8 0l-6.4-6.4a2 2 0 0 1-.6-1.
 
 # ------------------------------------------------------------------- rows ---
 if CLOSED:
+    good = T["pnl"] >= 0
     rows = [
         (G_ARROW, "OPEN PRICE", "%.2f" % T["entry"], "", "val"),
-        (G_TARGET, "CLOSE PRICE", "%.2f" % T["closed"], "", "good" if T["pnl"] >= 0 else "bad"),
-        (G_BARS, "PRICE MOVE", "%+.2f" % T["move"], "%+.2f%%" % (T["move"] / T["entry"] * 100),
-         "good" if T["pnl"] >= 0 else "bad"),
-        (G_SHIELD, "RETURN ON MARGIN", "%+.2f%%" % T["roi"], "",
-         "good" if T["pnl"] >= 0 else "bad"),
+        (G_TARGET, "CLOSE PRICE", "%.2f" % T["closed"], "", "good" if good else "bad"),
     ]
-    hl_label = "PROFIT" if T["pnl"] >= 0 else "LOSS"
+    hl_label = "TOTAL PROFIT" if good else "TOTAL LOSS"
     hl_big = usd(T["pnl"], sign=True)
-    hl_sub = "%+.2fR&nbsp;&nbsp;&bull;&nbsp;&nbsp;%+.2f%% on margin" % (T["pnl_r"], T["roi"])
-    hl_good = T["pnl"] >= 0
+    hl_sub = "%+.2f%%" % T["roi"]
+    hl_note = "on %s margin" % usd(TRADE["margin"])
+    hl_good = good
     status = "CLOSED"
 else:
     rows = [
-        (G_ARROW, "ENTRY PRICE", "%.2f" % T["entry"], "%g lots" % T["volume"], "val"),
-        (G_SHIELD, "STOP LOSS", "%.2f" % T["stop"],
-         "moved to entry" if T["moved_to_entry"] else "", "val"),
-        (G_TARGET, "TAKE PROFIT", "%.2f" % T["target"],
-         "%+.2f from entry" % T["tp_dist"], "good"),
-        (G_BARS, "RISK : REWARD", "1 : %.2f" % T["rr"], "", "good"),
+        (G_ARROW, "OPEN PRICE", "%.2f" % T["entry"], "", "val"),
+        (G_TARGET, "CLOSE PRICE", "--", "position still open", "val"),
     ]
     hl_label = "PROFIT AT TARGET"
     hl_big = usd(T["reward"], sign=True)
-    hl_sub = "%+.2fR&nbsp;&nbsp;&bull;&nbsp;&nbsp;risking %s" % (
-        T["rr"], usd(T["risk"]))
+    hl_sub = "%+.2f%%" % (T["reward"] / TRADE["margin"] * 100)
+    hl_note = "on %s margin" % usd(TRADE["margin"])
     hl_good = True
     status = "OPEN"
 
@@ -179,7 +173,7 @@ row_html = "".join(
 
 feet = [(G_CAL, "DATE", TRADE["date"]),
         (G_BARS, "VOLUME", "%g lots" % TRADE["volume"]),
-        (G_TAG, "RISK", "%s &nbsp;·&nbsp; 1%%" % usd(T["risk"]))]
+        (G_TAG, "MARGIN", usd(TRADE["margin"]))]
 foot_html = "".join(
     '<div class="ft">%s<div><div class="fk">%s</div><div class="fv">%s</div></div></div>'
     % (ring(g, "tiny"), k, v) for g, k, v in feet)
@@ -199,7 +193,7 @@ body{{width:{W}px;height:{H}px;background:#0A0D13;overflow:hidden;
  background-size:54px 54px;}}
 .rig{{position:absolute;right:-58px;bottom:96px;opacity:.055;
  transform:scale(1.9);transform-origin:bottom right;}}
-.cnd{{position:absolute;left:0;right:0;top:392px;height:430px;opacity:.17;
+.cnd{{position:absolute;left:0;right:0;top:430px;height:470px;opacity:.17;
  -webkit-mask-image:linear-gradient(to right,transparent 0%,#000 14%,#000 52%,
    rgba(0,0,0,.28) 70%,transparent 86%);}}
 .vig{{position:absolute;inset:0;
@@ -226,8 +220,8 @@ body{{width:{W}px;height:{H}px;background:#0A0D13;overflow:hidden;
  padding:10px 19px;border-radius:999px;color:{SC};
  background:{SBG};border:1.5px solid {SBD}}}
 
-.rows{{margin-top:58px}}
-.row{{display:flex;align-items:center;gap:20px;padding:29px 4px;
+.rows{{margin-top:56px;flex:1;display:flex;flex-direction:column;justify-content:center}}
+.row{{display:flex;align-items:center;gap:22px;padding:46px 4px;
  border-bottom:1px solid rgba(255,255,255,.075)}}
 .ic{{width:50px;height:50px;border-radius:50%;flex:0 0 50px;display:flex;
  align-items:center;justify-content:center;border:1.5px solid rgba(255,255,255,.14);
@@ -235,21 +229,23 @@ body{{width:{W}px;height:{H}px;background:#0A0D13;overflow:hidden;
 .ic.tiny{{width:38px;height:38px;flex:0 0 38px}}
 .ic.tiny svg{{width:17px;height:17px}}
 .rl{{font-size:16px;letter-spacing:3.2px;color:#8B99B0;font-weight:700}}
-.rv{{margin-left:auto;text-align:right;font-size:38px;font-weight:700;
+.rv{{margin-left:auto;text-align:right;font-size:52px;font-weight:700;
  letter-spacing:-.5px;color:#F2F5F9}}
 .rv.good{{color:#4ADE80}} .rv.bad{{color:#F0574B}}
 .rs{{display:block;font-size:13px;letter-spacing:1.7px;color:#7E8CA3;
  font-weight:700;margin-top:6px}}
 
-.hl{{margin-top:40px;display:flex;align-items:center;gap:22px;padding:34px 32px;
+.hl{{margin-top:52px;display:flex;align-items:center;gap:22px;padding:34px 32px;
  border-radius:20px;background:{HBG};border:1.6px solid {HBD}}}
 .hl .ic{{border-color:{HBD};color:{HC};background:rgba(255,255,255,.05)}}
 .hk{{font-size:14px;letter-spacing:4px;color:#93A2B8;font-weight:700}}
-.hv{{font-size:58px;font-weight:700;color:{HC};letter-spacing:-1.2px;margin-top:7px}}
-.hs{{margin-left:auto;text-align:right;font-size:22px;font-weight:700;color:{HC};
- letter-spacing:.2px}}
+.hv{{font-size:66px;font-weight:700;color:{HC};letter-spacing:-1.2px;margin-top:7px}}
+.hs{{margin-left:auto;text-align:right;font-size:44px;font-weight:700;color:{HC};
+ letter-spacing:-.6px}}
+.hn{{display:block;font-size:14px;font-weight:700;color:#8B99B0;letter-spacing:2px;
+ margin-top:8px}}
 
-.foot{{margin-top:auto;margin-bottom:2px;display:flex;gap:1px;background:rgba(255,255,255,.08);
+.foot{{margin-top:52px;margin-bottom:2px;display:flex;gap:1px;background:rgba(255,255,255,.08);
  border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden}}
 .ft{{flex:1;display:flex;align-items:center;gap:14px;padding:20px 22px;
  background:rgba(10,14,20,.55)}}
@@ -283,7 +279,7 @@ body{{width:{W}px;height:{H}px;background:#0A0D13;overflow:hidden;
 
     <div class="hl">{HLIC}
       <div><div class="hk">{HLK}</div><div class="hv">{HLV}</div></div>
-      <div class="hs">{HLS}</div>
+      <div class="hs">{HLS}<span class="hn">{HLN}</span></div>
     </div>
 
     <div class="foot">{FOOT}</div>
@@ -300,7 +296,7 @@ body{{width:{W}px;height:{H}px;background:#0A0D13;overflow:hidden;
     HBG="rgba(74,222,128,.09)" if hl_good else "rgba(240,87,75,.09)",
     HBD="rgba(74,222,128,.34)" if hl_good else "rgba(240,87,75,.34)",
     HC="#4ADE80" if hl_good else "#F0574B",
-    HLIC=ring(G_DOLLAR), HLK=hl_label, HLV=hl_big, HLS=hl_sub,
+    HLIC=ring(G_DOLLAR), HLK=hl_label, HLV=hl_big, HLS=hl_sub, HLN=hl_note,
     FOOT=foot_html, TAGLINE=TAGLINE)
 
 OUTDIR.mkdir(parents=True, exist_ok=True)

@@ -83,11 +83,15 @@ python3 trading/generate_card.py
 ```
 
 Layout: brand lockup and QR across the top, headline block with the asset
-icon and status chip, one labelled row per figure, a highlighted result
-panel, a three-up footer and the tagline. Behind it sit a seeded candle
-walk and a pumpjack silhouette, both decorative — the candles are not a
-price history and are masked away from the value column so the numbers stay
-legible.
+icon and status chip, two price rows, a highlighted result panel carrying the
+money and the percentage, a three-up footer and the tagline. Behind it sit a
+seeded candle walk and a pumpjack silhouette, both decorative — the candles
+are not a price history and are masked away from the value column.
+
+The card reports three things only: open price, close price, and the total
+profit in money and percent. The percent is return on the margin the position
+used; change `hl_sub` in the script to report it against free margin or as the
+raw price move instead.
 
 Brand assets:
 

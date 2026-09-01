@@ -13,7 +13,7 @@ body{width:1080px;height:1350px;background:#0A0D13;overflow:hidden;
  background-size:54px 54px;}
 .rig{position:absolute;right:-58px;bottom:96px;opacity:.055;
  transform:scale(1.9);transform-origin:bottom right;}
-.cnd{position:absolute;left:0;right:0;top:392px;height:430px;opacity:.17;
+.cnd{position:absolute;left:0;right:0;top:430px;height:470px;opacity:.17;
  -webkit-mask-image:linear-gradient(to right,transparent 0%,#000 14%,#000 52%,
    rgba(0,0,0,.28) 70%,transparent 86%);}
 .vig{position:absolute;inset:0;
@@ -37,11 +37,11 @@ body{width:1080px;height:1350px;background:#0A0D13;overflow:hidden;
 .h1{font-size:60px;font-weight:700;color:#fff;letter-spacing:-.6px;line-height:1.04}
 .h2{font-size:14px;letter-spacing:4.6px;color:#8B99B0;font-weight:700;margin-top:9px}
 .chip{margin-left:auto;font-size:12px;font-weight:700;letter-spacing:2.6px;
- padding:10px 19px;border-radius:999px;color:#F2B23E;
- background:rgba(242,178,62,.12);border:1.5px solid rgba(242,178,62,.38)}
+ padding:10px 19px;border-radius:999px;color:#4ADE80;
+ background:rgba(74,222,128,.12);border:1.5px solid rgba(74,222,128,.38)}
 
-.rows{margin-top:58px}
-.row{display:flex;align-items:center;gap:20px;padding:29px 4px;
+.rows{margin-top:56px;flex:1;display:flex;flex-direction:column;justify-content:center}
+.row{display:flex;align-items:center;gap:22px;padding:46px 4px;
  border-bottom:1px solid rgba(255,255,255,.075)}
 .ic{width:50px;height:50px;border-radius:50%;flex:0 0 50px;display:flex;
  align-items:center;justify-content:center;border:1.5px solid rgba(255,255,255,.14);
@@ -49,21 +49,23 @@ body{width:1080px;height:1350px;background:#0A0D13;overflow:hidden;
 .ic.tiny{width:38px;height:38px;flex:0 0 38px}
 .ic.tiny svg{width:17px;height:17px}
 .rl{font-size:16px;letter-spacing:3.2px;color:#8B99B0;font-weight:700}
-.rv{margin-left:auto;text-align:right;font-size:38px;font-weight:700;
+.rv{margin-left:auto;text-align:right;font-size:52px;font-weight:700;
  letter-spacing:-.5px;color:#F2F5F9}
 .rv.good{color:#4ADE80} .rv.bad{color:#F0574B}
 .rs{display:block;font-size:13px;letter-spacing:1.7px;color:#7E8CA3;
  font-weight:700;margin-top:6px}
 
-.hl{margin-top:40px;display:flex;align-items:center;gap:22px;padding:34px 32px;
+.hl{margin-top:52px;display:flex;align-items:center;gap:22px;padding:34px 32px;
  border-radius:20px;background:rgba(74,222,128,.09);border:1.6px solid rgba(74,222,128,.34)}
 .hl .ic{border-color:rgba(74,222,128,.34);color:#4ADE80;background:rgba(255,255,255,.05)}
 .hk{font-size:14px;letter-spacing:4px;color:#93A2B8;font-weight:700}
-.hv{font-size:58px;font-weight:700;color:#4ADE80;letter-spacing:-1.2px;margin-top:7px}
-.hs{margin-left:auto;text-align:right;font-size:22px;font-weight:700;color:#4ADE80;
- letter-spacing:.2px}
+.hv{font-size:66px;font-weight:700;color:#4ADE80;letter-spacing:-1.2px;margin-top:7px}
+.hs{margin-left:auto;text-align:right;font-size:44px;font-weight:700;color:#4ADE80;
+ letter-spacing:-.6px}
+.hn{display:block;font-size:14px;font-weight:700;color:#8B99B0;letter-spacing:2px;
+ margin-top:8px}
 
-.foot{margin-top:auto;margin-bottom:2px;display:flex;gap:1px;background:rgba(255,255,255,.08);
+.foot{margin-top:52px;margin-bottom:2px;display:flex;gap:1px;background:rgba(255,255,255,.08);
  border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden}
 .ft{flex:1;display:flex;align-items:center;gap:14px;padding:20px 22px;
  background:rgba(10,14,20,.55)}
@@ -105,17 +107,17 @@ body{width:1080px;height:1350px;background:#0A0D13;overflow:hidden;
         stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M12 2.7c3.6 4.2 6 7 6 9.9a6 6 0 1 1-12 0c0-2.9 2.4-5.7 6-9.9z"/></svg></div>
       <div><div class="h1">OIL TODAY</div>
            <div class="h2">WTIUSD &nbsp;&bull;&nbsp; CRUDE OIL</div></div>
-      <div class="chip">OPEN</div>
+      <div class="chip">CLOSED</div>
     </div>
 
-    <div class="rows"><div class="row"><div class="ic mute"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5.5 11.5 12 5l6.5 6.5"/></svg></div><div class="rl">ENTRY PRICE</div><div class="rv val">88.41<span class="rs">2.8 lots</span></div></div><div class="row"><div class="ic mute"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5.5c0 4.3 2.9 7.7 7 9.5 4.1-1.8 7-5.2 7-9.5V6z"/></svg></div><div class="rl">STOP LOSS</div><div class="rv val">87.56<span class="rs">moved to entry</span></div></div><div class="row"><div class="ic mute"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".9" fill="currentColor"/></svg></div><div class="rl">TAKE PROFIT</div><div class="rv good">91.20<span class="rs">+2.79 from entry</span></div></div><div class="row"><div class="ic mute"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V11"/><path d="M12 20V4"/><path d="M19 20v-6"/></svg></div><div class="rl">RISK : REWARD</div><div class="rv good">1 : 3.28</div></div></div>
+    <div class="rows"><div class="row"><div class="ic mute"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5.5 11.5 12 5l6.5 6.5"/></svg></div><div class="rl">OPEN PRICE</div><div class="rv val">88.41</div></div><div class="row"><div class="ic mute"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".9" fill="currentColor"/></svg></div><div class="rl">CLOSE PRICE</div><div class="rv good">91.27</div></div></div>
 
     <div class="hl"><div class="ic mute"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5v19"/><path d="M16.5 7.2c-.7-1.5-2.4-2.4-4.5-2.4-2.5 0-4.2 1.3-4.2 3.2 0 4.6 9 2.5 9 7.3 0 2-1.9 3.4-4.6 3.4-2.4 0-4.2-1-4.9-2.6"/></svg></div>
-      <div><div class="hk">PROFIT AT TARGET</div><div class="hv">+$7,812</div></div>
-      <div class="hs">+3.28R&nbsp;&nbsp;&bull;&nbsp;&nbsp;risking $2,380</div>
+      <div><div class="hk">TOTAL PROFIT</div><div class="hv">+$8,008</div></div>
+      <div class="hs">+323.56%<span class="hn">on $2,475 margin</span></div>
     </div>
 
-    <div class="foot"><div class="ft"><div class="ic tiny"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 2.8v4M16 2.8v4M3.5 10h17"/></svg></div><div><div class="fk">DATE</div><div class="fv">1 SEP 2026</div></div></div><div class="ft"><div class="ic tiny"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V11"/><path d="M12 20V4"/><path d="M19 20v-6"/></svg></div><div><div class="fk">VOLUME</div><div class="fv">2.8 lots</div></div></div><div class="ft"><div class="ic tiny"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12.7 12.8 20.4a2 2 0 0 1-2.8 0l-6.4-6.4a2 2 0 0 1-.6-1.4V5.5a2 2 0 0 1 2-2h7.1a2 2 0 0 1 1.4.6l6.4 6.4a2 2 0 0 1 .6 2.2z"/><circle cx="8" cy="8" r="1.4" fill="currentColor" stroke="none"/></svg></div><div><div class="fk">RISK</div><div class="fv">$2,380 &nbsp;·&nbsp; 1%</div></div></div></div>
+    <div class="foot"><div class="ft"><div class="ic tiny"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 2.8v4M16 2.8v4M3.5 10h17"/></svg></div><div><div class="fk">DATE</div><div class="fv">1 SEP 2026</div></div></div><div class="ft"><div class="ic tiny"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V11"/><path d="M12 20V4"/><path d="M19 20v-6"/></svg></div><div><div class="fk">VOLUME</div><div class="fv">2.8 lots</div></div></div><div class="ft"><div class="ic tiny"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12.7 12.8 20.4a2 2 0 0 1-2.8 0l-6.4-6.4a2 2 0 0 1-.6-1.4V5.5a2 2 0 0 1 2-2h7.1a2 2 0 0 1 1.4.6l6.4 6.4a2 2 0 0 1 .6 2.2z"/><circle cx="8" cy="8" r="1.4" fill="currentColor" stroke="none"/></svg></div><div><div class="fk">MARGIN</div><div class="fv">$2,475</div></div></div></div>
     <div class="tag">Grow Your Trading. Share Your Success.</div>
   </div>
 </div></body></html>

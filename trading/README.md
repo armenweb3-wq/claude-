@@ -72,3 +72,7 @@ python3 trading/generate_trade_boxes.py
 The trade lives in the `WTI` dict at the top of the script and every figure on
 page 1 is derived by `derive()` — nothing is typed in twice. `ASSETS` carries
 the per-lot value and leverage used for the blank boxes.
+
+**1R is 1% of free margin, not of balance.** `BALANCE`, `FREE_MARGIN` and the
+derived `ONE_R` sit at the top of the script; page 4's sizing table is computed
+from `ONE_R`, so changing the free-margin figure redraws it.

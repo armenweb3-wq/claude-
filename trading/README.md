@@ -82,21 +82,28 @@ pip install playwright segno     # chromium is already on the image
 python3 trading/generate_card.py
 ```
 
+Layout: brand lockup and QR across the top, headline block with the asset
+icon and status chip, one labelled row per figure, a highlighted result
+panel, a three-up footer and the tagline. Behind it sit a seeded candle
+walk and a pumpjack silhouette, both decorative — the candles are not a
+price history and are masked away from the value column so the numbers stay
+legible.
+
 Brand assets:
 
 - `tradertok-logo.png` — the real lockup, lifted from tradertok.com and keyed
   to transparency. Brand red is `#BF3C35`, sampled from the same source.
 - `qr-tradertok.png` — a real QR for `https://tradertok.com` (segno, error
-  level Q). It decodes off the finished card down to 540px wide, so it still
-  scans after a messaging app recompresses it. Regenerate it if the URL
-  changes; don't scale the card below about a third or the modules break down.
+  level M for fatter modules). Verified to decode off the finished card down
+  to 648px wide, so it survives messaging-app recompression. Re-run the
+  decode check if you shrink the QR or change the URL.
 
 The trade lives in the `TRADE` dict. Leave `closed` as `None` and the card
-shows the position as it stands — risk:reward as the hero, levels, and the
-money at target. Set `closed` to the exit price and it becomes a PnL card:
-realised profit/loss, R multiple, and ROI on margin, with a marker on the
-ladder where the trade closed. `TAKEN` drives the cycle strip
-(`open` / `win` / `loss` per asset).
+reports the position as it stands — levels, risk:reward, and the money at
+target. Set `closed` to the exit price and the rows switch to open/close/move
+and return on margin, the panel reports realised profit or loss with its R
+multiple, and the chip turns green. Green and red are only ever used for a
+result; an open position stays neutral.
 
 `generate_card.py` also writes the `.html` it screenshotted, so the layout can
 be tweaked in a browser before re-rendering.

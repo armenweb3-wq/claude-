@@ -118,8 +118,9 @@ def row(asset, name, vpl):
         cellp(usd(risk) if risk is not None else ""),
         cellp("1 : %.2f" % rr if rr is not None else "", col=GREEN),
         cellp("YES" if moved else ("" if moved is None else "NO")),
-        cellp("%.2f" % mark if mark is not None else "",
-              col=SLATE if floating else INK),
+        cellp(("%.2f" % mark) + ("" if floating else "  EXIT")
+              if mark is not None else "", col=SLATE if floating else INK,
+              size=10 if floating else 9),
         cellp(usd(res_cash, sign=True) if res_cash is not None else "", col=col),
         cellp("%+.2fR" % res_r if res_r is not None else "", col=col),
     ], res_cash, res_r, floating
@@ -143,8 +144,8 @@ story.append(hr)
 story.append(Spacer(1, 14))
 
 HEAD = ["ASSET", "DIR", "ENTRY", "VOLUME", "MARGIN", "STOP LOSS", "TAKE PROFIT",
-        "RISK (1R)", "R : R", "SL AT ENTRY", "CLOSED / NOW", "RESULT ($)",
-        "RESULT (R)"]
+        "RISK (1R)", "R : R", "SL AT ENTRY", "PRICE NOW", "UNREALISED P/L",
+        "R"]
 data = [[Paragraph(h, TH) for h in HEAD]]
 real_cash = real_r = flt_cash = flt_r = 0.0
 for a, n, vpl in ASSETS:
@@ -163,8 +164,8 @@ def total_row(label, cash, r, muted=False):
             + [Paragraph("", TD)] * 10
             + [cellp(usd(cash, sign=True), col=c), cellp("%+.2fR" % r, col=c)])
 
-data.append(total_row("OPEN P/L", flt_cash, flt_r, muted=False))
-data.append(total_row("CLOSED THIS CYCLE", real_cash, real_r))
+data.append(total_row("UNREALISED P/L", flt_cash, flt_r))
+data.append(total_row("REALISED P/L", real_cash, real_r))
 
 W = [72, 40, 52, 50, 56, 56, 60, 60, 54, 58, 56, 68, 0]
 assert len(W) == len(HEAD), (len(W), len(HEAD))
@@ -183,8 +184,9 @@ t.setStyle(TableStyle([
 story.append(t)
 story.append(Spacer(1, 5))
 story.append(Paragraph(
-    "Prices in <b>CLOSED / NOW</b> shown in grey are live marks on open "
-    "positions, so the result beside them is floating, not realised.", FOOT))
+    "<b>PRICE NOW</b> is a live mark while a position is open, so the P/L "
+    "beside it is unrealised. A price tagged <b>EXIT</b> is an actual close "
+    "and moves that row into realised.", FOOT))
 
 story.append(Spacer(1, 10))
 story.append(Paragraph(

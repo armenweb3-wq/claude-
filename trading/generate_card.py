@@ -30,7 +30,7 @@ TRADE = dict(
     side="LONG", leverage=100, value_per_lot=1000.0,
     entry=88.41, volume=2.8, margin=2475.0,
     stop=87.56, target=91.20, moved_to_entry=True,
-    closed=91.27,                    # set to None while the position is open
+    closed=89.93,                    # set to None while the position is open
     date="1 SEP 2026", time="—",
 )
 

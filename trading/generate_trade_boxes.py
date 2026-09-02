@@ -30,11 +30,12 @@ ASSETS = [("XAUUSD", "GOLD", 100.0), ("WTIUSD", "OIL", 1000.0),
 # Trades taken. Omit a field and it prints blank; omit an asset entirely and
 # the whole row is blank. "closed" fills the result columns automatically.
 TRADES = {
+    # pnl, where given, is the broker's figure and overrides price x volume
     "WTIUSD": dict(side="BUY", entry=88.41, volume=2.8, margin=2475.0,
                    stop=87.56, target=91.20, moved_to_entry=True,
-                   current=90.80),          # still open - mark-to-market
+                   closed=91.20, pnl=8047.0),          # closed at take profit
     "XAGUSD": dict(side="SELL", entry=64.31, volume=0.66, stop=65.00,
-                   target=62.00, leverage=100),
+                   target=62.00, leverage=100, pnl=937.0),   # open, unrealised
 }
 
 # ----------------------------------------------------------------- palette --
@@ -93,13 +94,19 @@ def row(asset, name, vpl):
     if margin is None and entry is not None and vol and t.get("leverage"):
         margin = vol * vpl * entry / t["leverage"]
 
+    reported = t.get("pnl")
+    floating = floating or (closed is None and reported is not None)
+
     risk = rr = res_cash = res_r = None
     if None not in (entry, stop, vol):
         risk = abs(entry - stop) * vol * vpl
         if target is not None:
             rr = abs(target - entry) / abs(entry - stop)
-        if mark is not None:
+        if reported is not None:
+            res_cash = reported
+        elif mark is not None:
             res_cash = (entry - mark if short else mark - entry) * vol * vpl
+        if res_cash is not None:
             res_r = res_cash / risk
 
     col = INK
@@ -186,7 +193,9 @@ story.append(Spacer(1, 5))
 story.append(Paragraph(
     "<b>PRICE NOW</b> is a live mark while a position is open, so the P/L "
     "beside it is unrealised. A price tagged <b>EXIT</b> is an actual close "
-    "and moves that row into realised.", FOOT))
+    "and moves that row into realised. P/L figures are as reported by the "
+    "broker and can differ from price x volume by the fill, spread and "
+    "financing.", FOOT))
 
 story.append(Spacer(1, 10))
 story.append(Paragraph(

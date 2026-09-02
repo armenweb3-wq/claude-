@@ -128,7 +128,10 @@ def row(asset, name, vpl):
         cellp(("%.2f" % mark) + ("" if floating else "  EXIT")
               if mark is not None else "", col=SLATE if floating else INK,
               size=10 if floating else 9),
-        cellp(usd(res_cash, sign=True) if res_cash is not None else "", col=col),
+        cellp(usd(res_cash, sign=True)
+              if (res_cash is not None and floating) else "", col=col),
+        cellp(usd(res_cash, sign=True)
+              if (res_cash is not None and not floating) else "", col=col),
         cellp("%+.2fR" % res_r if res_r is not None else "", col=col),
     ], res_cash, res_r, floating
 
@@ -152,7 +155,7 @@ story.append(Spacer(1, 14))
 
 HEAD = ["ASSET", "DIR", "ENTRY", "VOLUME", "MARGIN", "STOP LOSS", "TAKE PROFIT",
         "RISK (1R)", "R : R", "SL AT ENTRY", "PRICE NOW", "UNREALISED P/L",
-        "R"]
+        "REALISED P/L", "R"]
 data = [[Paragraph(h, TH) for h in HEAD]]
 real_cash = real_r = flt_cash = flt_r = 0.0
 for a, n, vpl in ASSETS:
@@ -165,16 +168,20 @@ for a, n, vpl in ASSETS:
     else:
         real_cash += rc; real_r += rr_
 
-def total_row(label, cash, r, muted=False):
-    c = SLATE if muted else (GREEN if cash > 0 else (RED if cash < 0 else SLATE))
+def tone(v):
+    return GREEN if v > 0 else (RED if v < 0 else SLATE)
+
+def total_row(label, flt, real):
     return ([Paragraph("<font size='8.6'><b>%s</b></font>" % label, TD)]
             + [Paragraph("", TD)] * 10
-            + [cellp(usd(cash, sign=True), col=c), cellp("%+.2fR" % r, col=c)])
+            + [cellp(flt, col=tone(flt_cash)), cellp(real, col=tone(real_cash)),
+               Paragraph("", TD)])
 
-data.append(total_row("UNREALISED P/L", flt_cash, flt_r))
-data.append(total_row("REALISED P/L", real_cash, real_r))
+data.append(total_row("TOTAL ($)", usd(flt_cash, sign=True),
+                      usd(real_cash, sign=True)))
+data.append(total_row("TOTAL (R)", "%+.2fR" % flt_r, "%+.2fR" % real_r))
 
-W = [72, 40, 52, 50, 56, 56, 60, 60, 54, 58, 56, 68, 0]
+W = [70, 38, 50, 46, 52, 52, 54, 56, 52, 52, 56, 62, 62, 0]
 assert len(W) == len(HEAD), (len(W), len(HEAD))
 W[-1] = CW - sum(W[:-1])
 t = Table(data, colWidths=W, rowHeights=[22] + [42] * 5 + [30, 30])

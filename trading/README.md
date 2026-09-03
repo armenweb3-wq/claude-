@@ -51,10 +51,11 @@ python3 trading/generate_simple_plan.py            # $2,000,000 (default)
 python3 trading/generate_simple_plan.py 100000     # $100,000
 ```
 
-Output is named for the balance: `Simple-Plan-2M.pdf`, `Simple-Plan-100k.pdf`. Two scenarios — a week with two stop-outs and three winners (+9R), and a week
-where stops are moved to entry so four trades scratch and one runs to 1:5 (+5R)
-— plus monthly totals, a twelve-month compounded table, and growth charts whose
-axes rescale to the balance.
+Output is named for the balance: `Simple-Plan-2M.pdf`, `Simple-Plan-100k.pdf`. Two worked scenarios — a week with two stop-outs and three winners (+9R), and
+a week where stops are moved to entry so four trades scratch and one runs to
+1:5 (+5R) — then monthly totals, a twelve-month compounded table, a matrix of
+all six possible weeks under three management styles with the expectancy by
+win rate, and growth charts whose axes rescale to the balance.
 
 `RISK_PCT`, `WEEK_A`, `WEEK_B` and `WEEKS_PER_MONTH` sit at the top of the
 script if the shape of the week needs changing.

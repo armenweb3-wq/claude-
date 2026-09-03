@@ -89,7 +89,7 @@ def money(v, sign=False):
     s = "${:,.0f}".format(abs(v))
     if v < 0:
         return "-" + s
-    return ("+" + s) if sign else s
+    return ("+" + s) if (sign and round(v)) else s
 
 
 # --------------------------------------------------------------- page furniture
@@ -425,6 +425,74 @@ story.append(table(
 story.append(PageBreak())
 
 # ------------------------------------------------------------- PAGE 4 -----
+story.append(Paragraph("EVERY OUTCOME, NOT JUST THE GOOD ONES", Kick))
+story.append(Paragraph("Every Possible Week", H1))
+story.append(hr)
+story.append(Spacer(1, 10))
+story.append(Paragraph(
+    "Five trades means six possible weeks - nothing wins, through to everything "
+    "wins. Here is all of them, under three ways of running the same trades.",
+    Body))
+story.append(Spacer(1, 4))
+
+
+def rcell(r):
+    col = "#2F6F4F" if r > 0 else ("#9B3535" if r < 0 else "#5A6678")
+    return Paragraph(
+        "<font size='13' color='%s'><b>%+dR</b></font><br/>"
+        "<font size='8.6' color='%s'>%s</font>"
+        % (col, r, col, money(r * R, sign=True)),
+        st("rc", fontName="Helvetica", fontSize=13, leading=16))
+
+
+poss_rows = []
+for w in range(6):
+    poss_rows.append([
+        Paragraph("<b>%d</b>" % w, TDb),
+        Paragraph("<font color='#5A6678'>%d</font>" % (5 - w), TD),
+        rcell(4 * w - 5),      # winners at 1:3, losers take the full stop
+        rcell(6 * w - 5),      # winners at 1:5, losers take the full stop
+        rcell(3 * w),          # winners at 1:3, losers scratch at entry
+    ])
+story.append(table(
+    ["WINNERS", "LOSERS", "ALL WINNERS AT 1:3", "ALL WINNERS AT 1:5",
+     "1:3, STOPS MOVED TO ENTRY"],
+    poss_rows, [76, 66, 118, 118, CW - 378]))
+story.append(Spacer(1, 6))
+story.append(note("WHERE EACH COLUMN TURNS GREEN",
+    "At <b>1:3 with full stops</b> you need <b>2 winners out of 5</b> to make "
+    "money. At <b>1:5</b> you need <b>1</b>. With <b>stops moved to entry</b> "
+    "the worst week is flat rather than %s - you cannot lose a week, only fail "
+    "to make one. That last column is the whole argument for moving the stop, "
+    "and it is why Week B matters more than Week A."
+    % money(5 * R, sign=False), tint=GOLDL, bar=GOLD))
+
+story.append(Paragraph("The average week", H2))
+story.append(Paragraph(
+    "The table above is what <i>can</i> happen. This is what it averages to "
+    "over many weeks, for a given win rate - the number that actually "
+    "determines whether the account grows.", Body))
+avg_rows = []
+for wr in (0.20, 0.30, 0.40, 0.50, 0.60):
+    e3, e5 = 5 * (wr * 3 - (1 - wr)), 5 * (wr * 5 - (1 - wr))
+    def cell(e):
+        c = "#2F6F4F" if e > 0 else ("#9B3535" if e < 0 else "#5A6678")
+        return Paragraph("<font color='%s'><b>%+.1fR</b></font>&nbsp;&nbsp;"
+                         "<font color='%s'>%s</font>"
+                         % (c, e, c, money(e * R, sign=True)), TD)
+    avg_rows.append([Paragraph("<b>%d%%</b>" % round(wr * 100), TDb),
+                     Paragraph("%.1f of 5" % (wr * 5), TD), cell(e3), cell(e5)])
+story.append(table(["WIN RATE", "WINNERS A WEEK", "AVERAGE WEEK AT 1:3",
+                    "AVERAGE WEEK AT 1:5"],
+                   avg_rows, [84, 116, 150, CW - 350]))
+story.append(Spacer(1, 6))
+story.append(Paragraph(
+    "A 1:3 plan breaks even at a 25% win rate and a 1:5 plan at 16.7%, which "
+    "is why the ratio matters more than being right. Costs - spread, "
+    "commission, financing - are not in these numbers and take roughly 0.05R "
+    "to 0.15R off every trade.", Small))
+story.append(PageBreak())
+
 story.append(Paragraph("COMPOUNDED WEEKLY", Kick))
 story.append(Paragraph("Growth Over Twelve Months", H1))
 story.append(hr)
@@ -447,28 +515,6 @@ story.append(Paragraph(
     "Both curves are the same shape because both are the same arithmetic: a "
     "fixed weekly percentage, compounded."
     % (money(sa[-1]), money(sb[-1])), Small))
-
-story.append(Paragraph("The weeks that are not Week A", H2))
-lose_rows = []
-for label, r in (("All five stopped out", -5),
-                 ("Four stopped out, one winner at 1:3", -1),
-                 ("Three stopped out, two winners at 1:3", 3),
-                 ("Week A", 9)):
-    hexc = "#2F6F4F" if r > 0 else "#9B3535"
-    lose_rows.append([
-        Paragraph("<b>%s</b>" % label, TD),
-        Paragraph("<font color='%s'><b>%+dR</b></font>" % (hexc, r), TD),
-        Paragraph("<font color='%s'><b>%s</b></font>"
-                  % (hexc, money(r * R, sign=True)), TD),
-        Paragraph("<font color='%s'>%+.1f%%</font>" % (hexc, r), TD)])
-story.append(table(["WEEK", "R", "PROFIT / LOSS", "% OF BALANCE"],
-                   lose_rows, [232, 60, 110, CW - 402]))
-story.append(Spacer(1, 4))
-story.append(Paragraph(
-    "The same 1%% risk that makes Week A worth %s makes the worst "
-    % money(A_R * R) +
-    "possible week cost %s. Five losses in a row is a 5%% drawdown - " % money(5 * R) +
-    "unpleasant, survivable, and the reason the risk is 1% and not 5%.", Small))
 
 story.append(Spacer(1, 10))
 story.append(note("READ THIS BEFORE YOU TRUST THE CHART",

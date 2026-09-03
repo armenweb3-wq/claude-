@@ -36,10 +36,11 @@ TRADES = {
                    closed=91.20, pnl=8047.0),          # closed at take profit
     "XAGUSD": dict(side="SELL", entry=64.31, volume=0.66, stop=65.00,
                    target=62.00, leverage=100, pnl=937.0),   # open, unrealised
-    # stop equals entry, so the original stop - and the risk it set - is not
-    # recorded; risk and R:R stay blank
-    "XAUUSD": dict(side="BUY", entry=4438.00, volume=0.5, stop=4438.00,
-                   target=4565.00, leverage=100, closed=4465.00, pnl=1370.0),
+    # stop is the original one the trade was sized from; it was later moved
+    # to entry, which `moved_to_entry` records
+    "XAUUSD": dict(side="BUY", entry=4438.00, volume=0.5, stop=4387.00,
+                   target=4565.00, leverage=100, moved_to_entry=True,
+                   closed=4465.00, pnl=1370.0),
 }
 
 # ----------------------------------------------------------------- palette --
@@ -130,8 +131,10 @@ def row(asset, name, vpl):
         cellp(usd(margin) if margin is not None else ""),
         cellp("%.2f" % stop if stop is not None else ""),
         cellp("%.2f" % target if target is not None else ""),
-        cellp(usd(risk) if risk is not None else ""),
-        cellp("1 : %.2f" % rr if rr is not None else "", col=GREEN),
+        cellp(usd(risk) if risk is not None else "",
+              col=RED if (risk is not None and risk > ONE_R * 1.005) else INK),
+        cellp("1 : %.2f" % rr if rr is not None else "",
+              col=GREEN if (rr is not None and rr >= 3) else RED),
         cellp("YES" if moved else ("" if moved is None else "NO")),
         cellp(("%.2f" % mark) + ("" if floating else "  EXIT")
               if mark is not None else "", col=SLATE if floating else INK,
@@ -228,6 +231,8 @@ story.append(Paragraph(
 
 story.append(Spacer(1, 10))
 story.append(Paragraph(
+    "Figures in red break a rule: risk above 1% of free margin, or a reward "
+    "to risk under 1:3.&nbsp;&nbsp; "
     "Per 1.00 lot, $1.00 of price movement is worth: "
     + "&nbsp;&nbsp;&bull;&nbsp;&nbsp;".join(
         "<b>%s</b> %s" % (a, usd(v)) for a, _, v in ASSETS)

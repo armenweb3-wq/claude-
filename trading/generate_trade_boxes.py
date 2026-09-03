@@ -36,6 +36,8 @@ TRADES = {
                    closed=91.20, pnl=8047.0),          # closed at take profit
     "XAGUSD": dict(side="SELL", entry=64.31, volume=0.66, stop=65.00,
                    target=62.00, leverage=100, pnl=937.0),   # open, unrealised
+    # entry, volume, stop and target not supplied - R cannot be derived
+    "XAUUSD": dict(closed=4465.00, pnl=1370.0),
 }
 
 # ----------------------------------------------------------------- palette --
@@ -102,12 +104,13 @@ def row(asset, name, vpl):
         risk = abs(entry - stop) * vol * vpl
         if target is not None:
             rr = abs(target - entry) / abs(entry - stop)
-        if reported is not None:
-            res_cash = reported
-        elif mark is not None:
-            res_cash = (entry - mark if short else mark - entry) * vol * vpl
-        if res_cash is not None:
-            res_r = res_cash / risk
+
+    if reported is not None:
+        res_cash = reported
+    elif mark is not None and None not in (entry, vol):
+        res_cash = (entry - mark if short else mark - entry) * vol * vpl
+    if res_cash is not None and risk:
+        res_r = res_cash / risk
 
     col = INK
     if res_cash is not None:
@@ -158,15 +161,22 @@ HEAD = ["ASSET", "DIR", "ENTRY", "VOLUME", "MARGIN", "STOP LOSS", "TAKE PROFIT",
         "REALISED P/L", "R"]
 data = [[Paragraph(h, TH) for h in HEAD]]
 real_cash = real_r = flt_cash = flt_r = 0.0
+no_r = []
 for a, n, vpl in ASSETS:
     cells, rc, rr_, flt = row(a, n, vpl)
     data.append(cells)
     if rc is None:
         continue
     if flt:
-        flt_cash += rc; flt_r += rr_
+        flt_cash += rc
     else:
-        real_cash += rc; real_r += rr_
+        real_cash += rc
+    if rr_ is None:
+        no_r.append(a)
+    elif flt:
+        flt_r += rr_
+    else:
+        real_r += rr_
 
 def tone(v):
     return GREEN if v > 0 else (RED if v < 0 else SLATE)
@@ -197,6 +207,12 @@ t.setStyle(TableStyle([
 ] + [("BACKGROUND", (0, i), (-1, i), ZEBRA) for i in (2, 4)]))
 story.append(t)
 story.append(Spacer(1, 5))
+if no_r:
+    story.append(Paragraph(
+        "<b>TOTAL (R)</b> excludes %s - no entry or stop is recorded, so the "
+        "risk it was taken against is unknown and its result cannot be "
+        "expressed in R." % ", ".join(no_r), FOOT))
+    story.append(Spacer(1, 3))
 story.append(Paragraph(
     "<b>PRICE NOW</b> is a live mark while a position is open, so the P/L "
     "beside it is unrealised. A price tagged <b>EXIT</b> is an actual close "

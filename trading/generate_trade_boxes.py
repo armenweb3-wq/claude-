@@ -43,7 +43,7 @@ TRADES = {
                    target=4565.00, leverage=100, moved_to_entry=True,
                    closed=4465.00, pnl=1370.0),
     "DJIUSD": dict(side="BUY", entry=53317.0, volume=4.0, stop=52795.0,
-                   target=54600.0, leverage=100),   # open
+                   target=54600.0, leverage=100, pnl=1512.0),  # open
     "BTCUSD": dict(skipped=True),                   # not traded this cycle
 }
 

@@ -36,8 +36,10 @@ TRADES = {
                    closed=91.20, pnl=8047.0),          # closed at take profit
     "XAGUSD": dict(side="SELL", entry=64.31, volume=0.66, stop=65.00,
                    target=62.00, leverage=100, pnl=937.0),   # open, unrealised
-    # entry, volume, stop and target not supplied - R cannot be derived
-    "XAUUSD": dict(closed=4465.00, pnl=1370.0),
+    # stop equals entry, so the original stop - and the risk it set - is not
+    # recorded; risk and R:R stay blank
+    "XAUUSD": dict(side="BUY", entry=4438.00, volume=0.5, stop=4438.00,
+                   target=4565.00, leverage=100, closed=4465.00, pnl=1370.0),
 }
 
 # ----------------------------------------------------------------- palette --
@@ -100,7 +102,8 @@ def row(asset, name, vpl):
     floating = floating or (closed is None and reported is not None)
 
     risk = rr = res_cash = res_r = None
-    if None not in (entry, stop, vol):
+    at_be = entry is not None and stop is not None and entry == stop
+    if None not in (entry, stop, vol) and not at_be:
         risk = abs(entry - stop) * vol * vpl
         if target is not None:
             rr = abs(target - entry) / abs(entry - stop)
@@ -116,6 +119,8 @@ def row(asset, name, vpl):
     if res_cash is not None:
         col = GREEN if res_cash > 0 else (RED if res_cash < 0 else SLATE)
     moved = t.get("moved_to_entry")
+    if moved is None and at_be:
+        moved = True
     return [
         Paragraph("<font size='10.5'><b>%s</b></font>&nbsp; "
                   "<font size='6.6' color='#5A6678'>%s</font>" % (asset, name), TD),
@@ -209,9 +214,10 @@ story.append(t)
 story.append(Spacer(1, 5))
 if no_r:
     story.append(Paragraph(
-        "<b>TOTAL (R)</b> excludes %s - no entry or stop is recorded, so the "
-        "risk it was taken against is unknown and its result cannot be "
-        "expressed in R." % ", ".join(no_r), FOOT))
+        "<b>TOTAL (R)</b> excludes %s - the risk it was taken against is not "
+        "recorded, so its result cannot be expressed in R. A stop shown equal "
+        "to the entry has already been moved to break-even and is not the stop "
+        "the trade was sized from." % ", ".join(no_r), FOOT))
     story.append(Spacer(1, 3))
 story.append(Paragraph(
     "<b>PRICE NOW</b> is a live mark while a position is open, so the P/L "

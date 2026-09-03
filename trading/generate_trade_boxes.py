@@ -35,7 +35,8 @@ TRADES = {
                    stop=87.56, target=91.20, moved_to_entry=True,
                    closed=91.20, pnl=8047.0),          # closed at take profit
     "XAGUSD": dict(side="SELL", entry=64.31, volume=0.66, stop=65.00,
-                   target=62.00, leverage=100, pnl=937.0),   # open, unrealised
+                   target=62.00, leverage=100, moved_to_entry=True,
+                   closed=64.31, pnl=29.70),   # scratched at break-even
     # stop is the original one the trade was sized from; it was later moved
     # to entry, which `moved_to_entry` records
     "XAUUSD": dict(side="BUY", entry=4438.00, volume=0.5, stop=4387.00,
@@ -70,10 +71,11 @@ FOOT = st("Foot", fontName="Helvetica", fontSize=7.4, leading=10.4,
 
 
 def usd(v, sign=False):
-    s = "${:,.0f}".format(abs(v))
+    dp = 2 if 0 < abs(v) < 100 else 0
+    s = ("${:,.%df}" % dp).format(abs(v))
     if v < 0:
         return "-" + s
-    return ("+" + s) if (sign and round(v)) else s
+    return ("+" + s) if (sign and round(v, dp)) else s
 
 
 def cellp(text, bold=True, col=INK, size=10):  # noqa: D401

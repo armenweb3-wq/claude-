@@ -44,6 +44,7 @@ TRADES = {
                    closed=4465.00, pnl=1370.0),
     "DJIUSD": dict(side="BUY", entry=53317.0, volume=4.0, stop=52795.0,
                    target=54600.0, leverage=100),   # open
+    "BTCUSD": dict(skipped=True),                   # not traded this cycle
 }
 
 # ----------------------------------------------------------------- palette --
@@ -96,6 +97,13 @@ def cellp(text, bold=True, col=INK, size=10):  # noqa: D401
 def row(asset, name, vpl):
     """One table row. Anything that cannot be derived is left blank."""
     t = TRADES.get(asset, {})
+    if t.get("skipped"):
+        # deliberately not traded - a dash reads differently from an empty cell
+        return ([Paragraph("<font size='10.5'><b>%s</b></font>&nbsp; "
+                           "<font size='6.6' color='#5A6678'>%s</font>"
+                           % (asset, name), TD)]
+                + [cellp("-", col=SLATE)] * (len(HEAD) - 1)), None, None, False
+
     side = t.get("side")
     entry, stop = t.get("entry"), t.get("stop")
     target, vol = t.get("target"), t.get("volume")

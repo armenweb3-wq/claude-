@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
 Generates "The Simple Version" - a four-page worked example of the weekly
-5-asset plan on a $2,000,000 balance at 1% risk per trade.
+5-asset plan at 1% risk per trade, for any starting balance.
 
-Usage:  python3 trading/generate_simple_plan.py
-Output: trading/Simple-Plan-2M.pdf
+Usage:  python3 trading/generate_simple_plan.py [balance]     default 2000000
+Output: trading/Simple-Plan-<balance>.pdf
 
 WinAnsi-safe glyphs only, so the built-in Helvetica family renders everything.
 """
@@ -20,12 +20,23 @@ from reportlab.platypus import (
     Paragraph, Spacer, Table, TableStyle,
 )
 
-OUT = "trading/Simple-Plan-2M.pdf"
+import sys
 
 # ------------------------------------------------------------------ inputs --
-BALANCE = 2_000_000.0
+BALANCE = float(sys.argv[1]) if len(sys.argv) > 1 else 2_000_000.0
+
+
+def size_label(b):
+    if b >= 1e6 and b % 1e6 == 0:
+        return "%dM" % (b / 1e6)
+    if b >= 1000 and b % 1000 == 0:
+        return "%dk" % (b / 1000)
+    return "%d" % b
+
+
+OUT = "trading/Simple-Plan-%s.pdf" % size_label(BALANCE)
 RISK_PCT = 0.01
-R = BALANCE * RISK_PCT              # 1R = $20,000
+R = BALANCE * RISK_PCT              # one unit of risk
 ASSETS = ["XAUUSD", "WTIUSD", "XAGUSD", "BTCUSD", "DJIUSD"]
 
 WEEK_A = [("Stopped out", -1), ("Stopped out", -1),
@@ -95,7 +106,7 @@ def page(canvas, doc):
     canvas.drawString(MARGIN, PAGE_H - 7.3 * mm, "THE SIMPLE VERSION")
     canvas.setFont("Helvetica", 7.6)
     canvas.drawRightString(PAGE_W - MARGIN, PAGE_H - 7.3 * mm,
-                           "$2,000,000  |  1% per trade  |  5 trades a week")
+                           money(BALANCE) + "  |  1% per trade  |  5 trades a week")
     canvas.setStrokeColor(RULE)
     canvas.setLineWidth(0.6)
     canvas.line(MARGIN, 12 * mm, PAGE_W - MARGIN, 12 * mm)
@@ -270,7 +281,7 @@ hr.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), GOLD)]))
 story.append(hr)
 story.append(Spacer(1, 10))
 
-facts = [("BALANCE", "$2,000,000"), ("RISK PER TRADE", "1% = $20,000"),
+facts = [("BALANCE", money(BALANCE)), ("RISK PER TRADE", "1% = " + money(R)),
          ("TRADES PER WEEK", "5 - one each"), ("REWARD", "1:3 to 1:5")]
 ft = Table([[Paragraph(
     "<font size='7.4' color='#5A6678'><b>%s</b></font><br/>"
@@ -286,23 +297,25 @@ ft.setStyle(TableStyle([
 story.append(ft)
 story.append(Spacer(1, 4))
 story.append(note("HOW TO READ EVERY NUMBER IN THIS DOCUMENT",
-    "<b>1R = $20,000.</b> That is what you lose if a stop is hit, and it is the "
-    "same on all five assets. A 1:3 winner pays 3R = $60,000. A 1:5 winner pays "
-    "5R = $100,000. Gold, oil, silver, bitcoin and the Dow - one trade each, "
-    "once a week.", tint=GOLDL, bar=GOLD))
+    "<b>1R = %s.</b> That is what you lose if a stop is hit, and it is the "
+    "same on all five assets. A 1:3 winner pays 3R = %s. A 1:5 winner pays "
+    "5R = %s. Gold, oil, silver, bitcoin and the Dow - one trade each, "
+    "once a week." % (money(R), money(3 * R), money(5 * R)),
+    tint=GOLDL, bar=GOLD))
 
 story.append(Paragraph("Week A - two stopped out, three winners", H2))
 story.append(week_table(WEEK_A))
 story.append(Spacer(1, 9))
 story.append(band("WEEK A PROFIT", money(A_R * R, sign=True),
                   "<b>%+dR on the week</b>, or %+d%% of the balance. Two losses "
-                  "cost $40,000 between them; the three winners brought back "
-                  "$220,000." % (A_R, A_R), tint=GREENL, bar=GREEN, vcol=GREEN))
+                  "cost %s between them; the three winners brought back %s."
+                  % (A_R, A_R, money(2 * R), money(11 * R)),
+                  tint=GREENL, bar=GREEN, vcol=GREEN))
 story.append(Spacer(1, 8))
 story.append(note("IF THE THIRD WINNER ALSO RUNS TO 1:5",
     "Two of the three winners were named as 1:3 and 1:5, so the third is taken "
-    "as a 1:3 here. If it reaches 1:5 instead, the week is <b>+11R = "
-    "+$220,000</b> rather than +9R.", tint=ZEBRA, bar=SLATE))
+    "as a 1:3 here. If it reaches 1:5 instead, the week is <b>+11R = %s</b> "
+    "rather than +9R." % money(11 * R, sign=True), tint=ZEBRA, bar=SLATE))
 story.append(PageBreak())
 
 # ------------------------------------------------------------- PAGE 2 -----
@@ -311,7 +324,7 @@ story.append(Paragraph("Week B - stops moved to entry", H1))
 story.append(hr)
 story.append(Spacer(1, 10))
 story.append(Paragraph(
-    "Same five trades, same $20,000 of risk on each. This time every position "
+    "Same five trades, same %s of risk on each. This time every position " % money(R) +
     "is moved to break-even once it goes your way, so four trades scratch out "
     "at entry for nothing instead of losing, and one runs all the way to 1:5.",
     Body))
@@ -328,13 +341,13 @@ cmp_rows = [
     [Paragraph("<b>Stops left where they were</b>", TD),
      Paragraph("4 losses and 1 winner at 1:5", TD),
      Paragraph("<font color='#5A6678'><b>+1R</b></font>", TD),
-     Paragraph("<font color='#5A6678'><b>+$20,000</b></font>", TD)],
+     Paragraph("<font color='#5A6678'><b>%s</b></font>" % money(R, sign=True), TD)],
     [Paragraph("<b>Stops moved to entry</b>", TD),
      Paragraph("4 scratches and 1 winner at 1:5", TD),
      Paragraph("<font color='#2F6F4F'><b>+5R</b></font>", TD),
-     Paragraph("<font color='#2F6F4F'><b>+$100,000</b></font>", TD)],
+     Paragraph("<font color='#2F6F4F'><b>%s</b></font>" % money(5 * R, sign=True), TD)],
     [Paragraph("<b>Difference</b>", TDb), Paragraph("Same trades, same entries", TDb),
-     Paragraph("<b>+4R</b>", TDb), Paragraph("<b>+$80,000</b>", TDb)],
+     Paragraph("<b>+4R</b>", TDb), Paragraph("<b>%s</b>" % money(4 * R, sign=True), TDb)],
 ]
 ct = table(["MANAGEMENT", "OUTCOME", "R", "RESULT"],
            cmp_rows, [150, 186, 52, CW - 388], zebra=False)
@@ -345,7 +358,8 @@ story.append(ct)
 story.append(Spacer(1, 8))
 story.append(note("THE POINT OF WEEK B",
     "Nothing about the trades changed - same entries, same stops, same targets. "
-    "Only the management changed, and the week went from $20,000 to $100,000. "
+    "Only the management changed, and the week went from %s to %s. "
+    % (money(R), money(5 * R)) +
     "The cost is that a trade which dips back to entry before running is now "
     "closed for nothing instead of eventually winning, so a real week lands "
     "somewhere between the two rows.", tint=GOLDL, bar=GOLD))
@@ -376,19 +390,21 @@ story.append(table(
     m_rows, [96, 52, 80, 58, 92, CW - 378]))
 story.append(Spacer(1, 5))
 story.append(Paragraph(
-    "<b>Fixed size</b> keeps 1R at $20,000 all month. <b>Compounded</b> "
+    "<b>Fixed size</b> keeps 1R at %s all month. <b>Compounded</b> " % money(R) +
     "recalculates 1% from the new balance each week, so the winners get bigger "
     "as the account grows. Four trading weeks to a month.", Small))
 
 story.append(Spacer(1, 8))
+_ca = BALANCE * ((1 + A_R / 100.0) ** WEEKS_PER_MONTH - 1)
+_cb = BALANCE * ((1 + B_R / 100.0) ** WEEKS_PER_MONTH - 1)
 story.append(band("WEEK A - ONE MONTH", money(A_R * WEEKS_PER_MONTH * R, sign=True),
-                  "Fixed sizing. Compounded weekly it is "
-                  "<b>+$823,163</b>, taking the balance to $2,823,163.",
+                  "Fixed sizing. Compounded weekly it is <b>%s</b>, taking the "
+                  "balance to %s." % (money(_ca, sign=True), money(BALANCE + _ca)),
                   tint=GREENL, bar=GREEN, vcol=GREEN))
 story.append(Spacer(1, 6))
 story.append(band("WEEK B - ONE MONTH", money(B_R * WEEKS_PER_MONTH * R, sign=True),
-                  "Fixed sizing. Compounded weekly it is "
-                  "<b>+$431,013</b>, taking the balance to $2,431,013.",
+                  "Fixed sizing. Compounded weekly it is <b>%s</b>, taking the "
+                  "balance to %s." % (money(_cb, sign=True), money(BALANCE + _cb)),
                   tint=GREENL, bar=GREEN, vcol=GREEN))
 
 story.append(Paragraph("Twelve months, compounded", H2))
@@ -427,9 +443,10 @@ charts.setStyle(TableStyle([
 story.append(charts)
 story.append(Spacer(1, 4))
 story.append(Paragraph(
-    "Note the two vertical scales differ - Week A ends at $125.2M, Week B at "
-    "$20.8M. Both curves are the same shape because both are the same "
-    "arithmetic: a fixed weekly percentage, compounded.", Small))
+    "Note the two vertical scales differ - Week A ends at %s, Week B at %s. "
+    "Both curves are the same shape because both are the same arithmetic: a "
+    "fixed weekly percentage, compounded."
+    % (money(sa[-1]), money(sb[-1])), Small))
 
 story.append(Paragraph("The weeks that are not Week A", H2))
 lose_rows = []
@@ -448,8 +465,9 @@ story.append(table(["WEEK", "R", "PROFIT / LOSS", "% OF BALANCE"],
                    lose_rows, [232, 60, 110, CW - 402]))
 story.append(Spacer(1, 4))
 story.append(Paragraph(
-    "The same 1% risk that makes Week A worth $180,000 makes the worst "
-    "possible week cost $100,000. Five losses in a row is a 5% drawdown - "
+    "The same 1%% risk that makes Week A worth %s makes the worst "
+    % money(A_R * R) +
+    "possible week cost %s. Five losses in a row is a 5%% drawdown - " % money(5 * R) +
     "unpleasant, survivable, and the reason the risk is 1% and not 5%.", Small))
 
 story.append(Spacer(1, 10))
@@ -459,22 +477,22 @@ story.append(note("READ THIS BEFORE YOU TRUST THE CHART",
     "losing one - no month where three assets chop sideways, no gap through a "
     "stop, no drawdown. <b>A 9% week is a very good week, not an average "
     "one.</b> Real results also lose spread, commission and financing on every "
-    "trade, and a $2,000,000 account moving in and out of five markets will "
-    "not always fill where it wants to. Treat these numbers as what the "
-    "sequence is worth if it happens, not as what a year looks like.",
+    "trade. Treat these numbers as what the sequence is worth if it happens, "
+    "not as what a year looks like.",
     tint=REDL, bar=RED))
 
 story.append(Spacer(1, 10))
-story.append(band("EVERY TRADE", "$20,000",
-                  "Risk $20,000. Aim for $60,000 to $100,000. Take five a week, "
-                  "one on each asset. Move the stop to entry once it is going "
-                  "your way. That is the entire system.",
+story.append(band("EVERY TRADE", money(R),
+                  "Risk %s. Aim for %s to %s. Take five a week, one on each "
+                  "asset. Move the stop to entry once it is going your way. "
+                  "That is the entire system."
+                  % (money(R), money(3 * R), money(5 * R)),
                   tint=GOLDL, bar=GOLD, vcol=NAVY))
 
 # ================================================================== build ==
 doc = BaseDocTemplate(OUT, pagesize=A4, leftMargin=MARGIN, rightMargin=MARGIN,
                       topMargin=MARGIN, bottomMargin=MARGIN,
-                      title="The Simple Version - $2,000,000 Weekly Plan",
+                      title="The Simple Version - %s Weekly Plan" % money(BALANCE),
                       subject="Worked example: 1% risk per trade on five assets "
                               "at 1:3 to 1:5")
 doc.addPageTemplates([PageTemplate(

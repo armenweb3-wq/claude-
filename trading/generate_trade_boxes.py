@@ -42,6 +42,8 @@ TRADES = {
     "XAUUSD": dict(side="BUY", entry=4438.00, volume=0.5, stop=4387.00,
                    target=4565.00, leverage=100, moved_to_entry=True,
                    closed=4465.00, pnl=1370.0),
+    "DJIUSD": dict(side="BUY", entry=53317.0, volume=4.0, stop=52795.0,
+                   target=54600.0, leverage=100),   # open
 }
 
 # ----------------------------------------------------------------- palette --
@@ -68,6 +70,11 @@ TH  = st("TH", fontName="Helvetica-Bold", fontSize=7.6, leading=10,
          textColor=colors.white)
 FOOT = st("Foot", fontName="Helvetica", fontSize=7.4, leading=10.4,
           textColor=SLATE)
+
+
+def px(v):
+    """Prices: 2dp for FX-scale quotes, none for index-scale ones."""
+    return ("%.2f" if abs(v) < 1000 else "%.0f") % v
 
 
 def usd(v, sign=False):
@@ -128,17 +135,17 @@ def row(asset, name, vpl):
         Paragraph("<font size='10.5'><b>%s</b></font>&nbsp; "
                   "<font size='6.6' color='#5A6678'>%s</font>" % (asset, name), TD),
         cellp(side or "", col=GREEN if side == "BUY" else RED, size=8.6),
-        cellp("%.2f" % entry if entry is not None else ""),
+        cellp(px(entry) if entry is not None else ""),
         cellp("%g" % vol if vol is not None else ""),
         cellp(usd(margin) if margin is not None else ""),
-        cellp("%.2f" % stop if stop is not None else ""),
-        cellp("%.2f" % target if target is not None else ""),
+        cellp(px(stop) if stop is not None else ""),
+        cellp(px(target) if target is not None else ""),
         cellp(usd(risk) if risk is not None else "",
               col=RED if (risk is not None and risk > ONE_R * 1.005) else INK),
         cellp("1 : %.2f" % rr if rr is not None else "",
               col=GREEN if (rr is not None and rr >= 3) else RED),
         cellp("YES" if moved else ("" if moved is None else "NO")),
-        cellp(("%.2f" % mark) + ("" if floating else "  EXIT")
+        cellp(px(mark) + ("" if floating else "  EXIT")
               if mark is not None else "", col=SLATE if floating else INK,
               size=10 if floating else 9),
         cellp(usd(res_cash, sign=True)

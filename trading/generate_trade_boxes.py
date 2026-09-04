@@ -182,8 +182,8 @@ story.append(hr)
 story.append(Spacer(1, 14))
 
 HEAD = ["ASSET", "DIR", "ENTRY", "VOLUME", "MARGIN", "STOP LOSS", "TAKE PROFIT",
-        "RISK (1R)", "R : R", "SL AT ENTRY", "PRICE NOW", "UNREALISED P/L",
-        "REALISED P/L", "R"]
+        "RISK (1R)", "R : R PLANNED", "SL AT ENTRY", "PRICE NOW", "UNREALISED P/L",
+        "REALISED P/L", "R ACHIEVED"]
 data = [[Paragraph(h, TH) for h in HEAD]]
 real_cash = real_r = flt_cash = flt_r = 0.0
 no_r = []
@@ -239,6 +239,13 @@ if no_r:
         "to the entry has already been moved to break-even and is not the stop "
         "the trade was sized from." % ", ".join(no_r), FOOT))
     story.append(Spacer(1, 3))
+story.append(Paragraph(
+    "<b>R : R PLANNED</b> is fixed when the trade is placed - target distance "
+    "divided by stop distance - and is how the setup is judged. "
+    "<b>R ACHIEVED</b> is what the trade actually returned against the risk "
+    "taken. They only match when a position runs the full way to target.",
+    FOOT))
+story.append(Spacer(1, 3))
 story.append(Paragraph(
     "<b>PRICE NOW</b> is a live mark while a position is open, so the P/L "
     "beside it is unrealised. A price tagged <b>EXIT</b> is an actual close "

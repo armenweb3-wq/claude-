@@ -14,7 +14,8 @@ from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
-from reportlab.graphics.shapes import Drawing, Line, PolyLine, String, Circle, Polygon
+from reportlab.graphics.shapes import (Drawing, Line, PolyLine, Rect,
+                                       String, Circle, Polygon)
 from reportlab.platypus import (
     BaseDocTemplate, Frame, NextPageTemplate, PageBreak, PageTemplate,
     Paragraph, Spacer, Table, TableStyle,
@@ -219,6 +220,54 @@ def week_table(legs):
 
 
 # ---------------------------------------------------------------- the chart --
+def be_diagram(w, h):
+    """Stop, entry, trigger and target on one track, before and after."""
+    d = Drawing(w, h)
+    L, Rt = 74, 8
+    pw = w - L - Rt
+    # the track spans -1R (stop) to +3R (target), so entry sits a quarter in
+    def X(r):
+        return L + pw * (r + 1) / 4.0
+
+    marks = [(-1, "STOP", "-1R"), (0, "ENTRY", "0"),
+             (1, "TRIGGER", "+1R"), (3, "TARGET", "+3R")]
+    for r, name, val in marks:
+        d.add(Line(X(r), 40, X(r), h - 34, strokeColor=RULE, strokeWidth=0.6))
+        d.add(String(X(r), h - 12, name, fontName="Helvetica-Bold", fontSize=7,
+                     fillColor=SLATE, textAnchor="middle"))
+        d.add(String(X(r), h - 26, val, fontName="Helvetica-Bold", fontSize=8.6,
+                     fillColor=NAVY, textAnchor="middle"))
+
+    bars = [(h - 62, "BEFORE", True), (h - 100, "AFTER", False)]
+    for y, label, before in bars:
+        d.add(String(0, y + 9, label, fontName="Helvetica-Bold", fontSize=8,
+                     fillColor=SLATE))
+        if before:
+            d.add(Rect(X(-1), y, X(0) - X(-1), 22, fillColor=RED,
+                       strokeColor=None))
+            d.add(String((X(-1) + X(0)) / 2, y + 7.5, "at risk",
+                         fontName="Helvetica-Bold", fontSize=7.4,
+                         fillColor=colors.white, textAnchor="middle"))
+        else:
+            d.add(Rect(X(-1), y, X(0) - X(-1), 22,
+                       fillColor=colors.HexColor("#EDEFF2"), strokeColor=None))
+            d.add(String((X(-1) + X(0)) / 2, y + 7.5, "no longer reachable",
+                         fontName="Helvetica-Bold", fontSize=6.6,
+                         fillColor=SLATE, textAnchor="middle"))
+            d.add(Line(X(0), y - 5, X(0), y + 27, strokeColor=NAVY,
+                       strokeWidth=2.2))
+        d.add(Rect(X(0), y, X(3) - X(0), 22, fillColor=GREEN, strokeColor=None))
+        d.add(String((X(0) + X(3)) / 2, y + 7.5, "to make",
+                     fontName="Helvetica-Bold", fontSize=7.4,
+                     fillColor=colors.white, textAnchor="middle"))
+
+    d.add(String(X(1), 12, "the stop moves here, once price reaches +1R",
+                 fontName="Helvetica-Oblique", fontSize=7.4, fillColor=SLATE,
+                 textAnchor="middle"))
+    d.add(Line(X(1), 24, X(1), 40, strokeColor=SLATE, strokeWidth=0.8))
+    return d
+
+
 def week_chart(w, h, series, colour, dd_at):
     """Equity week by week, with the deepest drawdown marked."""
     d = Drawing(w, h)
@@ -450,6 +499,74 @@ story.append(note("THE POINT OF WEEK B",
 story.append(PageBreak())
 
 # ------------------------------------------------------------- PAGE 3 -----
+story.append(Paragraph("THE ONE MECHANIC THAT CHANGES EVERYTHING", Kick))
+story.append(Paragraph("Moving the Stop to Entry", H1))
+story.append(hr)
+story.append(Spacer(1, 10))
+story.append(Paragraph(
+    "Every trade opens with the stop where the idea is proven wrong - one "
+    "risk unit away, %s. Once price has travelled that same distance <i>in "
+    "your favour</i>, the stop is moved up to the price you entered at. "
+    "From that moment the trade cannot cost you money." % money(R), Body))
+story.append(Spacer(1, 6))
+story.append(be_diagram(CW, 146))
+story.append(Spacer(1, 10))
+
+story.append(Paragraph("When to move it", H2))
+story.append(Paragraph(
+    "<b>When the trade is up by the same distance as the stop.</b> If your "
+    "stop is 0.85 away from entry, you move it the moment price is 0.85 in "
+    "profit. That single rule is the whole trigger - no judgement required.",
+    Body))
+when_rows = [
+    ["<b>Too early</b>", "Half the stop distance",
+     "Normal noise reaches back to your entry and scratches you out of trades "
+     "that were working. You will have flat weeks that should have been good "
+     "ones."],
+    ["<b>The rule</b>", "<b>One full stop distance</b>",
+     "<b>Far enough that price has genuinely moved, close enough that you stop "
+     "carrying risk early in the trade.</b>"],
+    ["<b>Too late</b>", "Two or more stop distances",
+     "You carried the full %s of risk through most of the move. If it turns "
+     "just before you move the stop, you lose the whole unit anyway." % money(R)],
+]
+story.append(table(["", "MOVE AT", "WHAT HAPPENS"],
+                   [[Paragraph(c, TD) for c in r] for r in when_rows],
+                   [76, 128, CW - 204]))
+
+story.append(Paragraph("What it costs you", H2))
+story.append(Paragraph(
+    "It is not free - it trades away some winners to remove all the losers. "
+    "Three things can happen after the trigger:", Body))
+cost_rows = [
+    ["Price runs straight to target",
+     Paragraph("<font color='#2F6F4F'><b>%s</b></font>" % money(3 * R, True), TD),
+     Paragraph("<font color='#2F6F4F'><b>%s</b></font>" % money(3 * R, True), TD),
+     "No difference. The stop was never touched."],
+    ["Price falls back to entry, then reverses",
+     Paragraph("<font color='#9B3535'><b>%s</b></font>" % money(-R), TD),
+     Paragraph("<font color='#5A6678'><b>%s</b></font>" % money(0), TD),
+     "The stop saved a full loss."],
+    ["Price falls back to entry, then runs to target",
+     Paragraph("<font color='#2F6F4F'><b>%s</b></font>" % money(3 * R, True), TD),
+     Paragraph("<font color='#5A6678'><b>%s</b></font>" % money(0), TD),
+     "The stop cost you the winner. This is the price of the mechanic."],
+]
+story.append(table(
+    ["AFTER THE TRIGGER, IF...", "STOP LEFT ALONE", "STOP AT ENTRY", ""],
+    [[Paragraph(c, TD) if isinstance(c, str) else c for c in r]
+     for r in cost_rows], [176, 92, 82, CW - 350]))
+story.append(Spacer(1, 8))
+story.append(note("THE TRADE YOU ARE MAKING",
+    "You give up the third row to never suffer the second. Over a week of five "
+    "trades the worst possible outcome stops being %s and becomes nothing at "
+    "all, and why a week where only one trade works still finishes ahead. "
+    "Whether it is worth it depends on how often price returns to your entry "
+    "and still reaches target - your own log will tell you after thirty or "
+    "forty trades. Until then, take the protection."
+    % money(5 * R), tint=GOLDL, bar=GOLD))
+story.append(PageBreak())
+
 story.append(Paragraph("FOUR WEEKS", Kick))
 story.append(Paragraph("The Monthly Total", H1))
 story.append(hr)

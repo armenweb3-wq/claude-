@@ -493,7 +493,7 @@ story.append(Paragraph(
     "to 0.15R off every trade.", Small))
 story.append(PageBreak())
 
-story.append(Paragraph("COMPOUNDED WEEKLY", Kick))
+story.append(Paragraph("COMPOUNDED WEEKLY - HYPOTHETICAL ILLUSTRATION", Kick))
 story.append(Paragraph("Growth Over Twelve Months", H1))
 story.append(hr)
 story.append(Spacer(1, 12))
@@ -527,7 +527,25 @@ story.append(note("READ THIS BEFORE YOU TRUST THE CHART",
     "not as what a year looks like.",
     tint=REDL, bar=RED))
 
-story.append(Spacer(1, 10))
+story.append(Spacer(1, 12))
+story.append(note("IMPORTANT",
+    "This document is an educational illustration of a risk and position-sizing "
+    "method. It is <b>not financial, investment or trading advice</b> and "
+    "contains no recommendation to buy or sell any instrument. "
+    "<b>Every figure in it is hypothetical.</b> None of it represents actual "
+    "trades, actual results, or a projection of future performance - the "
+    "returns shown are what the arithmetic produces if an assumed sequence of "
+    "outcomes occurs, and no such sequence is being predicted or promised. "
+    "Leveraged trading in commodities, indices and cryptocurrencies carries a "
+    "high risk of rapid loss; on some accounts losses can exceed the amount "
+    "deposited. Spread, commission and financing costs are excluded throughout "
+    "and reduce every result shown. No method guarantees a profit, and losing "
+    "weeks and months are a normal part of this one. Past performance does not "
+    "indicate future results. Consider whether this approach is suitable for "
+    "your circumstances and seek independent advice if you are unsure.",
+    tint=colors.HexColor("#F4F5F7"), bar=SLATE))
+
+story.append(Spacer(1, 12))
 story.append(band("EVERY TRADE", money(R),
                   "Risk %s. Aim for %s to %s. Take five a week, one on each "
                   "asset. Move the stop to entry once it is going your way. "

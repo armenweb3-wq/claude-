@@ -20,6 +20,8 @@ from reportlab.platypus import (
     Paragraph, Spacer, Table, TableStyle,
 )
 
+import math
+import random
 import sys
 
 # ------------------------------------------------------------------ inputs --
@@ -217,6 +219,49 @@ def week_table(legs):
 
 
 # ---------------------------------------------------------------- the chart --
+def week_chart(w, h, series, colour, dd_at):
+    """Equity week by week, with the deepest drawdown marked."""
+    d = Drawing(w, h)
+    L, Rt, T, Bo = 54, 10, 16, 22
+    pw, ph = w - L - Rt, h - T - Bo
+    lo, hi = min(series), max(series)
+    pad = (hi - lo) * 0.18 or hi * 0.1
+    raw = (hi + pad - max(0, lo - pad)) / 4.0
+    mag = 10 ** math.floor(math.log10(raw))
+    step = next(m * mag for m in (1, 2, 2.5, 5, 10) if m * mag >= raw)
+    ymin = math.floor(max(0, lo - pad) / step) * step
+    ymax = ymin + 4 * step
+
+    def Y(v):
+        return Bo + (v - ymin) / (ymax - ymin) * ph
+
+    for k in range(5):
+        v = ymin + step * k
+        d.add(Line(L, Y(v), L + pw, Y(v), strokeColor=RULE, strokeWidth=0.5))
+        d.add(String(L - 6, Y(v) - 2.6, money(v), fontName="Helvetica",
+                     fontSize=6.8, fillColor=SLATE, textAnchor="end"))
+    for wk in range(0, len(series), 13):
+        x = L + pw * wk / float(len(series) - 1)
+        d.add(String(x, Bo - 12, "wk %d" % wk, fontName="Helvetica",
+                     fontSize=6.8, fillColor=SLATE, textAnchor="middle"))
+
+    pts = []
+    for i, v in enumerate(series):
+        pts += [L + pw * i / float(len(series) - 1), Y(v)]
+    d.add(Line(L, Y(series[0]), L + pw, Y(series[0]), strokeColor=SLATE,
+               strokeWidth=0.7, strokeDashArray=[3, 3]))
+    d.add(PolyLine(points=pts, strokeColor=colour, strokeWidth=1.9))
+    d.add(Circle(pts[dd_at * 2], pts[dd_at * 2 + 1], 3.4, fillColor=RED,
+                 strokeColor=colors.white, strokeWidth=1))
+    d.add(String(pts[dd_at * 2] + 8, pts[dd_at * 2 + 1] - 12, "worst drawdown",
+                 fontName="Helvetica-Bold", fontSize=7, fillColor=RED))
+    d.add(String(L + pw, min(Y(series[-1]) + 13, Bo + ph - 8),
+                 money(series[-1]), fontName="Helvetica-Bold", fontSize=8.6,
+                 fillColor=colour, textAnchor="end"))
+    d.add(Line(L, Bo, L + pw, Bo, strokeColor=SLATE, strokeWidth=0.8))
+    return d
+
+
 def growth_chart(w, h, series, colour, title, months=12):
     """series: list of balances, index 0..months."""
     d = Drawing(w, h)
@@ -263,6 +308,45 @@ def growth_chart(w, h, series, colour, title, months=12):
                  "$%.1fM" % (series[-1] / 1e6), fontName="Helvetica-Bold",
                  fontSize=8, fillColor=colour, textAnchor="end"))
     return d
+
+
+# A plausible per-trade outcome mix. Winners rarely reach the full target,
+# scratches are common once the stop moves to entry, and costs come off every
+# trade. Tuned to roughly +0.3R expectancy - a good, not exceptional, edge.
+MIX = [(0.24, lambda r: r.uniform(1.9, 3.1)),    # runs to or near target
+       (0.20, lambda r: r.uniform(0.2, 0.9)),    # partial or early exit
+       (0.24, lambda r: r.uniform(-.05, .05)),   # scratched at break-even
+       (0.32, lambda r: -1.0)]                   # full stop
+COST_R = 0.08
+
+
+def _trade(r):
+    u, acc = r.random(), 0.0
+    for prob, f in MIX:
+        acc += prob
+        if u <= acc:
+            return f(r) - COST_R
+    return -1.0 - COST_R
+
+
+def realistic_year(seed=0, weeks=52):
+    """One seeded year at 3-4 trades a week. Returns the equity path."""
+    rnd = random.Random(seed)
+    eq = [BALANCE]
+    for w in range(weeks):
+        n = 3 if w % 2 else 4
+        eq.append(eq[-1] * (1 + sum(_trade(rnd) for _ in range(n)) / 100.0))
+    return eq
+
+
+def max_drawdown(path):
+    peak, worst, at = path[0], 0.0, 0
+    for i, v in enumerate(path):
+        peak = max(peak, v)
+        dd = 1 - v / peak
+        if dd > worst:
+            worst, at = dd, i
+    return worst, at
 
 
 def compound(weekly_r, months=12):
@@ -407,21 +491,14 @@ story.append(band("WEEK B - ONE MONTH", money(B_R * WEEKS_PER_MONTH * R, sign=Tr
                   "balance to %s." % (money(_cb, sign=True), money(BALANCE + _cb)),
                   tint=GREENL, bar=GREEN, vcol=GREEN))
 
-story.append(Paragraph("Twelve months, compounded", H2))
-sa, sb = compound(A_R), compound(B_R)
-yr_rows = []
-for m in (0, 1, 2, 3, 6, 9, 12):
-    yr_rows.append([
-        Paragraph("<b>%s</b>" % ("Start" if m == 0 else "Month %d" % m), TD),
-        Paragraph(money(sa[m]), TD),
-        Paragraph("<font color='#2F6F4F'>%s</font>"
-                  % money(sa[m] - BALANCE, sign=True) if m else "-", TD),
-        Paragraph(money(sb[m]), TD),
-        Paragraph("<font color='#2F6F4F'>%s</font>"
-                  % money(sb[m] - BALANCE, sign=True) if m else "-", TD)])
-story.append(table(
-    ["", "WEEK A - BALANCE", "GAIN", "WEEK B - BALANCE", "GAIN"],
-    yr_rows, [66, 110, 102, 110, CW - 388]))
+story.append(Spacer(1, 14))
+story.append(band("EVERY TRADE", money(R),
+                  "Risk %s. Aim for %s to %s. Take five a week, one on each "
+                  "asset. Move the stop to entry once it is going your way. "
+                  "That is the entire system."
+                  % (money(R), money(3 * R), money(5 * R)),
+                  tint=GOLDL, bar=GOLD, vcol=NAVY))
+
 story.append(PageBreak())
 
 # ------------------------------------------------------------- PAGE 4 -----
@@ -493,41 +570,60 @@ story.append(Paragraph(
     "to 0.15R off every trade.", Small))
 story.append(PageBreak())
 
-story.append(Paragraph("COMPOUNDED WEEKLY - HYPOTHETICAL ILLUSTRATION", Kick))
-story.append(Paragraph("Growth Over Twelve Months", H1))
+story.append(Paragraph("WHAT A YEAR ACTUALLY LOOKS LIKE", Kick))
+story.append(Paragraph("The Realistic Case", H1))
 story.append(hr)
-story.append(Spacer(1, 12))
-
-cwid = CW / 2.0 - 8
-charts = Table([[growth_chart(cwid, 176, sa, GOLD,
-                              "WEEK A REPEATED  -  +9% a week"),
-                 growth_chart(cwid, 176, sb, NAVY,
-                              "WEEK B REPEATED  -  +5% a week")]],
-               colWidths=[CW / 2.0] * 2, hAlign="LEFT")
-charts.setStyle(TableStyle([
-    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-    ("LEFTPADDING", (0, 0), (-1, -1), 0), ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-]))
-story.append(charts)
-story.append(Spacer(1, 4))
-story.append(Paragraph(
-    "Note the two vertical scales differ - Week A ends at %s, Week B at %s. "
-    "Both curves are the same shape because both are the same arithmetic: a "
-    "fixed weekly percentage, compounded."
-    % (money(sa[-1]), money(sb[-1])), Small))
-
 story.append(Spacer(1, 10))
-story.append(note("READ THIS BEFORE YOU TRUST THE CHART",
-    "Every figure here is correct arithmetic and none of it is a forecast. The "
-    "charts assume the same week repeats fifty-two times without a single "
-    "losing one - no month where three assets chop sideways, no gap through a "
-    "stop, no drawdown. <b>A 9% week is a very good week, not an average "
-    "one.</b> Real results also lose spread, commission and financing on every "
-    "trade. Treat these numbers as what the sequence is worth if it happens, "
-    "not as what a year looks like.",
-    tint=REDL, bar=RED))
+story.append(Paragraph(
+    "Repeating Week A for a year would multiply the account <b>88 times</b>. "
+    "That is not a plan, it is what happens when you assume fifty-two perfect "
+    "weeks in a row. A real year is about <b>180 trades</b>, and the only "
+    "number that decides where it ends is the average R those trades return.",
+    Body))
+story.append(Spacer(1, 4))
 
-story.append(Spacer(1, 12))
+sc_rows = []
+for e, label in ((-0.05, "Below break-even"), (0.10, "Modest edge"),
+                 (0.25, "Good edge"), (0.45, "Exceptional edge")):
+    wk = e * 3.5 / 100.0
+    yr = (1 + wk) ** 52 - 1
+    col = "#2F6F4F" if yr > 0 else "#9B3535"
+    sc_rows.append([
+        Paragraph("<b>%+.2fR</b>" % e, TDb),
+        Paragraph("<font color='#5A6678'>%s</font>" % label, TD),
+        Paragraph("<font color='%s'>%+.2f%%</font>" % (col, wk * 100), TD),
+        Paragraph("<font color='%s'><b>%+.0f%%</b></font>" % (col, yr * 100), TD),
+        Paragraph("<font color='%s'><b>%s</b></font>"
+                  % (col, money(BALANCE * (1 + yr))), TD)])
+story.append(table(
+    ["AVERAGE PER TRADE", "", "PER WEEK", "OVER 12 MONTHS", "ENDING BALANCE"],
+    sc_rows, [110, 122, 74, 106, CW - 412]))
+story.append(Spacer(1, 5))
+story.append(Paragraph(
+    "Assumes 3.5 trades a week. The difference between losing money and "
+    "doubling it is a third of one R.", Small))
+
+_eq = realistic_year(seed=0)
+_dd, _at = max_drawdown(_eq)
+story.append(Paragraph("One plausible year, week by week", H2))
+story.append(week_chart(CW, 186, _eq, GOLD, _at))
+story.append(Spacer(1, 5))
+story.append(Paragraph(
+    "A simulated year at roughly +0.3R a trade - a good edge, not a "
+    "spectacular one. It ends at <b>%s</b>, <b>%+.0f%%</b>, having spent the "
+    "first quarter below where it started and given back <b>%.0f%%</b> at its "
+    "worst point. That shape, not a smooth curve, is what a winning year "
+    "looks like." % (money(_eq[-1]), (_eq[-1] / BALANCE - 1) * 100, _dd * 100),
+    Small))
+story.append(Spacer(1, 7))
+story.append(note("THE PART NOBODY PUTS ON A CHART",
+    "The first thirteen weeks of that simulation lose money. Most people "
+    "change something at that point - size up to catch up, widen a stop, take "
+    "a 1:2 because nothing better is there - and the edge that would have paid "
+    "over the remaining thirty-nine weeks stops existing. The method is not "
+    "the hard part.", tint=GOLDL, bar=GOLD))
+
+story.append(Spacer(1, 9))
 story.append(note("IMPORTANT",
     "This document is an educational illustration of a risk and position-sizing "
     "method. It is <b>not financial, investment or trading advice</b> and "
@@ -535,23 +631,14 @@ story.append(note("IMPORTANT",
     "<b>Every figure in it is hypothetical.</b> None of it represents actual "
     "trades, actual results, or a projection of future performance - the "
     "returns shown are what the arithmetic produces if an assumed sequence of "
-    "outcomes occurs, and no such sequence is being predicted or promised. "
-    "Leveraged trading in commodities, indices and cryptocurrencies carries a "
-    "high risk of rapid loss; on some accounts losses can exceed the amount "
-    "deposited. Spread, commission and financing costs are excluded throughout "
-    "and reduce every result shown. No method guarantees a profit, and losing "
-    "weeks and months are a normal part of this one. Past performance does not "
-    "indicate future results. Consider whether this approach is suitable for "
-    "your circumstances and seek independent advice if you are unsure.",
+    "outcomes occurs, and no such sequence is predicted or promised. Leveraged "
+    "trading carries a high risk of rapid loss and on some accounts losses can "
+    "exceed the amount deposited. Costs are excluded throughout and reduce "
+    "every result shown. No method guarantees a profit, and losing weeks and "
+    "months are a normal part of this one. Past performance does not indicate "
+    "future results. Seek independent advice if you are unsure.",
     tint=colors.HexColor("#F4F5F7"), bar=SLATE))
 
-story.append(Spacer(1, 12))
-story.append(band("EVERY TRADE", money(R),
-                  "Risk %s. Aim for %s to %s. Take five a week, one on each "
-                  "asset. Move the stop to entry once it is going your way. "
-                  "That is the entire system."
-                  % (money(R), money(3 * R), money(5 * R)),
-                  tint=GOLDL, bar=GOLD, vcol=NAVY))
 
 # ================================================================== build ==
 doc = BaseDocTemplate(OUT, pagesize=A4, leftMargin=MARGIN, rightMargin=MARGIN,

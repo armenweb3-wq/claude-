@@ -58,7 +58,10 @@ all six possible weeks under three management styles with the expectancy by
 win rate, and growth charts whose axes rescale to the balance.
 
 `RISK_PCT`, `WEEK_A`, `WEEK_B` and `WEEKS_PER_MONTH` sit at the top of the
-script if the shape of the week needs changing.
+script if the shape of the week needs changing. `MIX` and `COST_R` define the
+per-trade outcome distribution behind the simulated year — it is tuned to
+roughly +0.3R expectancy, and `realistic_year()` is seeded so the chart is
+reproducible.
 
 ---
 

@@ -118,19 +118,3 @@ result; an open position stays neutral.
 
 `generate_card.py` also writes the `.html` it screenshotted, so the layout can
 be tweaked in a browser before re-rendering.
-
----
-
-## Package-<balance>.pdf
-
-A two-page client package built by `generate_package.py` — what is traded, how
-it is sized, what a week can look like, and what the client receives.
-
-```bash
-python3 trading/generate_package.py            # $20,000 (default)
-python3 trading/generate_package.py 50000      # $50,000
-```
-
-Balance is a command-line argument; every figure derives from it. Uses the
-TraderTok lockup from `card/tradertok-logo.png` and brand red `#BF3C35` on a
-light ground so it prints cleanly.

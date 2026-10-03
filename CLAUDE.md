@@ -16,6 +16,11 @@ Three unrelated things share this repo:
 3. **A live-scores automation** — `scripts/fetch-scores.mjs` plus
    `.github/workflows/scores.yml`, a standalone GitHub Action unrelated to the
    websites. It is *not* part of the Next.js build (it's excluded in `tsconfig`).
+4. **A single-file personal finance app** — `index.html` at the repo root. All
+   CSS/JS inline, no build step, no server; works from `file://` (iPhone Files
+   app). Data lives in `localStorage` (key `pfin.v1`), amounts are integer cents.
+   Chart.js is loaded from a CDN but optional (SVG fallback offline). It has a
+   self-test panel under Settings. Not part of the Next.js build.
 
 `npm run dev/build` operates on both web apps together.
 

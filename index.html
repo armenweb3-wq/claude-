@@ -218,6 +218,8 @@ const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov
 
 let S = null;   // persistent state
 const UI = { tab: 'dash', person: 'both', month: null, review: null, stmtPerson: 'Armen', txFilter: 'all', sim: {}, tests: null, showHistoryFor: null };
+function N(p) { return (S && S.names && S.names[p]) || p; }   // display name for a person key
+function weekday(iso) { return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(iso + 'T12:00:00').getDay()]; }
 
 /* ---------- small helpers ---------- */
 const $ = s => document.querySelector(s);
@@ -345,13 +347,15 @@ function blankState() {
     goals: [],             // {id,name,target,date,saved}
     statements: [],        // {id,bank,filename,importedAt,count,person}
     bankMappings: {},      // bankMappings[bank] = {date,amount,credit,merchant,dateFormat,sign}
+    names: { Armen: 'Armen', Partner: 'Partner' },
+    seedCleaned: true,     // installs created before the no-seed default lack this; they get the example data stripped once
     prefs: { person: 'both' }
   };
 }
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) { const o = JSON.parse(raw); if (o && o.version === 1) return Object.assign(blankState(), o); }
+    if (raw) { const o = JSON.parse(raw); if (o && o.version === 1) { const st = Object.assign(blankState(), o); if (!('seedCleaned' in o)) st.seedCleaned = false; return st; } }
   } catch (e) { console.warn('load failed', e); }
   return null;
 }
@@ -365,6 +369,13 @@ function save(immediate) {
 }
 function lastSavedStr() { if (!S.lastSaved) return 'never'; const d = new Date(S.lastSaved); return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 function findById(arr, id) { return arr.find(x => x.id === id); }
+function isEmptyState(st) { return !st.fixedCosts.length && !st.loans.length && !st.transactions.length && !st.goals.length && !Object.keys(st.income).some(m => Object.values(st.income[m]).some(e => e.salary || e.other || (e.commissions || []).length)); }
+/* remove everything the example seed created (ids are prefixed), keep categories and names */
+function stripSeed(st) {
+  const seedId = id => /^(fc-|loan-|goal-|tx-|stmt-|rule-|comm-)/.test(String(id));
+  for (const c of ['fixedCosts', 'loans', 'goals', 'transactions', 'statements', 'rules']) st[c] = (st[c] || []).filter(x => !seedId(x.id));
+  st.income = {}; st.payments = {}; delete st.bankMappings['Bank of Cyprus']; st.seeded = false;
+}
 function catByName(name) { return S.categories.find(c => c.name === name); }
 function catType(name) { const c = catByName(name); return c ? c.type : 'discretionary'; }
 function incomeOf(month, person) {
@@ -381,10 +392,21 @@ const Calc = {
   monthlyShare(fc) { return fc.frequency === 'yearly' ? Math.round(fc.amount / 12) : fc.amount; },
   personList(person) { return person === 'both' ? PEOPLE.slice() : [person]; },
 
+  /* The month's own entry, or salary/other carried forward from the latest earlier month (up to 12 back)
+     when nothing has been typed for this month yet. Commissions never carry. */
+  incomeEntry(st, month, person) {
+    const own = ((st.income || {})[month] || {})[person];
+    if (own && (own.salary || own.other || own.explicit)) return { salary: own.salary || 0, other: own.other || 0, commissions: own.commissions || [], carriedFrom: null };
+    for (let n = 1; n <= 12; n++) {
+      const e = ((st.income || {})[addMonths(month, -n)] || {})[person];
+      if (e && (e.salary || e.other)) return { salary: e.salary || 0, other: e.other || 0, commissions: (own && own.commissions) || [], carriedFrom: addMonths(month, -n) };
+    }
+    return { salary: 0, other: 0, commissions: (own && own.commissions) || [], carriedFrom: null };
+  },
   netIncomeFor(st, month, person) {
-    const m = (st.income || {})[month] || {}; const inc = m[person] || { salary: 0, other: 0, commissions: [] };
-    const comm = sum(inc.commissions || [], c => c.amount || 0);
-    return { salary: inc.salary || 0, other: inc.other || 0, commissions: comm, net: (inc.salary || 0) + (inc.other || 0) + comm };
+    const inc = Calc.incomeEntry(st, month, person);
+    const comm = sum(inc.commissions, c => c.amount || 0);
+    return { salary: inc.salary, other: inc.other, commissions: comm, net: inc.salary + inc.other + comm, carriedFrom: inc.carriedFrom };
   },
   netIncome(st, month, person) {
     const parts = Calc.personList(person).map(p => Calc.netIncomeFor(st, month, p));
@@ -408,8 +430,16 @@ const Calc = {
         dueDay, paid, rec, planned: Calc.applyShare(plannedFull, sh), plannedFull, actual: Calc.applyShare(actualFull, sh), actualFull, overdue, share: sh,
         mandatory: kind === 'loan' ? true : item.mandatory !== false });
     };
-    for (const fc of st.fixedCosts || []) if (fc.active !== false) push('fixed', fc, Calc.monthlyShare(fc));
-    for (const l of st.loans || []) if (l.balance > 0 || recs[l.id]) push('loan', l, l.payment);
+    for (const fc of st.fixedCosts || []) {
+      if (fc.active === false) continue;
+      if (fc.startMonth && month < fc.startMonth) continue;
+      if (fc.endMonth && month > fc.endMonth) continue;
+      push('fixed', fc, Calc.monthlyShare(fc));
+    }
+    for (const l of st.loans || []) {
+      if (l.startDate && month < l.startDate.slice(0, 7)) continue;
+      if (l.balance > 0 || recs[l.id]) push('loan', l, l.payment);
+    }
     return out;
   },
 
@@ -436,6 +466,35 @@ const Calc = {
     return { net: inc.net, income: inc, paid, due, overdue, fixedPlanned, loanPlanned, mandatoryTx, discretionary, mandatory, leftover, savingsRateBp, leftAfterDue, items, txCount: txs.length };
   },
 
+  /* month position + pace-based forecast */
+  forecast(st, month, person, today) {
+    today = today || todayISO(); const cm = today.slice(0, 7); const dim = daysInMonth(month);
+    const day = month < cm ? dim : month > cm ? 0 : +today.slice(8, 10);
+    const daysLeft = dim - day;
+    const t = Calc.monthTotals(st, month, person, today), tp = Calc.monthTotals(st, addMonths(month, -1), person, today);
+    const projectedDiscretionary = day > 0 ? Math.round(t.discretionary * dim / day) : 0;
+    const projectedLeftover = t.net - t.mandatory - projectedDiscretionary;
+    const safePerDay = daysLeft > 0 ? Math.floor(t.leftAfterDue / daysLeft) : t.leftAfterDue;
+    const dueSoon = t.items.filter(i => !i.paid && !i.overdue && i.dueDay > day && i.dueDay <= day + 7);
+    return { day, dim, daysLeft, projectedDiscretionary, projectedLeftover, safePerDay, dueSoon, dueSoonTotal: sum(dueSoon, i => i.planned), totals: t, prev: tp };
+  },
+  /* plain, data-driven observations for the month (no guessing) */
+  insights(st, month, person, today) {
+    today = today || todayISO(); const f = Calc.forecast(st, month, person, today); const t = f.totals, tp = f.prev; const out = [];
+    const od = t.items.filter(i => i.overdue);
+    if (od.length) out.push({ level: 'red', text: od.length + ' overdue: ' + od.map(i => i.name).join(', ') + ' (' + fmt(t.overdue) + ')' });
+    if (f.dueSoon.length) out.push({ level: 'amber', text: f.dueSoon.length + ' due in the next 7 days: ' + fmt(f.dueSoonTotal) + ' (' + f.dueSoon.map(i => i.name + ' ' + i.dueDay + (i.dueDay === 1 || i.dueDay === 21 || i.dueDay === 31 ? 'st' : i.dueDay === 2 || i.dueDay === 22 ? 'nd' : i.dueDay === 3 || i.dueDay === 23 ? 'rd' : 'th')).join(', ') + ')' });
+    if (t.net > 0 && t.leftAfterDue < 0) out.push({ level: 'red', text: 'Spending exceeds income by ' + fmt(-t.leftAfterDue) + ' once all bills are paid' });
+    if (f.day >= 7 && f.daysLeft > 0 && tp.discretionary > 0 && f.projectedDiscretionary * 100 > tp.discretionary * 110) out.push({ level: 'amber', text: 'Discretionary on pace for ' + fmt(f.projectedDiscretionary) + ', ' + pct(f.projectedDiscretionary - tp.discretionary, tp.discretionary) + '% above last month' });
+    if (f.day >= 7 && f.daysLeft > 0 && tp.discretionary > 0 && f.projectedDiscretionary * 100 < tp.discretionary * 90) out.push({ level: 'green', text: 'Discretionary on pace for ' + fmt(f.projectedDiscretionary) + ', ' + pct(tp.discretionary - f.projectedDiscretionary, tp.discretionary) + '% below last month' });
+    if (t.net > 0 && t.savingsRateBp < 1000 && t.savingsRateBp >= 0) out.push({ level: 'amber', text: 'Savings rate ' + bpStr(t.savingsRateBp) + ', under 10% of net income' });
+    if (t.net > 0 && t.savingsRateBp >= 2000) out.push({ level: 'green', text: 'Savings rate ' + bpStr(t.savingsRateBp) + ' of net income' });
+    const people = Calc.personList(person);
+    for (const p of people) { const e = Calc.incomeEntry(st, month, p); if (e.carriedFrom && e.salary) out.push({ level: '', text: N(p) + ': salary carried over from ' + monthLabel(e.carriedFrom) + '. Edit it on Income if it changed.' }); }
+    for (const l of st.loans || []) { if (Calc.share(l.owner, person) === 0 || l.balance <= 0) continue; const ls = Calc.loanStats(st, l, today); if (ls.neverEnds) out.push({ level: 'red', text: l.name + ': the payment does not cover the interest' }); else if (ls.termEnd && ls.payoffMonth && ls.payoffMonth > ls.termEnd) out.push({ level: 'amber', text: l.name + ': payoff ' + monthLabel(ls.payoffMonth) + ' is after the term end ' + monthLabel(ls.termEnd) }); }
+    for (const g of st.goals || []) { const gs = Calc.goalStats(g, today); if (gs.left > 0 && gs.months > 0 && t.leftover > 0 && gs.perMonth > t.leftover) out.push({ level: 'amber', text: g.name + ' needs ' + fmt(gs.perMonth) + '/month, more than this month\'s leftover ' + fmt(t.leftover) }); if (gs.left > 0 && gs.months === 0 && g.date) out.push({ level: 'red', text: g.name + ': target date reached with ' + fmt(gs.left) + ' still to save' }); }
+    return out;
+  },
   categorySpend(st, month, person) {
     const o = {};
     for (const t of Calc.txIn(st, month, person)) { if (t.linkedTo) continue; o[t.category || 'Uncategorized'] = (o[t.category || 'Uncategorized'] || 0) + t.amount; }
@@ -566,7 +625,8 @@ function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.ad
 function openModal(html) { $('#sheet').innerHTML = html; $('#modal').hidden = false; document.body.style.overflow = 'hidden'; }
 function closeModal() { $('#modal').hidden = true; $('#sheet').innerHTML = ''; document.body.style.overflow = ''; }
 function sheet(title, body) { return '<div class="shead"><h3>' + esc(title) + '</h3><button class="x" data-act="closeModal" aria-label="Close">×</button></div>' + body; }
-function chipOwner(o) { return '<span class="chip ' + (o === 'Armen' ? 'a' : o === 'Partner' ? 'p' : 's') + '">' + esc(o) + '</span>'; }
+function chipOwner(o) { return '<span class="chip ' + (o === 'Armen' ? 'a' : o === 'Partner' ? 'p' : 's') + '">' + esc(N(o)) + '</span>'; }
+function personOptions() { return PEOPLE.map(p => [p, N(p)]); }
 function deltaHtml(cur, prev, higherIsGood) {
   const d = cur - prev; if (!prev && !cur) return '<span class="dim">—</span>';
   if (d === 0) return '<span class="dim">= last month</span>';
@@ -576,11 +636,11 @@ function deltaHtml(cur, prev, higherIsGood) {
 function stat(k, v, d, cls) { return '<div class="stat"><div class="k">' + k + '</div><div class="v ' + (cls || '') + '">' + v + '</div><div class="d">' + (d || '') + '</div></div>'; }
 function selectHtml(attrs, options, value) { return '<select ' + attrs + '>' + options.map(o => { const [v, l] = Array.isArray(o) ? o : [o, o]; return '<option value="' + esc(v) + '"' + (v === value ? ' selected' : '') + '>' + esc(l) + '</option>'; }).join('') + '</select>'; }
 function catOptions() { return S.categories.map(c => [c.name, c.name + (c.type === 'mandatory' ? ' ·M' : '')]).concat([['Uncategorized', 'Uncategorized']]); }
-function personLabel() { return UI.person === 'both' ? 'Both' : UI.person; }
+function personLabel() { return UI.person === 'both' ? 'Both' : N(UI.person); }
 
 function render() {
   const y = window.scrollY;
-  $$('#personSeg button').forEach(b => b.classList.toggle('on', b.dataset.person === UI.person));
+  $$('#personSeg button').forEach(b => { b.classList.toggle('on', b.dataset.person === UI.person); if (b.dataset.person !== 'both') b.textContent = N(b.dataset.person); });
   $$('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === UI.tab));
   const isCur = UI.month === curMonth();
   $('#monthLbl').innerHTML = esc(monthLabel(UI.month)) + '<small>' + (isCur ? 'current month' : monthDiff(UI.month, curMonth()) > 0 ? 'past · tap for today' : 'future · tap for today') + '</small>';
@@ -600,16 +660,21 @@ window.onChartReady = function () { if (UI.tab === 'dash') render(); };
    ========================================================= */
 function renderDash() {
   const m = UI.month, p = UI.person;
-  const t = Calc.monthTotals(S, m, p), tp = Calc.monthTotals(S, addMonths(m, -1), p);
+  if (isEmptyState(S)) return renderSetup();
+  const f = Calc.forecast(S, m, p); const t = f.totals, tp = f.prev;
   const unpaid = t.items.filter(i => !i.paid).sort((a, b) => (b.overdue - a.overdue) || a.dueDay - b.dueDay);
+  const today = todayISO(); const isCur = m === curMonth();
   let h = '';
   h += '<div class="hero"><div class="k">Left after everything due · ' + esc(personLabel()) + '</div><div class="v ' + (t.leftAfterDue < 0 ? 'red' : '') + '">' + fmt(t.leftAfterDue) + '</div>' +
-    '<div class="d">' + deltaHtml(t.leftAfterDue, tp.leftAfterDue, true) + ' · net income − (paid + still due) − discretionary</div></div>';
+    '<div class="d">' + deltaHtml(t.leftAfterDue, tp.leftAfterDue, true) + (isCur ? ' · ' + weekday(today) + ' ' + fmtDate(today) + ' · ' + f.daysLeft + ' day' + (f.daysLeft === 1 ? '' : 's') + ' left' : m < curMonth() ? ' · month closed' : ' · not started') + '</div>' +
+    (isCur && f.daysLeft > 0 ? '<div class="row mt10" style="gap:16px"><div><div class="k">Safe per day</div><div style="font-size:18px;font-weight:650" class="' + (f.safePerDay < 0 ? 'red' : '') + '">' + fmt(f.safePerDay) + '</div></div><div><div class="k">Discretionary pace</div><div style="font-size:18px;font-weight:650">' + fmt(f.projectedDiscretionary) + '</div></div><div><div class="k">Projected leftover</div><div style="font-size:18px;font-weight:650" class="' + (f.projectedLeftover < 0 ? 'red' : '') + '">' + fmt(f.projectedLeftover) + '</div></div></div>' : '') + '</div>';
+  const ins = Calc.insights(S, m, p);
+  if (ins.length) { h += '<div class="card tight"><ul class="list">'; for (const i of ins) h += '<li class="item" style="min-height:0;padding:7px 0"><span class="' + (i.level || 'muted') + '" style="flex:none;width:8px;height:8px;border-radius:50%;background:currentColor;margin-top:1px"></span><span class="small">' + esc(i.text) + '</span></li>'; h += '</ul></div>'; }
   h += '<div class="grid2">' +
     stat('Net income', fmt(t.net), deltaHtml(t.net, tp.net, true)) +
     stat('Paid so far', fmt(t.paid), deltaHtml(t.paid, tp.paid, false)) +
     stat('Still due', fmt(t.due), deltaHtml(t.due, tp.due, false), t.due > 0 ? 'amber' : '') +
-    stat('Overdue', fmt(t.overdue), t.overdue > 0 ? '<span class="red">' + t.items.filter(i => i.overdue).length + ' item(s) past due day</span>' : '<span class="dim">nothing overdue</span>', t.overdue > 0 ? 'red' : 'green') +
+    stat('Overdue', fmt(t.overdue), t.overdue > 0 ? '<span class="red">' + t.items.filter(i => i.overdue).length + ' past due day</span>' : f.dueSoon.length ? '<span class="amber">' + f.dueSoon.length + ' due within 7 days</span>' : '<span class="dim">nothing overdue</span>', t.overdue > 0 ? 'red' : 'green') +
     stat('Discretionary', fmt(t.discretionary), deltaHtml(t.discretionary, tp.discretionary, false)) +
     stat('Savings rate', bpStr(t.savingsRateBp), deltaHtml(t.leftover, tp.leftover, true), t.savingsRateBp < 0 ? 'red' : t.savingsRateBp >= 2000 ? 'green' : '') +
     stat('Mandatory', fmt(t.mandatory), deltaHtml(t.mandatory, tp.mandatory, false)) +
@@ -640,15 +705,26 @@ function renderDash() {
   // goals
   if (S.goals.length) {
     h += '<h2>Goals</h2>';
-    for (const g of S.goals) { const gs = Calc.goalStats(g); h += '<div class="card tight"><div class="row"><div class="grow"><div class="name">' + esc(g.name) + '</div><div class="sub">' + fmt(gs.saved) + ' of ' + fmt(gs.target) + (g.date ? ' by ' + fmtDate(g.date) : '') + (gs.left > 0 && gs.months > 0 ? ' · needs ' + fmt(gs.perMonth) + '/mo' : gs.left === 0 ? ' · reached 🎉' : '') + '</div></div><div class="amt">' + bpStr(gs.pctBp) + '</div></div><div class="bar mt6"><i style="width:' + (gs.pctBp / 100) + '%"></i></div></div>'; }
+    for (const g of S.goals) { const gs = Calc.goalStats(g); h += '<div class="card tight"><div class="row"><div class="grow"><div class="name">' + esc(g.name) + '</div><div class="sub">' + fmt(gs.saved) + ' of ' + fmt(gs.target) + (g.date ? ' by ' + fmtDate(g.date) : '') + (gs.left > 0 && gs.months > 0 ? ' · needs ' + fmt(gs.perMonth) + '/mo' : gs.left === 0 ? ' · reached' : '') + '</div></div><div class="amt">' + bpStr(gs.pctBp) + '</div></div><div class="bar mt6"><i style="width:' + (gs.pctBp / 100) + '%"></i></div></div>'; }
   }
   return h;
+}
+function renderSetup() {
+  const step = (n, title, sub, tab) => '<li class="item" data-tab="' + tab + '" style="cursor:pointer"><span class="chip a" style="width:26px;text-align:center">' + n + '</span><div class="grow"><div class="name">' + title + '</div><div class="sub">' + sub + '</div></div><span class="dim">›</span></li>';
+  return '<div class="hero"><div class="k">' + esc(monthLabel(UI.month)) + '</div><div class="v" style="font-size:24px">Start with your numbers</div><div class="d">Nothing is stored yet. Everything you enter stays on this device.</div></div>' +
+    '<div class="card tight"><ul class="list">' +
+    step(1, 'Income', 'Net salary per person. It carries forward each month until you change it.', 'income') +
+    step(2, 'Fixed costs', 'Rent, utilities, subscriptions, insurance, with a due day and owner.', 'fixed') +
+    step(3, 'Loans', 'Balance, APR, monthly payment, start date and term.', 'loans') +
+    step(4, 'Statements', 'Import a bank CSV to track everyday spending and leaks.', 'stmt') +
+    step(5, 'Names and goals', 'Rename "Partner", add savings goals, back up as JSON.', 'settings') +
+    '</ul></div><p class="small dim center">Want to see it filled in first? Settings → Load example data.</p>';
 }
 function payRow(i, compact) {
   const dueTxt = i.paid ? 'paid ' + fmtDate(i.rec.paidDate) + (i.rec.amount != null && i.rec.amount !== i.plannedFull ? ' · planned ' + fmt(i.plannedFull) : '') : 'due day ' + i.dueDay + (i.overdue ? ' · <span class="red">overdue</span>' : '');
   return '<li class="item ' + (i.paid ? 'paid' : '') + '">' +
     '<input type="checkbox" class="chk big" data-change="togglePaid" data-kind="' + i.kind + '" data-id="' + esc(i.id) + '"' + (i.paid ? ' checked' : '') + ' aria-label="Paid">' +
-    '<div class="grow" data-act="' + (i.kind === 'loan' ? 'editLoan' : 'editFixed') + '" data-id="' + esc(i.id) + '"><div class="name ellip">' + esc(i.name) + ' ' + chipOwner(i.owner) + (i.kind === 'loan' ? ' <span class="chip">loan</span>' : '') + (i.share === 0.5 ? ' <span class="chip">½</span>' : '') + '</div><div class="sub">' + dueTxt + (compact ? '' : (i.item.frequency === 'yearly' ? ' · yearly ÷ 12' : '')) + '</div></div>' +
+    '<div class="grow" data-act="' + (i.kind === 'loan' ? 'editLoan' : 'editFixed') + '" data-id="' + esc(i.id) + '"><div class="name ellip">' + esc(i.name) + ' ' + chipOwner(i.owner) + (i.kind === 'loan' ? ' <span class="chip">loan</span>' : '') + (i.share === 0.5 ? ' <span class="chip">½</span>' : '') + '</div><div class="sub">' + dueTxt + (compact ? '' : (i.item.frequency === 'yearly' ? ' · yearly ÷ 12' : '') + (i.item.endMonth ? ' · until ' + monthLabel(i.item.endMonth) : '')) + '</div></div>' +
     '<div class="amt">' + fmt(i.paid ? i.actual : i.planned) + '</div></li>';
 }
 function trendData() {
@@ -701,20 +777,19 @@ function renderIncome() {
   let h = '';
   const tot = Calc.netIncome(S, m, UI.person);
   h += '<div class="hero"><div class="k">Net income · ' + esc(monthLabel(m)) + ' · ' + esc(personLabel()) + '</div><div class="v">' + fmt(tot.net) + '</div><div class="d">Salary ' + fmt(tot.salary) + ' · Commissions ' + fmt(tot.commissions) + ' · Other ' + fmt(tot.other) + '</div></div>';
-  h += '<div class="card"><h3>Quick-add commission</h3><div class="row mt10">' + selectHtml('id="qcPerson" class="inline" style="width:auto"', PEOPLE, UI.person === 'both' ? 'Armen' : UI.person) +
-    '<input type="text" inputmode="decimal" id="qcAmount" placeholder="Amount €" style="flex:1"><button class="btn pri" data-act="quickCommission">Add</button></div><input type="text" id="qcNote" placeholder="Note (client, deal…)" class="mt10"></div>';
+  h += '<div class="card"><h3>Quick-add commission</h3><div class="row mt10">' + selectHtml('id="qcPerson" class="inline" style="width:auto"', personOptions(), UI.person === 'both' ? 'Armen' : UI.person) +
+    '<input type="text" inputmode="decimal" id="qcAmount" placeholder="Amount €" style="flex:1"><button class="btn pri" data-act="quickCommission">Add</button></div><div class="row mt10"><input type="date" id="qcDate" value="' + (m === curMonth() ? todayISO() : m + '-01') + '" style="width:160px"><input type="text" id="qcNote" placeholder="Note (client, deal)" class="grow"></div></div>';
   for (const p of people) {
-    const inc = (S.income[m] || {})[p] || { salary: 0, other: 0, commissions: [] };
+    const inc = Calc.incomeEntry(S, m, p);
     const n = Calc.netIncomeFor(S, m, p);
-    h += '<h2>' + esc(p) + ' <small>' + fmt(n.net) + ' net</small></h2><div class="card">';
+    h += '<h2>' + esc(N(p)) + ' <small>' + fmt(n.net) + ' net</small></h2><div class="card">';
+    if (inc.carriedFrom) h += '<p class="small amber" style="margin-top:0">Salary carried over from ' + esc(monthLabel(inc.carriedFrom)) + '. Change it here if ' + esc(monthLabel(m)) + ' is different.</p>';
     h += '<div class="fields2"><div class="field"><label>Salary (net)</label><input type="text" inputmode="decimal" value="' + centsIn(inc.salary) + '" data-change="income" data-person="' + p + '" data-field="salary"></div>' +
       '<div class="field"><label>Other income</label><input type="text" inputmode="decimal" value="' + centsIn(inc.other) + '" data-change="income" data-person="' + p + '" data-field="other"></div></div>';
     h += '<div class="row" style="justify-content:space-between"><b>Commissions</b><span class="muted">' + fmt(n.commissions) + '</span></div><ul class="list">';
     if (!inc.commissions.length) h += '<li class="item"><span class="muted small">No commissions this month</span></li>';
-    for (const c of inc.commissions) h += '<li class="item"><div class="grow"><input type="text" inputmode="decimal" class="inline" style="width:100px;text-align:left" value="' + centsIn(c.amount) + '" data-change="commission" data-person="' + p + '" data-id="' + c.id + '" data-field="amount"></div><input type="text" class="inline grow" style="width:auto;text-align:left" placeholder="note" value="' + esc(c.note || '') + '" data-change="commission" data-person="' + p + '" data-id="' + c.id + '" data-field="note"><button class="btn xs danger" data-act="delCommission" data-person="' + p + '" data-id="' + c.id + '">✕</button></li>';
-    h += '</ul>';
-    if (!inc.salary && !inc.other && !inc.commissions.length) h += '<button class="btn sm block mt10" data-act="copyIncome" data-person="' + p + '">Copy from ' + esc(monthLabel(addMonths(m, -1))) + '</button>';
-    h += '</div>';
+    for (const c of inc.commissions.slice().sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))) h += '<li class="item" style="flex-wrap:wrap"><div class="row" style="width:100%"><input type="text" inputmode="decimal" class="inline" style="width:110px;text-align:left" value="' + centsIn(c.amount) + '" data-change="commission" data-person="' + p + '" data-id="' + c.id + '" data-field="amount"><input type="date" class="inline grow" style="width:auto;text-align:left" value="' + esc(c.date || '') + '" data-change="commission" data-person="' + p + '" data-id="' + c.id + '" data-field="date"><button class="btn xs danger" data-act="delCommission" data-person="' + p + '" data-id="' + c.id + '">✕</button></div><input type="text" class="inline" style="width:100%;text-align:left" placeholder="note" value="' + esc(c.note || '') + '" data-change="commission" data-person="' + p + '" data-id="' + c.id + '" data-field="note"></li>';
+    h += '</ul></div>';
   }
   return h;
 }
@@ -743,6 +818,12 @@ function renderFixed() {
     for (const f of inactive) h += '<li class="item off"><div class="grow" data-act="editFixed" data-id="' + f.id + '"><div class="name">' + esc(f.name) + ' ' + chipOwner(f.owner) + '</div><div class="sub">' + esc(f.category) + ' · ' + f.frequency + '</div></div><div class="amt">' + fmt(f.amount) + '</div><button class="btn xs" data-act="toggleActive" data-id="' + f.id + '">Activate</button></li>';
     h += '</ul></div>';
   }
+  const outOfRange = S.fixedCosts.filter(f => f.active !== false && Calc.share(f.owner, p) > 0 && ((f.startMonth && m < f.startMonth) || (f.endMonth && m > f.endMonth)));
+  if (outOfRange.length) {
+    h += '<h2>Not in ' + esc(monthLabel(m)) + ' <small>' + outOfRange.length + '</small></h2><div class="card tight"><ul class="list">';
+    for (const f of outOfRange) h += '<li class="item off"><div class="grow" data-act="editFixed" data-id="' + f.id + '"><div class="name">' + esc(f.name) + ' ' + chipOwner(f.owner) + '</div><div class="sub">' + (f.startMonth && m < f.startMonth ? 'starts ' + esc(monthLabel(f.startMonth)) : 'ended ' + esc(monthLabel(f.endMonth))) + '</div></div><div class="amt">' + fmt(f.amount) + '</div></li>';
+    h += '</ul></div>';
+  }
   h += '<p class="small dim mt14">Shared items count half for a single person and in full for Both. Yearly costs are spread as amount ÷ 12 each month.</p>';
   return h;
 }
@@ -758,7 +839,8 @@ function editFixedModal(id) {
     '<div class="field"><label>Owner</label>' + selectHtml(A + ' data-field="owner"', OWNERS, f.owner) + '</div></div>' +
     '<div class="fields2"><div class="field"><label>Due day of month</label><input type="number" min="1" max="31" inputmode="numeric" value="' + (f.dueDay || 1) + '" ' + A + ' data-field="dueDay" data-type="int"></div>' +
     '<div class="field"><label>&nbsp;</label><label class="tog"><input type="checkbox" class="sw" ' + A + ' data-field="active" data-type="bool"' + (f.active !== false ? ' checked' : '') + '> Active</label></div></div>' +
-    '<label class="tog"><input type="checkbox" class="sw" ' + A + ' data-field="mandatory" data-type="bool"' + (f.mandatory !== false ? ' checked' : '') + '> Mandatory (counts as must-pay)</label>';
+    '<label class="tog"><input type="checkbox" class="sw" ' + A + ' data-field="mandatory" data-type="bool"' + (f.mandatory !== false ? ' checked' : '') + '> Mandatory (counts as must-pay)</label>' +
+    '<div class="fields2"><div class="field"><label>From month</label><input type="month" value="' + esc(f.startMonth || '') + '" ' + A + ' data-field="startMonth"></div><div class="field"><label>Until month (optional)</label><input type="month" value="' + esc(f.endMonth || '') + '" ' + A + ' data-field="endMonth"></div></div>';
   b += '<hr><h3>' + esc(monthLabel(m)) + '</h3>' + paidEditor('fixed', f, rec, paid);
   b += historyHtml(hist);
   b += '<div class="btnrow"><button class="btn danger" data-act="delFixed" data-id="' + f.id + '">Delete</button><button class="btn pri" data-act="closeModal">Done</button></div>';
@@ -915,12 +997,12 @@ function renderStmt() {
   let h = '';
   if (UI.review) return renderReview();
   const banks = Object.keys(S.bankMappings);
-  h += '<div class="card"><h3>Upload statement (CSV)</h3><div class="fields2 mt10"><div class="field"><label>Bank name</label><input type="text" id="bankName" list="bankList" placeholder="e.g. Revolut" value="' + esc(UI.lastBank || banks[0] || '') + '"><datalist id="bankList">' + banks.map(b => '<option value="' + esc(b) + '">').join('') + '</datalist></div><div class="field"><label>Whose statement</label>' + selectHtml('data-change="stmtPerson"', PEOPLE, UI.stmtPerson) + '</div></div>' +
+  h += '<div class="card"><h3>Upload statement (CSV)</h3><div class="fields2 mt10"><div class="field"><label>Bank name</label><input type="text" id="bankName" list="bankList" placeholder="e.g. Revolut" value="' + esc(UI.lastBank || banks[0] || '') + '"><datalist id="bankList">' + banks.map(b => '<option value="' + esc(b) + '">').join('') + '</datalist></div><div class="field"><label>Whose statement</label>' + selectHtml('data-change="stmtPerson"', personOptions(), UI.stmtPerson) + '</div></div>' +
     '<div class="filetap">Tap to choose a .csv file<input type="file" accept=".csv,text/csv,text/plain" data-change="csvFile"></div><p class="small dim">Parsed on this device only. Date, amount and merchant columns are auto-detected; you can remap them. Mappings are remembered per bank.</p></div>';
   // history
   h += '<h2>Import history <small>' + S.statements.length + '</small></h2>';
   if (!S.statements.length) h += '<div class="card tight"><div class="empty">No statements imported yet.</div></div>';
-  else { h += '<div class="card tight"><ul class="list">'; for (const s of S.statements.slice().reverse()) h += '<li class="item"><div class="grow"><div class="name ellip">' + esc(s.bank) + ' · ' + esc(s.filename || '') + '</div><div class="sub">' + s.count + ' transactions · ' + esc(s.person) + ' · ' + new Date(s.importedAt).toLocaleDateString() + (s.ticked ? ' · ' + s.ticked + ' payment(s) ticked' : '') + '</div></div><button class="btn xs danger" data-act="delStatement" data-id="' + s.id + '">Delete</button></li>'; h += '</ul></div>'; }
+  else { h += '<div class="card tight"><ul class="list">'; for (const s of S.statements.slice().reverse()) h += '<li class="item"><div class="grow"><div class="name ellip">' + esc(s.bank) + ' · ' + esc(s.filename || '') + '</div><div class="sub">' + s.count + ' transactions · ' + esc(N(s.person)) + ' · ' + new Date(s.importedAt).toLocaleDateString() + (s.ticked ? ' · ' + s.ticked + ' payment(s) ticked' : '') + '</div></div><button class="btn xs danger" data-act="delStatement" data-id="' + s.id + '">Delete</button></li>'; h += '</ul></div>'; }
   // transactions this month
   const txs = Calc.personList(UI.person).length ? S.transactions.filter(t => t.date && t.date.slice(0, 7) === UI.month && Calc.personList(UI.person).includes(t.person)) : [];
   const filt = UI.txFilter; const shown = txs.filter(t => filt === 'all' || (filt === 'mandatory' && t.type === 'mandatory' && !t.duplicate) || (filt === 'discretionary' && t.type !== 'mandatory' && !t.duplicate) || (filt === 'dup' && t.duplicate)).sort((a, b) => b.date.localeCompare(a.date));
@@ -938,7 +1020,7 @@ function renderStmt() {
 }
 function txRow(t) {
   return '<div class="rv ' + (t.duplicate ? 'dup' : '') + '"><div class="top"><span class="merch">' + esc(t.merchant) + '</span><span class="amt mono">' + fmt(t.amount) + '</span></div>' +
-    '<div class="ctl"><span class="small muted">' + esc(fmtDate(t.date)) + ' · ' + esc(t.person) + '</span>' + (t.duplicate ? '<span class="chip red">duplicate</span>' : '') + (t.linkedTo ? '<span class="chip green">covers fixed/loan</span>' : '') + '</div>' +
+    '<div class="ctl"><span class="small muted">' + esc(fmtDate(t.date)) + ' · ' + esc(N(t.person)) + '</span>' + (t.duplicate ? '<span class="chip red">duplicate</span>' : '') + (t.linkedTo ? '<span class="chip green">covers fixed/loan</span>' : '') + '</div>' +
     '<div class="ctl">' + selectHtml('class="inline" data-change="txCat" data-id="' + t.id + '"', catOptions(), t.category) +
     '<div class="pill"><button data-act="txType" data-id="' + t.id + '" data-v="mandatory" class="' + (t.type === 'mandatory' ? 'on' : '') + '">M</button><button data-act="txType" data-id="' + t.id + '" data-v="discretionary" class="' + (t.type !== 'mandatory' ? 'on' : '') + '">D</button></div>' +
     '<button class="btn xs" data-act="txDup" data-id="' + t.id + '">' + (t.duplicate ? 'Not dup' : 'Dup') + '</button><button class="btn xs danger" data-act="delTx" data-id="' + t.id + '">✕</button></div></div>';
@@ -947,7 +1029,7 @@ function renderReview() {
   const r = UI.review; const map = r.mapping;
   const cols = r.header.map((hname, i) => [String(i), hname]);
   const M = k => selectHtml('data-change="mapping" data-field="' + k + '"', k === 'credit' ? [['', '— none —']].concat(cols) : cols, map[k] == null ? '' : String(map[k]));
-  let h = '<div class="card"><div class="row"><h3 class="grow">Review · ' + esc(r.bank) + '</h3><button class="btn sm ghost" data-act="cancelReview">Cancel</button></div><p class="small muted">' + esc(r.filename || '') + ' · ' + r.items.length + ' rows · ' + esc(r.person) + (r.flipped ? ' · signs flipped (expenses positive)' : '') + '</p>';
+  let h = '<div class="card"><div class="row"><h3 class="grow">Review · ' + esc(r.bank) + '</h3><button class="btn sm ghost" data-act="cancelReview">Cancel</button></div><p class="small muted">' + esc(r.filename || '') + ' · ' + r.items.length + ' rows · ' + esc(N(r.person)) + (r.flipped ? ' · signs flipped (expenses positive)' : '') + '</p>';
   h += '<details' + (r.items.some(i => !i.valid) ? ' open' : '') + '><summary class="muted small" style="min-height:40px;display:flex;align-items:center;cursor:pointer">Column mapping' + (r.items.some(i => !i.valid) ? ' · <span class="red">&nbsp;' + r.items.filter(i => !i.valid).length + ' rows could not be parsed</span>' : ' · ok') + '</summary>' +
     '<div class="fields2"><div class="field"><label>Date column</label>' + M('date') + '</div><div class="field"><label>Date format</label>' + selectHtml('data-change="mapping" data-field="dateFormat"', [['auto', 'Auto'], ['DMY', 'DD/MM/YYYY'], ['MDY', 'MM/DD/YYYY']], map.dateFormat) + '</div>' +
     '<div class="field"><label>Amount column</label>' + M('amount') + '</div><div class="field"><label>Credit column (optional)</label>' + M('credit') + '</div>' +
@@ -1016,9 +1098,10 @@ function renderSettings() {
   h += '<h2>Data</h2><div class="card"><div class="kv"><span class="muted">Last saved</span><b id="lastSaved">' + esc(lastSavedStr()) + '</b></div><div class="kv"><span class="muted">Stored</span><b>' + S.transactions.length + ' tx · ' + S.fixedCosts.length + ' fixed · ' + S.loans.length + ' loans</b></div>' +
     '<div class="btnrow"><button class="btn" data-act="exportJson">Export JSON</button><label class="btn" style="position:relative">Import JSON<input type="file" accept=".json,application/json" data-change="importFile" style="position:absolute;inset:0;opacity:0;width:100%"></label></div>' +
     '<div class="row mt10"><span class="small muted">Import mode</span><div class="pill"><button data-act="importMode" data-v="merge" class="' + (UI.importMode !== 'replace' ? 'on' : '') + '">Merge</button><button data-act="importMode" data-v="replace" class="' + (UI.importMode === 'replace' ? 'on' : '') + '">Replace</button></div></div>' +
-    (S.seeded ? '<button class="btn block mt10" data-act="clearSeed">Clear example data</button>' : '') +
+    (S.seeded ? '<button class="btn block mt10" data-act="clearSeed">Clear example data</button>' : isEmptyState(S) ? '<button class="btn block mt10" data-act="loadSeed">Load example data</button>' : '') +
     '<button class="btn block danger ghost mt10" data-act="resetAll">Reset everything</button></div>';
 
+  h += '<h2>People</h2><div class="card"><div class="fields2"><div class="field"><label>First person</label><input type="text" value="' + esc(N('Armen')) + '" data-change="personName" data-person="Armen"></div><div class="field"><label>Second person</label><input type="text" value="' + esc(N('Partner')) + '" data-change="personName" data-person="Partner"></div></div><p class="small dim" style="margin:0">Names only. Shared items count half each for one person, full for Both.</p></div>';
   h += '<h2>Categories <small>' + S.categories.length + '</small></h2><div class="card tight"><ul class="list">';
   for (const c of S.categories) h += '<li class="item" data-act="editCat" data-id="' + c.id + '"><div class="grow"><div class="name">' + esc(c.name) + ' <span class="chip ' + (c.type === 'mandatory' ? 'm' : 'd') + '">' + (c.type === 'mandatory' ? 'mandatory' : 'discretionary') + '</span></div><div class="sub ellip">' + esc((c.keywords || []).join(', ') || 'no keywords') + '</div></div><span class="dim">›</span></li>';
   h += '</ul><button class="btn sm block mt10" data-act="addCat">+ Add category</button></div>';
@@ -1036,7 +1119,7 @@ function renderSettings() {
   h += '<h2>Self-tests</h2><div class="card"><p class="small muted">Runs the calculation checks (integer-cent maths, parsing, loans, leaks, matching) against fixture data. Your data is not touched.</p><button class="btn block" data-act="runTests">Run self-tests</button>';
   if (UI.tests) { const ok = UI.tests.filter(t => t.ok).length; h += '<p class="mt10"><b class="' + (ok === UI.tests.length ? 'green' : 'red') + '">' + ok + ' / ' + UI.tests.length + ' passed</b></p>'; for (const t of UI.tests) h += '<div class="test"><span class="' + (t.ok ? 'ok' : 'fail') + '">' + (t.ok ? '✓' : '✗') + '</span><div><div>' + esc(t.name) + '</div>' + (t.ok ? '' : '<div class="detail">' + esc(t.detail) + '</div>') + '</div></div>'; }
   h += '</div>';
-  h += '<p class="small dim mt14">Single-file app · data lives only in this browser\'s storage (localStorage). Export regularly. Shared costs count ½ per person, full for Both.</p>';
+  h += '<p class="small dim mt14">Data lives only in this browser\'s storage. Export regularly.</p>';
   return h;
 }
 function editCatModal(id) {
@@ -1054,7 +1137,7 @@ function editGoalModal(id) {
   openModal(sheet('Goal', b));
 }
 function addTxModal() {
-  const b = '<div class="fields2"><div class="field"><label>Person</label>' + selectHtml('id="txPerson"', PEOPLE, UI.person === 'both' ? 'Armen' : UI.person) + '</div><div class="field"><label>Date</label><input type="date" id="txDate" value="' + (UI.month === curMonth() ? todayISO() : UI.month + '-01') + '"></div></div>' +
+  const b = '<div class="fields2"><div class="field"><label>Person</label>' + selectHtml('id="txPerson"', personOptions(), UI.person === 'both' ? 'Armen' : UI.person) + '</div><div class="field"><label>Date</label><input type="date" id="txDate" value="' + (UI.month === curMonth() ? todayISO() : UI.month + '-01') + '"></div></div>' +
     '<div class="field"><label>Merchant</label><input type="text" id="txMerchant" placeholder="e.g. Lidl"></div><div class="fields2"><div class="field"><label>Amount €</label><input type="text" inputmode="decimal" id="txAmount"></div><div class="field"><label>Category</label>' + selectHtml('id="txCategory"', catOptions(), 'Uncategorized') + '</div></div>' +
     '<div class="btnrow"><button class="btn pri" data-act="saveTx">Add</button></div>';
   openModal(sheet('Add transaction', b));
@@ -1205,6 +1288,23 @@ function runSelfTests() {
   ok('leak: recurring merchant (2 months) flagged', lk.some(l => l.type === 'recurring' && /netflix/i.test(l.title)));
   const st4 = fixtureState(); st4.transactions = []; for (const m of ['2026-07', '2026-08', '2026-09']) st4.transactions.push({ id: 'g' + m, person: 'Armen', date: m + '-05', merchant: 'Lidl', amount: 30000, category: 'Groceries', type: 'mandatory' }); st4.transactions.push({ id: 'g10', person: 'Armen', date: '2026-10-05', merchant: 'Lidl', amount: 35000, category: 'Groceries', type: 'mandatory' });
   ok('leak: +16.7% is NOT flagged', !Calc.leaks(st4, M, 'Armen').some(l => l.type === 'category'));
+  // carry-forward + ranges + forecast
+  const st5 = fixtureState(); st5.income['2026-11'] = {}; st5.income['2026-11'].Armen = { salary: 0, other: 0, commissions: [{ id: 'k2', amount: 5000 }] };
+  eq('income carries salary forward to a month with nothing typed', Calc.netIncomeFor(st5, '2026-11', 'Armen'), { salary: 250000, other: 10000, commissions: 5000, net: 265000, carriedFrom: '2026-10' });
+  st5.income['2026-11'].Armen.explicit = true; st5.income['2026-11'].Armen.salary = 0;
+  eq('explicit zero salary does not carry', Calc.netIncomeFor(st5, '2026-11', 'Armen').salary, 0);
+  eq('no carry beyond 12 months', Calc.netIncomeFor(st5, '2027-11', 'Partner').net, 0);
+  const st6 = fixtureState(); st6.fixedCosts[1].startMonth = '2026-11'; st6.fixedCosts[2].endMonth = '2026-09';
+  eq('fixed cost outside its from/until months is skipped', Calc.dueItems(st6, '2026-10', 'both', today).map(i => i.id), ['f1', 'l1']);
+  eq('loan before its start date is skipped', Calc.dueItems(fixtureState(), '2024-12', 'both', today).filter(i => i.kind === 'loan').length, 0);
+  const fc = Calc.forecast(st, M, 'both', today);
+  eq('forecast: day 15 of 31, 16 days left', [fc.day, fc.dim, fc.daysLeft], [15, 31, 16]);
+  eq('forecast: discretionary pace = round(spent × dim / day)', fc.projectedDiscretionary, Math.round(2850 * 31 / 15));
+  eq('forecast: safe per day = floor(leftAfterDue / daysLeft)', fc.safePerDay, Math.floor(tb.leftAfterDue / 16));
+  eq('forecast: due within 7 days = gym (day 20), loan (15) excluded', fc.dueSoon.map(i => i.id), ['f2']);
+  ok('insights mention the overdue insurance', Calc.insights(st, M, 'both', today).some(i => /overdue.*Car insurance/.test(i.text)));
+  const st7 = fixtureState(); stripSeed(Object.assign(st7, { seeded: true, fixedCosts: st7.fixedCosts.concat([{ id: 'fc-x', name: 'seed' }]) }));
+  eq('stripSeed removes seed-prefixed items only, clears income/payments', [st7.fixedCosts.length, st7.seeded, Object.keys(st7.income).length], [4, false, 0]);
   // goals
   eq('goal: per-month needed = ceil(left/months)', Calc.goalStats({ target: 300000, saved: 115000, date: '2027-06-01' }, '2026-10-15').perMonth, Math.ceil(185000 / 8));
   // merge
@@ -1223,11 +1323,8 @@ function runSelfTests() {
 /* =========================================================
    SEED DATA (deterministic)
    ========================================================= */
-function seedState() {
-  const st = blankState(); st.seeded = true;
-  let seed = 7; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
-  const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
-  st.categories = [
+function defaultCategories() {
+  return [
     { id: 'cat-housing', name: 'Housing', type: 'mandatory', keywords: ['rent', 'landlord'] },
     { id: 'cat-util', name: 'Utilities', type: 'mandatory', keywords: ['eac', 'electric', 'water', 'cyta', 'epic', 'primetel', 'cablenet'] },
     { id: 'cat-groc', name: 'Groceries', type: 'mandatory', keywords: ['lidl', 'alphamega', 'sklavenitis', 'papantoniou', 'athienitis', 'supermarket'] },
@@ -1240,6 +1337,12 @@ function seedState() {
     { id: 'cat-fun', name: 'Entertainment', type: 'discretionary', keywords: ['cinema', 'bar', 'club', 'steam', 'playstation'] },
     { id: 'cat-travel', name: 'Travel', type: 'discretionary', keywords: ['ryanair', 'wizz', 'airbnb', 'booking', 'hotel'] },
     { id: 'cat-other', name: 'Other', type: 'discretionary', keywords: [] }];
+}
+function seedState() {
+  const st = blankState(); st.seeded = true;
+  let seed = 7; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  const ri = (a, b) => a + Math.floor(rnd() * (b - a + 1));
+  st.categories = defaultCategories();
   st.rules = [{ id: 'rule-1', pattern: 'coffee island', category: 'Eating out' }, { id: 'rule-2', pattern: 'rent transfer', category: 'Housing' }];
   st.fixedCosts = [
     { id: 'fc-rent', name: 'Rent', amount: 130000, category: 'Housing', owner: 'Shared', frequency: 'monthly', active: true, mandatory: true, dueDay: 1 },
@@ -1302,18 +1405,18 @@ const Actions = {
   quickCommission() {
     const person = $('#qcPerson').value, amt = parseAmount($('#qcAmount').value), note = $('#qcNote').value.trim();
     if (amt == null || amt <= 0) { toast('Enter an amount'); return; }
-    incomeOf(UI.month, person).commissions.push({ id: uid(), amount: amt, note, date: todayISO() });
-    save(); render(); toast('Commission added for ' + person);
+    incomeOf(UI.month, person).commissions.push({ id: uid(), amount: amt, note, date: ($('#qcDate').value || todayISO()) });
+    save(); render(); toast('Commission added for ' + N(person));
   },
   delCommission(el) { const inc = incomeOf(UI.month, el.dataset.person); inc.commissions = inc.commissions.filter(c => c.id !== el.dataset.id); save(); render(); },
-  copyIncome(el) { const prev = (S.income[addMonths(UI.month, -1)] || {})[el.dataset.person]; if (!prev) { toast('Nothing to copy'); return; } const inc = incomeOf(UI.month, el.dataset.person); inc.salary = prev.salary; inc.other = prev.other; save(); render(); },
+  loadSeed() { if (!isEmptyState(S) && !confirm('Add example data on top of your data?')) return; const names = S.names; S = seedState(); S.names = names; save(); render(); toast('Example data loaded'); },
   // fixed
-  addFixed() { const f = { id: uid(), name: 'New fixed cost', amount: 0, category: S.categories[0] ? S.categories[0].name : 'Other', owner: UI.person === 'both' ? 'Shared' : UI.person, frequency: 'monthly', active: true, mandatory: true, dueDay: 1 }; S.fixedCosts.push(f); save(); render(); editFixedModal(f.id); },
+  addFixed() { const f = { id: uid(), name: 'New fixed cost', amount: 0, category: S.categories[0] ? S.categories[0].name : 'Other', owner: UI.person === 'both' ? 'Shared' : UI.person, frequency: 'monthly', active: true, mandatory: true, dueDay: 1, startMonth: UI.month, endMonth: '' }; S.fixedCosts.push(f); save(); render(); editFixedModal(f.id); },
   editFixed(el) { editFixedModal(el.dataset.id); },
   delFixed(el) { if (!confirm('Delete this fixed cost? Payment history for it is kept.')) return; S.fixedCosts = S.fixedCosts.filter(f => f.id !== el.dataset.id); closeModal(); save(); render(); },
   toggleActive(el) { const f = findById(S.fixedCosts, el.dataset.id); if (f) { f.active = !(f.active !== false); save(); render(); } },
   // loans
-  addLoan() { const l = { id: uid(), name: 'New loan', owner: UI.person === 'both' ? 'Armen' : UI.person, principal: 0, balance: 0, apr: 0, payment: 0, startDate: todayISO(), term: 12, dueDay: 1 }; S.loans.push(l); save(); render(); editLoanModal(l.id); },
+  addLoan() { const l = { id: uid(), name: 'New loan', owner: UI.person === 'both' ? 'Armen' : UI.person, principal: 0, balance: 0, apr: 0, payment: 0, startDate: UI.month + '-01', term: 12, dueDay: 1 }; S.loans.push(l); save(); render(); editLoanModal(l.id); },
   editLoan(el) { editLoanModal(el.dataset.id); },
   delLoan(el) { if (!confirm('Delete this loan?')) return; S.loans = S.loans.filter(l => l.id !== el.dataset.id); closeModal(); save(); render(); },
   schedule(el) { scheduleModal(el.dataset.id, +(el.dataset.extra || 0)); },
@@ -1342,8 +1445,8 @@ const Actions = {
   exportJson() { exportJson(); },
   copyExport() { const ta = $('#exportText'); ta.select(); try { document.execCommand('copy'); toast('Copied'); } catch (e) { toast('Select and copy manually'); } },
   importMode(el) { UI.importMode = el.dataset.v; render(); },
-  clearSeed() { if (!confirm('Remove all example data? Categories are kept.')) return; const cats = S.categories; S = blankState(); S.categories = cats; S.seeded = false; save(); render(); toast('Example data cleared'); },
-  resetAll() { if (!confirm('Delete ALL data in this app? Export first if unsure.')) return; S = blankState(); S.categories = seedState().categories; save(); render(); toast('Reset'); },
+  clearSeed() { if (!confirm('Remove all example data? Categories are kept.')) return; stripSeed(S); save(); render(); toast('Example data cleared'); },
+  resetAll() { if (!confirm('Delete ALL data in this app? Export first if unsure.')) return; S = blankState(); S.categories = defaultCategories(); save(); render(); toast('Reset'); },
   addCat() { const c = { id: uid(), name: 'New category', type: 'discretionary', keywords: [] }; S.categories.push(c); save(); render(); editCatModal(c.id); },
   editCat(el) { editCatModal(el.dataset.id); },
   delCat(el) { const c = findById(S.categories, el.dataset.id); if (!c || !confirm('Delete category "' + c.name + '"? Transactions keep the name.')) return; S.categories = S.categories.filter(x => x.id !== c.id); closeModal(); save(); render(); },
@@ -1368,8 +1471,14 @@ const Changes = {
     else { const amt = parseAmount(el.value); if (amt == null) { toast('Invalid amount'); return; } setPaid(S, UI.month, el.dataset.kind, item, true, amt, rec.paidDate); }
     save(); render(); (el.dataset.kind === 'loan' ? editLoanModal : editFixedModal)(item.id);
   },
-  income(el) { const v = parseAmount(el.value); if (v == null) { toast('Invalid amount'); render(); return; } incomeOf(UI.month, el.dataset.person)[el.dataset.field] = v; save(); render(); },
-  commission(el) { const c = findById(incomeOf(UI.month, el.dataset.person).commissions, el.dataset.id); if (!c) return; if (el.dataset.field === 'amount') { const v = parseAmount(el.value); if (v == null) { toast('Invalid amount'); render(); return; } c.amount = v; } else c.note = el.value; save(); render(); },
+  income(el) {
+    const v = parseAmount(el.value); if (v == null) { toast('Invalid amount'); render(); return; }
+    const inc = incomeOf(UI.month, el.dataset.person); const cur = Calc.incomeEntry(S, UI.month, el.dataset.person);
+    if (cur.carriedFrom) { inc.salary = cur.salary; inc.other = cur.other; }
+    inc[el.dataset.field] = v; inc.explicit = true; save(); render();
+  },
+  commission(el) { const c = findById(incomeOf(UI.month, el.dataset.person).commissions, el.dataset.id); if (!c) return; if (el.dataset.field === 'amount') { const v = parseAmount(el.value); if (v == null) { toast('Invalid amount'); render(); return; } c.amount = v; } else if (el.dataset.field === 'date') c.date = el.value; else c.note = el.value; save(); render(); },
+  personName(el) { S.names = S.names || {}; S.names[el.dataset.person] = el.value.trim() || el.dataset.person; save(); render(); },
   field(el) {
     const coll = S[el.dataset.coll]; const it = findById(coll, el.dataset.id); if (!it) return;
     const f = el.dataset.field, t = el.dataset.type || 'text'; let v;
@@ -1378,6 +1487,7 @@ const Changes = {
     else if (t === 'bool') v = el.checked;
     else if (t === 'list') v = el.value.split(',').map(s => s.trim()).filter(Boolean);
     else v = el.value;
+    if ((f === 'startMonth' || f === 'endMonth') && v && !/^\d{4}-\d{2}$/.test(v)) { toast('Use a month like 2026-11'); return; }
     if (el.dataset.coll === 'categories' && f === 'name' && v !== it.name) { const old = it.name; v = v.trim() || old; for (const x of S.transactions) if (x.category === old) x.category = v; for (const x of S.fixedCosts) if (x.category === old) x.category = v; for (const x of S.rules) if (x.category === old) x.category = v; }
     if (el.dataset.coll === 'loans' && f === 'principal' && it.balance === 0 && !paymentHistory(S, it).length) it.balance = v;
     it[f] = v; save(); render();
@@ -1415,7 +1525,10 @@ $('#modal').addEventListener('click', ev => { if (ev.target.id === 'modal') clos
 /* ---------- init ---------- */
 (function init() {
   S = load();
-  if (!S) { S = seedState(); save(); }
+  if (!S) { S = blankState(); S.categories = defaultCategories(); save(); }
+  else if (S.seeded && !S.seedCleaned) { stripSeed(S); S.seedCleaned = true; save(); setTimeout(() => toast('Example data removed. Start with your own numbers.'), 300); }
+  S.seedCleaned = true;
+  S.names = S.names || { Armen: 'Armen', Partner: 'Partner' };
   UI.person = (S.prefs && S.prefs.person) || 'both';
   UI.month = curMonth();
   render();

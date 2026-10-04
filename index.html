@@ -18,6 +18,7 @@
   --sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-padding-bottom:120px}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Inter","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   font-size:16px;line-height:1.4;-webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased}
@@ -92,7 +93,7 @@ main{padding:8px 16px 20px;max-width:720px;margin:0 auto;animation:fade .22s eas
 .hero .mini{display:flex;gap:8px;margin-top:14px}
 .hero .mini>div{flex:1;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:9px 10px;min-width:0}
 .hero .mini .k{font-size:10px}
-.hero .mini b{display:block;font-size:16px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hero .mini b{display:block;font-size:15px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hero .mini b.red{color:#ffd0d8}
 .hero svg.spark{position:absolute;right:18px;top:40px;width:96px;height:36px;opacity:.9}
 .hero>.k,.hero>.v{padding-right:104px}
@@ -175,6 +176,7 @@ table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:ta
 th,td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
 th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
 th:first-child,td:first-child{text-align:left}
+table.bd td{font-size:14px;vertical-align:top}table.bd tr.tot td{border-top:1px solid var(--line2);border-bottom:1px solid var(--line2);background:rgba(255,255,255,.03)}table.bd td:first-child{color:var(--muted)}table.bd tr.tot td:first-child{color:var(--text)}
 .tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -16px;padding:0 16px}
 
 /* review rows */
@@ -685,6 +687,11 @@ function paymentHistory(st, item) {
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), 2200); }
 function openModal(html) { $('#sheet').innerHTML = html; $('#modal').hidden = false; document.body.style.overflow = 'hidden'; }
 function closeModal() { $('#modal').hidden = true; $('#sheet').innerHTML = ''; document.body.style.overflow = ''; }
+/* in-app confirmation (browser confirm() is unreliable in iOS home-screen web apps) */
+function askConfirm(message, onYes, label) {
+  UI._confirm = onYes;
+  openModal('<div class="shead"><h3>Please confirm</h3><button class="x" data-act="closeModal" aria-label="Close">×</button></div><p style="font-size:15px">' + esc(message) + '</p><div class="btnrow"><button class="btn" data-act="closeModal">Cancel</button><button class="btn danger" data-act="confirmYes">' + esc(label || 'Delete') + '</button></div>');
+}
 function sheet(title, body) { return '<div class="shead"><h3>' + esc(title) + '</h3><button class="x" data-act="closeModal" aria-label="Close">×</button></div>' + body; }
 function chipOwner(o) { return '<span class="chip ' + (o === 'Armen' ? 'a' : o === 'Partner' ? 'p' : 's') + '">' + esc(N(o)) + '</span>'; }
 function personOptions() { return PEOPLE.map(p => [p, N(p)]); }
@@ -701,7 +708,10 @@ function selectHtml(attrs, options, value) { return '<select ' + attrs + '>' + o
 function catOptions() { return S.categories.map(c => [c.name, c.name + (c.type === 'mandatory' ? ' ·M' : '')]).concat([['Uncategorized', 'Uncategorized']]); }
 function personLabel() { return UI.person === 'both' ? 'Both' : N(UI.person); }
 
+let _renderTimer = null;
 function render() {
+  if (UI._deferRender) { clearTimeout(_renderTimer); _renderTimer = setTimeout(() => { UI._deferRender = false; render(); }, 260); return; }
+  clearTimeout(_renderTimer);
   const y = window.scrollY;
   $$('#personSeg button').forEach(b => { b.classList.toggle('on', b.dataset.person === UI.person); if (b.dataset.person !== 'both') b.textContent = N(b.dataset.person); });
   $$('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === UI.tab));
@@ -734,6 +744,7 @@ function renderDash() {
   h += '<div class="hero">' + sparkline(trend.map(x => x.leftover)) + '<div class="k">Left after bills · ' + esc(personLabel()) + '</div><div class="v ' + (t.leftAfterDue < 0 ? 'red' : '') + '">' + fmt(t.leftAfterDue) + '</div>' +
     '<div class="d">' + deltaHtml(t.leftAfterDue, tp.leftAfterDue, true) + (isCur ? ' · ' + weekday(today) + ' ' + fmtDate(today) + ' · ' + f.daysLeft + ' day' + (f.daysLeft === 1 ? '' : 's') + ' left' : m < curMonth() ? ' · month closed' : ' · not started') + '</div>' +
     (isCur && f.daysLeft > 0 ? '<div class="mini">' + (stp ? '<div><div class="k">To payday ' + ordinal(stp.payday.day) + '</div><b class="' + (stp.perDay < 0 ? 'red' : '') + '">' + fmt(stp.perDay) + '/d</b></div>' : '<div><div class="k">Safe per day</div><b class="' + (f.safePerDay < 0 ? 'red' : '') + '">' + fmt(f.safePerDay) + '</b></div>') + '<div><div class="k">Spend pace</div><b>' + fmt(f.projectedDiscretionary) + '</b></div><div><div class="k">Projected</div><b class="' + (f.projectedLeftover < 0 ? 'red' : '') + '">' + fmt(f.projectedLeftover) + '</b></div></div>' : '') + '</div>';
+  h += breakdownCard(m, p);
   const ins = Calc.insights(S, m, p);
   if (ins.length) { h += '<div class="card tight">'; for (const i of ins) h += '<div class="ins ' + (i.level || 'muted') + '"><i></i><span style="color:var(--text)">' + esc(i.text) + '</span></div>'; h += '</div>'; }
   h += '<div class="grid2">' +
@@ -788,6 +799,23 @@ function renderDash() {
     h += '<h2>Goals</h2>';
     for (const g of S.goals) { const gs = Calc.goalStats(g); h += '<div class="card tight"><div class="row">' + ring(gs.pctBp) + '<div class="grow"><div class="name">' + esc(g.name) + '</div><div class="sub">' + fmt(gs.saved) + ' of ' + fmt(gs.target) + (g.date ? ' by ' + fmtDate(g.date) : '') + '</div><div class="sub">' + (gs.left > 0 && gs.months > 0 ? 'needs ' + fmt(gs.perMonth) + '/mo for ' + gs.months + ' months' : gs.left === 0 ? 'reached' : fmt(gs.left) + ' to go') + '</div></div></div></div>'; }
   }
+  return h;
+}
+/* plain month breakdown: income − bills − loans − spending = left, per person */
+function breakdownCard(m, p) {
+  const cols = p === 'both' ? ['Armen', 'Partner', 'both'] : [p];
+  const T = {}; for (const c of cols) T[c] = Calc.monthTotals(S, m, c);
+  const row = (label, key, cls, hint) => '<tr><td>' + label + (hint ? '<div class="xs dim">' + hint + '</div>' : '') + '</td>' + cols.map(c => '<td class="' + (cls || '') + '">' + (typeof key === 'function' ? key(T[c]) : fmt(T[c][key])) + '</td>').join('') + '</tr>';
+  const loansFor = c => S.loans.filter(l => Calc.share(l.owner, c) > 0 && (l.balance > 0)).map(l => '<div class="xs dim">' + esc(l.name) + ' ' + fmt(Calc.applyShare(l.payment, Calc.share(l.owner, c))) + '</div>').join('');
+  let h = '<h2>' + esc(monthLabel(m)) + ' breakdown</h2><div class="card tight"><div class="tscroll"><table class="bd"><tr><th></th>' + cols.map(c => '<th>' + esc(c === 'both' ? 'Both' : N(c)) + '</th>').join('') + '</tr>';
+  h += row('Net income', 'net', 'green');
+  h += row('− Fixed costs', t => '−' + fmt(t.fixedPlanned), '', null);
+  h += '<tr><td>− Loan payments</td>' + cols.map(c => '<td>−' + fmt(T[c].loanPlanned) + loansFor(c) + '</td>').join('') + '</tr>';
+  h += row('− Spending so far', t => '−' + fmt(t.mandatoryTx + t.discretionary), '', 'from statements');
+  h += '<tr class="tot"><td><b>= Leftover</b><div class="xs dim">if every bill is paid</div></td>' + cols.map(c => '<td><b class="' + (T[c].leftover < 0 ? 'red' : 'green') + '">' + fmt(T[c].leftover) + '</b></td>').join('') + '</tr>';
+  h += '<tr><td>Bills paid so far</td>' + cols.map(c => '<td class="muted">' + fmt(T[c].paid) + '</td>').join('') + '</tr>';
+  h += '<tr><td>Bills still due' + (T[cols[0]].carriedTotal ? '<div class="xs red">incl. carried over</div>' : '') + '</td>' + cols.map(c => '<td class="' + (T[c].due ? 'amber' : 'muted') + '">' + fmt(T[c].due) + '</td>').join('') + '</tr>';
+  h += '</table></div>' + (p === 'both' ? '<p class="xs dim" style="margin:8px 0 0">Shared bills are split in half between the two columns.</p>' : '') + '</div>';
   return h;
 }
 function renderSetup() {
@@ -890,7 +918,7 @@ function renderFixed() {
   const items = Calc.dueItems(S, m, p).filter(i => i.kind === 'fixed');
   const t = Calc.monthTotals(S, m, p);
   const planned = sum(items, i => i.planned), paid = sum(items.filter(i => i.paid), i => i.actual), due = sum(items.filter(i => !i.paid), i => i.planned);
-  let h = '<div class="grid3">' + stat('Planned', fmt(planned)) + stat('Paid', fmt(paid), '', 'green') + stat('Due', fmt(due), '', due ? 'amber' : '') + '</div>';
+  let h = '<div class="grid3">' + stat('Planned', fmt(planned), p === 'both' ? '<span class="dim">' + esc(N('Armen')) + ' ' + fmt(sum(Calc.dueItems(S, m, 'Armen').filter(i => i.kind === 'fixed'), i => i.planned)) + ' · ' + esc(N('Partner')) + ' ' + fmt(sum(Calc.dueItems(S, m, 'Partner').filter(i => i.kind === 'fixed'), i => i.planned)) + '</span>' : '') + stat('Paid', fmt(paid), '', 'green') + stat('Due', fmt(due), '', due ? 'amber' : '') + '</div>';
   h += '<button class="btn block mt10" data-act="addFixed">+ Add fixed cost</button>';
   const sugg = Calc.recurringCandidates(S, p);
   if (sugg.length) { h += '<h2>Looks like a regular bill <small>from your statements</small></h2><div class="card tight"><ul class="list">'; for (const s of sugg.slice(0, 5)) h += '<li class="item"><span class="av" style="--c:' + catColor(s.category) + '">' + esc(s.name.charAt(0).toUpperCase()) + '</span><div class="grow"><div class="name ellip">' + esc(s.name) + '</div><div class="sub">' + fmt(s.amount) + ' around the ' + ordinal(s.dueDay) + ', ' + s.months + ' months running</div></div><button class="btn xs" data-act="dismissSugg" data-pattern="' + esc(s.pattern) + '">✕</button><button class="btn xs pri" data-act="addSugg" data-pattern="' + esc(s.pattern) + '">Add</button></li>'; h += '</ul></div>'; }
@@ -962,7 +990,15 @@ function historyHtml(hist) {
 function renderLoans() {
   const m = UI.month, p = UI.person;
   const loans = S.loans.filter(l => Calc.share(l.owner, p) > 0);
-  let h = '<button class="btn block" data-act="addLoan">+ Add loan</button>';
+  let h = '';
+  if (loans.length) {
+    const sh = l => Calc.share(l.owner, p); const totalPay = sum(loans, l => Calc.applyShare(l.payment, sh(l))), totalBal = sum(loans, l => Calc.applyShare(Math.max(0, l.balance), sh(l))), totalPrincipal = sum(loans, l => Calc.applyShare(l.principal, sh(l)));
+    const stats = loans.map(l => Calc.loanStats(S, l)); const toGo = sum(stats, s => s.remainingInterest), paidInt = sum(stats, s => s.interestPaid); const last = stats.filter(s => s.payoffMonth).map(s => s.payoffMonth).sort().pop();
+    h += '<div class="hero"><div class="k">Loans · ' + esc(personLabel()) + '</div><div class="v">' + fmt(totalPay) + '<span style="font-size:16px;font-weight:600;opacity:.8"> /month</span></div><div class="d">' + loans.length + ' loan' + (loans.length > 1 ? 's' : '') + ' · ' + fmt(totalBal) + ' still owed of ' + fmt(totalPrincipal) + (last ? ' · last payment ' + esc(monthLabel(last)) : '') + '</div>' +
+      '<div class="mini"><div><div class="k">Owed</div><b>' + fmt(totalBal) + '</b></div><div><div class="k">Interest to go</div><b>' + fmt(toGo) + '</b></div><div><div class="k">Interest paid</div><b>' + fmt(paidInt) + '</b></div></div></div>';
+    h += '<div class="card tight"><div class="tscroll"><table><tr><th>Loan</th><th>Per month</th><th>Owed</th><th>APR</th><th>Ends</th></tr>' + loans.map((l, i) => '<tr><td>' + esc(l.name) + ' <span class="dim xs">' + esc(N(l.owner)) + '</span></td><td><b>' + fmt(Calc.applyShare(l.payment, sh(l))) + '</b></td><td>' + fmt(Calc.applyShare(Math.max(0, l.balance), sh(l))) + '</td><td>' + bpStr(l.apr) + '</td><td>' + (stats[i].neverEnds ? '<span class="red">never</span>' : l.balance <= 0 ? 'paid off' : esc(monthShort(stats[i].payoffMonth))) + '</td></tr>').join('') + '</table></div></div>';
+  }
+  h += '<button class="btn block mt10" data-act="addLoan">+ Add loan</button>';
   if (!loans.length) h += '<div class="card"><div class="empty">No loans for ' + esc(personLabel()) + '.</div></div>';
   if (loans.length > 1) { const dp = Calc.debtPlan(S, p, (S.whatif || {}).extraDebt || 0, UI.debtMethod || 'avalanche', true), db = Calc.debtPlan(S, p, 0, 'avalanche', false); if (dp && db && !dp.neverEnds && !db.neverEnds) h += '<div class="card tight" data-tab="plan" style="cursor:pointer"><div class="row"><div class="grow"><div class="name">Debt-free ' + esc(monthLabel(dp.debtFree)) + ' with freed payments rolling over</div><div class="sub">' + (db.months - dp.months) + ' months sooner and ' + fmt(db.totalInterest - dp.totalInterest) + ' less interest than minimums only · open Plan</div></div><span class="dim">›</span></div></div>'; }
   for (const l of loans) {
@@ -1886,7 +1922,8 @@ function renderPlan() {
    ========================================================= */
 function itemFor(kind, id) { return kind === 'loan' ? findById(S.loans, id) : findById(S.fixedCosts, id); }
 const Actions = {
-  closeModal() { closeModal(); },
+  closeModal() { UI._confirm = null; closeModal(); },
+  confirmYes() { const fn = UI._confirm; UI._confirm = null; closeModal(); if (fn) fn(); },
   monthPrev() { UI.month = addMonths(UI.month, -1); render(); },
   monthNext() { UI.month = addMonths(UI.month, 1); render(); },
   monthToday() { UI.month = curMonth(); render(); },
@@ -1899,16 +1936,16 @@ const Actions = {
     save(); render(); toast('Commission added for ' + N(person));
   },
   delCommission(el) { const inc = incomeOf(UI.month, el.dataset.person); inc.commissions = inc.commissions.filter(c => c.id !== el.dataset.id); save(); render(); },
-  loadSeed() { if (!isEmptyState(S) && !confirm('Add example data on top of your data?')) return; const names = S.names; S = seedState(); S.names = names; save(); render(); toast('Example data loaded'); },
+  loadSeed() { const go = () => { const names = S.names; S = seedState(); S.names = names; save(); render(); toast('Example data loaded'); }; if (isEmptyState(S)) go(); else askConfirm('Replace your data with the example data?', go, 'Load example'); },
   // fixed
   addFixed() { const f = { id: uid(), name: 'New fixed cost', amount: 0, category: S.categories[0] ? S.categories[0].name : 'Other', owner: UI.person === 'both' ? 'Shared' : UI.person, frequency: 'monthly', active: true, mandatory: true, dueDay: 1, startMonth: UI.month, endMonth: '' }; S.fixedCosts.push(f); save(); render(); editFixedModal(f.id); },
   editFixed(el) { editFixedModal(el.dataset.id); },
-  delFixed(el) { if (!confirm('Delete this fixed cost? Payment history for it is kept.')) return; S.fixedCosts = S.fixedCosts.filter(f => f.id !== el.dataset.id); closeModal(); save(); render(); },
+  delFixed(el) { const id = el.dataset.id; const f = findById(S.fixedCosts, id); askConfirm('Delete "' + (f ? f.name : 'this fixed cost') + '"? Its payment history is kept.', () => { S.fixedCosts = S.fixedCosts.filter(x => x.id !== id); save(); render(); toast('Deleted'); }); },
   toggleActive(el) { const f = findById(S.fixedCosts, el.dataset.id); if (f) { f.active = !(f.active !== false); save(); render(); } },
   // loans
   addLoan() { const l = { id: uid(), name: 'New loan', owner: UI.person === 'both' ? 'Armen' : UI.person, principal: 0, balance: 0, apr: 0, payment: 0, startDate: UI.month + '-01', term: 12, dueDay: 1 }; S.loans.push(l); save(); render(); editLoanModal(l.id); },
   editLoan(el) { editLoanModal(el.dataset.id); },
-  delLoan(el) { if (!confirm('Delete this loan?')) return; S.loans = S.loans.filter(l => l.id !== el.dataset.id); closeModal(); save(); render(); },
+  delLoan(el) { const id = el.dataset.id; const l = findById(S.loans, id); askConfirm('Delete loan "' + (l ? l.name : '') + '"?', () => { S.loans = S.loans.filter(x => x.id !== id); save(); render(); toast('Deleted'); }); },
   schedule(el) { scheduleModal(el.dataset.id, +(el.dataset.extra || 0)); },
   simSet(el) { UI.sim[el.dataset.id] = +el.dataset.v; render(); },
   // statements
@@ -1919,11 +1956,11 @@ const Actions = {
   rvDup(el) { const i = UI.review.items[+el.dataset.idx]; (UI.review.edits[i.idx] = UI.review.edits[i.idx] || {}).dup = !i.dup; buildReview(); render(); },
   rvSkip(el) { const i = UI.review.items[+el.dataset.idx]; (UI.review.edits[i.idx] = UI.review.edits[i.idx] || {}).skip = !i.skip; buildReview(); render(); },
   rvType(el) { (UI.review.edits[+el.dataset.idx] = UI.review.edits[+el.dataset.idx] || {}).type = el.dataset.v; buildReview(); render(); },
-  delStatement(el) { const s = findById(S.statements, el.dataset.id); if (!s || !confirm('Delete this statement and its ' + s.count + ' transactions?')) return; S.transactions = S.transactions.filter(t => t.statementId !== s.id); S.statements = S.statements.filter(x => x.id !== s.id); save(); render(); },
+  delStatement(el) { const s = findById(S.statements, el.dataset.id); if (!s) return; askConfirm('Delete this statement and its ' + s.count + ' transactions?', () => { S.transactions = S.transactions.filter(t => t.statementId !== s.id); S.statements = S.statements.filter(x => x.id !== s.id); save(); render(); toast('Statement deleted'); }); },
   txFilter(el) { UI.txFilter = el.dataset.v; render(); },
   txType(el) { const t = findById(S.transactions, el.dataset.id); if (t) { t.type = el.dataset.v; save(); render(); } },
   txDup(el) { const t = findById(S.transactions, el.dataset.id); if (t) { t.duplicate = !t.duplicate; save(); render(); } },
-  delTx(el) { S.transactions = S.transactions.filter(t => t.id !== el.dataset.id); save(); render(); },
+  delTx(el) { S.transactions = S.transactions.filter(t => t.id !== el.dataset.id); save(); render(); toast('Transaction deleted'); },
   addTx() { addTxModal(); },
   saveTx() {
     const amt = parseAmount($('#txAmount').value), date = $('#txDate').value, merchant = $('#txMerchant').value.trim(), category = $('#txCategory').value;
@@ -1935,16 +1972,16 @@ const Actions = {
   exportJson() { exportJson(); },
   copyExport() { const ta = $('#exportText'); ta.select(); try { document.execCommand('copy'); toast('Copied'); } catch (e) { toast('Select and copy manually'); } },
   importMode(el) { UI.importMode = el.dataset.v; render(); },
-  clearSeed() { if (!confirm('Remove all example data? Categories are kept.')) return; stripSeed(S); save(); render(); toast('Example data cleared'); },
-  resetAll() { if (!confirm('Delete ALL data in this app? Export first if unsure.')) return; S = blankState(); S.categories = defaultCategories(); save(); render(); toast('Reset'); },
+  clearSeed() { askConfirm('Remove all example data? Categories are kept.', () => { stripSeed(S); save(); render(); toast('Example data cleared'); }, 'Clear'); },
+  resetAll() { askConfirm('Delete ALL data in this app? Export first if unsure.', () => { S = blankState(); S.categories = defaultCategories(); save(); render(); toast('Reset'); }, 'Delete everything'); },
   addCat() { const c = { id: uid(), name: 'New category', type: 'discretionary', keywords: [] }; S.categories.push(c); save(); render(); editCatModal(c.id); },
   editCat(el) { editCatModal(el.dataset.id); },
-  delCat(el) { const c = findById(S.categories, el.dataset.id); if (!c || !confirm('Delete category "' + c.name + '"? Transactions keep the name.')) return; S.categories = S.categories.filter(x => x.id !== c.id); closeModal(); save(); render(); },
+  delCat(el) { const c = findById(S.categories, el.dataset.id); if (!c) return; askConfirm('Delete category "' + c.name + '"? Transactions keep the name.', () => { S.categories = S.categories.filter(x => x.id !== c.id); save(); render(); }); },
   addRule() { S.rules.push({ id: uid(), pattern: '', category: S.categories[0] ? S.categories[0].name : 'Other' }); save(); render(); },
   delRule(el) { S.rules = S.rules.filter(r => r.id !== el.dataset.id); save(); render(); },
   addGoal() { const g = { id: uid(), name: 'New goal', target: 100000, saved: 0, date: addMonths(curMonth(), 12) + '-01' }; S.goals.push(g); save(); render(); editGoalModal(g.id); },
   editGoal(el) { editGoalModal(el.dataset.id); },
-  delGoal(el) { S.goals = S.goals.filter(g => g.id !== el.dataset.id); closeModal(); save(); render(); },
+  delGoal(el) { const id = el.dataset.id; askConfirm('Delete this goal?', () => { S.goals = S.goals.filter(g => g.id !== id); save(); render(); }); },
   addAccount() { S.accounts.push({ id: uid(), name: 'Current account', owner: UI.person === 'both' ? 'Armen' : UI.person, type: 'cash', balance: 0 }); save(); render(); },
   delAccount(el) { S.accounts = S.accounts.filter(a => a.id !== el.dataset.id); save(); render(); },
   addSugg(el) { const s = Calc.recurringCandidates(S, UI.person).find(x => x.pattern === el.dataset.pattern); if (!s) return; const f = { id: uid(), name: s.name.replace(/\s+/g, ' ').trim(), amount: s.amount, category: s.category && s.category !== 'Uncategorized' ? s.category : (S.categories[0] || {}).name || 'Other', owner: UI.person === 'both' ? 'Armen' : UI.person, frequency: 'monthly', active: true, mandatory: catType(s.category) === 'mandatory', dueDay: s.dueDay, startMonth: UI.month, endMonth: '' }; S.fixedCosts.push(f); save(); render(); editFixedModal(f.id); },
@@ -2009,7 +2046,7 @@ const Changes = {
   rvCat(el) { const e = UI.review.edits[+el.dataset.idx] = UI.review.edits[+el.dataset.idx] || {}; e.category = el.value; e.type = catType(el.value); buildReview(); render(); },
   rvTick(el) { (UI.review.edits[+el.dataset.idx] = UI.review.edits[+el.dataset.idx] || {}).tick = el.checked; buildReview(); render(); },
   txCat(el) { const t = findById(S.transactions, el.dataset.id); if (!t) return; t.category = el.value; t.type = catType(el.value); S.catRev = (S.catRev || 0) + 1; if (el.value !== 'Uncategorized') { const p = patternFromMerchant(t.merchant); if (p) upsertRule(p, el.value); } save(); render(); toast('Rule learned: "' + patternFromMerchant(t.merchant) + '" → ' + el.value); },
-  importFile(el) { const f = el.files && el.files[0]; if (!f) return; const mode = UI.importMode === 'replace' ? 'replace' : 'merge'; if (mode === 'replace' && !confirm('Replace ALL current data with this file?')) { el.value = ''; return; } readFileText(f, text => importJsonText(text, mode)); el.value = ''; }
+  importFile(el) { const f = el.files && el.files[0]; if (!f) return; const mode = UI.importMode === 'replace' ? 'replace' : 'merge'; el.value = ''; readFileText(f, text => { if (mode === 'replace') askConfirm('Replace ALL current data with this file?', () => importJsonText(text, 'replace'), 'Replace'); else importJsonText(text, 'merge'); }); }
 };
 
 document.addEventListener('click', ev => {
@@ -2021,7 +2058,11 @@ document.addEventListener('click', ev => {
 });
 document.addEventListener('change', ev => {
   const el = ev.target.closest('[data-change]'); if (!el) return;
-  const fn = Changes[el.dataset.change]; if (fn) fn(el, ev);
+  const fn = Changes[el.dataset.change]; if (!fn) return;
+  // A tap on a button right after typing fires blur→change first; re-rendering synchronously would
+  // replace the button before its click lands. Defer renders caused by change events briefly.
+  UI._deferRender = !el.matches('input[type=checkbox],select,input[type=range],input[type=file]');
+  try { fn(el, ev); } finally { UI._deferRender = false; }
 });
 document.addEventListener('keydown', ev => { if (ev.key === 'Enter' && ev.target.matches('input[type=text]')) ev.target.blur(); if (ev.key === 'Escape') closeModal(); });
 $('#modal').addEventListener('click', ev => { if (ev.target.id === 'modal') closeModal(); });

@@ -231,9 +231,9 @@ svg.chart{width:100%;height:170px;display:block}
   <div class="hbar">
     <h1>Fin<span>ance</span></h1>
     <div class="row gap6"><div class="seg" id="personSeg">
-      <button data-person="Armen">Armen</button>
-      <button data-person="Partner">Partner</button>
-      <button data-person="both">Both</button>
+      <button data-pick="Armen">Armen</button>
+      <button data-pick="Partner">Partner</button>
+      <button data-pick="both">Both</button>
     </div><button class="gear" data-tab="settings" aria-label="Settings"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div>
   </div>
   <div class="monthpick" id="monthpick">
@@ -261,6 +261,9 @@ svg.chart{width:100%;height:170px;display:block}
    APR is stored in basis points (5.9% = 590). Months are 'YYYY-MM'.
    ========================================================= */
 const KEY = 'pfin.v1';
+const APP_VERSION = '2026.10.04-4';
+const IS_STANDALONE = !!(window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches));
+const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const PEOPLE = ['Armen', 'Partner'];
 const OWNERS = ['Armen', 'Partner', 'Shared'];
 const SMALL_CHARGE = 1500;        // "small charge" threshold for leak detection (€15)
@@ -435,7 +438,16 @@ function isEmptyState(st) { return !st.fixedCosts.length && !st.loans.length && 
 function stripSeed(st) {
   const seedId = id => /^(fc-|loan-|goal-|tx-|stmt-|rule-|comm-)/.test(String(id));
   for (const c of ['fixedCosts', 'loans', 'goals', 'transactions', 'statements', 'rules']) st[c] = (st[c] || []).filter(x => !seedId(x.id));
-  st.income = {}; st.payments = {}; delete st.bankMappings['Bank of Cyprus']; st.seeded = false;
+  // payments: only those recorded against example items; income: only example values, user-typed values are kept
+  for (const m of Object.keys(st.payments || {})) { for (const id of Object.keys(st.payments[m])) if (seedId(id)) delete st.payments[m][id]; if (!Object.keys(st.payments[m]).length) delete st.payments[m]; }
+  const seedSalary = { Armen: 285000, Partner: 210000 };
+  for (const m of Object.keys(st.income || {})) { for (const p of Object.keys(st.income[m])) { const e = st.income[m][p]; if (!e) continue; e.commissions = (e.commissions || []).filter(c => !seedId(c.id)); if (!e.explicit && e.salary === seedSalary[p]) { e.salary = 0; if (e.other === 15000 || e.other === 0) e.other = 0; } if (!e.salary && !e.other && !e.commissions.length && !e.explicit) delete st.income[m][p]; } if (!Object.keys(st.income[m]).length) delete st.income[m]; }
+  delete st.bankMappings['Bank of Cyprus']; st.seeded = false;
+}
+function storageInfo() {
+  let ok = false, bytes = 0, err = '';
+  try { localStorage.setItem('pfin.test', '1'); localStorage.removeItem('pfin.test'); ok = true; bytes = (localStorage.getItem(KEY) || '').length; } catch (e) { err = e.message || String(e); }
+  return { ok, bytes, err };
 }
 function catByName(name) { return S.categories.find(c => c.name === name); }
 function catType(name) { const c = catByName(name); return c ? c.type : 'discretionary'; }
@@ -713,7 +725,7 @@ function render() {
   if (UI._deferRender) { clearTimeout(_renderTimer); _renderTimer = setTimeout(() => { UI._deferRender = false; render(); }, 260); return; }
   clearTimeout(_renderTimer);
   const y = window.scrollY;
-  $$('#personSeg button').forEach(b => { b.classList.toggle('on', b.dataset.person === UI.person); if (b.dataset.person !== 'both') b.textContent = N(b.dataset.person); });
+  $$('#personSeg button').forEach(b => { b.classList.toggle('on', b.dataset.pick === UI.person); if (b.dataset.pick !== 'both') b.textContent = N(b.dataset.pick); });
   $$('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === UI.tab));
   const gear = $('.gear'); if (gear) gear.classList.toggle('on', UI.tab === 'settings');
   const isCur = UI.month === curMonth();
@@ -735,11 +747,16 @@ window.onChartReady = function () { if (UI.tab === 'dash') render(); };
 function renderDash() {
   const m = UI.month, p = UI.person;
   if (isEmptyState(S)) return renderSetup();
+  let h0 = '';
+  if (!IS_STANDALONE && IS_IOS) h0 += '<div class="card tight" style="border-color:#34457f"><div class="row"><div class="grow small"><b>Tip:</b> add this page to your Home Screen for the app experience. The icon keeps its own separate data, so afterwards use Settings → Copy backup code here and Paste it there.</div><button class="btn xs" data-tab="settings">Settings</button></div></div>';
+  const days = S.lastBackup ? daysBetween(S.lastBackup.slice(0, 10), todayISO()) : null;
+  if (days == null || days > 30) h0 += '<div class="card tight" style="border-color:#6b5520"><div class="row"><div class="grow small"><b>Back up your data.</b> ' + (days == null ? 'No backup yet.' : 'Last backup ' + days + ' days ago.') + ' Everything lives on this phone only.</div><button class="btn xs" data-act="copyBackup">Copy code</button></div></div>';
   const f = Calc.forecast(S, m, p); const t = f.totals, tp = f.prev;
   const unpaid = t.items.filter(i => !i.paid).sort((a, b) => (b.overdue - a.overdue) || a.dueDay - b.dueDay);
   const today = todayISO(); const isCur = m === curMonth();
   let h = '';
   const trend = trendData(); const stp = isCur ? Calc.safeToPayday(S, p) : null; const hasCash = Calc.hasCash(S, p);
+  h += h0;
   if (hasCash) { const nw = Calc.accountsTotal(S, p) - sum(S.loans.filter(l => Calc.share(l.owner, p) > 0), l => Calc.applyShare(Math.max(0, l.balance), Calc.share(l.owner, p))); h += '<div class="grid3" style="margin-top:4px"><div class="stat sm"><div class="k">Cash</div><div class="v">' + fmt(Calc.accountsTotal(S, p, 'cash')) + '</div></div><div class="stat sm"><div class="k">Savings</div><div class="v">' + fmt(Calc.accountsTotal(S, p, 'savings')) + '</div></div><div class="stat sm"><div class="k">Net worth</div><div class="v ' + (nw < 0 ? 'red' : '') + '">' + fmt(nw) + '</div></div></div>'; }
   h += '<div class="hero">' + sparkline(trend.map(x => x.leftover)) + '<div class="k">Left after bills · ' + esc(personLabel()) + '</div><div class="v ' + (t.leftAfterDue < 0 ? 'red' : '') + '">' + fmt(t.leftAfterDue) + '</div>' +
     '<div class="d">' + deltaHtml(t.leftAfterDue, tp.leftAfterDue, true) + (isCur ? ' · ' + weekday(today) + ' ' + fmtDate(today) + ' · ' + f.daysLeft + ' day' + (f.daysLeft === 1 ? '' : 's') + ' left' : m < curMonth() ? ' · month closed' : ' · not started') + '</div>' +
@@ -821,6 +838,7 @@ function breakdownCard(m, p) {
 function renderSetup() {
   const step = (n, title, sub, tab) => '<li class="item" data-tab="' + tab + '" style="cursor:pointer"><span class="step-n">' + n + '</span><div class="grow"><div class="name">' + title + '</div><div class="sub">' + sub + '</div></div><span class="dim">›</span></li>';
   return '<div class="hero"><div class="k">' + esc(monthLabel(UI.month)) + '</div><div class="setup-v">Start with your numbers</div><div class="d">Nothing is stored yet. Everything you enter stays on this device.</div></div>' +
+    (IS_STANDALONE ? '<div class="card tight" style="border-color:#6b5520"><div class="small"><b>Opened from the Home Screen.</b> This copy has its own storage, separate from Safari. If you already entered data in Safari: open it there, Settings → <b>Copy backup code</b>, come back here and tap Paste.</div><div class="btnrow"><button class="btn sm pri" data-act="pasteBackup">Paste backup code</button></div></div>' : '') +
     '<div class="card tight"><ul class="list">' +
     step(1, 'Income', 'Net salary per person. It carries forward each month until you change it.', 'income') +
     step(2, 'Fixed costs', 'Rent, utilities, subscriptions, insurance, with a due day and owner.', 'fixed') +
@@ -902,11 +920,12 @@ function renderIncome() {
     if (inc.carriedFrom) h += '<p class="small amber" style="margin-top:0">Salary carried over from ' + esc(monthLabel(inc.carriedFrom)) + '. Change it here if ' + esc(monthLabel(m)) + ' is different.</p>';
     h += '<div class="fields2"><div class="field"><label>Salary (net)</label><input type="text" inputmode="decimal" value="' + centsIn(inc.salary) + '" data-change="income" data-person="' + p + '" data-field="salary"></div>' +
       '<div class="field"><label>Other income</label><input type="text" inputmode="decimal" value="' + centsIn(inc.other) + '" data-change="income" data-person="' + p + '" data-field="other"></div></div>';
-    h += '<div class="row" style="justify-content:space-between"><b>Commissions</b><span class="muted">' + fmt(n.commissions) + '</span></div><ul class="list">';
+    h += '<div class="row" style="justify-content:space-between"><b>Commissions · ' + esc(monthLabel(m)) + '</b><span class="muted">' + fmt(n.commissions) + '</span></div><ul class="list">';
     if (!inc.commissions.length) h += '<li class="item"><span class="muted small">No commissions this month</span></li>';
     for (const c of inc.commissions.slice().sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))) h += '<li class="item" style="flex-wrap:wrap"><div class="row" style="width:100%"><input type="text" inputmode="decimal" class="inline" style="width:110px;text-align:left" value="' + centsIn(c.amount) + '" data-change="commission" data-person="' + p + '" data-id="' + c.id + '" data-field="amount"><input type="date" class="inline grow" style="width:auto;text-align:left" value="' + esc(c.date || '') + '" data-change="commission" data-person="' + p + '" data-id="' + c.id + '" data-field="date"><button class="btn xs danger" data-act="delCommission" data-person="' + p + '" data-id="' + c.id + '">✕</button></div><input type="text" class="inline" style="width:100%;text-align:left" placeholder="note" value="' + esc(c.note || '') + '" data-change="commission" data-person="' + p + '" data-id="' + c.id + '" data-field="note"></li>';
-    h += '</ul></div>';
+    h += '</ul><div class="kv" style="border-top:1px solid var(--line);margin-top:6px;padding-top:10px"><span class="muted">Salary ' + fmt(n.salary) + ' + commissions ' + fmt(n.commissions) + ' + other ' + fmt(n.other) + '</span><b class="green">= ' + fmt(n.net) + '</b></div></div>';
   }
+  h += '<p class="small dim">Each month keeps its own salary, commissions and other income. A month with nothing typed uses the last salary you entered; commissions are always per month.</p>';
   return h;
 }
 
@@ -1234,6 +1253,10 @@ function readFileText(file, cb) {
    ========================================================= */
 function renderSettings() {
   let h = '';
+  const si = storageInfo();
+  h += '<h2>Backup &amp; transfer</h2><div class="card"><p class="small muted" style="margin-top:0">' + (IS_STANDALONE ? 'You are in the Home Screen app. Its storage is separate from Safari.' : IS_IOS ? 'You are in Safari. A Home Screen copy of this app has its own separate storage.' : 'Data lives only in this browser.') + ' Use a backup code to move data between them, or to keep a copy.</p>' +
+    '<div class="btnrow"><button class="btn pri" data-act="copyBackup">Copy backup code</button><button class="btn" data-act="pasteBackup">Paste backup code</button></div>' +
+    '<div class="kv mt10"><span class="muted">Last backup</span><b>' + (S.lastBackup ? esc(new Date(S.lastBackup).toLocaleDateString()) : '<span class="amber">never</span>') + '</b></div></div>';
   h += '<h2>Data</h2><div class="card"><div class="kv"><span class="muted">Last saved</span><b id="lastSaved">' + esc(lastSavedStr()) + '</b></div><div class="kv"><span class="muted">Stored</span><b>' + S.transactions.length + ' tx · ' + S.fixedCosts.length + ' fixed · ' + S.loans.length + ' loans</b></div>' +
     '<div class="btnrow"><button class="btn" data-act="exportJson">Export JSON</button><label class="btn" style="position:relative">Import JSON<input type="file" accept=".json,application/json" data-change="importFile" style="position:absolute;inset:0;opacity:0;width:100%"></label></div>' +
     '<div class="row mt10"><span class="small muted">Import mode</span><div class="pill"><button data-act="importMode" data-v="merge" class="' + (UI.importMode !== 'replace' ? 'on' : '') + '">Merge</button><button data-act="importMode" data-v="replace" class="' + (UI.importMode === 'replace' ? 'on' : '') + '">Replace</button></div></div>' +
@@ -1255,6 +1278,13 @@ function renderSettings() {
   for (const g of S.goals) { const gs = Calc.goalStats(g); h += '<li class="item" data-act="editGoal" data-id="' + g.id + '"><div class="grow"><div class="name">' + esc(g.name) + '</div><div class="sub">' + fmt(gs.saved) + ' / ' + fmt(gs.target) + (g.date ? ' by ' + fmtDate(g.date) : '') + ' · ' + bpStr(gs.pctBp) + '</div><div class="bar mt6"><i style="width:' + (gs.pctBp / 100) + '%"></i></div></div><span class="dim">›</span></li>'; }
   h += '</ul><button class="btn sm block mt10" data-act="addGoal">+ Add goal</button></div>';
 
+  h += '<h2>Diagnostics</h2><div class="card tight">' +
+    '<div class="kv"><span class="muted">App version</span><b>' + APP_VERSION + '</b></div>' +
+    '<div class="kv"><span class="muted">Running as</span><b>' + (IS_STANDALONE ? 'Home Screen app' : 'browser tab') + (IS_IOS ? ' · iOS' : '') + '</b></div>' +
+    '<div class="kv"><span class="muted">Storage</span><b class="' + (si.ok ? 'green' : 'red') + '">' + (si.ok ? 'working · ' + Math.round(si.bytes / 1024) + ' KB used' : 'blocked: ' + esc(si.err)) + '</b></div>' +
+    '<div class="kv"><span class="muted">Records</span><b>' + S.fixedCosts.length + ' bills · ' + S.loans.length + ' loans · ' + S.transactions.length + ' tx · ' + Object.keys(S.income).length + ' income months · ' + Object.keys(S.payments).length + ' payment months</b></div>' +
+    '<div class="kv"><span class="muted">Tracking since</span><b>' + esc(monthLabel(S.startMonth || curMonth())) + '</b></div>' +
+    '<div class="kv"><span class="muted">Chart library</span><b>' + (window.Chart ? 'online' : 'offline fallback') + '</b></div></div>';
   h += '<h2>Tracking</h2><div class="card tight"><div class="field"><label>Tracking since (unpaid bills carry over from this month)</label><input type="month" value="' + esc(S.startMonth || '') + '" data-change="startMonth"></div></div>';
   h += '<h2>Self-tests</h2><div class="card"><p class="small muted">Runs the calculation checks (integer-cent maths, parsing, loans, leaks, matching) against fixture data. Your data is not touched.</p><button class="btn block" data-act="runTests">Run self-tests</button>';
   if (UI.tests) { const ok = UI.tests.filter(t => t.ok).length; h += '<p class="mt10"><b class="' + (ok === UI.tests.length ? 'green' : 'red') + '">' + ok + ' / ' + UI.tests.length + ' passed</b></p>'; for (const t of UI.tests) h += '<div class="test"><span class="' + (t.ok ? 'ok' : 'fail') + '">' + (t.ok ? '✓' : '✗') + '</span><div><div>' + esc(t.name) + '</div>' + (t.ok ? '' : '<div class="detail">' + esc(t.detail) + '</div>') + '</div></div>'; }
@@ -1282,7 +1312,22 @@ function addTxModal() {
     '<div class="btnrow"><button class="btn pri" data-act="saveTx">Add</button></div>';
   openModal(sheet('Add transaction', b));
 }
+function backupCode() { return 'PFIN1.' + btoa(unescape(encodeURIComponent(JSON.stringify(S)))); }
+function decodeBackup(text) {
+  text = String(text || '').trim();
+  if (text.startsWith('PFIN1.')) { try { return decodeURIComponent(escape(atob(text.slice(6)))); } catch (e) { return null; } }
+  return text.startsWith('{') ? text : null;
+}
+function copyBackup() {
+  const code = backupCode(); S.lastBackup = new Date().toISOString(); save();
+  const done = ok => openModal(sheet('Backup code', '<p class="small muted">' + (ok ? 'Copied to the clipboard. ' : '') + 'Paste it into the other copy of the app (Settings → Paste backup code), or keep it in Notes as a backup. It contains all your data.</p><textarea readonly id="backupText" style="min-height:90px">' + esc(code) + '</textarea><div class="btnrow"><button class="btn" data-act="selectBackup">Select all</button><button class="btn pri" data-act="closeModal">Done</button></div>'));
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(() => done(true), () => done(false)); else done(false);
+}
+function pasteBackupModal() {
+  openModal(sheet('Paste backup code', '<p class="small muted">Paste the code copied from the other copy of the app, or an exported JSON file\'s contents.</p><textarea id="pasteText" placeholder="PFIN1.…" style="min-height:110px"></textarea><div class="row mt10"><span class="small muted">Mode</span><div class="pill"><button data-act="importMode" data-v="merge" data-keep="1" class="' + (UI.importMode !== 'replace' ? 'on' : '') + '">Merge</button><button data-act="importMode" data-v="replace" data-keep="1" class="' + (UI.importMode === 'replace' ? 'on' : '') + '">Replace</button></div></div><div class="btnrow"><button class="btn pri" data-act="restoreBackup">Restore</button></div>'));
+}
 function exportJson() {
+  S.lastBackup = new Date().toISOString(); save();
   const text = JSON.stringify(S, null, 2);
   const name = 'finance-' + todayISO() + '.json';
   try {
@@ -1295,7 +1340,13 @@ function exportJson() {
 }
 function mergeState(a, b) {
   const ids = coll => new Set((a[coll] || []).map(x => x.id));
-  for (const coll of ['fixedCosts', 'loans', 'transactions', 'rules', 'goals', 'statements']) { const have = ids(coll); for (const x of b[coll] || []) if (x && x.id && !have.has(x.id)) a[coll].push(x); }
+  for (const coll of ['fixedCosts', 'loans', 'transactions', 'rules', 'goals', 'statements', 'accounts']) { a[coll] = a[coll] || []; const have = ids(coll); for (const x of b[coll] || []) if (x && x.id && !have.has(x.id)) a[coll].push(x); }
+  for (const k of ['paydays', 'budgets', 'snapshots']) { a[k] = a[k] || {}; for (const key of Object.keys(b[k] || {})) if (a[k][key] == null) a[k][key] = b[k][key]; }
+  a.names = a.names || {}; for (const p of PEOPLE) if ((!a.names[p] || a.names[p] === p) && b.names && b.names[p]) a.names[p] = b.names[p];
+  a.dismissed = Array.from(new Set((a.dismissed || []).concat(b.dismissed || [])));
+  if (b.startMonth && (!a.startMonth || b.startMonth < a.startMonth)) a.startMonth = b.startMonth;
+  if (b.whatif && !Object.keys(a.whatif && a.whatif.cuts || {}).length && !(a.whatif && (a.whatif.extraDebt || a.whatif.incomeDelta))) a.whatif = b.whatif;
+  if (b.lastBackup && (!a.lastBackup || b.lastBackup > a.lastBackup)) a.lastBackup = b.lastBackup;
   const catNames = new Set(a.categories.map(c => c.name)); for (const c of b.categories || []) if (c && !catNames.has(c.name)) a.categories.push(c);
   for (const m of Object.keys(b.income || {})) { a.income[m] = a.income[m] || {}; for (const p of Object.keys(b.income[m])) { if (!a.income[m][p]) a.income[m][p] = b.income[m][p]; else { const have = new Set((a.income[m][p].commissions || []).map(c => c.id)); for (const c of b.income[m][p].commissions || []) if (!have.has(c.id)) a.income[m][p].commissions.push(c); } } }
   for (const m of Object.keys(b.payments || {})) { a.payments[m] = a.payments[m] || {}; for (const id of Object.keys(b.payments[m])) if (!a.payments[m][id]) a.payments[m][id] = b.payments[m][id]; }
@@ -1446,7 +1497,11 @@ function runSelfTests() {
   eq('forecast: due within 7 days = gym (day 20), loan (15) excluded', fc.dueSoon.map(i => i.id), ['f2']);
   ok('insights mention the overdue insurance', Calc.insights(st, M, 'both', today).some(i => /overdue.*Car insurance/.test(i.text)));
   const st7 = fixtureState(); stripSeed(Object.assign(st7, { seeded: true, fixedCosts: st7.fixedCosts.concat([{ id: 'fc-x', name: 'seed' }]) }));
-  eq('stripSeed removes seed-prefixed items only, clears income/payments', [st7.fixedCosts.length, st7.seeded, Object.keys(st7.income).length], [4, false, 0]);
+  eq('stripSeed removes seed-prefixed items only', [st7.fixedCosts.length, st7.seeded], [4, false]);
+  const stQ = seedState(); stQ.income['2026-10'].Armen.salary = 300000; stQ.income['2026-10'].Armen.explicit = true; stQ.income['2026-10'].Armen.commissions.push({ id: 'mine', amount: 5000 }); stQ.payments['2026-10']['user-item'] = { paid: true, amount: 1 }; stQ.fixedCosts.push({ id: 'user-fc', name: 'Mine', amount: 1 });
+  stripSeed(stQ);
+  eq('stripSeed keeps user-typed salary, commission, payment and bill', [stQ.income['2026-10'].Armen.salary, stQ.income['2026-10'].Armen.commissions.map(c => c.id), !!stQ.payments['2026-10']['user-item'], stQ.fixedCosts.map(f => f.id), stQ.transactions.length], [300000, ['mine'], true, ['user-fc'], 0]);
+  ok('backup code round-trips', JSON.parse(decodeBackup('PFIN1.' + btoa(unescape(encodeURIComponent(JSON.stringify({ a: 'é€', b: [1] })))))).a === 'é€');
   // smart layer
   const st8 = fixtureState(); st8.startMonth = '2026-09';
   const t8 = Calc.monthTotals(st8, M, 'both', today);
@@ -1503,6 +1558,9 @@ function runSelfTests() {
   const a = fixtureState(), b = fixtureState(); b.fixedCosts.push({ id: 'f9', name: 'New', amount: 100, category: 'Fun', owner: 'Armen', frequency: 'monthly', active: true, dueDay: 1 }); b.payments['2026-11'] = { f1: { paid: true, amount: 1 } };
   mergeState(a, b);
   eq('merge: adds new ids, no duplicates, merges payments', [a.fixedCosts.length, a.transactions.length, !!a.payments['2026-11'].f1], [5, 4, true]);
+  const mA = blankState(), mB = Object.assign(blankState(), { accounts: [{ id: 'acc1', balance: 5 }], names: { Armen: 'Armen', Partner: 'Maria' }, paydays: { Armen: 25 }, budgets: { Food: 100 }, startMonth: '2026-08' });
+  mergeState(mA, mB);
+  eq('merge: accounts, names, paydays, budgets, startMonth carried over', [mA.accounts.length, mA.names.Partner, mA.paydays.Armen, mA.budgets.Food, mA.startMonth], [1, 'Maria', 25, 100, '2026-08']);
   ok('export/import roundtrip preserves state', JSON.stringify(JSON.parse(JSON.stringify(fixtureState()))) === JSON.stringify(fixtureState()));
   // column detection
   const det = detectMapping(parseCSV('Date,Description,Amount\n01/10/2026,LIDL,-12.50\n02/10/2026,WOLT,-8.00'));
@@ -1970,8 +2028,12 @@ const Actions = {
   },
   // settings
   exportJson() { exportJson(); },
+  copyBackup() { copyBackup(); },
+  pasteBackup() { pasteBackupModal(); },
+  selectBackup() { const ta = $('#backupText'); if (ta) { ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length); } },
+  restoreBackup() { const text = decodeBackup(($('#pasteText') || {}).value); if (!text) { toast('That is not a valid backup code'); return; } const mode = UI.importMode === 'replace' ? 'replace' : 'merge'; if (mode === 'replace') askConfirm('Replace ALL current data with the pasted backup?', () => { closeModal(); importJsonText(text, 'replace'); }, 'Replace'); else { closeModal(); importJsonText(text, 'merge'); } },
   copyExport() { const ta = $('#exportText'); ta.select(); try { document.execCommand('copy'); toast('Copied'); } catch (e) { toast('Select and copy manually'); } },
-  importMode(el) { UI.importMode = el.dataset.v; render(); },
+  importMode(el) { UI.importMode = el.dataset.v; if (el.dataset.keep) { $$('#sheet [data-act="importMode"]').forEach(b => b.classList.toggle('on', b.dataset.v === UI.importMode)); } else render(); },
   clearSeed() { askConfirm('Remove all example data? Categories are kept.', () => { stripSeed(S); save(); render(); toast('Example data cleared'); }, 'Clear'); },
   resetAll() { askConfirm('Delete ALL data in this app? Export first if unsure.', () => { S = blankState(); S.categories = defaultCategories(); save(); render(); toast('Reset'); }, 'Delete everything'); },
   addCat() { const c = { id: uid(), name: 'New category', type: 'discretionary', keywords: [] }; S.categories.push(c); save(); render(); editCatModal(c.id); },
@@ -2050,9 +2112,9 @@ const Changes = {
 };
 
 document.addEventListener('click', ev => {
-  const el = ev.target.closest('[data-act],[data-tab],[data-person]'); if (!el) return;
+  const el = ev.target.closest('[data-act],[data-tab],[data-pick]'); if (!el) return;
   if (el.dataset.tab) { UI.tab = el.dataset.tab; render(); window.scrollTo(0, 0); return; }
-  if (el.dataset.person) { UI.person = el.dataset.person; save(); render(); return; }
+  if (el.dataset.pick) { UI.person = el.dataset.pick; save(); render(); return; }
   if (ev.target.closest('input,select') && !el.matches('button')) return; // don't treat clicks into inline inputs as row taps
   const fn = Actions[el.dataset.act]; if (fn) { ev.preventDefault(); fn(el, ev); }
 });

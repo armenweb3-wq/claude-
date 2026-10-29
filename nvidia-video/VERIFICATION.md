@@ -14,7 +14,15 @@ source is cited on screen. Check each **NEEDS VERIFICATION** item against a prim
 | 3 | Major commercial partnerships | Scene 5 | **NEEDS NAMES + SOURCE** | No partner names were supplied, so the scene shows **categories only**. Add the partners you can document in `partners` in `content.ts`. Don't use company logos unless you have rights to them. |
 | 4 | Upcoming earnings report as a catalyst | Scene 5 | **NEEDS DATE** | Shows "Date to be confirmed". Set `earnings.date` once NVIDIA confirms the date. |
 | 5 | NVIDIA is "a leading supplier" of AI computing / GPUs and systems | Scenes 2–3 | Qualitative, your wording | I kept it as "a leading" supplier. I didn't add any market-share number. |
+| 7 | Jensen Huang co-founded NVIDIA in **1993**, is its CEO, and the company began with graphics chips for games | Scene 1 | Widely documented | Matches NVIDIA's corporate history. Still worth confirming the wording against nvidia.com before publishing. |
+| 8 | Founder portrait | Scene 1 + board | **NEEDS A LICENSED PHOTO** | Supply an image you have rights to: an NVIDIA newsroom press photo (check its editorial-use terms) or a CC-licensed photo, with attribution in `founder.credit`. Using a real person's face in investment content can read as endorsement. The disclaimer states there's no affiliation with or endorsement by NVIDIA or its founder. |
 | 6 | Stock prices **$218 → $235.44** | Scenes 6–8 | Scenario, not a quote | Labelled as hypothetical on screen. The chart path is synthetic ("Illustrative path · not historical data · not a forecast"). |
+
+## "By investing $25,000 you could potentially make…"
+The investment scene says **"By investing $25,000 with about 5× leverage, you could potentially make $9,975.68 — before costs."**
+The leverage is part of the sentence on purpose: **without leverage, $25,000 buys about 114 shares, and an 8% rise
+makes about $2,000, not $9,975.68.** Dropping "with about 5× leverage" would make the claim false. The same scene
+also shows what an 8% fall would lose (−$9,975.68).
 
 ## Derived maths: verified (the build fails if these drift)
 

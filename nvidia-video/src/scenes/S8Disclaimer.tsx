@@ -15,7 +15,7 @@ const items: { t: string; warn?: boolean }[] = [
     t: `An 8% fall would mean losses of −${fmtUSD(a.grossLossIfDown, 2)} and −${fmtUSD(b.grossLossIfDown, 2)} (${a.returnOnCapitalPct.toFixed(0)}% / ${b.returnOnCapitalPct.toFixed(0)}% of capital).`,
     warn: true,
   },
-  { t: "Revenue and catalyst details as supplied — verify with NVIDIA filings." },
+  { t: "Revenue and catalyst details as supplied — verify with NVIDIA filings. Not affiliated with or endorsed by NVIDIA or its founder." },
 ];
 
 export const S8Disclaimer: React.FC = () => {

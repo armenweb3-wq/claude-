@@ -6,6 +6,18 @@
  * DERIVED   = computed below from supplied figures; never hard-code these.
  */
 
+// FOUNDER — Jensen Huang co-founded NVIDIA in 1993 and is its CEO (NVIDIA corporate history).
+// `photo` must be a portrait you have rights to use (e.g. NVIDIA newsroom press image, or a
+// CC-licensed photo with attribution in `credit`). Put it in public/images/ and set the path.
+// While null, the video shows a clearly-marked placeholder silhouette.
+export const founder = {
+  name: "Jensen Huang",
+  role: "Co-founder & CEO, NVIDIA",
+  founded: 1993,
+  photo: null as string | null, // e.g. "images/founder.jpg"
+  credit: "",
+};
+
 // SUPPLIED — quarterly revenue (USD billions), oldest → newest.
 // Quarter labels were NOT supplied; replace with exact fiscal quarters once verified.
 export const revenue = [

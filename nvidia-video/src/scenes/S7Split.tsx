@@ -37,7 +37,7 @@ const ScenarioCard: React.FC<{ index: number; start: number; emphasis: number; x
   const { fps } = useVideoConfig();
   const p = positions[index];
   const s = spring({ frame: f - start, fps, config: { damping: 22, mass: 0.9 } });
-  const step = 9;
+  const step = 5;
   const profitAt = start + step * 6;
   const glow = interpolate(emphasis, [0, 1], [0, 1]);
   return (
@@ -110,7 +110,7 @@ const ScenarioCard: React.FC<{ index: number; start: number; emphasis: number; x
           opacity: prog(f, profitAt, 10),
         }}
       >
-        <Counter to={p.grossProfit} start={profitAt} dur={42} format={(n) => fmtUSD(n, 2)} />
+        <Counter to={p.grossProfit} start={profitAt} dur={28} format={(n) => fmtUSD(n, 2)} />
       </div>
       <div style={{ fontFamily: fonts.body, fontSize: 22, color: colors.muted, marginTop: 6, opacity: prog(f, profitAt + 20, 14) }}>
         before costs
@@ -130,8 +130,8 @@ export const S7Split: React.FC = () => {
     <AbsoluteFill>
       <Backdrop glow={0.8} />
       <Column top={210} gap={22}>
-        <Kicker delay={2}>Same +8% move · two position sizes</Kicker>
-        <Headline text="The leverage effect." accent={["leverage"]} delay={4} size={88} />
+        <Kicker delay={2}>Same +8% move · bigger position</Kicker>
+        <Headline text="Scale it up." accent={["up"]} delay={4} size={88} />
       </Column>
       {/* Glowing centre divider */}
       <div

@@ -3,59 +3,70 @@
 Generated from `src/data/voiceover.json`. Record each line to land inside its window;
 a single continuous take can be dropped in as `public/audio/voiceover.mp3` (set `voiceoverFile` in the JSON).
 
-## 0.0s – 8.0s · AI in everyday life
+## 0.0s – 6.3s · The founder
 
 | In | Out | Secs | Words | Line |
 |---|---|---|---|---|
-| 0.3 | 2.5 | 2.2 | 7 | AI is already part of everyday life. |
-| 2.8 | 6.4 | 3.5 | 9 | Even an 80-year-old retiree now asks AI for help. |
+| 0.4 | 3.7 | 3.3 | 6 | In 1993, Jensen Huang co-founded NVIDIA |
+| 4.0 | 6.0 | 2.0 | 7 | to build graphics chips for video games. |
 
-## 8.0s – 15.0s · Why AI needs GPUs
-
-| In | Out | Secs | Words | Line |
-|---|---|---|---|---|
-| 8.3 | 11.0 | 2.6 | 7 | But every answer needs enormous computing power. |
-| 11.3 | 14.7 | 3.4 | 9 | That takes GPUs — thousands of calculations at once. |
-
-## 15.0s – 21.0s · GPU & data-center sequence
+## 6.3s – 11.3s · AI in everyday life
 
 | In | Out | Secs | Words | Line |
 |---|---|---|---|---|
-| 15.3 | 18.6 | 3.3 | 10 | NVIDIA is a leading supplier of AI chips and systems |
-| 18.9 | 20.6 | 1.6 | 4 | powering today's data centers. |
+| 6.7 | 8.3 | 1.6 | 4 | Today, AI is everywhere. |
+| 8.6 | 11.0 | 2.4 | 6 | Even an 80-year-old retiree uses it. |
 
-## 21.0s – 29.0s · Quarterly revenue
-
-| In | Out | Secs | Words | Line |
-|---|---|---|---|---|
-| 21.4 | 25.0 | 3.7 | 6 | Quarterly revenue rose from $68.1 billion, |
-| 25.3 | 28.6 | 3.3 | 6 | to $81.6 billion, then $96.2 billion. |
-
-## 29.0s – 36.0s · Partnerships & earnings catalyst
+## 11.3s – 18.0s · Why AI needs GPUs
 
 | In | Out | Secs | Words | Line |
 |---|---|---|---|---|
-| 29.4 | 32.5 | 3.2 | 7 | NVIDIA partners across cloud, enterprise and AI, |
-| 32.8 | 35.5 | 2.6 | 9 | and its next earnings report is a key catalyst. |
+| 11.7 | 15.1 | 3.4 | 12 | And AI runs on GPUs — the chips built for games — |
+| 15.4 | 17.7 | 2.3 | 6 | doing thousands of calculations at once. |
 
-## 36.0s – 43.0s · Stock-price scenario
-
-| In | Out | Secs | Words | Line |
-|---|---|---|---|---|
-| 36.4 | 39.4 | 3.1 | 8 | Picture a scenario: the stock rises from $218 |
-| 39.7 | 42.6 | 2.9 | 4 | to $235.44. Up 8%. |
-
-## 43.0s – 53.5s · Investment reveal
+## 18.0s – 22.5s · GPU & data-center sequence
 
 | In | Out | Secs | Words | Line |
 |---|---|---|---|---|
-| 43.4 | 48.9 | 5.5 | 8 | $25,000 at about 5× leverage: nearly $10,000 gross. |
-| 49.2 | 53.2 | 4.0 | 6 | $50,000 at about 7.5×: nearly $30,000. |
+| 18.4 | 22.1 | 3.7 | 11 | NVIDIA is a leading supplier of AI chips for data centers. |
 
-## 53.5s – 60.0s · Assumptions & disclaimer
+## 22.5s – 30.0s · Quarterly revenue
 
 | In | Out | Secs | Words | Line |
 |---|---|---|---|---|
-| 53.9 | 57.2 | 3.4 | 6 | Hypothetical, before costs. Leverage magnifies losses. |
-| 57.5 | 59.7 | 2.2 | 5 | Not guaranteed. Not financial advice. |
+| 22.9 | 26.0 | 3.1 | 4 | Quarterly revenue: $68.1 billion, |
+| 26.3 | 29.7 | 3.4 | 6 | then $81.6 billion, then $96.2 billion. |
+
+## 30.0s – 34.5s · Partnerships & earnings catalyst
+
+| In | Out | Secs | Words | Line |
+|---|---|---|---|---|
+| 30.4 | 33.5 | 3.1 | 8 | Major partners, and earnings ahead: the next catalyst. |
+
+## 34.5s – 40.2s · Stock-price scenario
+
+| In | Out | Secs | Words | Line |
+|---|---|---|---|---|
+| 34.9 | 36.8 | 1.9 | 5 | Picture the stock rising 8%, |
+| 37.1 | 39.9 | 2.8 | 4 | from $218 to $235.44. |
+
+## 40.2s – 48.9s · Your investment
+
+| In | Out | Secs | Words | Line |
+|---|---|---|---|---|
+| 40.6 | 44.8 | 4.2 | 7 | By investing $25,000 with about 5× leverage, |
+| 45.1 | 48.6 | 3.5 | 8 | you could potentially make $9,975.68 — before costs. |
+
+## 48.9s – 53.7s · Scaling the position
+
+| In | Out | Secs | Words | Line |
+|---|---|---|---|---|
+| 49.3 | 53.2 | 3.8 | 6 | At $50,000 and 7.5×: nearly $30,000. |
+
+## 53.7s – 60.0s · Assumptions & disclaimer
+
+| In | Out | Secs | Words | Line |
+|---|---|---|---|---|
+| 54.1 | 57.0 | 2.9 | 5 | Hypothetical. Leverage magnifies losses too. |
+| 57.3 | 59.7 | 2.4 | 5 | Not guaranteed. Not financial advice. |
 

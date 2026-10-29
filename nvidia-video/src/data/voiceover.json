@@ -4,164 +4,193 @@
   "musicFile": "audio/music-placeholder.mp3",
   "scenes": [
     {
+      "id": "founder",
+      "title": "The founder",
+      "minDuration": 6.0,
+      "start": 0.0,
+      "end": 6.3
+    },
+    {
       "id": "intro",
       "title": "AI in everyday life",
-      "start": 0,
-      "end": 8
+      "minDuration": 4.5,
+      "start": 6.3,
+      "end": 11.3
     },
     {
       "id": "gpu",
       "title": "Why AI needs GPUs",
-      "start": 8,
-      "end": 15
+      "minDuration": 5.0,
+      "start": 11.3,
+      "end": 17.967
     },
     {
       "id": "datacenter",
       "title": "GPU & data-center sequence",
-      "start": 15,
-      "end": 21
+      "minDuration": 4.5,
+      "start": 17.967,
+      "end": 22.467
     },
     {
       "id": "revenue",
       "title": "Quarterly revenue",
-      "start": 21,
-      "end": 29
+      "minDuration": 6.0,
+      "start": 22.467,
+      "end": 30.033
     },
     {
       "id": "partners",
       "title": "Partnerships & earnings catalyst",
-      "start": 29,
-      "end": 36
+      "minDuration": 4.5,
+      "start": 30.033,
+      "end": 34.533
     },
     {
       "id": "price",
       "title": "Stock-price scenario",
-      "start": 36,
-      "end": 43
+      "minDuration": 5.0,
+      "start": 34.533,
+      "end": 40.2
+    },
+    {
+      "id": "invest",
+      "title": "Your investment",
+      "minDuration": 7.5,
+      "start": 40.2,
+      "end": 48.933
     },
     {
       "id": "split",
-      "title": "Investment reveal",
-      "start": 43,
-      "end": 53.5
+      "title": "Scaling the position",
+      "minDuration": 4.8,
+      "start": 48.933,
+      "end": 53.733
     },
     {
       "id": "disclaimer",
       "title": "Assumptions & disclaimer",
-      "start": 53.5,
+      "minDuration": 6.0,
+      "start": 53.733,
       "end": 60
     }
   ],
   "cues": [
     {
-      "scene": "intro",
-      "start": 0.35,
-      "end": 2.54,
-      "text": "AI is already part of everyday life.",
-      "say": "AI is already part of everyday life."
+      "scene": "founder",
+      "start": 0.4,
+      "end": 3.71,
+      "text": "In 1993, Jensen Huang co-founded NVIDIA",
+      "say": "In nineteen ninety-three, Jensen Huang co-founded NVIDIA,"
+    },
+    {
+      "scene": "founder",
+      "start": 3.99,
+      "end": 6.01,
+      "text": "to build graphics chips for video games.",
+      "say": "to build graphics chips for video games."
     },
     {
       "scene": "intro",
-      "start": 2.84,
-      "end": 6.38,
-      "text": "Even an 80-year-old retiree now asks AI for help.",
-      "say": "Even an eighty-year-old retiree now asks AI for help."
+      "start": 6.7,
+      "end": 8.32,
+      "text": "Today, AI is everywhere.",
+      "say": "Today, AI is everywhere."
+    },
+    {
+      "scene": "intro",
+      "start": 8.6,
+      "end": 10.98,
+      "text": "Even an 80-year-old retiree uses it.",
+      "say": "Even an eighty-year-old retiree uses it."
     },
     {
       "scene": "gpu",
-      "start": 8.35,
-      "end": 10.99,
-      "text": "But every answer needs enormous computing power.",
-      "say": "But every answer needs enormous computing power."
+      "start": 11.7,
+      "end": 15.1,
+      "text": "And AI runs on GPUs — the chips built for games —",
+      "say": "And AI runs on GPUs. The chips built for games,"
     },
     {
       "scene": "gpu",
-      "start": 11.29,
-      "end": 14.73,
-      "text": "That takes GPUs — thousands of calculations at once.",
-      "say": "That takes GPUs. Thousands of calculations, at once."
+      "start": 15.38,
+      "end": 17.67,
+      "text": "doing thousands of calculations at once.",
+      "say": "doing thousands of calculations at once."
     },
     {
       "scene": "datacenter",
-      "start": 15.35,
-      "end": 18.61,
-      "text": "NVIDIA is a leading supplier of AI chips and systems",
-      "say": "NVIDIA is a leading supplier of AI chips and systems"
-    },
-    {
-      "scene": "datacenter",
-      "start": 18.91,
-      "end": 20.55,
-      "text": "powering today's data centers.",
-      "say": "powering today's data centers."
+      "start": 18.37,
+      "end": 22.11,
+      "text": "NVIDIA is a leading supplier of AI chips for data centers.",
+      "say": "NVIDIA is a leading supplier of AI chips for data centers."
     },
     {
       "scene": "revenue",
-      "start": 21.35,
-      "end": 25.01,
-      "text": "Quarterly revenue rose from $68.1 billion,",
-      "say": "Quarterly revenue rose from sixty-eight point one billion dollars,"
+      "start": 22.87,
+      "end": 25.98,
+      "text": "Quarterly revenue: $68.1 billion,",
+      "say": "Quarterly revenue. Sixty-eight point one billion dollars,"
     },
     {
       "scene": "revenue",
-      "start": 25.31,
-      "end": 28.62,
-      "text": "to $81.6 billion, then $96.2 billion.",
-      "say": "to eighty-one point six, then ninety-six point two billion."
+      "start": 26.26,
+      "end": 29.7,
+      "text": "then $81.6 billion, then $96.2 billion.",
+      "say": "then eighty-one point six, then ninety-six point two billion."
     },
     {
       "scene": "partners",
-      "start": 29.35,
-      "end": 32.51,
-      "text": "NVIDIA partners across cloud, enterprise and AI,",
-      "say": "NVIDIA partners across cloud, enterprise and AI,"
-    },
-    {
-      "scene": "partners",
-      "start": 32.81,
-      "end": 35.45,
-      "text": "and its next earnings report is a key catalyst.",
-      "say": "and its next earnings report is a key catalyst."
+      "start": 30.43,
+      "end": 33.53,
+      "text": "Major partners, and earnings ahead: the next catalyst.",
+      "say": "Major partners, and earnings ahead. The next catalyst."
     },
     {
       "scene": "price",
-      "start": 36.35,
-      "end": 39.44,
-      "text": "Picture a scenario: the stock rises from $218",
-      "say": "Picture a scenario. The stock rises from two eighteen,"
+      "start": 34.93,
+      "end": 36.84,
+      "text": "Picture the stock rising 8%,",
+      "say": "Picture the stock rising eight percent,"
     },
     {
       "scene": "price",
-      "start": 39.74,
-      "end": 42.64,
-      "text": "to $235.44. Up 8%.",
-      "say": "to two thirty-five forty-four. Up eight percent."
+      "start": 37.12,
+      "end": 39.88,
+      "text": "from $218 to $235.44.",
+      "say": "from two eighteen, to two thirty-five forty-four."
+    },
+    {
+      "scene": "invest",
+      "start": 40.6,
+      "end": 44.84,
+      "text": "By investing $25,000 with about 5× leverage,",
+      "say": "By investing twenty-five thousand dollars, with about five times leverage,"
+    },
+    {
+      "scene": "invest",
+      "start": 45.12,
+      "end": 48.63,
+      "text": "you could potentially make $9,975.68 — before costs.",
+      "say": "you could potentially make nearly ten thousand dollars, before costs."
     },
     {
       "scene": "split",
-      "start": 43.35,
-      "end": 48.88,
-      "text": "$25,000 at about 5× leverage: nearly $10,000 gross.",
-      "say": "Twenty-five thousand dollars, at about five times leverage: nearly ten thousand dollars, gross."
-    },
-    {
-      "scene": "split",
-      "start": 49.18,
+      "start": 49.33,
       "end": 53.16,
-      "text": "$50,000 at about 7.5×: nearly $30,000.",
-      "say": "Fifty thousand, at about seven and a half times: nearly thirty thousand."
+      "text": "At $50,000 and 7.5×: nearly $30,000.",
+      "say": "At fifty thousand, and seven and a half times: nearly thirty thousand."
     },
     {
       "scene": "disclaimer",
-      "start": 53.85,
-      "end": 57.23,
-      "text": "Hypothetical, before costs. Leverage magnifies losses.",
-      "say": "Hypothetical, before costs. Leverage magnifies losses."
+      "start": 54.13,
+      "end": 57.05,
+      "text": "Hypothetical. Leverage magnifies losses too.",
+      "say": "Hypothetical. Leverage magnifies losses too."
     },
     {
       "scene": "disclaimer",
-      "start": 57.53,
-      "end": 59.72,
+      "start": 57.33,
+      "end": 59.69,
       "text": "Not guaranteed. Not financial advice.",
       "say": "Not guaranteed. Not financial advice."
     }
@@ -169,6 +198,8 @@
   "voice": {
     "engine": "kokoro-v1.0",
     "voice": "af_heart",
-    "baseSpeed": 1.08
-  }
+    "baseSpeed": 1.06,
+    "speed": 1.073
+  },
+  "totalDuration": 60
 }

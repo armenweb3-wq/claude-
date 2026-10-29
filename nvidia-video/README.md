@@ -24,16 +24,20 @@ If Chrome Headless Shell can't be downloaded (sandboxed CI), point Remotion at a
 
 | Time | Scene | File |
 |---|---|---|
-| 0–8 s | AI in everyday life, then the 80-year-old retiree | `src/scenes/S1Intro.tsx` |
-| 8–15 s | Why AI needs GPUs (CPU vs GPU parallelism) | `S2Gpu.tsx` |
-| 15–21 s | GPU chip → camera dives into an AI data-center hall | `S3DataCenter.tsx` |
-| 21–29 s | Revenue chart $68.1B → $81.6B → $96.2B (zero-based axis) | `S4Revenue.tsx` |
-| 29–36 s | Partnership network → earnings catalyst | `S5Partners.tsx` |
-| 36–43 s | Scenario price $218 → $235.44 (+8%) | `S6Price.tsx` |
-| 43–53.5 s | Split-screen reveal: $25k / 572 sh vs $50k / 1,720 sh | `S7Split.tsx` |
-| 53.5–60 s | Assumptions, downside, disclaimer, end card | `S8Disclaimer.tsx` |
+| 0.0–6.3 s | The founder | `src/scenes/S0Founder.tsx` |
+| 6.3–11.3 s | AI in everyday life | `src/scenes/S1Intro.tsx` |
+| 11.3–18.0 s | Why AI needs GPUs | `src/scenes/S2Gpu.tsx` |
+| 18.0–22.5 s | GPU & data-center sequence | `src/scenes/S3DataCenter.tsx` |
+| 22.5–30.0 s | Quarterly revenue | `src/scenes/S4Revenue.tsx` |
+| 30.0–34.5 s | Partnerships & earnings catalyst | `src/scenes/S5Partners.tsx` |
+| 34.5–40.2 s | Stock-price scenario | `src/scenes/S6Price.tsx` |
+| 40.2–48.9 s | Your investment | `src/scenes/S7Invest.tsx` |
+| 48.9–53.7 s | Scaling the position | `src/scenes/S7Split.tsx` |
+| 53.7–60.0 s | Assumptions & disclaimer | `src/scenes/S8Disclaimer.tsx` |
 
-Scenes cross-dissolve over 14 frames (blur + scale). A chapter rail, burned-in subtitles,
+Between scenes the camera flies across a **connect-the-dots board** (`src/components/Board.tsx`):
+every scene is a pinned card, and a string draws from the last card to the next before the camera
+dives in. The final transition pulls back to show the whole board. A chapter rail, burned-in subtitles,
 animated film grain and a vignette sit on top of every scene (`src/Video.tsx`).
 
 ## Where to edit
@@ -54,6 +58,9 @@ animated film grain and a vignette sit on top of every scene (`src/Video.tsx`).
   - **Music bed** (`music-placeholder.mp3`). A generated **placeholder**. Swap in a licensed track with the
     same filename. It ducks automatically under every spoken line.
   - **SFX:** `whoosh.wav` on every scene transition, `impact.wav` on the three big reveals (both generated).
+- **Founder portrait:** set `founder.photo` in `src/data/content.ts` (file in `public/images/`) to a
+  portrait you have the rights to use, and put any required attribution in `founder.credit`. Until then
+  the video shows a clearly-labelled placeholder silhouette. The project deliberately never generates a face.
 - **Brand:** `src/theme.ts` (NVIDIA green `#76B900`, black, charcoal, white; Inter / Inter Tight /
   JetBrains Mono bundled in `public/fonts`).
 

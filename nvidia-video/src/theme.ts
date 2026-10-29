@@ -6,6 +6,7 @@ const families = [
   { family: "Inter", file: "inter", weights: [300, 400, 500, 600, 700] },
   { family: "Inter Tight", file: "inter-tight", weights: [500, 600, 700, 800] },
   { family: "JetBrains Mono", file: "jetbrains-mono", weights: [400, 500, 700] },
+  { family: "Caveat", file: "caveat", weights: [600, 700] },
 ];
 for (const f of families) {
   for (const w of f.weights) {
@@ -17,6 +18,8 @@ export const fonts = {
   body: "Inter, sans-serif",
   display: "'Inter Tight', Inter, sans-serif",
   mono: "'JetBrains Mono', monospace",
+  /** Hand-drawn annotation voice for circles, arrows and call-outs. */
+  hand: "Caveat, cursive",
 };
 
 export const colors = {

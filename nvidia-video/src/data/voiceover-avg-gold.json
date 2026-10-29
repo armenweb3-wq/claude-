@@ -1,0 +1,140 @@
+{
+  "fps": 30,
+  "totalDuration": 60,
+  "voiceoverFile": "audio/avg-gold-voice.mp3",
+  "musicFile": "audio/avg-gold-music.mp3",
+  "voice": {
+    "engine": "kokoro-v1.0",
+    "voice": "af_heart",
+    "baseSpeed": 0.98,
+    "speed": 0.98
+  },
+  "pacing": {
+    "lead": 0.7,
+    "gap": 0.55,
+    "tail": 1.0
+  },
+  "scenes": [
+    {
+      "id": "title",
+      "title": "Averaging a position",
+      "minDuration": 5,
+      "start": 0.0,
+      "end": 6.133
+    },
+    {
+      "id": "setup",
+      "title": "The losing trade",
+      "minDuration": 5,
+      "start": 6.133,
+      "end": 17.533
+    },
+    {
+      "id": "double",
+      "title": "Doubling the position",
+      "minDuration": 5,
+      "start": 17.533,
+      "end": 27.533
+    },
+    {
+      "id": "recover",
+      "title": "The way out",
+      "minDuration": 5,
+      "start": 27.533,
+      "end": 37.567
+    },
+    {
+      "id": "rule",
+      "title": "The rule",
+      "minDuration": 5,
+      "start": 37.567,
+      "end": 49.967
+    },
+    {
+      "id": "risk",
+      "title": "It works both ways",
+      "minDuration": 5,
+      "start": 49.967,
+      "end": 60
+    }
+  ],
+  "cues": [
+    {
+      "scene": "title",
+      "start": 0.7,
+      "end": 4.47,
+      "text": "Averaging means adding to a trade, to change your average price.",
+      "say": "Averaging means adding to a trade, to change your average price."
+    },
+    {
+      "scene": "setup",
+      "start": 6.83,
+      "end": 11.81,
+      "text": "You buy 1 lot of gold at $4,000. Every $1 move = $100.",
+      "say": "You buy one lot of gold at four thousand. Every dollar move is a hundred dollars."
+    },
+    {
+      "scene": "setup",
+      "start": 12.36,
+      "end": 15.31,
+      "text": "Gold drops $40, to $3,960. You're $4,000 down.",
+      "say": "Gold drops forty dollars. You're four thousand down."
+    },
+    {
+      "scene": "double",
+      "start": 18.23,
+      "end": 20.88,
+      "text": "You buy twice your position: 2 more lots at $3,960.",
+      "say": "So you buy twice your position. Two more lots."
+    },
+    {
+      "scene": "double",
+      "start": 21.43,
+      "end": 25.44,
+      "text": "With 3 lots, your average price is $3,973.33.",
+      "say": "With three lots, your average price drops to about three nine seven three."
+    },
+    {
+      "scene": "recover",
+      "start": 28.23,
+      "end": 32.94,
+      "text": "To break even, gold now only needs +$13.33, not +$40.",
+      "say": "Now gold only needs to rise about thirteen dollars to break even, not forty."
+    },
+    {
+      "scene": "recover",
+      "start": 33.49,
+      "end": 35.49,
+      "text": "Each $1 is now worth $300.",
+      "say": "Each dollar is now worth three hundred."
+    },
+    {
+      "scene": "rule",
+      "start": 38.27,
+      "end": 42.85,
+      "text": "Move needed = loss ÷ (total lots × $100)",
+      "say": "The rule: the move you need, is your loss, divided by your lots, times a hundred."
+    },
+    {
+      "scene": "rule",
+      "start": 43.4,
+      "end": 47.61,
+      "text": "2 lots: $20 · 3 lots: $13.33 · 4 lots: $10",
+      "say": "Two lots, twenty dollars. Three lots, thirteen. Four lots, ten."
+    },
+    {
+      "scene": "risk",
+      "start": 50.67,
+      "end": 54.35,
+      "text": "But if gold falls another $20, you're $10,000 down.",
+      "say": "But if gold falls another twenty dollars, you're ten thousand down."
+    },
+    {
+      "scene": "risk",
+      "start": 54.9,
+      "end": 57.92,
+      "text": "Set a maximum size and a stop loss first.",
+      "say": "So set a maximum size, and a stop loss, first."
+    }
+  ]
+}

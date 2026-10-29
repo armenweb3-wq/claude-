@@ -1,0 +1,43 @@
+1
+00:00:00,700 --> 00:00:04,470
+Averaging means adding to a trade, to change your average price.
+
+2
+00:00:06,830 --> 00:00:11,810
+You buy 1 lot of gold at $4,000. Every $1 move = $100.
+
+3
+00:00:12,360 --> 00:00:15,310
+Gold drops $40, to $3,960. You're $4,000 down.
+
+4
+00:00:18,230 --> 00:00:20,880
+You buy twice your position: 2 more lots at $3,960.
+
+5
+00:00:21,430 --> 00:00:25,440
+With 3 lots, your average price is $3,973.33.
+
+6
+00:00:28,230 --> 00:00:32,940
+To break even, gold now only needs +$13.33, not +$40.
+
+7
+00:00:33,490 --> 00:00:35,490
+Each $1 is now worth $300.
+
+8
+00:00:38,270 --> 00:00:42,850
+Move needed = loss ÷ (total lots × $100)
+
+9
+00:00:43,400 --> 00:00:47,610
+2 lots: $20 · 3 lots: $13.33 · 4 lots: $10
+
+10
+00:00:50,670 --> 00:00:54,350
+But if gold falls another $20, you're $10,000 down.
+
+11
+00:00:54,900 --> 00:00:57,920
+Set a maximum size and a stop loss first.

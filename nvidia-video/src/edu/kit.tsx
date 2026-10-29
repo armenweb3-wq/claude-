@@ -380,7 +380,17 @@ export const Chart: React.FC<{
             <text x={w - padR / 2 + 2} y={yy + 8} textAnchor="middle" fontFamily={EF.mono} fontWeight={700} fontSize={20} fill="white">
               {l.price.toFixed(digits)}
             </text>
-            <text x={(l.side === "left" ? padL + 12 : padL + plotW - 12)} y={yy - 12} textAnchor={l.side === "left" ? "start" : "end"} fontFamily={EF.display} fontWeight={700} fontSize={26} fill={l.color}>
+            {/* dark backing so labels stay readable over candles and the price line */}
+            <rect
+              x={l.side === "left" ? padL + 4 : padL + plotW - 20 - l.label.length * 13.2}
+              y={yy - 44}
+              width={l.label.length * 13.2 + 16}
+              height={34}
+              rx={8}
+              fill="#0F1B2E"
+              opacity={0.88}
+            />
+            <text x={(l.side === "left" ? padL + 12 : padL + plotW - 12)} y={yy - 18} textAnchor={l.side === "left" ? "start" : "end"} fontFamily={EF.display} fontWeight={700} fontSize={26} fill={l.color}>
               {l.label}
             </text>
           </g>

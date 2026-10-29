@@ -9,7 +9,8 @@
     "render": "remotion render src/index.ts NvidiaExplainer out/nvidia-explainer.mp4 --codec h264 --crf 18 --audio-codec aac --audio-bitrate 320k",
     "voiceover": "python scripts/generate-voiceover.py --model ./models/kokoro",
     "captions": "node scripts/export-captions.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "master": "ffmpeg -y -loglevel error -i out/nvidia-explainer.mp4 -c:v copy -af loudnorm=I=-14:TP=-1.5:LRA=11 -c:a aac -b:a 320k -ar 48000 -movflags +faststart out/nvidia-explainer-final.mp4"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.539",

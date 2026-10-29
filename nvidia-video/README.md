@@ -12,7 +12,8 @@ npm install
 npm run studio                 # Remotion Studio: live, scrubbable preview at http://localhost:3000
 npm run preview:stills         # QA stills at key beats + out/contact-sheet.jpg
 node scripts/export-captions.mjs   # out/*.srt, out/*.vtt, VOICEOVER.md (timed VO script)
-npm run render                 # final out/nvidia-explainer.mp4 (H.264, CRF 18)
+npm run render                 # out/nvidia-explainer.mp4 (H.264 CRF 18, AAC 320k)
+npm run master                 # loudness-normalise to -14 LUFS → out/nvidia-explainer-final.mp4
 ./scripts/make-music-placeholder.sh  # regenerate the placeholder music bed
 ```
 

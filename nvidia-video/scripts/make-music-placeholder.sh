@@ -20,13 +20,13 @@ ffmpeg -y -loglevel error -f lavfi -i "aevalsrc='sin(2*PI*(38+70*exp(-12*t))*t)*
   -af "lowpass=f=900,volume=0.9,pan=stereo|c0=c0|c1=c0" public/audio/impact.wav
 echo "wrote public/audio/{music-placeholder.mp3,whoosh.wav,impact.wav}"
 
-# Calm, slower bed for the long "simple" cut (no pulse), 3 minutes so it covers the narration.
+# Calm, slower bed for the long "simple" cut (no pulse), 4 minutes so it covers the narration.
 ffmpeg -y -loglevel error \
-  -f lavfi -i "sine=f=110:d=181" -f lavfi -i "sine=f=164.81:d=181" -f lavfi -i "sine=f=220:d=181" \
-  -f lavfi -i "sine=f=277.18:d=181" -f lavfi -i "sine=f=329.63:d=181" \
+  -f lavfi -i "sine=f=110:d=241" -f lavfi -i "sine=f=164.81:d=241" -f lavfi -i "sine=f=220:d=241" \
+  -f lavfi -i "sine=f=277.18:d=241" -f lavfi -i "sine=f=329.63:d=241" \
   -filter_complex "[0]volume=0.4,tremolo=f=0.12:d=0.4[a0];[1]volume=0.25,tremolo=f=0.15:d=0.5[a1];[2]volume=0.22,tremolo=f=0.1:d=0.6[a2];\
 [3]volume=0.12,tremolo=f=0.17:d=0.7[a3];[4]volume=0.1,tremolo=f=0.11:d=0.8[a4];\
 [a0][a1][a2][a3][a4]amix=inputs=5:normalize=0,lowpass=f=1800,aecho=0.8:0.85:700|1300:0.35|0.25,\
-afade=t=in:d=4,afade=t=out:st=175:d=6,loudnorm=I=-18:TP=-2,pan=stereo|c0=c0|c1=c0,aformat=sample_rates=48000" \
-  -t 180 -c:a libmp3lame -b:a 192k public/audio/music-calm-placeholder.mp3
+afade=t=in:d=4,afade=t=out:st=232:d=8,loudnorm=I=-18:TP=-2,pan=stereo|c0=c0|c1=c0,aformat=sample_rates=48000" \
+  -t 240 -c:a libmp3lame -b:a 192k public/audio/music-calm-placeholder.mp3
 echo "wrote public/audio/music-calm-placeholder.mp3"

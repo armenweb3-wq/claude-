@@ -1,21 +1,26 @@
 /**
- * Visual kit for the "simple" cut: a hand-drawn, storybook explainer on navy paper
- * (big serif titles, cream line-art, a red accent), built to be calm and easy to read.
+ * Visual kit for the "simple" cut: a colourful, hand-drawn storybook explainer on blue paper
+ * (big serif titles with gold highlights, bright cartoon art), built to be calm and easy to read.
+ * Everything moves slowly on purpose.
  */
 import React from "react";
 import { AbsoluteFill, Easing, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 
 export const P = {
-  navy: "#1F2E4A",
-  navyDeep: "#152139",
-  frame: "#9CC3D9",
-  cream: "#F4EFE3",
-  creamDim: "#C9C4B8",
-  red: "#E4513F",
-  green: "#8CC63F", // NVIDIA-family green, softened for the paper palette
-  gold: "#E8B64C",
-  skin: "#E9C3A0",
-  ink: "#0E1626",
+  navy: "#2F5C93",
+  navyDeep: "#1C3A66",
+  frame: "#BFE0F2",
+  cream: "#FFF8EA",
+  creamDim: "#D9E6F2",
+  red: "#F0584A",
+  green: "#8CC63F", // NVIDIA-family green
+  gold: "#FFC94A",
+  orange: "#F59A3C",
+  sky: "#6EC6EC",
+  purple: "#B27AD6",
+  panel: "#24497A",
+  skin: "#F0C7A2",
+  ink: "#13233F",
 };
 
 export const F = {
@@ -26,12 +31,14 @@ export const F = {
 
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 const ease = Easing.bezier(0.33, 1, 0.68, 1);
-export const p01 = (f: number, from: number, dur: number) => interpolate(f, [from, from + dur], [0, 1], { ...clamp, easing: ease });
+/** Global slow-down for every entrance/stroke so nothing feels rushed. */
+export const SLOW = 1.6;
+export const p01 = (f: number, from: number, dur: number) => interpolate(f, [from, from + dur * SLOW], [0, 1], { ...clamp, easing: ease });
 
 /** Navy paper with texture, vignette and the pale double frame from the reference look. */
 export const Paper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <AbsoluteFill style={{ background: `radial-gradient(1200px 1500px at 50% 40%, ${P.navy}, ${P.navyDeep} 80%)` }}>
-    <AbsoluteFill style={{ opacity: 0.22, mixBlendMode: "overlay" }}>
+  <AbsoluteFill style={{ background: `radial-gradient(1200px 1500px at 50% 35%, #3E72AE, ${P.navy} 45%, ${P.navyDeep} 95%)` }}>
+    <AbsoluteFill style={{ opacity: 0.16, mixBlendMode: "overlay" }}>
       <svg width="100%" height="100%">
         <filter id="paper">
           <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves={3} seed={7} />
@@ -45,7 +52,7 @@ export const Paper: React.FC<{ children: React.ReactNode }> = ({ children }) => 
       <div style={{ position: "absolute", inset: 26, border: `6px solid ${P.frame}`, opacity: 0.85 }} />
       <div style={{ position: "absolute", inset: 44, border: `2px solid ${P.frame}`, opacity: 0.7 }} />
     </AbsoluteFill>
-    <AbsoluteFill style={{ pointerEvents: "none", background: "radial-gradient(ellipse 80% 70% at 50% 45%, transparent 60%, rgba(5,10,20,0.55))" }} />
+    <AbsoluteFill style={{ pointerEvents: "none", background: "radial-gradient(ellipse 85% 75% at 50% 45%, transparent 65%, rgba(10,25,50,0.35))" }} />
   </AbsoluteFill>
 );
 
@@ -65,23 +72,32 @@ export const SoftScene: React.FC<{ duration: number; fade: number; first?: boole
 };
 
 /** Big serif title with an optional small spaced-caps line above it, like a book cover. */
-export const Title: React.FC<{ kicker?: string; children: React.ReactNode; at?: number; size?: number; top?: number }> = ({
+export const Title: React.FC<{ kicker?: string; children: React.ReactNode; at?: number; size?: number; top?: number; gold?: string[] }> = ({
   kicker,
   children,
   at = 0,
   size = 96,
   top = 150,
+  gold = [],
 }) => {
   const f = useCurrentFrame();
   const a = p01(f, at, 24);
+  const content =
+    typeof children === "string" && gold.length
+      ? children.split(" ").map((w, i) => (
+          <span key={i} style={{ color: gold.includes(w.replace(/[^\w$%]/g, "")) ? P.gold : undefined }}>
+            {w}{" "}
+          </span>
+        ))
+      : children;
   return (
     <div style={{ position: "absolute", top, left: 90, right: 90, textAlign: "center", opacity: a, transform: `translateY(${(1 - a) * 20}px)` }}>
       {kicker && (
-        <div style={{ fontFamily: F.serif, fontWeight: 700, fontSize: 34, letterSpacing: 9, color: P.creamDim, textTransform: "uppercase", marginBottom: 14 }}>
+        <div style={{ fontFamily: F.serif, fontWeight: 700, fontSize: 36, letterSpacing: 9, color: P.sky, textTransform: "uppercase", marginBottom: 14 }}>
           {kicker}
         </div>
       )}
-      <div style={{ fontFamily: F.serif, fontWeight: 900, fontSize: size, lineHeight: 1.04, color: P.cream, textShadow: "0 4px 0 rgba(0,0,0,0.25)" }}>{children}</div>
+      <div style={{ fontFamily: F.serif, fontWeight: 900, fontSize: size, lineHeight: 1.04, color: P.cream, textShadow: "0 4px 0 rgba(0,0,0,0.25)" }}>{content}</div>
     </div>
   );
 };
@@ -136,7 +152,7 @@ export const Draw: React.FC<{
 export const Pop: React.FC<{ at: number; children: React.ReactNode; style?: React.CSSProperties; from?: number }> = ({ at, children, style, from = 0.85 }) => {
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const s = spring({ frame: f - at, fps, config: { damping: 26, mass: 1.1 } });
+  const s = spring({ frame: f - at, fps, config: { damping: 30, mass: 1.8 } });
   return <div style={{ opacity: Math.min(1, s * 1.4), transform: `scale(${from + (1 - from) * s})`, ...style }}>{children}</div>;
 };
 

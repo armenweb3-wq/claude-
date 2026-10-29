@@ -6,366 +6,457 @@
   "voice": {
     "engine": "kokoro-v1.0",
     "voice": "af_heart",
-    "baseSpeed": 0.92,
-    "speed": 0.92
+    "baseSpeed": 0.9,
+    "speed": 0.9
   },
   "pacing": {
-    "lead": 0.9,
-    "gap": 0.65,
-    "tail": 1.1
+    "lead": 1.2,
+    "gap": 1.0,
+    "tail": 1.8
   },
   "scenes": [
     {
       "id": "title",
       "title": "Title",
-      "minDuration": 6,
+      "minDuration": 7,
       "start": 0.0,
-      "end": 7.4
+      "end": 7.3
     },
     {
       "id": "ai",
       "title": "AI is everywhere",
-      "minDuration": 5,
-      "start": 7.4,
-      "end": 18.833
+      "minDuration": 6,
+      "start": 7.3,
+      "end": 20.7
     },
     {
       "id": "founder",
       "title": "It started with games",
-      "minDuration": 5,
-      "start": 18.833,
-      "end": 28.7
+      "minDuration": 6,
+      "start": 20.7,
+      "end": 31.0
     },
     {
       "id": "gpu",
       "title": "What is a GPU?",
-      "minDuration": 5,
-      "start": 28.7,
-      "end": 43.3
+      "minDuration": 6,
+      "start": 31.0,
+      "end": 46.567
+    },
+    {
+      "id": "why",
+      "title": "Why NVIDIA matters",
+      "minDuration": 12,
+      "start": 46.567,
+      "end": 66.667
     },
     {
       "id": "datacenter",
       "title": "Where AI lives",
-      "minDuration": 5,
-      "start": 43.3,
-      "end": 53.367
+      "minDuration": 6,
+      "start": 66.667,
+      "end": 76.767
     },
     {
       "id": "dots",
       "title": "Connecting the dots",
-      "minDuration": 7,
-      "start": 53.367,
-      "end": 60.933
+      "minDuration": 9,
+      "start": 76.767,
+      "end": 90.833
     },
     {
       "id": "revenue",
-      "title": "The business has grown",
-      "minDuration": 5,
-      "start": 60.933,
-      "end": 74.267
+      "title": "The business is growing",
+      "minDuration": 6,
+      "start": 90.833,
+      "end": 107.1
     },
     {
       "id": "partners",
       "title": "Partners and next results",
-      "minDuration": 5,
-      "start": 74.267,
-      "end": 85.2
+      "minDuration": 6,
+      "start": 107.1,
+      "end": 119.867
     },
     {
       "id": "price",
-      "title": "An example",
-      "minDuration": 5,
-      "start": 85.2,
-      "end": 98.0
+      "title": "The investment idea",
+      "minDuration": 6,
+      "start": 119.867,
+      "end": 135.7
     },
     {
       "id": "leverage",
       "title": "Using borrowed money",
-      "minDuration": 5,
-      "start": 98.0,
-      "end": 114.8
+      "minDuration": 6,
+      "start": 135.7,
+      "end": 153.733
     },
     {
       "id": "invest",
       "title": "Your $25,000",
-      "minDuration": 9,
-      "start": 114.8,
-      "end": 127.1
+      "minDuration": 11,
+      "start": 153.733,
+      "end": 166.667
     },
     {
       "id": "fifty",
       "title": "With $50,000",
-      "minDuration": 5,
-      "start": 127.1,
-      "end": 141.933
+      "minDuration": 6,
+      "start": 166.667,
+      "end": 185.067
     },
     {
       "id": "risk",
-      "title": "It works both ways",
-      "minDuration": 5,
-      "start": 141.933,
-      "end": 156.467
+      "title": "One thing to remember",
+      "minDuration": 6,
+      "start": 185.067,
+      "end": 193.567
     },
     {
       "id": "close",
-      "title": "Examples, not promises",
-      "minDuration": 8,
-      "start": 156.467,
-      "end": 165.4
+      "title": "The shovel seller",
+      "minDuration": 9,
+      "start": 193.567,
+      "end": 202.56666666666666
     }
   ],
   "cues": [
     {
       "scene": "title",
-      "start": 0.9,
-      "end": 4.11,
-      "text": "This is a simple story about one company, NVIDIA,",
-      "say": "This is a simple story about one company, NVIDIA,"
+      "start": 1.2,
+      "end": 2.96,
+      "text": "This is the story of NVIDIA,",
+      "say": "This is the story of NVIDIA,"
     },
     {
       "scene": "title",
-      "start": 4.76,
-      "end": 6.28,
+      "start": 3.96,
+      "end": 5.5,
       "text": "and one investment idea.",
       "say": "and one investment idea."
     },
     {
       "scene": "ai",
-      "start": 8.3,
-      "end": 10.63,
+      "start": 8.5,
+      "end": 10.87,
       "text": "Today, millions of people use AI.",
       "say": "Today, millions of people use AI."
     },
     {
       "scene": "ai",
-      "start": 11.28,
-      "end": 13.85,
-      "text": "You ask a question, and a computer answers.",
-      "say": "You ask a question, and a computer answers."
+      "start": 11.87,
+      "end": 13.0,
+      "text": "You ask a question.",
+      "say": "You ask a question."
     },
     {
       "scene": "ai",
-      "start": 14.5,
-      "end": 17.74,
-      "text": "Even an 80-year-old retiree can use it for help.",
-      "say": "Even an eighty-year-old retiree can use it for help."
+      "start": 14.0,
+      "end": 15.29,
+      "text": "A computer answers.",
+      "say": "A computer answers."
+    },
+    {
+      "scene": "ai",
+      "start": 16.29,
+      "end": 18.93,
+      "text": "Even an 80-year-old retiree uses it.",
+      "say": "Even an eighty-year-old retiree uses it."
     },
     {
       "scene": "founder",
-      "start": 19.73,
-      "end": 24.7,
-      "text": "NVIDIA was started in 1993 by Jensen Huang and two partners.",
-      "say": "NVIDIA was started in nineteen ninety-three, by Jensen Huang and two partners."
+      "start": 21.9,
+      "end": 25.79,
+      "text": "NVIDIA was started in 1993 by Jensen Huang.",
+      "say": "NVIDIA was started in nineteen ninety-three, by Jensen Huang."
     },
     {
       "scene": "founder",
-      "start": 25.35,
-      "end": 27.63,
-      "text": "At first, they made chips for video games.",
-      "say": "At first, they made chips for video games."
+      "start": 26.79,
+      "end": 29.2,
+      "text": "At first, it made chips for video games.",
+      "say": "At first, it made chips for video games."
     },
     {
       "scene": "gpu",
-      "start": 29.6,
-      "end": 31.53,
-      "text": "Those chips are called GPUs.",
-      "say": "Those chips are called G P Us."
+      "start": 32.2,
+      "end": 34.13,
+      "text": "These chips are called GPUs.",
+      "say": "These chips are called G P Us."
     },
     {
       "scene": "gpu",
-      "start": 32.18,
-      "end": 35.0,
-      "text": "A regular chip handles a few jobs at a time.",
-      "say": "A regular chip handles a few jobs at a time."
+      "start": 35.13,
+      "end": 37.73,
+      "text": "A regular chip does a few jobs at a time.",
+      "say": "A regular chip does a few jobs at a time."
     },
     {
       "scene": "gpu",
-      "start": 35.65,
-      "end": 39.38,
-      "text": "A GPU handles thousands of small jobs at once.",
-      "say": "A G P U handles thousands of small jobs, at once."
+      "start": 38.73,
+      "end": 41.71,
+      "text": "A GPU does thousands of jobs at once.",
+      "say": "A G P U does thousands of jobs, at once."
     },
     {
       "scene": "gpu",
-      "start": 40.03,
-      "end": 42.17,
-      "text": "And that is exactly what AI needs.",
-      "say": "And that is exactly what AI needs."
+      "start": 42.71,
+      "end": 44.73,
+      "text": "That is exactly what AI needs.",
+      "say": "That is exactly what AI needs."
+    },
+    {
+      "scene": "why",
+      "start": 47.77,
+      "end": 50.12,
+      "text": "Here is why NVIDIA is so important.",
+      "say": "Here is why NVIDIA is so important."
+    },
+    {
+      "scene": "why",
+      "start": 51.12,
+      "end": 52.41,
+      "text": "Think of a gold rush.",
+      "say": "Think of a gold rush."
+    },
+    {
+      "scene": "why",
+      "start": 53.41,
+      "end": 56.01,
+      "text": "The people who sold the shovels did very well.",
+      "say": "The people who sold the shovels did very well."
+    },
+    {
+      "scene": "why",
+      "start": 57.01,
+      "end": 60.75,
+      "text": "In the AI rush, NVIDIA sells the shovels: the chips.",
+      "say": "In the AI rush, NVIDIA sells the shovels. The chips."
+    },
+    {
+      "scene": "why",
+      "start": 61.75,
+      "end": 64.88,
+      "text": "The biggest tech companies buy them to build their AI.",
+      "say": "The biggest tech companies buy them to build their AI."
     },
     {
       "scene": "datacenter",
-      "start": 44.2,
-      "end": 47.46,
-      "text": "Today, NVIDIA is a leading supplier of these chips",
-      "say": "Today, NVIDIA is a leading supplier of these chips"
+      "start": 67.87,
+      "end": 70.17,
+      "text": "These chips fill giant computer buildings,",
+      "say": "These chips fill giant computer buildings,"
     },
     {
       "scene": "datacenter",
-      "start": 48.11,
-      "end": 52.29,
-      "text": "for giant computer buildings called data centers, where AI runs.",
-      "say": "for giant computer buildings called data centers, where AI runs."
+      "start": 71.17,
+      "end": 72.49,
+      "text": "called data centers.",
+      "say": "called data centers."
+    },
+    {
+      "scene": "datacenter",
+      "start": 73.49,
+      "end": 74.98,
+      "text": "That is where AI lives.",
+      "say": "That is where AI lives."
     },
     {
       "scene": "dots",
-      "start": 54.27,
-      "end": 55.6,
-      "text": "Let's connect the dots:",
-      "say": "Let's connect the dots:"
+      "start": 77.97,
+      "end": 79.53,
+      "text": "So, let's connect the dots.",
+      "say": "So, let's connect the dots."
     },
     {
       "scene": "dots",
-      "start": 56.25,
-      "end": 59.82,
-      "text": "video games, to GPUs, to AI, to data centers.",
-      "say": "video games, to G P Us, to AI, to data centers."
+      "start": 80.53,
+      "end": 82.17,
+      "text": "Games led to GPUs.",
+      "say": "Games led to G P Us."
+    },
+    {
+      "scene": "dots",
+      "start": 83.17,
+      "end": 84.72,
+      "text": "GPUs power AI.",
+      "say": "G P Us power AI."
+    },
+    {
+      "scene": "dots",
+      "start": 85.72,
+      "end": 89.01,
+      "text": "And AI needs data centers full of NVIDIA chips.",
+      "say": "And AI needs data centers full of NVIDIA chips."
     },
     {
       "scene": "revenue",
-      "start": 61.83,
-      "end": 63.21,
-      "text": "And the business has grown.",
-      "say": "And the business has grown."
+      "start": 92.03,
+      "end": 93.85,
+      "text": "And the business is growing fast.",
+      "say": "And the business is growing fast."
     },
     {
       "scene": "revenue",
-      "start": 63.86,
-      "end": 68.63,
+      "start": 94.85,
+      "end": 99.7,
       "text": "In three recent quarters, sales went from $68.1 billion,",
       "say": "In three recent quarters, sales went from sixty-eight point one billion dollars,"
     },
     {
       "scene": "revenue",
-      "start": 69.28,
-      "end": 73.15,
-      "text": "to $81.6 billion, to $96.2 billion.",
-      "say": "to eighty-one point six billion, to ninety-six point two billion."
+      "start": 100.7,
+      "end": 102.49,
+      "text": "to $81.6 billion,",
+      "say": "to eighty-one point six billion,"
+    },
+    {
+      "scene": "revenue",
+      "start": 103.49,
+      "end": 105.31,
+      "text": "to $96.2 billion.",
+      "say": "to ninety-six point two billion."
     },
     {
       "scene": "partners",
-      "start": 75.17,
-      "end": 77.59,
+      "start": 108.3,
+      "end": 110.78,
       "text": "Many large companies work with NVIDIA.",
       "say": "Many large companies work with NVIDIA."
     },
     {
       "scene": "partners",
-      "start": 78.24,
-      "end": 80.43,
-      "text": "Soon, it will report its next results.",
-      "say": "Soon, it will report its next results."
+      "start": 111.78,
+      "end": 114.67,
+      "text": "Soon, NVIDIA will report its next results.",
+      "say": "Soon, NVIDIA will report its next results."
     },
     {
       "scene": "partners",
-      "start": 81.08,
-      "end": 84.11,
-      "text": "News like that can move the share price — up or down.",
-      "say": "News like that can move the share price, up, or down."
+      "start": 115.67,
+      "end": 118.07,
+      "text": "Results like these can move the share price.",
+      "say": "Results like these can move the share price."
     },
     {
       "scene": "price",
-      "start": 86.1,
-      "end": 90.37,
-      "text": "Now, an example. Say one share costs $218.",
-      "say": "Now, an example. Say one share costs two hundred and eighteen dollars."
+      "start": 121.07,
+      "end": 122.77,
+      "text": "Now, the investment idea.",
+      "say": "Now, the investment idea."
     },
     {
       "scene": "price",
-      "start": 91.02,
-      "end": 96.9,
-      "text": "If the price rises 8%, it becomes $235.44.",
-      "say": "If the price rises eight percent, it becomes two hundred thirty-five dollars and forty-four cents."
+      "start": 123.77,
+      "end": 126.18,
+      "text": "A share costs $218.",
+      "say": "A share costs two hundred and eighteen dollars."
+    },
+    {
+      "scene": "price",
+      "start": 127.18,
+      "end": 129.0,
+      "text": "If the price rises 8%,",
+      "say": "If the price rises eight percent,"
+    },
+    {
+      "scene": "price",
+      "start": 130.0,
+      "end": 133.88,
+      "text": "it becomes $235.44.",
+      "say": "it becomes two hundred thirty-five dollars, and forty-four cents."
     },
     {
       "scene": "leverage",
-      "start": 98.9,
-      "end": 102.54,
-      "text": "This example uses borrowed money. That is called leverage.",
-      "say": "This example uses borrowed money. That is called leverage."
+      "start": 136.9,
+      "end": 139.86,
+      "text": "The idea uses borrowed money, called leverage.",
+      "say": "The idea uses borrowed money, called leverage."
     },
     {
       "scene": "leverage",
-      "start": 103.19,
-      "end": 105.79,
-      "text": "You put in $25,000 of your own,",
-      "say": "You put in twenty-five thousand dollars of your own,"
+      "start": 140.86,
+      "end": 143.5,
+      "text": "You put in $25,000 of your own.",
+      "say": "You put in twenty-five thousand dollars of your own."
     },
     {
       "scene": "leverage",
-      "start": 106.44,
-      "end": 109.89,
-      "text": "the broker lends you about $100,000 more,",
-      "say": "the broker lends you about one hundred thousand dollars more,"
+      "start": 144.5,
+      "end": 148.01,
+      "text": "The broker lends you about $100,000 more.",
+      "say": "The broker lends you about one hundred thousand dollars more."
     },
     {
       "scene": "leverage",
-      "start": 110.54,
-      "end": 113.71,
-      "text": "and together you buy 572 shares.",
-      "say": "and together, you buy five hundred seventy-two shares."
+      "start": 149.01,
+      "end": 151.94,
+      "text": "Together, you buy 572 shares.",
+      "say": "Together, you buy five hundred seventy-two shares."
     },
     {
       "scene": "invest",
-      "start": 115.7,
-      "end": 118.52,
+      "start": 154.93,
+      "end": 157.81,
       "text": "By investing $25,000 this way,",
       "say": "By investing twenty-five thousand dollars this way,"
     },
     {
       "scene": "invest",
-      "start": 119.17,
-      "end": 126.01,
-      "text": "you could potentially make $9,975.68, before costs.",
-      "say": "you could potentially make nine thousand, nine hundred seventy-five dollars and sixty-eight cents, before costs."
+      "start": 158.81,
+      "end": 164.9,
+      "text": "you could potentially make $9,975.68.",
+      "say": "you could potentially make nine thousand, nine hundred seventy-five dollars, and sixty-eight cents."
     },
     {
       "scene": "fifty",
-      "start": 128.0,
-      "end": 134.33,
-      "text": "With $50,000 of your own and more borrowing, you buy 1,720 shares.",
-      "say": "With fifty thousand dollars of your own, and more borrowing, you buy one thousand seven hundred and twenty shares."
+      "start": 167.87,
+      "end": 169.82,
+      "text": "With $50,000 of your own,",
+      "say": "With fifty thousand dollars of your own,"
     },
     {
       "scene": "fifty",
-      "start": 134.98,
-      "end": 140.82,
-      "text": "The same rise could make $29,996.80.",
-      "say": "The same rise could make twenty-nine thousand, nine hundred ninety-six dollars and eighty cents."
+      "start": 170.82,
+      "end": 172.14,
+      "text": "and more borrowed money,",
+      "say": "and more borrowed money,"
+    },
+    {
+      "scene": "fifty",
+      "start": 173.14,
+      "end": 176.29,
+      "text": "you buy 1,720 shares.",
+      "say": "you buy one thousand, seven hundred and twenty shares."
+    },
+    {
+      "scene": "fifty",
+      "start": 177.29,
+      "end": 183.24,
+      "text": "That could potentially make $29,996.80.",
+      "say": "That could potentially make twenty-nine thousand, nine hundred ninety-six dollars, and eighty cents."
     },
     {
       "scene": "risk",
-      "start": 142.83,
-      "end": 144.45,
-      "text": "But borrowing works both ways.",
-      "say": "But borrowing works both ways."
+      "start": 186.27,
+      "end": 187.23,
+      "text": "Just remember:",
+      "say": "Just remember:"
     },
     {
       "scene": "risk",
-      "start": 145.1,
-      "end": 148.79,
-      "text": "If the price falls 8% instead, you lose the same amounts.",
-      "say": "If the price falls eight percent instead, you lose the same amounts."
-    },
-    {
-      "scene": "risk",
-      "start": 149.44,
-      "end": 155.35,
-      "text": "The loan costs interest and fees, and if prices fall far enough, the broker can sell your shares.",
-      "say": "The loan costs interest and fees, and if prices fall far enough, the broker can sell your shares."
+      "start": 188.23,
+      "end": 191.78,
+      "text": "borrowed money also makes losses bigger if the price falls.",
+      "say": "borrowed money also makes losses bigger if the price falls."
     },
     {
       "scene": "close",
-      "start": 157.37,
-      "end": 161.17,
-      "text": "These are examples, not promises, and not financial advice.",
-      "say": "These are examples, not promises, and not financial advice."
-    },
-    {
-      "scene": "close",
-      "start": 161.82,
-      "end": 164.31,
-      "text": "Before investing, talk with someone you trust.",
-      "say": "Before investing, talk with someone you trust."
+      "start": 194.77,
+      "end": 198.59,
+      "text": "NVIDIA: the company selling the shovels of the AI age.",
+      "say": "NVIDIA. The company selling the shovels, of the AI age."
     }
   ]
 }

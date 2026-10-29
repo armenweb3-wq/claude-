@@ -55,3 +55,16 @@ also shows what an 8% fall would lose (−$9,975.68).
 - The split-screen strip reads "Before costs · hypothetical · not guaranteed".
 - The final disclaimer scene lists the assumptions, the exclusions, and the downside loss figures.
 - This is not legal or regulatory review. Get the video checked by compliance before promoting it to the public.
+
+## The slow "storybook" cut (`NvidiaSimple`)
+- **Disclaimer wording removed at the client's request.** The labels "hypothetical", "not financial advice",
+  "examples, not promises" and "figures to be verified" are gone from this cut. The video keeps one plain
+  sentence about risk: *"borrowed money also makes losses bigger if the price falls."* The profit figures only
+  exist because of the borrowing, so this is the minimum that keeps the message honest.
+  The on-screen profit still says "before interest and fees".
+- **New claim to check:** "The biggest tech companies buy NVIDIA chips to build their AI." This is widely
+  reported (major cloud providers and AI labs are NVIDIA customers), but confirm it against NVIDIA's filings
+  or reputable reporting before sharing beyond family.
+- **The "shovels in a gold rush" line is an analogy,** not a factual claim.
+- **The stock price is stated as "A share costs $218".** Check the current price before showing the video.
+  The share count and profit maths assume exactly $218 and an 8% rise.

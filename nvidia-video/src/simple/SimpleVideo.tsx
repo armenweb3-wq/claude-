@@ -3,15 +3,15 @@ import { AbsoluteFill, Audio, interpolate, Sequence, staticFile, useCurrentFrame
 import "../theme"; // registers the bundled fonts
 import { F, P, Paper, SoftScene } from "./kit";
 import {
-  SAi, SClose, SDataCenter, SDots, SFifty, SFounder, SGpu, SInvest, SLeverage, SPartners, SPrice, SRevenue, SRisk, STitle,
+  SAi, SClose, SDataCenter, SDots, SFifty, SFounder, SGpu, SInvest, SLeverage, SPartners, SPrice, SRevenue, SRisk, STitle, SWhy,
 } from "./scenes";
 import { audio, cues, scenes, totalFrames } from "./timeline";
 
 const components: Record<string, React.FC> = {
-  title: STitle, ai: SAi, founder: SFounder, gpu: SGpu, datacenter: SDataCenter, dots: SDots, revenue: SRevenue,
+  title: STitle, ai: SAi, founder: SFounder, gpu: SGpu, why: SWhy, datacenter: SDataCenter, dots: SDots, revenue: SRevenue,
   partners: SPartners, price: SPrice, leverage: SLeverage, invest: SInvest, fifty: SFifty, risk: SRisk, close: SClose,
 };
-const FADE = 20;
+const FADE = 32;
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 
 /** Large, high-contrast captions: the whole sentence at once, nothing dimmed — easy to read. */
@@ -30,7 +30,8 @@ const BigSubtitles: React.FC = () => {
           lineHeight: 1.3,
           color: P.cream,
           textAlign: "center",
-          background: "rgba(10,16,30,0.72)",
+          background: "rgba(22,52,94,0.88)",
+          border: `3px solid ${P.gold}`,
           borderRadius: 22,
           padding: "20px 34px",
         }}
@@ -50,7 +51,7 @@ const Sound: React.FC = () => {
           src={staticFile(audio.musicFile)}
           volume={(fr) => {
             let v = 0;
-            for (let k = -10; k <= 10; k++) v += speaking(fr + k) ? 0.09 : 0.22;
+            for (let k = -10; k <= 10; k++) v += speaking(fr + k) ? 0.05 : 0.18;
             const edge = Math.min(interpolate(fr, [0, 60], [0, 1], clamp), interpolate(fr, [totalFrames - 90, totalFrames], [1, 0], clamp));
             return (v / 21) * edge;
           }}

@@ -16,7 +16,7 @@ Scene boundaries and cue start/end are written back to voiceover.json, so scenes
 animation beats (src/data/timeline.ts) all follow the real voice.
 Output: the script's `voiceoverFile` under public/, one continuous track.
 """
-import argparse, json, os
+import argparse, json, os, shutil, subprocess
 import numpy as np
 import soundfile as sf
 from kokoro_onnx import Kokoro
@@ -81,7 +81,16 @@ print(f"voice speed {speed:.2f}x; total needed {sum(need):.2f}s of {TOTAL}s")
 
 track = track[: int(TOTAL * SR)]
 track = track / (np.max(np.abs(track)) or 1) * 0.89
-sf.write(os.path.join(ROOT, "public", vo["voiceoverFile"]), track, SR)
+out_path = os.path.join(ROOT, "public", vo["voiceoverFile"])
+sf.write(out_path, track, SR)
+# Broadcast-style clean-up: remove rumble, add a little clarity, even out the level.
+if shutil.which("ffmpeg"):
+    tmp = out_path + ".tmp.wav"
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", out_path, "-af",
+                    "highpass=f=80,lowpass=f=11000,equalizer=f=3200:t=q:w=1.2:g=2.5,"
+                    "acompressor=threshold=-22dB:ratio=2.5:attack=8:release=160,loudnorm=I=-16:TP=-1.5",
+                    "-ar", "48000", tmp], check=True)
+    os.replace(tmp, out_path)
 vo["voice"]["speed"] = round(speed, 3)
 json.dump(vo, open(vo_path, "w"), indent=2, ensure_ascii=False)
 open(vo_path, "a").write("\n")

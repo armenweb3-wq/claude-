@@ -1,0 +1,219 @@
+1
+00:00:01,100 --> 00:00:05,050
+Welcome to Education Session 1: account basics and costs.
+
+2
+00:00:05,800 --> 00:00:10,450
+In this session, we'll look at the numbers on your trading account, and what each one means.
+
+3
+00:00:11,200 --> 00:00:15,480
+Balance, profit and loss, margin, free margin, leverage, and swaps.
+
+4
+00:00:18,170 --> 00:00:19,580
+Let's start with your balance.
+
+5
+00:00:20,330 --> 00:00:28,760
+Your balance is the money in your account from closed trades: your deposits, plus or minus every closed trade, minus any withdrawals.
+
+6
+00:00:29,510 --> 00:00:32,330
+For example, you deposit $10,000.
+
+7
+00:00:33,080 --> 00:00:39,180
+You close a trade with a $500 profit. Your balance is now $10,500.
+
+8
+00:00:39,930 --> 00:00:43,230
+Open trades don't change your balance until they are closed.
+
+9
+00:00:45,930 --> 00:00:48,950
+So what is your account worth right now? That's your equity.
+
+10
+00:00:49,700 --> 00:00:54,360
+Equity is your balance, plus or minus the profit or loss of your open trades.
+
+11
+00:00:55,110 --> 00:01:00,370
+If an open trade is $300 down, your equity is $10,200.
+
+12
+00:01:01,120 --> 00:01:08,920
+So you deposited $10,000, your balance is $10,500, and your account is worth $10,200 right now.
+
+13
+00:01:11,630 --> 00:01:14,530
+Next, profit and loss, often called P&L.
+
+14
+00:01:15,280 --> 00:01:22,450
+While a trade is open, its profit or loss is floating, or unrealized. It changes every time the price moves.
+
+15
+00:01:23,200 --> 00:01:28,630
+When you close the trade, the result becomes closed, or realized, and it's added to your balance.
+
+16
+00:01:29,380 --> 00:01:35,760
+Example: you buy 1 lot of EUR/USD. On this pair, one pip is worth about $10 per lot.
+
+17
+00:01:36,510 --> 00:01:41,210
+If the price rises 50 pips, you have $500 of floating profit.
+
+18
+00:01:41,960 --> 00:01:47,320
+Close the trade, and that $500 becomes realized, and moves into your balance.
+
+19
+00:01:48,070 --> 00:01:54,140
+Your overall performance is your realized results, plus whatever is still floating on open trades.
+
+20
+00:01:56,830 --> 00:01:57,750
+Now, margin.
+
+21
+00:01:58,500 --> 00:02:04,190
+Margin is the part of your money the broker sets aside as a deposit, to keep a trade open.
+
+22
+00:02:04,940 --> 00:02:07,990
+It isn't a fee. It's released when the trade is closed.
+
+23
+00:02:08,740 --> 00:02:13,500
+It's required because a leveraged trade controls much more value than you put in.
+
+24
+00:02:14,250 --> 00:02:17,620
+Margin is the trade value, divided by your leverage.
+
+25
+00:02:18,370 --> 00:02:31,020
+1 lot of EUR/USD at 1.1000 is worth about $110,000. With 1:100 leverage, the margin is $1,100.
+
+26
+00:02:31,770 --> 00:02:38,340
+Trade size and margin move together: half a lot needs half the margin, and two lots need twice as much.
+
+27
+00:02:41,070 --> 00:02:45,340
+Free margin is what's left to open new trades, or to absorb losses.
+
+28
+00:02:46,090 --> 00:02:49,290
+Free margin equals equity, minus used margin.
+
+29
+00:02:50,040 --> 00:02:58,480
+With equity of $10,200 and $1,100 of used margin, your free margin is $9,100.
+
+30
+00:02:59,230 --> 00:03:03,830
+If your open trades lose money, equity falls, and free margin falls with it.
+
+31
+00:03:04,580 --> 00:03:10,460
+Brokers also watch your margin level: equity divided by used margin, as a percentage.
+
+32
+00:03:11,210 --> 00:03:21,480
+At the margin call level you get a warning. At the stop out level, the platform starts closing trades automatically. These levels differ by broker, so check yours.
+
+33
+00:03:22,230 --> 00:03:27,070
+That's why keeping plenty of free margin matters. It gives your trades room to breathe.
+
+34
+00:03:29,770 --> 00:03:31,240
+That brings us to leverage.
+
+35
+00:03:31,990 --> 00:03:36,820
+Leverage lets you control a large position with a smaller amount of your own money.
+
+36
+00:03:37,570 --> 00:03:44,380
+With 1:100 leverage, $1,000 of margin controls a $100,000 position.
+
+37
+00:03:45,130 --> 00:03:49,260
+The benefit: you need less capital for each trade, and keep more of it free.
+
+38
+00:03:50,010 --> 00:03:55,250
+The risk: profit and loss are calculated on the full position, not on your margin.
+
+39
+00:03:56,000 --> 00:04:02,490
+On a $100,000 position, a 1% move is $1,000. That's the whole margin.
+
+40
+00:04:03,240 --> 00:04:08,800
+Leverage doesn't change how far the price moves. It changes how exposed you are to that move.
+
+41
+00:04:09,550 --> 00:04:14,960
+So size each trade by the risk you can accept, not by the maximum leverage available.
+
+42
+00:04:17,630 --> 00:04:18,740
+Finally, swaps.
+
+43
+00:04:19,490 --> 00:04:26,330
+A swap is an overnight charge, or sometimes a credit, for keeping a position open past the daily rollover.
+
+44
+00:04:27,080 --> 00:04:36,740
+For currencies, it mainly reflects the interest-rate difference between the two currencies, plus a broker fee. For other instruments, it reflects a financing rate.
+
+45
+00:04:37,490 --> 00:04:44,350
+Each instrument has one swap rate for buying, and one for selling. You'll find them in the instrument's specification.
+
+46
+00:04:45,100 --> 00:04:50,770
+A common calculation: lots, times the swap rate in points, times the value of one point.
+
+47
+00:04:51,520 --> 00:04:58,390
+For example: 1 lot, a swap of minus 7 points, at $1 per point, costs $7 per night.
+
+48
+00:04:59,140 --> 00:05:05,480
+Once a week, usually on Wednesday for currencies, the swap is charged three times, to cover the weekend.
+
+49
+00:05:06,230 --> 00:05:10,120
+Swaps add up on trades held for weeks, so include them in your costs.
+
+50
+00:05:12,800 --> 00:05:13,690
+Let's recap.
+
+51
+00:05:14,440 --> 00:05:19,410
+Balance is your money from closed trades. Equity is what your account is worth right now.
+
+52
+00:05:20,160 --> 00:05:24,060
+Floating profit or loss becomes realized when you close the trade.
+
+53
+00:05:24,810 --> 00:05:31,990
+Margin is a deposit, free margin is your room to trade, and leverage magnifies both gains and losses.
+
+54
+00:05:32,740 --> 00:05:39,620
+Swaps are overnight costs or credits. Together with the spread, and any commission, they make up your trading costs.
+
+55
+00:05:40,370 --> 00:05:45,190
+In Session 2, we'll look at the orders that help you plan and protect every trade.

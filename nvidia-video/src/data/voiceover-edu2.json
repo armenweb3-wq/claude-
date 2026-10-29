@@ -1,0 +1,343 @@
+{
+  "fps": 30,
+  "totalDuration": null,
+  "voiceoverFile": "audio/edu2-voice.mp3",
+  "musicFile": "audio/edu2-music.mp3",
+  "voice": {
+    "engine": "kokoro-v1.0",
+    "voice": "af_heart",
+    "baseSpeed": 0.95,
+    "speed": 0.95
+  },
+  "pacing": {
+    "lead": 1.1,
+    "gap": 0.75,
+    "tail": 1.6
+  },
+  "scenes": [
+    {
+      "id": "title",
+      "title": "Orders & market types",
+      "minDuration": 7,
+      "start": 0.0,
+      "end": 13.933
+    },
+    {
+      "id": "market",
+      "title": "Market orders",
+      "minDuration": 7,
+      "start": 13.933,
+      "end": 30.8
+    },
+    {
+      "id": "sl",
+      "title": "Stop loss",
+      "minDuration": 7,
+      "start": 30.8,
+      "end": 70.4
+    },
+    {
+      "id": "slplace",
+      "title": "Placing a stop loss",
+      "minDuration": 7,
+      "start": 70.4,
+      "end": 107.0
+    },
+    {
+      "id": "tp",
+      "title": "Take profit",
+      "minDuration": 7,
+      "start": 107.0,
+      "end": 154.5
+    },
+    {
+      "id": "pending",
+      "title": "Pending orders",
+      "minDuration": 7,
+      "start": 154.5,
+      "end": 199.4
+    },
+    {
+      "id": "plan",
+      "title": "Planning entries in advance",
+      "minDuration": 7,
+      "start": 199.4,
+      "end": 229.267
+    },
+    {
+      "id": "recap",
+      "title": "Recap",
+      "minDuration": 7,
+      "start": 229.267,
+      "end": 254.1
+    }
+  ],
+  "cues": [
+    {
+      "scene": "title",
+      "start": 1.1,
+      "end": 4.92,
+      "text": "Welcome to Education Session 2: orders and market types.",
+      "say": "Welcome to Education Session 2: orders and market types."
+    },
+    {
+      "scene": "title",
+      "start": 5.67,
+      "end": 12.33,
+      "text": "Today: stop loss, take profit, and pending orders. The tools that let you plan and control every trade.",
+      "say": "Today: stop loss, take profit, and pending orders. The tools that let you plan and control every trade."
+    },
+    {
+      "scene": "market",
+      "start": 15.03,
+      "end": 17.54,
+      "text": "First, the simplest order: a market order.",
+      "say": "First, the simplest order: a market order."
+    },
+    {
+      "scene": "market",
+      "start": 18.29,
+      "end": 21.85,
+      "text": "It opens a trade immediately, at the best available price.",
+      "say": "It opens a trade immediately, at the best available price."
+    },
+    {
+      "scene": "market",
+      "start": 22.6,
+      "end": 29.2,
+      "text": "When you buy, you pay the ask price. When you sell, you receive the bid price. The gap between them is the spread.",
+      "say": "When you buy, you pay the ask price. When you sell, you receive the bid price. The gap between them is the spread."
+    },
+    {
+      "scene": "sl",
+      "start": 31.9,
+      "end": 38.72,
+      "text": "A stop loss is an order that closes your trade automatically, if the price moves against you to a level you choose.",
+      "say": "A stop loss is an order that closes your trade automatically, if the price moves against you to a level you choose."
+    },
+    {
+      "scene": "sl",
+      "start": 39.47,
+      "end": 45.24,
+      "text": "Its purpose is to limit the loss on a trade, decided in advance, not in the heat of the moment.",
+      "say": "Its purpose is to limit the loss on a trade, decided in advance, not in the heat of the moment."
+    },
+    {
+      "scene": "sl",
+      "start": 45.99,
+      "end": 55.56,
+      "text": "Example: you buy EUR/USD at 1.1000, with a stop loss at 1.0950, fifty pips away.",
+      "say": "Example: you buy euro dollar at one point one zero zero zero, with a stop loss at one point zero nine five zero, fifty pips away."
+    },
+    {
+      "scene": "sl",
+      "start": 56.31,
+      "end": 60.61,
+      "text": "On 1 lot, that's a planned maximum loss of about $500.",
+      "say": "On one lot, that's a planned maximum loss of about five hundred dollars."
+    },
+    {
+      "scene": "sl",
+      "start": 61.36,
+      "end": 68.81,
+      "text": "In fast markets, or when prices gap over a weekend, a stop can be filled at a worse price. This is called slippage.",
+      "say": "In fast markets, or when prices gap over a weekend, a stop can be filled at a worse price. This is called slippage."
+    },
+    {
+      "scene": "slplace",
+      "start": 71.5,
+      "end": 72.69,
+      "text": "Where should a stop go?",
+      "say": "Where should a stop go?"
+    },
+    {
+      "scene": "slplace",
+      "start": 73.44,
+      "end": 82.83,
+      "text": "Common practice is to place it where your trade idea is proven wrong. For example, just beyond a recent low, or a support or resistance level.",
+      "say": "Common practice is to place it where your trade idea is proven wrong. For example, just beyond a recent low, or a support or resistance level."
+    },
+    {
+      "scene": "slplace",
+      "start": 83.58,
+      "end": 89.17,
+      "text": "Too close, and normal price noise can stop you out. Too far, and the loss becomes too large.",
+      "say": "Too close, and normal price noise can stop you out. Too far, and the loss becomes too large."
+    },
+    {
+      "scene": "slplace",
+      "start": 89.92,
+      "end": 93.39,
+      "text": "Many traders choose the stop first, and then size the trade.",
+      "say": "Many traders choose the stop first, and then size the trade."
+    },
+    {
+      "scene": "slplace",
+      "start": 94.14,
+      "end": 99.54,
+      "text": "For example, risking 1% of a $10,000 account is $100.",
+      "say": "For example, risking one percent of a ten thousand dollar account is one hundred dollars."
+    },
+    {
+      "scene": "slplace",
+      "start": 100.29,
+      "end": 105.39,
+      "text": "With a 50-pip stop, at $10 per pip per lot, that's 0.2 lots.",
+      "say": "With a fifty pip stop, at ten dollars per pip per lot, that's zero point two lots."
+    },
+    {
+      "scene": "tp",
+      "start": 108.1,
+      "end": 114.08,
+      "text": "A take profit does the opposite. It closes the trade automatically, when the price reaches your target.",
+      "say": "A take profit does the opposite. It closes the trade automatically, when the price reaches your target."
+    },
+    {
+      "scene": "tp",
+      "start": 114.83,
+      "end": 120.43,
+      "text": "It locks in the gain, even when you aren't watching the screen, so a winning trade isn't given back.",
+      "say": "It locks in the gain, even when you aren't watching the screen, so a winning trade isn't given back."
+    },
+    {
+      "scene": "tp",
+      "start": 121.18,
+      "end": 132.6,
+      "text": "Example: you buy at 1.1000, with a take profit at 1.1100. That's 100 pips, about $1,000 on 1 lot.",
+      "say": "Example: you buy at one point one zero zero zero, with a take profit at one point one one zero zero. That's one hundred pips, about one thousand dollars on one lot."
+    },
+    {
+      "scene": "tp",
+      "start": 133.35,
+      "end": 140.69,
+      "text": "Compared with the 50-pip stop, you risk 50 pips to make 100. That's a risk-to-reward ratio of 1 to 2.",
+      "say": "Compared with the fifty pip stop, you risk fifty pips to make one hundred. That's a risk to reward ratio of one to two."
+    },
+    {
+      "scene": "tp",
+      "start": 141.44,
+      "end": 152.9,
+      "text": "Targets should fit your strategy. A short-term trader may aim for nearby levels; a longer-term trader, for bigger moves. What matters is that the target is realistic for that market.",
+      "say": "Targets should fit your strategy. A short-term trader may aim for nearby levels; a longer-term trader, for bigger moves. What matters is that the target is realistic for that market."
+    },
+    {
+      "scene": "pending",
+      "start": 155.6,
+      "end": 156.96,
+      "text": "Now, pending orders.",
+      "say": "Now, pending orders."
+    },
+    {
+      "scene": "pending",
+      "start": 157.71,
+      "end": 165.65,
+      "text": "A market order trades now. A pending order is an instruction to open a trade later, only if the price reaches a level you set.",
+      "say": "A market order trades now. A pending order is an instruction to open a trade later, only if the price reaches a level you set."
+    },
+    {
+      "scene": "pending",
+      "start": 166.4,
+      "end": 167.8,
+      "text": "There are four main types.",
+      "say": "There are four main types."
+    },
+    {
+      "scene": "pending",
+      "start": 168.55,
+      "end": 173.64,
+      "text": "A Buy Limit buys below the current price, when you expect a dip first, and then a rise.",
+      "say": "A Buy Limit buys below the current price, when you expect a dip first, and then a rise."
+    },
+    {
+      "scene": "pending",
+      "start": 174.39,
+      "end": 179.45,
+      "text": "A Sell Limit sells above the current price, when you expect a rise first, and then a fall.",
+      "say": "A Sell Limit sells above the current price, when you expect a rise first, and then a fall."
+    },
+    {
+      "scene": "pending",
+      "start": 180.2,
+      "end": 185.21,
+      "text": "A Buy Stop buys above the current price, when you expect a breakout to keep going up.",
+      "say": "A Buy Stop buys above the current price, when you expect a breakout to keep going up."
+    },
+    {
+      "scene": "pending",
+      "start": 185.96,
+      "end": 191.07,
+      "text": "A Sell Stop sells below the current price, when you expect a breakdown to keep going down.",
+      "say": "A Sell Stop sells below the current price, when you expect a breakdown to keep going down."
+    },
+    {
+      "scene": "pending",
+      "start": 191.82,
+      "end": 197.81,
+      "text": "An easy way to remember: limit orders look for a better price. Stop orders follow momentum.",
+      "say": "An easy way to remember: limit orders look for a better price. Stop orders follow momentum."
+    },
+    {
+      "scene": "plan",
+      "start": 200.5,
+      "end": 207.38,
+      "text": "You can attach a stop loss and a take profit to a pending order, so the whole plan is set before the trade even opens.",
+      "say": "You can attach a stop loss and a take profit to a pending order, so the whole plan is set before the trade even opens."
+    },
+    {
+      "scene": "plan",
+      "start": 208.13,
+      "end": 211.14,
+      "text": "Planning entries in advance has real advantages.",
+      "say": "Planning entries in advance has real advantages."
+    },
+    {
+      "scene": "plan",
+      "start": 211.89,
+      "end": 219.46,
+      "text": "You don't need to watch the screen. You avoid emotional, last-minute decisions. And every trade starts with a defined risk.",
+      "say": "You don't need to watch the screen. You avoid emotional, last-minute decisions. And every trade starts with a defined risk."
+    },
+    {
+      "scene": "plan",
+      "start": 220.21,
+      "end": 227.66,
+      "text": "Keep in mind: a pending order may never be triggered, and in fast markets it can be filled at a different price than requested.",
+      "say": "Keep in mind: a pending order may never be triggered, and in fast markets it can be filled at a different price than requested."
+    },
+    {
+      "scene": "recap",
+      "start": 230.37,
+      "end": 231.26,
+      "text": "Let's recap.",
+      "say": "Let's recap."
+    },
+    {
+      "scene": "recap",
+      "start": 232.01,
+      "end": 234.98,
+      "text": "A market order trades immediately, at the current price.",
+      "say": "A market order trades immediately, at the current price."
+    },
+    {
+      "scene": "recap",
+      "start": 235.73,
+      "end": 239.59,
+      "text": "A stop loss limits your loss. A take profit locks in your gain.",
+      "say": "A stop loss limits your loss. A take profit locks in your gain."
+    },
+    {
+      "scene": "recap",
+      "start": 240.34,
+      "end": 247.15,
+      "text": "Pending orders open trades at the levels you choose: limit orders for a better price, stop orders for momentum.",
+      "say": "Pending orders open trades at the levels you choose: limit orders for a better price, stop orders for momentum."
+    },
+    {
+      "scene": "recap",
+      "start": 247.9,
+      "end": 252.51,
+      "text": "In Session 3, we'll look at two advanced strategies: hedging and averaging.",
+      "say": "In session three, we'll look at two advanced strategies: hedging, and averaging."
+    }
+  ]
+}

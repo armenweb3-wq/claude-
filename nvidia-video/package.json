@@ -14,7 +14,9 @@
     "render:simple": "remotion render src/index.ts NvidiaSimple out/nvidia-simple.mp4 --codec h264 --crf 18 --audio-codec aac --audio-bitrate 320k",
     "master:simple": "ffmpeg -y -loglevel error -i out/nvidia-simple.mp4 -c:v copy -af loudnorm=I=-14:TP=-1.5:LRA=11 -c:a aac -b:a 320k -ar 48000 -movflags +faststart out/nvidia-simple-final.mp4",
     "voiceover:simple": "python scripts/generate-voiceover.py --model ./models/kokoro --script src/data/voiceover-simple.json",
-    "captions:simple": "node scripts/export-captions.mjs src/data/voiceover-simple.json nvidia-simple"
+    "captions:simple": "node scripts/export-captions.mjs src/data/voiceover-simple.json nvidia-simple",
+    "render:education": "scripts/render-education.sh",
+    "voiceover:education": "for n in 1 2 3; do python scripts/generate-voiceover.py --model ./models/kokoro --script src/data/voiceover-edu$n.json; done"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.539",

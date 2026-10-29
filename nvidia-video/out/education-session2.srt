@@ -1,0 +1,151 @@
+1
+00:00:01,100 --> 00:00:04,920
+Welcome to Education Session 2: orders and market types.
+
+2
+00:00:05,670 --> 00:00:12,330
+Today: stop loss, take profit, and pending orders. The tools that let you plan and control every trade.
+
+3
+00:00:15,030 --> 00:00:17,540
+First, the simplest order: a market order.
+
+4
+00:00:18,290 --> 00:00:21,850
+It opens a trade immediately, at the best available price.
+
+5
+00:00:22,600 --> 00:00:29,200
+When you buy, you pay the ask price. When you sell, you receive the bid price. The gap between them is the spread.
+
+6
+00:00:31,900 --> 00:00:38,720
+A stop loss is an order that closes your trade automatically, if the price moves against you to a level you choose.
+
+7
+00:00:39,470 --> 00:00:45,240
+Its purpose is to limit the loss on a trade, decided in advance, not in the heat of the moment.
+
+8
+00:00:45,990 --> 00:00:55,560
+Example: you buy EUR/USD at 1.1000, with a stop loss at 1.0950, fifty pips away.
+
+9
+00:00:56,310 --> 00:01:00,610
+On 1 lot, that's a planned maximum loss of about $500.
+
+10
+00:01:01,360 --> 00:01:08,810
+In fast markets, or when prices gap over a weekend, a stop can be filled at a worse price. This is called slippage.
+
+11
+00:01:11,500 --> 00:01:12,690
+Where should a stop go?
+
+12
+00:01:13,440 --> 00:01:22,830
+Common practice is to place it where your trade idea is proven wrong. For example, just beyond a recent low, or a support or resistance level.
+
+13
+00:01:23,580 --> 00:01:29,170
+Too close, and normal price noise can stop you out. Too far, and the loss becomes too large.
+
+14
+00:01:29,920 --> 00:01:33,390
+Many traders choose the stop first, and then size the trade.
+
+15
+00:01:34,140 --> 00:01:39,540
+For example, risking 1% of a $10,000 account is $100.
+
+16
+00:01:40,290 --> 00:01:45,390
+With a 50-pip stop, at $10 per pip per lot, that's 0.2 lots.
+
+17
+00:01:48,100 --> 00:01:54,080
+A take profit does the opposite. It closes the trade automatically, when the price reaches your target.
+
+18
+00:01:54,830 --> 00:02:00,430
+It locks in the gain, even when you aren't watching the screen, so a winning trade isn't given back.
+
+19
+00:02:01,180 --> 00:02:12,600
+Example: you buy at 1.1000, with a take profit at 1.1100. That's 100 pips, about $1,000 on 1 lot.
+
+20
+00:02:13,350 --> 00:02:20,690
+Compared with the 50-pip stop, you risk 50 pips to make 100. That's a risk-to-reward ratio of 1 to 2.
+
+21
+00:02:21,440 --> 00:02:32,900
+Targets should fit your strategy. A short-term trader may aim for nearby levels; a longer-term trader, for bigger moves. What matters is that the target is realistic for that market.
+
+22
+00:02:35,600 --> 00:02:36,960
+Now, pending orders.
+
+23
+00:02:37,710 --> 00:02:45,650
+A market order trades now. A pending order is an instruction to open a trade later, only if the price reaches a level you set.
+
+24
+00:02:46,400 --> 00:02:47,800
+There are four main types.
+
+25
+00:02:48,550 --> 00:02:53,640
+A Buy Limit buys below the current price, when you expect a dip first, and then a rise.
+
+26
+00:02:54,390 --> 00:02:59,450
+A Sell Limit sells above the current price, when you expect a rise first, and then a fall.
+
+27
+00:03:00,200 --> 00:03:05,210
+A Buy Stop buys above the current price, when you expect a breakout to keep going up.
+
+28
+00:03:05,960 --> 00:03:11,070
+A Sell Stop sells below the current price, when you expect a breakdown to keep going down.
+
+29
+00:03:11,820 --> 00:03:17,810
+An easy way to remember: limit orders look for a better price. Stop orders follow momentum.
+
+30
+00:03:20,500 --> 00:03:27,380
+You can attach a stop loss and a take profit to a pending order, so the whole plan is set before the trade even opens.
+
+31
+00:03:28,130 --> 00:03:31,140
+Planning entries in advance has real advantages.
+
+32
+00:03:31,890 --> 00:03:39,460
+You don't need to watch the screen. You avoid emotional, last-minute decisions. And every trade starts with a defined risk.
+
+33
+00:03:40,210 --> 00:03:47,660
+Keep in mind: a pending order may never be triggered, and in fast markets it can be filled at a different price than requested.
+
+34
+00:03:50,370 --> 00:03:51,260
+Let's recap.
+
+35
+00:03:52,010 --> 00:03:54,980
+A market order trades immediately, at the current price.
+
+36
+00:03:55,730 --> 00:03:59,590
+A stop loss limits your loss. A take profit locks in your gain.
+
+37
+00:04:00,340 --> 00:04:07,150
+Pending orders open trades at the levels you choose: limit orders for a better price, stop orders for momentum.
+
+38
+00:04:07,900 --> 00:04:12,510
+In Session 3, we'll look at two advanced strategies: hedging and averaging.

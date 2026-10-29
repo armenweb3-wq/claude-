@@ -82,15 +82,20 @@ print(f"voice speed {speed:.2f}x; total needed {sum(need):.2f}s of {TOTAL}s")
 track = track[: int(TOTAL * SR)]
 track = track / (np.max(np.abs(track)) or 1) * 0.89
 out_path = os.path.join(ROOT, "public", vo["voiceoverFile"])
-sf.write(out_path, track, SR)
+wav_path = os.path.splitext(out_path)[0] + ".wav"
+sf.write(wav_path, track, SR)
 # Broadcast-style clean-up: remove rumble, add a little clarity, even out the level.
 if shutil.which("ffmpeg"):
-    tmp = out_path + ".tmp.wav"
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", out_path, "-af",
+    tmp = wav_path + ".tmp.wav"
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", wav_path, "-af",
                     "highpass=f=80,lowpass=f=11000,equalizer=f=3200:t=q:w=1.2:g=2.5,"
                     "acompressor=threshold=-22dB:ratio=2.5:attack=8:release=160,loudnorm=I=-16:TP=-1.5",
                     "-ar", "48000", tmp], check=True)
-    os.replace(tmp, out_path)
+    os.replace(tmp, wav_path)
+    # MP3 targets (e.g. the education films) are encoded from the cleaned WAV to keep the repo small.
+    if out_path.endswith(".mp3"):
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", wav_path, "-c:a", "libmp3lame", "-b:a", "192k", out_path], check=True)
+        os.remove(wav_path)
 vo["voice"]["speed"] = round(speed, 3)
 json.dump(vo, open(vo_path, "w"), indent=2, ensure_ascii=False)
 open(vo_path, "a").write("\n")

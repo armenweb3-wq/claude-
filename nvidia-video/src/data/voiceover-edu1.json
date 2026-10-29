@@ -1,0 +1,469 @@
+{
+  "fps": 30,
+  "totalDuration": null,
+  "voiceoverFile": "audio/edu1-voice.mp3",
+  "musicFile": "audio/edu1-music.mp3",
+  "voice": {
+    "engine": "kokoro-v1.0",
+    "voice": "af_heart",
+    "baseSpeed": 0.95,
+    "speed": 0.95
+  },
+  "pacing": {
+    "lead": 1.1,
+    "gap": 0.75,
+    "tail": 1.6
+  },
+  "scenes": [
+    {
+      "id": "title",
+      "title": "Account basics & costs",
+      "minDuration": 7,
+      "start": 0.0,
+      "end": 17.067
+    },
+    {
+      "id": "balance",
+      "title": "Balance",
+      "minDuration": 7,
+      "start": 17.067,
+      "end": 44.833
+    },
+    {
+      "id": "equity",
+      "title": "Balance vs. equity",
+      "minDuration": 7,
+      "start": 44.833,
+      "end": 70.533
+    },
+    {
+      "id": "pnl",
+      "title": "Profit & loss",
+      "minDuration": 7,
+      "start": 70.533,
+      "end": 115.733
+    },
+    {
+      "id": "margin",
+      "title": "Margin",
+      "minDuration": 7,
+      "start": 115.733,
+      "end": 159.967
+    },
+    {
+      "id": "free",
+      "title": "Free margin",
+      "minDuration": 7,
+      "start": 159.967,
+      "end": 208.667
+    },
+    {
+      "id": "leverage",
+      "title": "Leverage",
+      "minDuration": 7,
+      "start": 208.667,
+      "end": 256.533
+    },
+    {
+      "id": "swaps",
+      "title": "Swaps",
+      "minDuration": 7,
+      "start": 256.533,
+      "end": 311.7
+    },
+    {
+      "id": "recap",
+      "title": "Recap",
+      "minDuration": 7,
+      "start": 311.7,
+      "end": 346.8
+    }
+  ],
+  "cues": [
+    {
+      "scene": "title",
+      "start": 1.1,
+      "end": 5.05,
+      "text": "Welcome to Education Session 1: account basics and costs.",
+      "say": "Welcome to Education Session 1: account basics and costs."
+    },
+    {
+      "scene": "title",
+      "start": 5.8,
+      "end": 10.45,
+      "text": "In this session, we'll look at the numbers on your trading account, and what each one means.",
+      "say": "In this session, we'll look at the numbers on your trading account, and what each one means."
+    },
+    {
+      "scene": "title",
+      "start": 11.2,
+      "end": 15.48,
+      "text": "Balance, profit and loss, margin, free margin, leverage, and swaps.",
+      "say": "Balance, profit and loss, margin, free margin, leverage, and swaps."
+    },
+    {
+      "scene": "balance",
+      "start": 18.17,
+      "end": 19.58,
+      "text": "Let's start with your balance.",
+      "say": "Let's start with your balance."
+    },
+    {
+      "scene": "balance",
+      "start": 20.33,
+      "end": 28.76,
+      "text": "Your balance is the money in your account from closed trades: your deposits, plus or minus every closed trade, minus any withdrawals.",
+      "say": "Your balance is the money in your account from closed trades: your deposits, plus or minus every closed trade, minus any withdrawals."
+    },
+    {
+      "scene": "balance",
+      "start": 29.51,
+      "end": 32.33,
+      "text": "For example, you deposit $10,000.",
+      "say": "For example, you deposit ten thousand dollars."
+    },
+    {
+      "scene": "balance",
+      "start": 33.08,
+      "end": 39.18,
+      "text": "You close a trade with a $500 profit. Your balance is now $10,500.",
+      "say": "You close a trade with a five hundred dollar profit. Your balance is now ten thousand, five hundred."
+    },
+    {
+      "scene": "balance",
+      "start": 39.93,
+      "end": 43.23,
+      "text": "Open trades don't change your balance until they are closed.",
+      "say": "Open trades don't change your balance, until they are closed."
+    },
+    {
+      "scene": "equity",
+      "start": 45.93,
+      "end": 48.95,
+      "text": "So what is your account worth right now? That's your equity.",
+      "say": "So what is your account worth right now? That's your equity."
+    },
+    {
+      "scene": "equity",
+      "start": 49.7,
+      "end": 54.36,
+      "text": "Equity is your balance, plus or minus the profit or loss of your open trades.",
+      "say": "Equity is your balance, plus or minus the profit or loss of your open trades."
+    },
+    {
+      "scene": "equity",
+      "start": 55.11,
+      "end": 60.37,
+      "text": "If an open trade is $300 down, your equity is $10,200.",
+      "say": "If an open trade is three hundred dollars down, your equity is ten thousand, two hundred."
+    },
+    {
+      "scene": "equity",
+      "start": 61.12,
+      "end": 68.92,
+      "text": "So you deposited $10,000, your balance is $10,500, and your account is worth $10,200 right now.",
+      "say": "So you deposited ten thousand, your balance is ten thousand five hundred, and your account is worth ten thousand two hundred, right now."
+    },
+    {
+      "scene": "pnl",
+      "start": 71.63,
+      "end": 74.53,
+      "text": "Next, profit and loss, often called P&L.",
+      "say": "Next, profit and loss, often called P and L."
+    },
+    {
+      "scene": "pnl",
+      "start": 75.28,
+      "end": 82.45,
+      "text": "While a trade is open, its profit or loss is floating, or unrealized. It changes every time the price moves.",
+      "say": "While a trade is open, its profit or loss is floating, or unrealized. It changes every time the price moves."
+    },
+    {
+      "scene": "pnl",
+      "start": 83.2,
+      "end": 88.63,
+      "text": "When you close the trade, the result becomes closed, or realized, and it's added to your balance.",
+      "say": "When you close the trade, the result becomes closed, or realized, and it's added to your balance."
+    },
+    {
+      "scene": "pnl",
+      "start": 89.38,
+      "end": 95.76,
+      "text": "Example: you buy 1 lot of EUR/USD. On this pair, one pip is worth about $10 per lot.",
+      "say": "Example: you buy one lot of euro dollar. On this pair, one pip is worth about ten dollars per lot."
+    },
+    {
+      "scene": "pnl",
+      "start": 96.51,
+      "end": 101.21,
+      "text": "If the price rises 50 pips, you have $500 of floating profit.",
+      "say": "If the price rises fifty pips, you have five hundred dollars of floating profit."
+    },
+    {
+      "scene": "pnl",
+      "start": 101.96,
+      "end": 107.32,
+      "text": "Close the trade, and that $500 becomes realized, and moves into your balance.",
+      "say": "Close the trade, and that five hundred dollars becomes realized, and moves into your balance."
+    },
+    {
+      "scene": "pnl",
+      "start": 108.07,
+      "end": 114.14,
+      "text": "Your overall performance is your realized results, plus whatever is still floating on open trades.",
+      "say": "Your overall performance is your realized results, plus whatever is still floating on open trades."
+    },
+    {
+      "scene": "margin",
+      "start": 116.83,
+      "end": 117.75,
+      "text": "Now, margin.",
+      "say": "Now, margin."
+    },
+    {
+      "scene": "margin",
+      "start": 118.5,
+      "end": 124.19,
+      "text": "Margin is the part of your money the broker sets aside as a deposit, to keep a trade open.",
+      "say": "Margin is the part of your money the broker sets aside as a deposit, to keep a trade open."
+    },
+    {
+      "scene": "margin",
+      "start": 124.94,
+      "end": 127.99,
+      "text": "It isn't a fee. It's released when the trade is closed.",
+      "say": "It isn't a fee. It's released when the trade is closed."
+    },
+    {
+      "scene": "margin",
+      "start": 128.74,
+      "end": 133.5,
+      "text": "It's required because a leveraged trade controls much more value than you put in.",
+      "say": "It's required because a leveraged trade controls much more value than you put in."
+    },
+    {
+      "scene": "margin",
+      "start": 134.25,
+      "end": 137.62,
+      "text": "Margin is the trade value, divided by your leverage.",
+      "say": "Margin is the trade value, divided by your leverage."
+    },
+    {
+      "scene": "margin",
+      "start": 138.37,
+      "end": 151.02,
+      "text": "1 lot of EUR/USD at 1.1000 is worth about $110,000. With 1:100 leverage, the margin is $1,100.",
+      "say": "One lot of euro dollar at one point one zero zero zero, is worth about one hundred and ten thousand dollars. With one to one hundred leverage, the margin is one thousand, one hundred dollars."
+    },
+    {
+      "scene": "margin",
+      "start": 151.77,
+      "end": 158.34,
+      "text": "Trade size and margin move together: half a lot needs half the margin, and two lots need twice as much.",
+      "say": "Trade size and margin move together: half a lot needs half the margin, and two lots need twice as much."
+    },
+    {
+      "scene": "free",
+      "start": 161.07,
+      "end": 165.34,
+      "text": "Free margin is what's left to open new trades, or to absorb losses.",
+      "say": "Free margin is what's left to open new trades, or to absorb losses."
+    },
+    {
+      "scene": "free",
+      "start": 166.09,
+      "end": 169.29,
+      "text": "Free margin equals equity, minus used margin.",
+      "say": "Free margin equals equity, minus used margin."
+    },
+    {
+      "scene": "free",
+      "start": 170.04,
+      "end": 178.48,
+      "text": "With equity of $10,200 and $1,100 of used margin, your free margin is $9,100.",
+      "say": "With equity of ten thousand two hundred, and one thousand one hundred of used margin, your free margin is nine thousand, one hundred dollars."
+    },
+    {
+      "scene": "free",
+      "start": 179.23,
+      "end": 183.83,
+      "text": "If your open trades lose money, equity falls, and free margin falls with it.",
+      "say": "If your open trades lose money, equity falls, and free margin falls with it."
+    },
+    {
+      "scene": "free",
+      "start": 184.58,
+      "end": 190.46,
+      "text": "Brokers also watch your margin level: equity divided by used margin, as a percentage.",
+      "say": "Brokers also watch your margin level: equity divided by used margin, as a percentage."
+    },
+    {
+      "scene": "free",
+      "start": 191.21,
+      "end": 201.48,
+      "text": "At the margin call level you get a warning. At the stop out level, the platform starts closing trades automatically. These levels differ by broker, so check yours.",
+      "say": "At the margin call level you get a warning. At the stop out level, the platform starts closing trades automatically. These levels differ by broker, so check yours."
+    },
+    {
+      "scene": "free",
+      "start": 202.23,
+      "end": 207.07,
+      "text": "That's why keeping plenty of free margin matters. It gives your trades room to breathe.",
+      "say": "That's why keeping plenty of free margin matters. It gives your trades room to breathe."
+    },
+    {
+      "scene": "leverage",
+      "start": 209.77,
+      "end": 211.24,
+      "text": "That brings us to leverage.",
+      "say": "That brings us to leverage."
+    },
+    {
+      "scene": "leverage",
+      "start": 211.99,
+      "end": 216.82,
+      "text": "Leverage lets you control a large position with a smaller amount of your own money.",
+      "say": "Leverage lets you control a large position with a smaller amount of your own money."
+    },
+    {
+      "scene": "leverage",
+      "start": 217.57,
+      "end": 224.38,
+      "text": "With 1:100 leverage, $1,000 of margin controls a $100,000 position.",
+      "say": "With one to one hundred leverage, one thousand dollars of margin controls a one hundred thousand dollar position."
+    },
+    {
+      "scene": "leverage",
+      "start": 225.13,
+      "end": 229.26,
+      "text": "The benefit: you need less capital for each trade, and keep more of it free.",
+      "say": "The benefit: you need less capital for each trade, and keep more of it free."
+    },
+    {
+      "scene": "leverage",
+      "start": 230.01,
+      "end": 235.25,
+      "text": "The risk: profit and loss are calculated on the full position, not on your margin.",
+      "say": "The risk: profit and loss are calculated on the full position, not on your margin."
+    },
+    {
+      "scene": "leverage",
+      "start": 236.0,
+      "end": 242.49,
+      "text": "On a $100,000 position, a 1% move is $1,000. That's the whole margin.",
+      "say": "On a one hundred thousand dollar position, a one percent move is one thousand dollars. That's the whole margin."
+    },
+    {
+      "scene": "leverage",
+      "start": 243.24,
+      "end": 248.8,
+      "text": "Leverage doesn't change how far the price moves. It changes how exposed you are to that move.",
+      "say": "Leverage doesn't change how far the price moves. It changes how exposed you are to that move."
+    },
+    {
+      "scene": "leverage",
+      "start": 249.55,
+      "end": 254.96,
+      "text": "So size each trade by the risk you can accept, not by the maximum leverage available.",
+      "say": "So size each trade by the risk you can accept, not by the maximum leverage available."
+    },
+    {
+      "scene": "swaps",
+      "start": 257.63,
+      "end": 258.74,
+      "text": "Finally, swaps.",
+      "say": "Finally, swaps."
+    },
+    {
+      "scene": "swaps",
+      "start": 259.49,
+      "end": 266.33,
+      "text": "A swap is an overnight charge, or sometimes a credit, for keeping a position open past the daily rollover.",
+      "say": "A swap is an overnight charge, or sometimes a credit, for keeping a position open past the daily rollover."
+    },
+    {
+      "scene": "swaps",
+      "start": 267.08,
+      "end": 276.74,
+      "text": "For currencies, it mainly reflects the interest-rate difference between the two currencies, plus a broker fee. For other instruments, it reflects a financing rate.",
+      "say": "For currencies, it mainly reflects the interest-rate difference between the two currencies, plus a broker fee. For other instruments, it reflects a financing rate."
+    },
+    {
+      "scene": "swaps",
+      "start": 277.49,
+      "end": 284.35,
+      "text": "Each instrument has one swap rate for buying, and one for selling. You'll find them in the instrument's specification.",
+      "say": "Each instrument has one swap rate for buying, and one for selling. You'll find them in the instrument's specification."
+    },
+    {
+      "scene": "swaps",
+      "start": 285.1,
+      "end": 290.77,
+      "text": "A common calculation: lots, times the swap rate in points, times the value of one point.",
+      "say": "A common calculation: lots, times the swap rate in points, times the value of one point."
+    },
+    {
+      "scene": "swaps",
+      "start": 291.52,
+      "end": 298.39,
+      "text": "For example: 1 lot, a swap of minus 7 points, at $1 per point, costs $7 per night.",
+      "say": "For example: one lot, a swap of minus seven points, at one dollar per point, costs seven dollars per night."
+    },
+    {
+      "scene": "swaps",
+      "start": 299.14,
+      "end": 305.48,
+      "text": "Once a week, usually on Wednesday for currencies, the swap is charged three times, to cover the weekend.",
+      "say": "Once a week, usually on Wednesday for currencies, the swap is charged three times, to cover the weekend."
+    },
+    {
+      "scene": "swaps",
+      "start": 306.23,
+      "end": 310.12,
+      "text": "Swaps add up on trades held for weeks, so include them in your costs.",
+      "say": "Swaps add up on trades held for weeks, so include them in your costs."
+    },
+    {
+      "scene": "recap",
+      "start": 312.8,
+      "end": 313.69,
+      "text": "Let's recap.",
+      "say": "Let's recap."
+    },
+    {
+      "scene": "recap",
+      "start": 314.44,
+      "end": 319.41,
+      "text": "Balance is your money from closed trades. Equity is what your account is worth right now.",
+      "say": "Balance is your money from closed trades. Equity is what your account is worth right now."
+    },
+    {
+      "scene": "recap",
+      "start": 320.16,
+      "end": 324.06,
+      "text": "Floating profit or loss becomes realized when you close the trade.",
+      "say": "Floating profit or loss becomes realized when you close the trade."
+    },
+    {
+      "scene": "recap",
+      "start": 324.81,
+      "end": 331.99,
+      "text": "Margin is a deposit, free margin is your room to trade, and leverage magnifies both gains and losses.",
+      "say": "Margin is a deposit, free margin is your room to trade, and leverage magnifies both gains and losses."
+    },
+    {
+      "scene": "recap",
+      "start": 332.74,
+      "end": 339.62,
+      "text": "Swaps are overnight costs or credits. Together with the spread, and any commission, they make up your trading costs.",
+      "say": "Swaps are overnight costs or credits. Together with the spread, and any commission, they make up your trading costs."
+    },
+    {
+      "scene": "recap",
+      "start": 340.37,
+      "end": 345.19,
+      "text": "In Session 2, we'll look at the orders that help you plan and protect every trade.",
+      "say": "In session two, we'll look at the orders that help you plan, and protect, every trade."
+    }
+  ]
+}

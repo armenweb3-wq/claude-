@@ -4,7 +4,7 @@ Gentle cinematic piano over warm string-like pads: A minor → F → C → G, 72
 Sections build slowly (pad only → piano arpeggios → soft bass, heartbeat kick and a melody) and ease out at the end.
 Everything is synthesised here, so there is no licensing to worry about.
 
-Usage: python scripts/compose-music.py [--seconds 255] [--out public/audio/music-documentary.mp3]
+Usage: python scripts/compose-music.py [--seconds 255] [--out FILE] [--bpm 72] [--transpose 0] [--seed 7]
 Needs: numpy, soundfile, ffmpeg.
 """
 import argparse, os, subprocess
@@ -15,19 +15,22 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ap = argparse.ArgumentParser()
 ap.add_argument("--seconds", type=float, default=255)
 ap.add_argument("--out", default="public/audio/music-documentary.mp3")
+ap.add_argument("--bpm", type=float, default=72)
+ap.add_argument("--transpose", type=int, default=0, help="semitones, to give each film its own key")
+ap.add_argument("--seed", type=int, default=7)
 args = ap.parse_args()
 
 SR = 44100
-BPM = 72
+BPM = args.bpm
 BEAT = 60 / BPM
 BAR = BEAT * 4
 total = args.seconds
 n = int(total * SR) + SR * 4
 L = np.zeros(n)
 R = np.zeros(n)
-rng = np.random.default_rng(7)
+rng = np.random.default_rng(args.seed)
 
-hz = lambda m: 440 * 2 ** ((m - 69) / 12)
+hz = lambda m: 440 * 2 ** ((m + args.transpose - 69) / 12)
 # (pad voicing, bass root, arpeggio notes)
 CHORDS = [
     ([57, 60, 64, 69], 45, [57, 64, 69, 72, 76, 72, 69, 64]),  # Am
@@ -125,7 +128,7 @@ fade_in, fade_out = int(3 * SR), int(6 * SR)
 mix[:fade_in] *= np.linspace(0, 1, fade_in)[:, None]
 mix[-fade_out:] *= np.linspace(1, 0, fade_out)[:, None] ** 1.5
 mix /= np.max(np.abs(mix)) + 1e-9
-tmp = os.path.join(ROOT, "out", "music-tmp.wav")
+tmp = os.path.join(ROOT, "out", f"music-tmp-{os.getpid()}.wav")
 os.makedirs(os.path.dirname(tmp), exist_ok=True)
 sf.write(tmp, (mix * 0.9).astype(np.float32), SR)
 out = os.path.join(ROOT, args.out)

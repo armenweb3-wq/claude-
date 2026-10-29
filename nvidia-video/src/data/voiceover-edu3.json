@@ -1,0 +1,336 @@
+{
+  "fps": 30,
+  "totalDuration": null,
+  "voiceoverFile": "audio/edu3-voice.mp3",
+  "musicFile": "audio/edu3-music.mp3",
+  "voice": {
+    "engine": "kokoro-v1.0",
+    "voice": "af_heart",
+    "baseSpeed": 0.95,
+    "speed": 0.95
+  },
+  "pacing": {
+    "lead": 1.1,
+    "gap": 0.75,
+    "tail": 1.6
+  },
+  "scenes": [
+    {
+      "id": "title",
+      "title": "Advanced strategies",
+      "minDuration": 7,
+      "start": 0.0,
+      "end": 18.533
+    },
+    {
+      "id": "hedge",
+      "title": "Hedging",
+      "minDuration": 7,
+      "start": 18.533,
+      "end": 31.267
+    },
+    {
+      "id": "hedgeex",
+      "title": "A hedging example",
+      "minDuration": 7,
+      "start": 31.267,
+      "end": 63.467
+    },
+    {
+      "id": "hedgetypes",
+      "title": "Other ways to hedge",
+      "minDuration": 7,
+      "start": 63.467,
+      "end": 81.567
+    },
+    {
+      "id": "hedgepros",
+      "title": "Hedging: benefits & limits",
+      "minDuration": 7,
+      "start": 81.567,
+      "end": 112.733
+    },
+    {
+      "id": "avg",
+      "title": "Averaging",
+      "minDuration": 7,
+      "start": 112.733,
+      "end": 126.7
+    },
+    {
+      "id": "avgdown",
+      "title": "Averaging down",
+      "minDuration": 7,
+      "start": 126.7,
+      "end": 166.2
+    },
+    {
+      "id": "avgup",
+      "title": "Averaging up",
+      "minDuration": 7,
+      "start": 166.2,
+      "end": 197.6
+    },
+    {
+      "id": "avgrisk",
+      "title": "Averaging: managing the risk",
+      "minDuration": 7,
+      "start": 197.6,
+      "end": 219.667
+    },
+    {
+      "id": "finish",
+      "title": "Course complete",
+      "minDuration": 7,
+      "start": 219.667,
+      "end": 249.2
+    }
+  ],
+  "cues": [
+    {
+      "scene": "title",
+      "start": 1.1,
+      "end": 4.68,
+      "text": "Welcome to Education Session 3: advanced strategies.",
+      "say": "Welcome to Education Session 3: advanced strategies."
+    },
+    {
+      "scene": "title",
+      "start": 5.43,
+      "end": 10.58,
+      "text": "Hedging and averaging are techniques experienced traders use to manage positions.",
+      "say": "Hedging and averaging are techniques experienced traders use to manage positions."
+    },
+    {
+      "scene": "title",
+      "start": 11.33,
+      "end": 16.93,
+      "text": "Used well, they can help. Used badly, they can increase risk. So let's look at both carefully.",
+      "say": "Used well, they can help. Used badly, they can increase risk. So let's look at both carefully."
+    },
+    {
+      "scene": "hedge",
+      "start": 19.63,
+      "end": 23.7,
+      "text": "Hedging means opening a position that offsets the risk of another one.",
+      "say": "Hedging means opening a position that offsets the risk of another one."
+    },
+    {
+      "scene": "hedge",
+      "start": 24.45,
+      "end": 29.66,
+      "text": "The goal is not to make extra profit. It's to reduce your exposure to a price move.",
+      "say": "The goal is not to make extra profit. It's to reduce your exposure to a price move."
+    },
+    {
+      "scene": "hedgeex",
+      "start": 32.37,
+      "end": 37.82,
+      "text": "Example: you're long 1 lot of EUR/USD from 1.1000.",
+      "say": "Example: you're long one lot of euro dollar, from one point one zero zero zero."
+    },
+    {
+      "scene": "hedgeex",
+      "start": 38.57,
+      "end": 43.65,
+      "text": "The price falls to 1.0950, and you're $500 down.",
+      "say": "The price falls to one point zero nine five zero, and you're five hundred dollars down."
+    },
+    {
+      "scene": "hedgeex",
+      "start": 44.4,
+      "end": 48.05,
+      "text": "A big news release is coming, but you don't want to close the trade.",
+      "say": "A big news release is coming, but you don't want to close the trade."
+    },
+    {
+      "scene": "hedgeex",
+      "start": 48.8,
+      "end": 55.84,
+      "text": "So you open a short position of 1 lot. Now, whichever way the price moves, the two positions offset each other.",
+      "say": "So you open a short position of one lot. Now, whichever way the price moves, the two positions offset each other."
+    },
+    {
+      "scene": "hedgeex",
+      "start": 56.59,
+      "end": 61.87,
+      "text": "Your loss is locked at about $500, until you close one of the two positions.",
+      "say": "Your loss is locked at about five hundred dollars, until you close one of the two positions."
+    },
+    {
+      "scene": "hedgetypes",
+      "start": 64.57,
+      "end": 70.44,
+      "text": "A hedge can also be partial: a smaller opposite position that only reduces your exposure.",
+      "say": "A hedge can also be partial: a smaller opposite position that only reduces your exposure."
+    },
+    {
+      "scene": "hedgetypes",
+      "start": 71.19,
+      "end": 79.98,
+      "text": "Or it can use a related market. An investor holding many shares might sell a stock index, to protect against a broad market fall.",
+      "say": "Or it can use a related market. An investor holding many shares might sell a stock index, to protect against a broad market fall."
+    },
+    {
+      "scene": "hedgepros",
+      "start": 82.67,
+      "end": 90.36,
+      "text": "The benefits: you can cut exposure quickly, protect open profits, and keep a long-term position through a short-term risk.",
+      "say": "The benefits: you can cut exposure quickly, protect open profits, and keep a long-term position through a short-term risk."
+    },
+    {
+      "scene": "hedgepros",
+      "start": 91.11,
+      "end": 98.1,
+      "text": "The limitations: while fully hedged, you can't profit either. You pay the spread on both positions, and swaps on both.",
+      "say": "The limitations: while fully hedged, you can't profit either. You pay the spread on both positions, and swaps on both."
+    },
+    {
+      "scene": "hedgepros",
+      "start": 98.85,
+      "end": 104.55,
+      "text": "The hardest part is the exit. Close one side at the wrong moment, and the loss can grow again.",
+      "say": "The hardest part is the exit. Close one side at the wrong moment, and the loss can grow again."
+    },
+    {
+      "scene": "hedgepros",
+      "start": 105.3,
+      "end": 111.14,
+      "text": "Also, some brokers and regions don't allow hedging in the same account, so check your account rules.",
+      "say": "Also, some brokers and regions don't allow hedging in the same account, so check your account rules."
+    },
+    {
+      "scene": "avg",
+      "start": 113.83,
+      "end": 114.88,
+      "text": "Now, averaging.",
+      "say": "Now, averaging."
+    },
+    {
+      "scene": "avg",
+      "start": 115.63,
+      "end": 120.97,
+      "text": "Averaging means building a position in several steps, so your average entry price changes.",
+      "say": "Averaging means building a position in several steps, so your average entry price changes."
+    },
+    {
+      "scene": "avg",
+      "start": 121.72,
+      "end": 125.11,
+      "text": "There are two directions: averaging down, and averaging up.",
+      "say": "There are two directions: averaging down, and averaging up."
+    },
+    {
+      "scene": "avgdown",
+      "start": 127.8,
+      "end": 132.57,
+      "text": "Averaging down means buying more as the price falls, to lower your average price.",
+      "say": "Averaging down means buying more as the price falls, to lower your average price."
+    },
+    {
+      "scene": "avgdown",
+      "start": 133.32,
+      "end": 145.47,
+      "text": "Example: buy 1 lot at 1.1000, then another lot at 1.0950. Your average price is now 1.0975.",
+      "say": "Example: buy one lot at one point one zero zero zero, then another lot at one point zero nine five zero. Your average price is now one point zero nine seven five."
+    },
+    {
+      "scene": "avgdown",
+      "start": 146.22,
+      "end": 155.52,
+      "text": "The price only needs to climb back to 1.0975 to break even, not all the way to 1.1000.",
+      "say": "The price only needs to climb back to one point zero nine seven five to break even, not all the way to one point one zero zero zero."
+    },
+    {
+      "scene": "avgdown",
+      "start": 156.27,
+      "end": 164.59,
+      "text": "But you now hold 2 lots. Each pip is worth $20, not $10. If the price keeps falling, losses grow twice as fast.",
+      "say": "But you now hold two lots. Each pip is worth twenty dollars, not ten. If the price keeps falling, losses grow twice as fast."
+    },
+    {
+      "scene": "avgup",
+      "start": 167.3,
+      "end": 172.63,
+      "text": "Averaging up means adding to a position that's already in profit, as the trend continues.",
+      "say": "Averaging up means adding to a position that's already in profit, as the trend continues."
+    },
+    {
+      "scene": "avgup",
+      "start": 173.38,
+      "end": 186.02,
+      "text": "Example: buy 1 lot at 1.1000, and add another at 1.1050 as the trade works. Your average is now 1.1025.",
+      "say": "Example: buy one lot at one point one zero zero zero, and add another at one point one zero five zero as the trade works. Your average is now one point one zero two five."
+    },
+    {
+      "scene": "avgup",
+      "start": 186.77,
+      "end": 195.99,
+      "text": "You add size only while the market proves you right. But a sharp reversal can erase gains quickly, because the extra lot was bought at a higher price.",
+      "say": "You add size only while the market proves you right. But a sharp reversal can erase gains quickly, because the extra lot was bought at a higher price."
+    },
+    {
+      "scene": "avgrisk",
+      "start": 198.7,
+      "end": 202.09,
+      "text": "Whichever direction you use, averaging needs firm rules.",
+      "say": "Whichever direction you use, averaging needs firm rules."
+    },
+    {
+      "scene": "avgrisk",
+      "start": 202.84,
+      "end": 207.84,
+      "text": "Decide in advance the maximum total size, and the stop loss for the whole position.",
+      "say": "Decide in advance the maximum total size, and the stop loss for the whole position."
+    },
+    {
+      "scene": "avgrisk",
+      "start": 208.59,
+      "end": 211.01,
+      "text": "Check your free margin before every addition.",
+      "say": "Check your free margin before every addition."
+    },
+    {
+      "scene": "avgrisk",
+      "start": 211.76,
+      "end": 218.09,
+      "text": "And never keep adding to a losing trade without a limit. That's how small losses turn into margin calls.",
+      "say": "And never keep adding to a losing trade without a limit. That's how small losses turn into margin calls."
+    },
+    {
+      "scene": "finish",
+      "start": 220.77,
+      "end": 222.63,
+      "text": "Let's bring the three sessions together.",
+      "say": "Let's bring the three sessions together."
+    },
+    {
+      "scene": "finish",
+      "start": 223.38,
+      "end": 229.47,
+      "text": "You now know how to read your account: balance, equity, margin, free margin, leverage and swaps.",
+      "say": "You now know how to read your account: balance, equity, margin, free margin, leverage and swaps."
+    },
+    {
+      "scene": "finish",
+      "start": 230.22,
+      "end": 234.47,
+      "text": "You can plan trades with stop losses, take profits, and pending orders.",
+      "say": "You can plan trades with stop losses, take profits, and pending orders."
+    },
+    {
+      "scene": "finish",
+      "start": 235.22,
+      "end": 239.63,
+      "text": "And you understand how hedging and averaging work, and the risks that come with them.",
+      "say": "And you understand how hedging and averaging work, and the risks that come with them."
+    },
+    {
+      "scene": "finish",
+      "start": 240.38,
+      "end": 247.6,
+      "text": "With these foundations, you can make more informed trading decisions. Trade with a plan, and always manage your risk.",
+      "say": "With these foundations, you can make more informed trading decisions. Trade with a plan, and always manage your risk."
+    }
+  ]
+}

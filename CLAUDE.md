@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-Three unrelated things share this repo:
+Four unrelated things share this repo:
 
 1. **Catalyst — the startup ⇄ investor marketplace** (primary) — a Next.js App
    Router app served at `/`. Accounts (Supabase auth), founder/investor listings,
@@ -16,6 +16,11 @@ Three unrelated things share this repo:
 3. **A live-scores automation** — `scripts/fetch-scores.mjs` plus
    `.github/workflows/scores.yml`, a standalone GitHub Action unrelated to the
    websites. It is *not* part of the Next.js build (it's excluded in `tsconfig`).
+
+4. **An NVIDIA explainer video** — `nvidia-video/`, a self-contained Remotion
+   project (own `package.json`; excluded from the root `tsconfig`). See its
+   `README.md`; figures live in `nvidia-video/src/data/content.ts` and must be
+   checked against `nvidia-video/VERIFICATION.md` before publishing.
 
 `npm run dev/build` operates on both web apps together.
 

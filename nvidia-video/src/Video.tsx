@@ -13,20 +13,24 @@ import { S5Partners } from "./scenes/S5Partners";
 import { S6Price } from "./scenes/S6Price";
 import { S7Invest } from "./scenes/S7Invest";
 import { S7Split } from "./scenes/S7Split";
-import { S8Disclaimer } from "./scenes/S8Disclaimer";
+import { S8Close } from "./scenes/S8Close";
+import { SLeverage } from "./scenes/SLeverage";
+import { SWhy } from "./scenes/SWhy";
 import { colors } from "./theme";
 
 const components: Record<string, React.FC> = {
   founder: S0Founder,
   intro: S1Intro,
   gpu: S2Gpu,
+  why: SWhy,
   datacenter: S3DataCenter,
   revenue: S4Revenue,
   partners: S5Partners,
   price: S6Price,
+  leverage: SLeverage,
   invest: S7Invest,
   split: S7Split,
-  disclaimer: S8Disclaimer,
+  close: S8Close,
 };
 
 export const NvidiaExplainer: React.FC = () => (

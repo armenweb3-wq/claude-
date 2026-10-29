@@ -1,67 +1,187 @@
 1
-00:00:00,400 --> 00:00:03,710
-In 1993, Jensen Huang co-founded NVIDIA
+00:00:01,300 --> 00:00:04,800
+This is the story of NVIDIA, and one investment idea.
 
 2
-00:00:03,990 --> 00:00:06,010
-to build graphics chips for video games.
+00:00:05,750 --> 00:00:09,450
+In 1993, Jensen Huang co-founded NVIDIA.
 
 3
-00:00:06,700 --> 00:00:08,320
-Today, AI is everywhere.
+00:00:10,400 --> 00:00:13,710
+At first, the company made graphics chips for video games.
 
 4
-00:00:08,600 --> 00:00:10,980
-Even an 80-year-old retiree uses it.
+00:00:16,700 --> 00:00:21,380
+Today, artificial intelligence, or AI, is part of everyday life.
 
 5
-00:00:11,700 --> 00:00:15,100
-And AI runs on GPUs — the chips built for games —
+00:00:22,330 --> 00:00:26,970
+People use it to answer questions, write letters, translate, and plan trips.
 
 6
-00:00:15,380 --> 00:00:17,670
-doing thousands of calculations at once.
+00:00:27,920 --> 00:00:33,740
+Even an 80-year-old retiree can ask AI for help, just by typing or talking.
 
 7
-00:00:18,370 --> 00:00:22,110
-NVIDIA is a leading supplier of AI chips for data centers.
+00:00:36,770 --> 00:00:40,660
+But every AI answer needs a huge amount of computing power.
 
 8
-00:00:22,870 --> 00:00:25,980
-Quarterly revenue: $68.1 billion,
+00:00:41,610 --> 00:00:45,020
+A regular computer chip works on a few tasks at a time.
 
 9
-00:00:26,260 --> 00:00:29,700
-then $81.6 billion, then $96.2 billion.
+00:00:45,970 --> 00:00:51,830
+A GPU, the kind of chip NVIDIA makes, works on thousands of small tasks at once.
 
 10
-00:00:30,430 --> 00:00:33,530
-Major partners, and earnings ahead: the next catalyst.
+00:00:52,780 --> 00:00:55,460
+That is exactly the kind of work AI needs.
 
 11
-00:00:34,930 --> 00:00:36,840
-Picture the stock rising 8%,
+00:00:58,430 --> 00:01:00,560
+So why is NVIDIA so important?
 
 12
-00:00:37,120 --> 00:00:39,880
-from $218 to $235.44.
+00:01:01,510 --> 00:01:04,950
+Think of the gold rush. Many people went looking for gold.
 
 13
-00:00:40,600 --> 00:00:44,840
-By investing $25,000 with about 5× leverage,
+00:01:05,900 --> 00:01:09,980
+But the people selling the shovels did well, no matter who found the gold.
 
 14
-00:00:45,120 --> 00:00:48,630
-you could potentially make $9,975.68 — before costs.
+00:01:10,930 --> 00:01:17,770
+In today's AI rush, NVIDIA sells the shovels: the chips that many AI systems are built on.
 
 15
-00:00:49,330 --> 00:00:53,160
-At $50,000 and 7.5×: nearly $30,000.
+00:01:18,720 --> 00:01:22,370
+The biggest technology companies buy them to build their AI.
 
 16
-00:00:54,130 --> 00:00:57,050
-Hypothetical. Leverage magnifies losses too.
+00:01:25,400 --> 00:01:28,800
+Those chips go into giant buildings called data centers.
 
 17
-00:00:57,330 --> 00:00:59,690
-Not guaranteed. Not financial advice.
+00:01:29,750 --> 00:01:33,580
+Each one is filled with thousands of computers, running day and night.
+
+18
+00:01:34,530 --> 00:01:36,420
+This is where AI really lives.
+
+19
+00:01:39,430 --> 00:01:41,850
+And this demand shows up in NVIDIA's sales.
+
+20
+00:01:42,800 --> 00:01:44,880
+Three recent quarters tell the story.
+
+21
+00:01:45,830 --> 00:01:48,510
+Sales of $68.1 billion,
+
+22
+00:01:49,460 --> 00:01:51,370
+then $81.6 billion,
+
+23
+00:01:52,320 --> 00:01:54,230
+then $96.2 billion.
+
+24
+00:01:55,180 --> 00:01:59,210
+From the first to the third, that is growth of about 41%.
+
+25
+00:02:02,200 --> 00:02:08,560
+NVIDIA works with major partners: cloud companies, AI labs, carmakers, and governments.
+
+26
+00:02:09,510 --> 00:02:13,180
+And soon, NVIDIA will report its next quarterly results.
+
+27
+00:02:14,130 --> 00:02:17,640
+Results like these can move the share price, sometimes a lot.
+
+28
+00:02:20,630 --> 00:02:22,330
+Now, the investment idea.
+
+29
+00:02:23,280 --> 00:02:27,630
+Imagine buying NVIDIA shares at $218 each.
+
+30
+00:02:28,580 --> 00:02:35,490
+If the price rises 8%, each share becomes worth $235.44.
+
+31
+00:02:36,440 --> 00:02:40,710
+That is a gain of $17.44 on every share.
+
+32
+00:02:43,700 --> 00:02:47,250
+This idea uses borrowed money, which is called leverage.
+
+33
+00:02:48,200 --> 00:02:50,840
+You put in $25,000 of your own.
+
+34
+00:02:51,790 --> 00:02:55,410
+Your broker lends you about $100,000 more.
+
+35
+00:02:56,360 --> 00:03:02,560
+Together, that buys 572 shares, worth about $125,000.
+
+36
+00:03:03,510 --> 00:03:07,660
+So your money controls about five times more shares than it could alone.
+
+37
+00:03:10,670 --> 00:03:11,740
+Now, the result.
+
+38
+00:03:12,690 --> 00:03:15,560
+By investing $25,000 this way,
+
+39
+00:03:16,510 --> 00:03:18,330
+if the price rises 8%,
+
+40
+00:03:19,280 --> 00:03:25,370
+you could potentially make $9,975.68.
+
+41
+00:03:26,320 --> 00:03:28,980
+That is about 40% on your own money.
+
+42
+00:03:31,970 --> 00:03:35,230
+And with $50,000 of your own, plus more borrowing,
+
+43
+00:03:36,180 --> 00:03:39,540
+you could buy 1,720 shares.
+
+44
+00:03:40,490 --> 00:03:48,090
+The same 8% rise could potentially make $29,996.80.
+
+45
+00:03:49,040 --> 00:03:52,180
+That one uses about seven and a half times leverage.
+
+46
+00:03:55,170 --> 00:04:00,530
+One thing to remember: borrowed money makes gains bigger, and it makes losses bigger too.
+
+47
+00:04:01,480 --> 00:04:06,150
+So that is NVIDIA: the company selling the shovels of the AI age.

@@ -1,7 +1,7 @@
 import React from "react";
 import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import { Backdrop, clamp, Column, ComplianceStrip, easeOut, Headline, Kicker, prog } from "../components/primitives";
-import { revenue, revenueGrowth } from "../data/content";
+import { Backdrop, clamp, Column, Headline, Kicker, prog } from "../components/primitives";
+import { revenue } from "../data/content";
 import { beat } from "../data/timeline";
 import { colors, fonts } from "../theme";
 
@@ -96,31 +96,24 @@ export const S4Revenue: React.FC = () => {
           opacity={0.8}
         />
       </svg>
-      {/* Quarter-over-quarter growth chips */}
-      <div style={{ position: "absolute", left: 72, right: 72, top: 1262, display: "flex", justifyContent: "center", gap: 28 }}>
-        {revenueGrowth.map((g, i) => {
-          const p = prog(f, starts[i + 1] + 20, 20, easeOut);
-          return (
-            <div
-              key={i}
-              style={{
-                opacity: p,
-                transform: `translateY(${(1 - p) * 20}px)`,
-                padding: "12px 24px",
-                borderRadius: 100,
-                border: `1px solid ${colors.green}66`,
-                background: `${colors.green}14`,
-                fontFamily: fonts.mono,
-                fontSize: 26,
-                color: colors.text,
-              }}
-            >
-              <span style={{ color: colors.greenBright }}>▲ {g.toFixed(1)}%</span> {revenue[i].label.replace("Quarter ", "Q")}→{revenue[i + 1].label.replace("Quarter ", "Q")}
-            </div>
-          );
-        })}
+      {/* Overall growth, said out loud in the narration */}
+      <div style={{ position: "absolute", left: 72, right: 72, top: 1262, display: "flex", justifyContent: "center" }}>
+        <div
+          style={{
+            opacity: prog(f, beat("revenue", "growth"), 18),
+            padding: "14px 34px",
+            borderRadius: 100,
+            border: `2px solid ${colors.green}`,
+            background: `${colors.green}22`,
+            fontFamily: fonts.display,
+            fontWeight: 700,
+            fontSize: 40,
+            color: colors.text,
+          }}
+        >
+          <span style={{ color: colors.greenBright }}>▲ {(((revenue[2].value - revenue[0].value) / revenue[0].value) * 100).toFixed(0)}%</span> from the first to the third
+        </div>
       </div>
-      <ComplianceStrip text="Figures as supplied · verify against NVIDIA filings" delay={20} />
     </AbsoluteFill>
   );
 };

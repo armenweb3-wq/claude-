@@ -1,6 +1,6 @@
 import React from "react";
 import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import { Backdrop, clamp, Column, ComplianceStrip, Counter, Headline, Kicker, prog } from "../components/primitives";
+import { Backdrop, clamp, Column, Counter, Headline, Kicker, prog } from "../components/primitives";
 import { fmtInt, fmtUSD, positions, priceMovePct } from "../data/content";
 import { beat } from "../data/timeline";
 import { colors, fonts, SAFE } from "../theme";
@@ -57,7 +57,7 @@ export const S7Invest: React.FC = () => {
   const profitAt = beat("invest", "profit");
   const circleAt = beat("invest", "circle");
   const investIn = spring({ frame: f - investAt, fps, config: { damping: 22 } });
-  const arrowP = prog(f, profitAt - 14, 18);
+  const arrowP = prog(f, beat("invest", "rise"), 18);
   const profitIn = spring({ frame: f - profitAt, fps, config: { damping: 20 } });
   const circleP = interpolate(f, [circleAt, circleAt + 18], [0, 1], clamp);
   const noteP = prog(f, circleAt + 6, 12);
@@ -67,7 +67,7 @@ export const S7Invest: React.FC = () => {
     <AbsoluteFill>
       <Backdrop />
       <Column top={210} gap={22}>
-        <Kicker delay={2}>Your scenario · hypothetical</Kicker>
+        <Kicker delay={2}>Your investment</Kicker>
         <Headline text="By investing $25,000…" accent={["$25,000…"]} delay={4} size={90} />
       </Column>
 
@@ -120,7 +120,7 @@ export const S7Invest: React.FC = () => {
           >
             <Counter to={pos.grossProfit} start={profitAt} dur={36} format={(n) => fmtUSD(n, 2)} />
           </div>
-          <div style={{ fontFamily: fonts.body, fontSize: 27, color: colors.muted, marginTop: 22 }}>Illustrative gross profit · before costs</div>
+          <div style={{ fontFamily: fonts.body, fontSize: 27, color: colors.muted, marginTop: 22 }}>potential profit · before interest and fees</div>
         </Card>
         {/* Marker circle around the number + pointer */}
         <svg width={1080} height={1920} style={{ position: "absolute", overflow: "visible" }}>
@@ -130,7 +130,9 @@ export const S7Invest: React.FC = () => {
       <div
         style={{
           position: "absolute",
-          right: SAFE.x + 6,
+          left: 0,
+          right: 0,
+          justifyContent: "center",
           top: 1240 + bob * noteP,
           display: "flex",
           alignItems: "center",
@@ -145,23 +147,6 @@ export const S7Invest: React.FC = () => {
           ≈ +{pos.returnOnCapitalPct.toFixed(0)}% on your $25K
         </span>
       </div>
-      <div
-        style={{
-          position: "absolute",
-          left: SAFE.x,
-          top: 1244,
-          fontFamily: fonts.body,
-          fontSize: 25,
-          lineHeight: 1.35,
-          color: "#e6a3a5",
-          opacity: prog(f, profitAt + 20, 16),
-          maxWidth: 400,
-        }}
-      >
-        An 8% fall would lose
-        <br />−{fmtUSD(pos.grossLossIfDown, 2)}
-      </div>
-      <ComplianceStrip text="Hypothetical · leveraged · before costs · not guaranteed" delay={investAt} />
     </AbsoluteFill>
   );
 };

@@ -6,9 +6,12 @@ export const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as 
 export const easeOut = Easing.bezier(0.16, 1, 0.3, 1);
 export const easeInOut = Easing.bezier(0.65, 0, 0.35, 1);
 
+/** Every entrance, stroke and counter is stretched by this factor so the film never feels rushed. */
+export const SLOW = 1.7;
+
 /** 0→1 progress between two local frames with a premium ease-out. */
 export const prog = (frame: number, from: number, dur: number, ease = easeOut) =>
-  interpolate(frame, [from, from + dur], [0, 1], { ...clamp, easing: ease });
+  interpolate(frame, [from, from + dur * SLOW], [0, 1], { ...clamp, easing: ease });
 
 /** Cross-dissolve wrapper: fades/defocuses in and out at the scene edges. */
 export const SceneShell: React.FC<{ duration: number; overlap: number; children: React.ReactNode; first?: boolean; last?: boolean }> = ({
@@ -40,7 +43,7 @@ export const Backdrop: React.FC<{ glow?: number; grid?: boolean; hue?: string }>
     <AbsoluteFill style={{ background: colors.ink }}>
       <AbsoluteFill
         style={{
-          background: `radial-gradient(900px 900px at ${gx}% ${gy}%, ${hue}2E, transparent 60%), radial-gradient(1200px 900px at 50% 110%, #1b2a0866, transparent 70%)`,
+          background: `radial-gradient(900px 900px at ${gx}% ${gy}%, ${hue}2E, transparent 60%), radial-gradient(1200px 900px at 50% 110%, ${colors.teal}40, transparent 70%), radial-gradient(900px 700px at 0% 0%, #1d4f8a55, transparent 70%)`,
           opacity: glow,
         }}
       />
@@ -107,7 +110,7 @@ export const Headline: React.FC<{
   weight?: number;
   align?: "left" | "center";
   lineHeight?: number;
-}> = ({ text, delay = 0, size = 92, accent = [], stagger = 3, weight = 700, align = "left", lineHeight = 1.04 }) => {
+}> = ({ text, delay = 0, size = 92, accent = [], stagger = 5, weight = 700, align = "left", lineHeight = 1.04 }) => {
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
   const words = text.split(" ");
@@ -128,7 +131,7 @@ export const Headline: React.FC<{
       }}
     >
       {words.map((w, i) => {
-        const s = spring({ frame: f - delay - i * stagger, fps, config: { damping: 200, mass: 0.8 } });
+        const s = spring({ frame: f - delay - i * stagger, fps, config: { damping: 200, mass: 1.6 } });
         const clean = w.replace(/[.,!?—]/g, "");
         return (
           <span key={i} style={{ display: "inline-block", overflow: "hidden", paddingBottom: size * 0.12, marginBottom: -size * 0.12 }}>
@@ -184,7 +187,7 @@ export const Counter: React.FC<{
   style?: React.CSSProperties;
 }> = ({ from = 0, to, start, dur = 40, format, style }) => {
   const f = useCurrentFrame();
-  const v = interpolate(f, [start, start + dur], [from, to], { ...clamp, easing: Easing.bezier(0.22, 1, 0.36, 1) });
+  const v = interpolate(f, [start, start + dur * SLOW], [from, to], { ...clamp, easing: Easing.bezier(0.22, 1, 0.36, 1) });
   return <span style={{ fontVariantNumeric: "tabular-nums", ...style }}>{format(v)}</span>;
 };
 

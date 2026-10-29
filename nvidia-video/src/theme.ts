@@ -29,15 +29,18 @@ export const colors = {
   greenBright: "#9BE12A",
   greenDeep: "#3E6300",
   black: "#000000",
-  ink: "#07090A",
-  charcoal: "#141617",
-  charcoal2: "#1E2122",
-  line: "rgba(255,255,255,0.12)",
+  // Midnight-blue documentary palette with teal light; NVIDIA green stays the accent.
+  ink: "#061A2E",
+  charcoal: "#0C2742",
+  charcoal2: "#123556",
+  line: "rgba(170,215,255,0.16)",
   white: "#FFFFFF",
-  text: "#F2F4F1",
-  muted: "#9EA3A0",
-  dim: "#5E6361",
-  red: "#E5484D",
+  text: "#F3F7FB",
+  muted: "#A8BBCD",
+  dim: "#6D86A0",
+  red: "#FF5C5C",
+  teal: "#2EC4C9",
+  gold: "#F6C451",
 };
 
 export const VIDEO = { width: 1080, height: 1920, fps: 30, durationInFrames: 1800 };

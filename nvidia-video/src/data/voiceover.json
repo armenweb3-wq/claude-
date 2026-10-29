@@ -1,205 +1,434 @@
 {
   "fps": 30,
+  "totalDuration": null,
   "voiceoverFile": "audio/voiceover.wav",
-  "musicFile": "audio/music-placeholder.mp3",
+  "musicFile": "audio/music-documentary.mp3",
+  "voice": {
+    "engine": "kokoro-v1.0",
+    "voice": "af_heart",
+    "baseSpeed": 0.9,
+    "speed": 0.9
+  },
+  "pacing": {
+    "lead": 1.3,
+    "gap": 0.95,
+    "tail": 1.7
+  },
   "scenes": [
     {
       "id": "founder",
       "title": "The founder",
-      "minDuration": 6.0,
+      "minDuration": 9,
       "start": 0.0,
-      "end": 6.3
+      "end": 15.4
     },
     {
       "id": "intro",
       "title": "AI in everyday life",
-      "minDuration": 4.5,
-      "start": 6.3,
-      "end": 11.3
+      "minDuration": 7,
+      "start": 15.4,
+      "end": 35.467
     },
     {
       "id": "gpu",
       "title": "Why AI needs GPUs",
-      "minDuration": 5.0,
-      "start": 11.3,
-      "end": 17.967
+      "minDuration": 7,
+      "start": 35.467,
+      "end": 57.133
+    },
+    {
+      "id": "why",
+      "title": "Why NVIDIA matters",
+      "minDuration": 7,
+      "start": 57.133,
+      "end": 84.1
     },
     {
       "id": "datacenter",
       "title": "GPU & data-center sequence",
-      "minDuration": 4.5,
-      "start": 17.967,
-      "end": 22.467
+      "minDuration": 7,
+      "start": 84.1,
+      "end": 98.133
     },
     {
       "id": "revenue",
       "title": "Quarterly revenue",
-      "minDuration": 6.0,
-      "start": 22.467,
-      "end": 30.033
+      "minDuration": 7,
+      "start": 98.133,
+      "end": 120.9
     },
     {
       "id": "partners",
-      "title": "Partnerships & earnings catalyst",
-      "minDuration": 4.5,
-      "start": 30.033,
-      "end": 34.533
+      "title": "Partnerships & next results",
+      "minDuration": 7,
+      "start": 120.9,
+      "end": 139.333
     },
     {
       "id": "price",
-      "title": "Stock-price scenario",
-      "minDuration": 5.0,
-      "start": 34.533,
-      "end": 40.2
+      "title": "The investment idea",
+      "minDuration": 7,
+      "start": 139.333,
+      "end": 162.4
+    },
+    {
+      "id": "leverage",
+      "title": "How borrowing works",
+      "minDuration": 7,
+      "start": 162.4,
+      "end": 189.367
     },
     {
       "id": "invest",
-      "title": "Your investment",
-      "minDuration": 7.5,
-      "start": 40.2,
-      "end": 48.933
+      "title": "Your $25,000",
+      "minDuration": 13,
+      "start": 189.367,
+      "end": 210.667
     },
     {
       "id": "split",
-      "title": "Scaling the position",
-      "minDuration": 4.8,
-      "start": 48.933,
-      "end": 53.733
+      "title": "With $50,000",
+      "minDuration": 12,
+      "start": 210.667,
+      "end": 233.867
     },
     {
-      "id": "disclaimer",
-      "title": "Assumptions & disclaimer",
-      "minDuration": 6.0,
-      "start": 53.733,
-      "end": 60
+      "id": "close",
+      "title": "One thing to remember",
+      "minDuration": 17,
+      "start": 233.867,
+      "end": 250.86666666666667
     }
   ],
   "cues": [
     {
       "scene": "founder",
-      "start": 0.4,
-      "end": 3.71,
-      "text": "In 1993, Jensen Huang co-founded NVIDIA",
-      "say": "In nineteen ninety-three, Jensen Huang co-founded NVIDIA,"
+      "start": 1.3,
+      "end": 4.8,
+      "text": "This is the story of NVIDIA, and one investment idea.",
+      "say": "This is the story of NVIDIA, and one investment idea."
     },
     {
       "scene": "founder",
-      "start": 3.99,
-      "end": 6.01,
-      "text": "to build graphics chips for video games.",
-      "say": "to build graphics chips for video games."
+      "start": 5.75,
+      "end": 9.45,
+      "text": "In 1993, Jensen Huang co-founded NVIDIA.",
+      "say": "In nineteen ninety-three, Jensen Huang co-founded NVIDIA."
+    },
+    {
+      "scene": "founder",
+      "start": 10.4,
+      "end": 13.71,
+      "text": "At first, the company made graphics chips for video games.",
+      "say": "At first, the company made graphics chips for video games."
     },
     {
       "scene": "intro",
-      "start": 6.7,
-      "end": 8.32,
-      "text": "Today, AI is everywhere.",
-      "say": "Today, AI is everywhere."
+      "start": 16.7,
+      "end": 21.38,
+      "text": "Today, artificial intelligence, or AI, is part of everyday life.",
+      "say": "Today, artificial intelligence, or AI, is part of everyday life."
     },
     {
       "scene": "intro",
-      "start": 8.6,
-      "end": 10.98,
-      "text": "Even an 80-year-old retiree uses it.",
-      "say": "Even an eighty-year-old retiree uses it."
+      "start": 22.33,
+      "end": 26.97,
+      "text": "People use it to answer questions, write letters, translate, and plan trips.",
+      "say": "People use it to answer questions, write letters, translate, and plan trips."
+    },
+    {
+      "scene": "intro",
+      "start": 27.92,
+      "end": 33.74,
+      "text": "Even an 80-year-old retiree can ask AI for help, just by typing or talking.",
+      "say": "Even an eighty-year-old retiree can ask AI for help, just by typing, or talking."
     },
     {
       "scene": "gpu",
-      "start": 11.7,
-      "end": 15.1,
-      "text": "And AI runs on GPUs — the chips built for games —",
-      "say": "And AI runs on GPUs. The chips built for games,"
+      "start": 36.77,
+      "end": 40.66,
+      "text": "But every AI answer needs a huge amount of computing power.",
+      "say": "But every AI answer needs a huge amount of computing power."
     },
     {
       "scene": "gpu",
-      "start": 15.38,
-      "end": 17.67,
-      "text": "doing thousands of calculations at once.",
-      "say": "doing thousands of calculations at once."
+      "start": 41.61,
+      "end": 45.02,
+      "text": "A regular computer chip works on a few tasks at a time.",
+      "say": "A regular computer chip works on a few tasks at a time."
+    },
+    {
+      "scene": "gpu",
+      "start": 45.97,
+      "end": 51.83,
+      "text": "A GPU, the kind of chip NVIDIA makes, works on thousands of small tasks at once.",
+      "say": "A G P U, the kind of chip NVIDIA makes, works on thousands of small tasks, at once."
+    },
+    {
+      "scene": "gpu",
+      "start": 52.78,
+      "end": 55.46,
+      "text": "That is exactly the kind of work AI needs.",
+      "say": "That is exactly the kind of work AI needs."
+    },
+    {
+      "scene": "why",
+      "start": 58.43,
+      "end": 60.56,
+      "text": "So why is NVIDIA so important?",
+      "say": "So why is NVIDIA so important?"
+    },
+    {
+      "scene": "why",
+      "start": 61.51,
+      "end": 64.95,
+      "text": "Think of the gold rush. Many people went looking for gold.",
+      "say": "Think of the gold rush. Many people went looking for gold."
+    },
+    {
+      "scene": "why",
+      "start": 65.9,
+      "end": 69.98,
+      "text": "But the people selling the shovels did well, no matter who found the gold.",
+      "say": "But the people selling the shovels did well, no matter who found the gold."
+    },
+    {
+      "scene": "why",
+      "start": 70.93,
+      "end": 77.77,
+      "text": "In today's AI rush, NVIDIA sells the shovels: the chips that many AI systems are built on.",
+      "say": "In today's AI rush, NVIDIA sells the shovels. The chips that many AI systems are built on."
+    },
+    {
+      "scene": "why",
+      "start": 78.72,
+      "end": 82.37,
+      "text": "The biggest technology companies buy them to build their AI.",
+      "say": "The biggest technology companies buy them to build their AI."
     },
     {
       "scene": "datacenter",
-      "start": 18.37,
-      "end": 22.11,
-      "text": "NVIDIA is a leading supplier of AI chips for data centers.",
-      "say": "NVIDIA is a leading supplier of AI chips for data centers."
+      "start": 85.4,
+      "end": 88.8,
+      "text": "Those chips go into giant buildings called data centers.",
+      "say": "Those chips go into giant buildings called data centers."
+    },
+    {
+      "scene": "datacenter",
+      "start": 89.75,
+      "end": 93.58,
+      "text": "Each one is filled with thousands of computers, running day and night.",
+      "say": "Each one is filled with thousands of computers, running day and night."
+    },
+    {
+      "scene": "datacenter",
+      "start": 94.53,
+      "end": 96.42,
+      "text": "This is where AI really lives.",
+      "say": "This is where AI really lives."
     },
     {
       "scene": "revenue",
-      "start": 22.87,
-      "end": 25.98,
-      "text": "Quarterly revenue: $68.1 billion,",
-      "say": "Quarterly revenue. Sixty-eight point one billion dollars,"
+      "start": 99.43,
+      "end": 101.85,
+      "text": "And this demand shows up in NVIDIA's sales.",
+      "say": "And this demand shows up in NVIDIA's sales."
     },
     {
       "scene": "revenue",
-      "start": 26.26,
-      "end": 29.7,
-      "text": "then $81.6 billion, then $96.2 billion.",
-      "say": "then eighty-one point six, then ninety-six point two billion."
+      "start": 102.8,
+      "end": 104.88,
+      "text": "Three recent quarters tell the story.",
+      "say": "Three recent quarters tell the story."
+    },
+    {
+      "scene": "revenue",
+      "start": 105.83,
+      "end": 108.51,
+      "text": "Sales of $68.1 billion,",
+      "say": "Sales of sixty-eight point one billion dollars,"
+    },
+    {
+      "scene": "revenue",
+      "start": 109.46,
+      "end": 111.37,
+      "text": "then $81.6 billion,",
+      "say": "then eighty-one point six billion,"
+    },
+    {
+      "scene": "revenue",
+      "start": 112.32,
+      "end": 114.23,
+      "text": "then $96.2 billion.",
+      "say": "then ninety-six point two billion."
+    },
+    {
+      "scene": "revenue",
+      "start": 115.18,
+      "end": 119.21,
+      "text": "From the first to the third, that is growth of about 41%.",
+      "say": "From the first to the third, that is growth of about forty-one percent."
     },
     {
       "scene": "partners",
-      "start": 30.43,
-      "end": 33.53,
-      "text": "Major partners, and earnings ahead: the next catalyst.",
-      "say": "Major partners, and earnings ahead. The next catalyst."
+      "start": 122.2,
+      "end": 128.56,
+      "text": "NVIDIA works with major partners: cloud companies, AI labs, carmakers, and governments.",
+      "say": "NVIDIA works with major partners: cloud companies, AI labs, carmakers, and governments."
+    },
+    {
+      "scene": "partners",
+      "start": 129.51,
+      "end": 133.18,
+      "text": "And soon, NVIDIA will report its next quarterly results.",
+      "say": "And soon, NVIDIA will report its next quarterly results."
+    },
+    {
+      "scene": "partners",
+      "start": 134.13,
+      "end": 137.64,
+      "text": "Results like these can move the share price, sometimes a lot.",
+      "say": "Results like these can move the share price, sometimes a lot."
     },
     {
       "scene": "price",
-      "start": 34.93,
-      "end": 36.84,
-      "text": "Picture the stock rising 8%,",
-      "say": "Picture the stock rising eight percent,"
+      "start": 140.63,
+      "end": 142.33,
+      "text": "Now, the investment idea.",
+      "say": "Now, the investment idea."
     },
     {
       "scene": "price",
-      "start": 37.12,
-      "end": 39.88,
-      "text": "from $218 to $235.44.",
-      "say": "from two eighteen, to two thirty-five forty-four."
+      "start": 143.28,
+      "end": 147.63,
+      "text": "Imagine buying NVIDIA shares at $218 each.",
+      "say": "Imagine buying NVIDIA shares at two hundred and eighteen dollars each."
+    },
+    {
+      "scene": "price",
+      "start": 148.58,
+      "end": 155.49,
+      "text": "If the price rises 8%, each share becomes worth $235.44.",
+      "say": "If the price rises eight percent, each share becomes worth two hundred thirty-five dollars, and forty-four cents."
+    },
+    {
+      "scene": "price",
+      "start": 156.44,
+      "end": 160.71,
+      "text": "That is a gain of $17.44 on every share.",
+      "say": "That is a gain of seventeen dollars and forty-four cents, on every share."
+    },
+    {
+      "scene": "leverage",
+      "start": 163.7,
+      "end": 167.25,
+      "text": "This idea uses borrowed money, which is called leverage.",
+      "say": "This idea uses borrowed money, which is called leverage."
+    },
+    {
+      "scene": "leverage",
+      "start": 168.2,
+      "end": 170.84,
+      "text": "You put in $25,000 of your own.",
+      "say": "You put in twenty-five thousand dollars of your own."
+    },
+    {
+      "scene": "leverage",
+      "start": 171.79,
+      "end": 175.41,
+      "text": "Your broker lends you about $100,000 more.",
+      "say": "Your broker lends you about one hundred thousand dollars more."
+    },
+    {
+      "scene": "leverage",
+      "start": 176.36,
+      "end": 182.56,
+      "text": "Together, that buys 572 shares, worth about $125,000.",
+      "say": "Together, that buys five hundred seventy-two shares, worth about one hundred twenty-five thousand dollars."
+    },
+    {
+      "scene": "leverage",
+      "start": 183.51,
+      "end": 187.66,
+      "text": "So your money controls about five times more shares than it could alone.",
+      "say": "So your money controls about five times more shares than it could alone."
     },
     {
       "scene": "invest",
-      "start": 40.6,
-      "end": 44.84,
-      "text": "By investing $25,000 with about 5× leverage,",
-      "say": "By investing twenty-five thousand dollars, with about five times leverage,"
+      "start": 190.67,
+      "end": 191.74,
+      "text": "Now, the result.",
+      "say": "Now, the result."
     },
     {
       "scene": "invest",
-      "start": 45.12,
-      "end": 48.63,
-      "text": "you could potentially make $9,975.68 — before costs.",
-      "say": "you could potentially make nearly ten thousand dollars, before costs."
+      "start": 192.69,
+      "end": 195.56,
+      "text": "By investing $25,000 this way,",
+      "say": "By investing twenty-five thousand dollars this way,"
+    },
+    {
+      "scene": "invest",
+      "start": 196.51,
+      "end": 198.33,
+      "text": "if the price rises 8%,",
+      "say": "if the price rises eight percent,"
+    },
+    {
+      "scene": "invest",
+      "start": 199.28,
+      "end": 205.37,
+      "text": "you could potentially make $9,975.68.",
+      "say": "you could potentially make nine thousand, nine hundred seventy-five dollars, and sixty-eight cents."
+    },
+    {
+      "scene": "invest",
+      "start": 206.32,
+      "end": 208.98,
+      "text": "That is about 40% on your own money.",
+      "say": "That is about forty percent, on your own money."
     },
     {
       "scene": "split",
-      "start": 49.33,
-      "end": 53.16,
-      "text": "At $50,000 and 7.5×: nearly $30,000.",
-      "say": "At fifty thousand, and seven and a half times: nearly thirty thousand."
+      "start": 211.97,
+      "end": 215.23,
+      "text": "And with $50,000 of your own, plus more borrowing,",
+      "say": "And with fifty thousand dollars of your own, plus more borrowing,"
     },
     {
-      "scene": "disclaimer",
-      "start": 54.13,
-      "end": 57.05,
-      "text": "Hypothetical. Leverage magnifies losses too.",
-      "say": "Hypothetical. Leverage magnifies losses too."
+      "scene": "split",
+      "start": 216.18,
+      "end": 219.54,
+      "text": "you could buy 1,720 shares.",
+      "say": "you could buy one thousand, seven hundred and twenty shares."
     },
     {
-      "scene": "disclaimer",
-      "start": 57.33,
-      "end": 59.69,
-      "text": "Not guaranteed. Not financial advice.",
-      "say": "Not guaranteed. Not financial advice."
+      "scene": "split",
+      "start": 220.49,
+      "end": 228.09,
+      "text": "The same 8% rise could potentially make $29,996.80.",
+      "say": "The same eight percent rise could potentially make twenty-nine thousand, nine hundred ninety-six dollars, and eighty cents."
+    },
+    {
+      "scene": "split",
+      "start": 229.04,
+      "end": 232.18,
+      "text": "That one uses about seven and a half times leverage.",
+      "say": "That one uses about seven and a half times leverage."
+    },
+    {
+      "scene": "close",
+      "start": 235.17,
+      "end": 240.53,
+      "text": "One thing to remember: borrowed money makes gains bigger, and it makes losses bigger too.",
+      "say": "One thing to remember: borrowed money makes gains bigger, and it makes losses bigger too."
+    },
+    {
+      "scene": "close",
+      "start": 241.48,
+      "end": 246.15,
+      "text": "So that is NVIDIA: the company selling the shovels of the AI age.",
+      "say": "So, that is NVIDIA. The company selling the shovels, of the AI age."
     }
-  ],
-  "voice": {
-    "engine": "kokoro-v1.0",
-    "voice": "af_heart",
-    "baseSpeed": 1.06,
-    "speed": 1.073
-  },
-  "totalDuration": 60
+  ]
 }

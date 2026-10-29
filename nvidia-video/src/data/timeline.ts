@@ -15,6 +15,8 @@ export const sceneById = (id: string) => {
   return s;
 };
 
+export const totalFrames = sec(vo.scenes[vo.scenes.length - 1].end);
+
 export const cues = vo.cues.map((c) => ({ ...c, from: sec(c.start), to: sec(c.end) }));
 
 /** The n-th voiceover cue of a scene (cue timings are written by scripts/generate-voiceover.py). */
@@ -29,16 +31,18 @@ const cue = (scene: string, n = 0) => {
  * so visuals land on the spoken word.
  */
 export const beats = {
-  founder: { dots: cue("founder", 1).start },
-  intro: { retiree: cue("intro", 1).start },
-  gpu: { gpuReveal: cue("gpu", 0).start + 1.0 },
-  datacenter: { racks: cue("datacenter").start + 1.8 },
-  revenue: { q1: cue("revenue", 0).start + 1.2, q2: cue("revenue", 1).start + 0.2, q3: cue("revenue", 1).start + 1.6 },
-  partners: { catalyst: cue("partners").start + 1.9 },
-  price: { move: cue("price", 0).start + 0.5, land: cue("price", 1).end },
-  invest: { invest: cue("invest", 0).start + 0.5, profit: cue("invest", 1).start + 0.7, circle: cue("invest", 1).start + 2.1 },
-  split: { left: sceneById("split").start + 0.1, right: cue("split").start + 0.2, emphasis: cue("split").end - 0.3 },
-  disclaimer: { losses: cue("disclaimer", 0).start + 1.0, end: cue("disclaimer", 1).start + 0.2 },
+  founder: { dots: cue("founder", 2).start },
+  intro: { retiree: cue("intro", 2).start },
+  gpu: { gpuReveal: cue("gpu", 2).start },
+  why: { rush: cue("why", 1).start, shovels: cue("why", 2).start, chips: cue("why", 3).start + 1.2, buyers: cue("why", 4).start },
+  datacenter: { racks: cue("datacenter", 1).start },
+  revenue: { q1: cue("revenue", 2).start + 0.2, q2: cue("revenue", 3).start + 0.2, q3: cue("revenue", 4).start + 0.2, growth: cue("revenue", 5).start + 1.5 },
+  partners: { catalyst: cue("partners", 1).start },
+  price: { start: cue("price", 1).start, move: cue("price", 2).start + 0.6, land: cue("price", 2).end, gain: cue("price", 3).start },
+  leverage: { own: cue("leverage", 1).start, borrow: cue("leverage", 2).start, total: cue("leverage", 3).start, multiple: cue("leverage", 4).start },
+  invest: { invest: cue("invest", 1).start, rise: cue("invest", 2).start, profit: cue("invest", 3).start + 0.8, circle: cue("invest", 4).start },
+  split: { left: sceneById("split").start + 0.3, right: cue("split", 1).start, emphasis: cue("split", 2).end - 0.5 },
+  close: { risk: cue("close", 0).start, end: cue("close", 1).start },
 };
 
 /** Sound-design hits (absolute seconds) for the impact SFX layer. */

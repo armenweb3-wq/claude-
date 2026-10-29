@@ -11,7 +11,7 @@ import { clamp, easeInOut } from "./primitives";
  * the camera pulls back, a string is drawn from the last card to the next, and the camera dives into it.
  */
 const BW = 2200;
-const BH = 3400;
+const BH = 4100;
 const CARD_W = 520;
 const CARD_H = 400;
 
@@ -84,6 +84,22 @@ const Money: React.FC<{ i: number }> = ({ i }) => (
     <div style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 54, color: colors.greenBright }}>{fmtUSD(positions[i].grossProfit, 2)}</div>
   </div>
 );
+const ShovelThumb: React.FC = () => (
+  <svg viewBox="0 0 240 130" width="100%" height="100%">
+    <path d="M90 20 V80 M78 20 H102 M76 80 H104 V96 Q90 118 76 96 Z" stroke={colors.gold} strokeWidth={6} fill="none" strokeLinecap="round" />
+    <path d="M130 65 h24 m-8 -10 l10 10 l-10 10" stroke={colors.muted} strokeWidth={5} fill="none" />
+    <rect x={168} y={40} width={50} height={50} rx={6} fill={colors.green} />
+  </svg>
+);
+const LevThumb: React.FC = () => (
+  <svg viewBox="0 0 240 130" width="100%" height="100%">
+    <rect x={14} y={50} width={44} height={40} rx={4} fill={colors.green} />
+    <rect x={58} y={50} width={168} height={40} rx={4} fill={colors.teal} opacity={0.75} />
+    <text x={120} y={30} textAnchor="middle" fontFamily={fonts.display} fontWeight={800} fontSize={24} fill={colors.text}>
+      ≈5× your money
+    </text>
+  </svg>
+);
 const FounderThumb: React.FC = () => (
   <div style={{ position: "relative", width: "100%", height: "100%" }}>
     <Portrait grade="duotone" label={false} />
@@ -99,16 +115,18 @@ const NODES: NodeDef[] = [
   { id: "founder", title: "The founder, 1993", Thumb: FounderThumb },
   { id: "intro", title: "AI everywhere", Thumb: svgThumb(Chat) },
   { id: "gpu", title: "GPUs: game chips → AI", Thumb: svgThumb(Grid) },
+  { id: "why", title: "Selling the shovels", Thumb: () => <ShovelThumb /> },
   { id: "datacenter", title: "AI data centers", Thumb: svgThumb(Racks) },
   { id: "revenue", title: "Revenue climbing", Thumb: svgThumb(Bars) },
   { id: "partners", title: "Partners + earnings", Thumb: svgThumb(Hub) },
-  { id: "price", title: "Scenario: +8%", Thumb: svgThumb(Line) },
+  { id: "price", title: "If the price rises 8%", Thumb: svgThumb(Line) },
+  { id: "leverage", title: "Borrowed money", Thumb: () => <LevThumb /> },
   { id: "invest", title: "Your $25K", Thumb: () => <Money i={0} /> },
   { id: "split", title: "Scaled to $50K", Thumb: () => <Money i={1} /> },
 ];
-const LINKS = ["", "games → AI", "AI needs GPUs", "chips → data centers", "demand → revenue", "momentum → catalyst", "catalyst → price", "price → you", "scale it up"];
+const LINKS = ["", "games → AI", "AI needs GPUs", "GPUs = shovels", "shovels → data centers", "demand → sales", "sales → partners", "results → price", "price → borrowing", "borrowing → you", "scale it up"];
 
-const nodePos = (i: number) => ({ x: i % 2 === 0 ? 640 : 1560, y: 420 + i * 320 });
+const nodePos = (i: number) => ({ x: i % 2 === 0 ? 640 : 1560, y: 420 + i * 340 });
 const rot = (i: number) => (random(`rot${i}`) - 0.5) * 6;
 
 const Card: React.FC<{ i: number; lit: number }> = ({ i, lit }) => {
@@ -163,7 +181,7 @@ const stringPath = (a: number, b: number) => {
 
 /** Board seen through a camera. `strings` = how many links are drawn (fractional = drawing). */
 const BoardView: React.FC<{ cx: number; cy: number; zoom: number; strings: number; lit: number }> = ({ cx, cy, zoom, strings, lit }) => (
-  <AbsoluteFill style={{ background: "#0b0d0c", overflow: "hidden" }}>
+  <AbsoluteFill style={{ background: colors.ink, overflow: "hidden" }}>
     <div
       style={{
         position: "absolute",
@@ -173,7 +191,7 @@ const BoardView: React.FC<{ cx: number; cy: number; zoom: number; strings: numbe
         top: 0,
         transformOrigin: "0 0",
         transform: `translate(${540 - cx * zoom}px, ${900 - cy * zoom}px) scale(${zoom})`,
-        background: `radial-gradient(1400px 1000px at 50% 30%, #1d2420, #0d100e 75%)`,
+        background: `radial-gradient(1400px 1200px at 50% 30%, ${colors.charcoal2}, ${colors.ink} 80%)`,
       }}
     >
       <div
@@ -218,8 +236,8 @@ const BoardView: React.FC<{ cx: number; cy: number; zoom: number; strings: numbe
 );
 
 const ZOOM_IN = 2.0;
-const HALF = 16; // frames either side of a scene boundary
-const FINAL_HALF = 30;
+const HALF = 34; // frames either side of a scene boundary — slow, calm travel
+const FINAL_HALF = 50;
 
 /**
  * Transition overlay. Around each scene boundary it covers the cut with the board: the camera
@@ -237,7 +255,7 @@ export const BoardTransitions: React.FC = () => {
     const opacity = Math.min(interpolate(f, [b - half, b - half + 6], [0, 1], clamp), interpolate(f, [b + half - 7, b + half], [1, 0], clamp));
     const from = nodePos(k - 1);
     if (last) {
-      const fit = { x: BW / 2, y: BH / 2 - 120, z: 0.46 };
+      const fit = { x: BW / 2, y: BH / 2 - 120, z: Math.min(1000 / BW, 1500 / BH) };
       const m = interpolate(t, [0, 0.6], [0, 1], clamp);
       return (
         <AbsoluteFill style={{ opacity }}>

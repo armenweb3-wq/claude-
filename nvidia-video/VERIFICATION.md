@@ -68,3 +68,12 @@ also shows what an 8% fall would lose (−$9,975.68).
 - **The "shovels in a gold rush" line is an analogy,** not a factual claim.
 - **The stock price is stated as "A share costs $218".** Check the current price before showing the video.
   The share count and profit maths assume exactly $218 and an 8% rise.
+
+## Documentary cut (`NvidiaExplainer`, ~4 min), latest revision
+- The same wording policy as the storybook cut: no "hypothetical" labels. The video keeps one plain risk scene ("Leverage works
+  both ways": +$9,975.68 / −$9,975.68 on $25,000), and the profit cards say "before interest and fees".
+- The price chart is a smooth rise from $218 to $235.44. It deliberately does not imitate a real price history.
+- New figure: "growth of about 41%" = (96.2 − 68.1) ÷ 68.1 = 41.3%. It is derived from the supplied revenue, so verify those numbers.
+- New claims: partners include "cloud companies, AI labs, carmakers, and governments"; NVIDIA chips are what "many AI systems
+  are built on"; "the biggest technology companies buy them". These are widely reported but should be confirmed.
+- The founder portrait shows a "JH" monogram until a licensed photo is set in `founder.photo`.

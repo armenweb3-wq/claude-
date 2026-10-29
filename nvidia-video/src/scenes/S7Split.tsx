@@ -1,6 +1,6 @@
 import React from "react";
 import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import { Backdrop, clamp, Column, ComplianceStrip, Counter, Headline, Kicker, prog } from "../components/primitives";
+import { Backdrop, clamp, Column, Counter, Headline, Kicker, prog } from "../components/primitives";
 import { fmtInt, fmtUSD, gainPerShare, positions } from "../data/content";
 import { beat } from "../data/timeline";
 import { colors, fonts } from "../theme";
@@ -96,7 +96,7 @@ const ScenarioCard: React.FC<{ index: number; start: number; emphasis: number; x
       </Row>
       <div style={{ flex: 1 }} />
       <div style={{ fontFamily: fonts.mono, fontSize: 20, letterSpacing: 2.5, color: colors.muted, textTransform: "uppercase", opacity: prog(f, profitAt, 14) }}>
-        Illustrative gross profit
+        Potential profit
       </div>
       <div
         style={{
@@ -113,7 +113,7 @@ const ScenarioCard: React.FC<{ index: number; start: number; emphasis: number; x
         <Counter to={p.grossProfit} start={profitAt} dur={28} format={(n) => fmtUSD(n, 2)} />
       </div>
       <div style={{ fontFamily: fonts.body, fontSize: 22, color: colors.muted, marginTop: 6, opacity: prog(f, profitAt + 20, 14) }}>
-        before costs
+        before interest and fees
       </div>
     </div>
   );
@@ -130,7 +130,7 @@ export const S7Split: React.FC = () => {
     <AbsoluteFill>
       <Backdrop glow={0.8} />
       <Column top={210} gap={22}>
-        <Kicker delay={2}>Same +8% move · bigger position</Kicker>
+        <Kicker delay={2}>Same 8% rise · bigger position</Kicker>
         <Headline text="Scale it up." accent={["up"]} delay={4} size={88} />
       </Column>
       {/* Glowing centre divider */}
@@ -169,7 +169,6 @@ export const S7Split: React.FC = () => {
         SCENARIO B
       </div>
       <ScenarioCard index={1} start={right} emphasis={emph} x={552} />
-      <ComplianceStrip text="Before costs · hypothetical · not guaranteed" delay={right} />
       <div
         style={{
           position: "absolute",

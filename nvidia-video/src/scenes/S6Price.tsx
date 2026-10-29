@@ -1,6 +1,6 @@
 import React from "react";
-import { AbsoluteFill, interpolate, random, useCurrentFrame } from "remotion";
-import { Backdrop, clamp, Column, ComplianceStrip, Counter, easeInOut, Headline, Kicker, prog } from "../components/primitives";
+import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
+import { Backdrop, clamp, Column, Counter, easeInOut, Headline, Kicker, prog } from "../components/primitives";
 import { fmtUSD, price, priceMovePct } from "../data/content";
 import { beat } from "../data/timeline";
 import { colors, fonts } from "../theme";
@@ -19,8 +19,7 @@ const N = 80;
 const path = Array.from({ length: N + 1 }).map((_, i) => {
   const t = i / N;
   const trend = price.start + (price.target - price.start) * (t * t * (3 - 2 * t));
-  const wobble = [3, 7, 13].reduce((acc, k, j) => acc + Math.sin(t * Math.PI * k + random(`ph${j}`) * 6) / (j + 1), 0);
-  const wiggle = 1.6 * wobble * Math.sin(t * Math.PI);
+  const wiggle = 0; // a clean, smooth rise: this shows the idea, not a real price history
   return { x: PAD.l + t * plotW, y: yOf(trend + wiggle) };
 });
 
@@ -28,7 +27,7 @@ export const S6Price: React.FC = () => {
   const f = useCurrentFrame();
   const move = beat("price", "move");
   const land = beat("price", "land");
-  const p = interpolate(f, [move, land], [0, 1], { ...clamp, easing: easeInOut });
+  const p = interpolate(f, [move, Math.max(move + 30, land)], [0, 1], { ...clamp, easing: easeInOut });
   const shown = Math.max(1, Math.round(p * N));
   const pts = path.slice(0, shown + 1);
   const head = pts[pts.length - 1];
@@ -40,14 +39,14 @@ export const S6Price: React.FC = () => {
     <AbsoluteFill>
       <Backdrop />
       <Column top={210} gap={24}>
-        <Kicker delay={4}>Hypothetical scenario</Kicker>
-        <Headline text="What if the stock rises 8%?" accent={["8%?"]} delay={8} size={92} />
+        <Kicker delay={4}>The investment idea</Kicker>
+        <Headline text="If the price rises 8%…" accent={["8%…"]} delay={8} size={92} />
       </Column>
 
       {/* Price ticker */}
       <div style={{ position: "absolute", left: 72, right: 72, top: 520, display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
         <div>
-          <div style={{ fontFamily: fonts.mono, fontSize: 24, letterSpacing: 3, color: colors.muted, textTransform: "uppercase" }}>NVDA · scenario price</div>
+          <div style={{ fontFamily: fonts.mono, fontSize: 24, letterSpacing: 3, color: colors.muted, textTransform: "uppercase" }}>NVDA · price per share</div>
           <div style={{ fontFamily: fonts.display, fontWeight: 700, fontSize: 112, color: colors.text, lineHeight: 1.05, letterSpacing: -2 }}>
             <Counter from={price.start} to={price.target} start={move} dur={land - move} format={(n) => fmtUSD(n, 2)} />
           </div>
@@ -97,11 +96,10 @@ export const S6Price: React.FC = () => {
         <polyline points={line} fill="none" stroke={colors.green} strokeWidth={5} strokeLinejoin="round" strokeLinecap="round" />
         <circle cx={head.x} cy={head.y} r={22 + Math.sin(f / 4) * 4} fill={colors.green} opacity={0.25} />
         <circle cx={head.x} cy={head.y} r={10} fill={colors.white} stroke={colors.green} strokeWidth={4} />
-        <text x={PAD.l} y={H + 4} fontFamily={fonts.mono} fontSize={22} fill={colors.dim} opacity={axisIn}>
-          ILLUSTRATIVE PATH · NOT HISTORICAL DATA · NOT A FORECAST
+        <text x={PAD.l + plotW / 2} y={H + 10} textAnchor="middle" fontFamily={fonts.display} fontWeight={700} fontSize={44} fill={colors.greenBright} opacity={prog(f, beat("price", "gain"), 16)}>
+          +{fmtUSD(price.target - price.start, 2)} on every share
         </text>
       </svg>
-      <ComplianceStrip />
     </AbsoluteFill>
   );
 };

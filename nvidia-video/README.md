@@ -1,5 +1,14 @@
 # NVIDIA investment explainer: Remotion video
 
+Two cuts share the same figures (`src/data/content.ts`) and the same voice pipeline:
+
+| Composition | Style | Length |
+|---|---|---|
+| **`NvidiaSimple`** | Calm, storybook explainer on navy paper: hand-drawn cartoon figures, serif titles, one idea per shot, slow narration, big captions. Made for older viewers. Code in `src/simple/`, script in `src/data/voiceover-simple.json`. | ≈2:45 (follows the narration) |
+| `NvidiaExplainer` | Fast, premium financial-documentary cut with the connect-the-dots board. | 60 s |
+
+For the simple cut: `npm run voiceover:simple`, `npm run captions:simple`, `npm run render:simple`, then `npm run master:simple`.
+
 A 60-second vertical explainer (1080 × 1920, 30 fps, 1,800 frames) built entirely from code:
 React + TypeScript motion graphics. There's no stock footage, so every visual and number is reproducible.
 

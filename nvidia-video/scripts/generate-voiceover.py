@@ -1,7 +1,7 @@
 """Generate the narration with Kokoro TTS (Apache-2.0 open model) and time the whole video to it.
 
 Usage:
-  python scripts/generate-voiceover.py --model DIR [--voice af_heart]
+  python scripts/generate-voiceover.py --model DIR [--script src/data/voiceover.json] [--voice af_heart]
 
 DIR holds kokoro-v1.0.onnx + voices-v1.0.bin from
 https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.0
@@ -9,11 +9,12 @@ Needs: pip install kokoro-onnx soundfile numpy
 
 Each cue in src/data/voiceover.json is spoken from its `say` field (numbers written out for
 natural pronunciation). The script then lays out the whole timeline: every scene gets at least
-its `minDuration` and enough room for its lines, and any spare time up to `totalDuration` is
-shared out in proportion. If the narration can't fit, the voice speeds up slightly (max 1.25x).
+its `minDuration` and enough room for its lines. With a fixed `totalDuration`, spare time is shared
+out in proportion, and if the narration can't fit the voice speeds up slightly (max 1.25x). With
+`totalDuration: null` the video simply runs as long as the narration needs (slow, relaxed pacing).
 Scene boundaries and cue start/end are written back to voiceover.json, so scenes, subtitles and
 animation beats (src/data/timeline.ts) all follow the real voice.
-Output: public/audio/voiceover.wav, one continuous track.
+Output: the script's `voiceoverFile` under public/, one continuous track.
 """
 import argparse, json, os
 import numpy as np
@@ -24,14 +25,16 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ap = argparse.ArgumentParser()
 ap.add_argument("--model", required=True)
 ap.add_argument("--voice")
+ap.add_argument("--script", default="src/data/voiceover.json")
 args = ap.parse_args()
 
-vo_path = os.path.join(ROOT, "src/data/voiceover.json")
+vo_path = os.path.join(ROOT, args.script)
 vo = json.load(open(vo_path))
 voice = args.voice or vo["voice"]["voice"]
 FPS, TOTAL = vo["fps"], vo["totalDuration"]
 k = Kokoro(os.path.join(args.model, "kokoro-v1.0.onnx"), os.path.join(args.model, "voices-v1.0.bin"))
-LEAD, GAP, TAIL = 0.4, 0.28, 0.3  # seconds
+pacing = vo.get("pacing", {})
+LEAD, GAP, TAIL = pacing.get("lead", 0.4), pacing.get("gap", 0.28), pacing.get("tail", 0.3)  # seconds
 
 def speak(text, speed):
     audio, sr = k.create(text, voice=voice, speed=speed, lang="en-us")
@@ -47,10 +50,12 @@ for _ in range(5):
         idx = [i for i, c in enumerate(vo["cues"]) if c["scene"] == s["id"]]
         speech = sum(len(clips[i][0]) / clips[i][1] for i in idx)
         need.append(max(s["minDuration"], LEAD + speech + GAP * (len(idx) - 1) + TAIL))
-    if sum(need) <= TOTAL or speed >= 1.25:
+    if TOTAL is None or sum(need) <= TOTAL or speed >= 1.25:
         break
     speed = min(1.25, speed * (sum(need) - len(need) * (LEAD + TAIL)) / (TOTAL - len(need) * (LEAD + TAIL)) * 1.01)
 
+if TOTAL is None:
+    TOTAL = round(sum(need) * FPS) / FPS
 spare = max(0.0, TOTAL - sum(need))
 durs = [n + spare * n / sum(need) for n in need]
 t = 0.0
@@ -76,8 +81,8 @@ print(f"voice speed {speed:.2f}x; total needed {sum(need):.2f}s of {TOTAL}s")
 
 track = track[: int(TOTAL * SR)]
 track = track / (np.max(np.abs(track)) or 1) * 0.89
-sf.write(os.path.join(ROOT, "public/audio/voiceover.wav"), track, SR)
+sf.write(os.path.join(ROOT, "public", vo["voiceoverFile"]), track, SR)
 vo["voice"]["speed"] = round(speed, 3)
 json.dump(vo, open(vo_path, "w"), indent=2, ensure_ascii=False)
 open(vo_path, "a").write("\n")
-print("wrote public/audio/voiceover.wav and updated scene + cue timings in src/data/voiceover.json")
+print(f"wrote public/{vo['voiceoverFile']} and updated scene + cue timings in {args.script}")

@@ -17,7 +17,7 @@ const list = frames.length
 
 const browserExecutable = process.env.REMOTION_BROWSER_EXECUTABLE ?? null;
 const serveUrl = await bundle({ entryPoint: path.join(root, "src/index.ts") });
-const composition = await selectComposition({ serveUrl, id: "NvidiaExplainer", browserExecutable });
+const composition = await selectComposition({ serveUrl, id: process.env.COMP ?? "NvidiaExplainer", browserExecutable });
 for (const frame of list) {
   const output = path.join(outDir, `f${String(frame).padStart(4, "0")}.jpg`);
   await renderStill({ composition, serveUrl, frame, output, imageFormat: "jpeg", jpegQuality: 85, browserExecutable });

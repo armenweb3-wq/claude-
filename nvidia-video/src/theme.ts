@@ -7,6 +7,8 @@ const families = [
   { family: "Inter Tight", file: "inter-tight", weights: [500, 600, 700, 800] },
   { family: "JetBrains Mono", file: "jetbrains-mono", weights: [400, 500, 700] },
   { family: "Caveat", file: "caveat", weights: [600, 700] },
+  { family: "Playfair Display", file: "playfair", weights: [700, 900] },
+  { family: "Patrick Hand", file: "patrick-hand", weights: [400] },
 ];
 for (const f of families) {
   for (const w of f.weights) {

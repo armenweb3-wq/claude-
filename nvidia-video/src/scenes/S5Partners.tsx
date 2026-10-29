@@ -23,7 +23,7 @@ export const S5Partners: React.FC = () => {
       <Column top={210} gap={24}>
         <Kicker delay={4}>{swap < 0.5 ? "Commercial partnerships" : "Upcoming catalyst"}</Kicker>
         <div style={{ position: "relative", height: 200 }}>
-          <div style={{ position: "absolute", inset: 0, opacity: 1 - swap }}>
+          <div style={{ position: "absolute", inset: 0, opacity: 1 - prog(f, cat - 12, 8) }}>
             <Headline text="Built into the AI economy." accent={["AI"]} delay={8} size={92} />
           </div>
           <div style={{ position: "absolute", inset: 0, opacity: swap }}>

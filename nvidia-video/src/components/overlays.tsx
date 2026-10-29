@@ -1,6 +1,6 @@
 import React from "react";
-import { AbsoluteFill, Audio, interpolate, staticFile, useCurrentFrame } from "remotion";
-import { audio, cues, scenes } from "../data/timeline";
+import { AbsoluteFill, Audio, interpolate, Sequence, staticFile, useCurrentFrame } from "remotion";
+import { audio, cues, impacts, scenes, sec } from "../data/timeline";
 import { colors, fonts, SAFE } from "../theme";
 import { clamp } from "./primitives";
 
@@ -103,12 +103,9 @@ export const ChapterRail: React.FC = () => {
   );
 };
 
-/** Music bed (placeholder) ducked under every voiceover cue, plus the optional VO file. */
+/** Music bed (placeholder) ducked under every voiceover cue, the narration, and transition/impact SFX. */
 export const Soundtrack: React.FC = () => {
-  const duck = (frame: number) => {
-    const speaking = cues.some((c) => frame >= c.from - 6 && frame <= c.to + 6);
-    return speaking ? 0.28 : 0.55;
-  };
+  const speaking = (frame: number) => cues.some((c) => frame >= c.from - 6 && frame <= c.to + 6);
   return (
     <>
       {audio.musicFile && (
@@ -117,14 +114,24 @@ export const Soundtrack: React.FC = () => {
           volume={(fr) => {
             const fadeIn = interpolate(fr, [0, 45], [0, 1], clamp);
             const fadeOut = interpolate(fr, [1740, 1800], [1, 0], clamp);
-            // Smooth the duck by averaging a small window.
+            // Average a small window so the duck ramps instead of clicking.
             let v = 0;
-            for (let k = -6; k <= 6; k++) v += duck(fr + k);
-            return (v / 13) * fadeIn * fadeOut;
+            for (let k = -8; k <= 8; k++) v += speaking(fr + k) ? 0.11 : 0.3;
+            return (v / 17) * fadeIn * fadeOut;
           }}
         />
       )}
       {audio.voiceoverFile && <Audio src={staticFile(audio.voiceoverFile)} />}
+      {scenes.slice(1).map((s) => (
+        <Sequence key={s.id} from={s.from - 16} durationInFrames={36} layout="none">
+          <Audio src={staticFile("audio/whoosh.wav")} volume={0.35} />
+        </Sequence>
+      ))}
+      {impacts.map((t) => (
+        <Sequence key={t} from={sec(t) - 2} durationInFrames={50} layout="none">
+          <Audio src={staticFile("audio/impact.wav")} volume={0.32} />
+        </Sequence>
+      ))}
     </>
   );
 };

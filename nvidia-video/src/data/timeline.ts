@@ -18,21 +18,25 @@ export const sceneById = (id: string) => {
 export const cues = vo.cues.map((c) => ({ ...c, from: sec(c.start), to: sec(c.end) }));
 
 /**
- * Animation beats, in absolute seconds, locked to the voiceover cues above.
- * Scenes convert them to local frames with `beat(sceneId, key)`.
+ * Animation beats, in absolute seconds, derived from the measured voiceover cue timings
+ * (scripts/generate-voiceover.py writes them) so visuals land on the spoken word.
  */
+const c = vo.cues;
 export const beats = {
-  intro: { retiree: 3.7 },
-  gpu: { gpuReveal: 11.5 },
-  datacenter: { racks: 17.6 },
-  revenue: { q1: 22.6, q2: 25.0, q3: 26.9 },
-  partners: { catalyst: 32.6 },
-  price: { move: 37.6, land: 41.0 },
-  split: { left: 43.2, right: 48.4, emphasis: 52.6 },
-  disclaimer: { losses: 55.2, end: 58.2 },
-} as const;
+  intro: { retiree: c[1].start },
+  gpu: { gpuReveal: c[3].start },
+  datacenter: { racks: c[5].start - 0.4 },
+  revenue: { q1: c[6].start + 1.6, q2: c[7].start + 0.1, q3: c[7].start + 1.5 },
+  partners: { catalyst: c[9].start - 0.2 },
+  price: { move: c[10].start + 1.2, land: c[11].end },
+  split: { left: c[12].start, right: c[13].start - 0.3, emphasis: c[13].end - 0.2 },
+  disclaimer: { losses: c[14].start + 1.2, end: c[15].start },
+};
+
+/** Sound-design hits (absolute seconds) for the impact SFX layer. */
+export const impacts = [beats.revenue.q3, beats.price.land, beats.split.emphasis];
 
 export const beat = <S extends keyof typeof beats>(scene: S, key: keyof (typeof beats)[S]) =>
-  sec((beats[scene][key] as number) - sceneById(scene).start);
+  sec((beats[scene][key] as unknown as number) - sceneById(scene).start);
 
 export const audio = { voiceoverFile: vo.voiceoverFile as string | null, musicFile: vo.musicFile as string | null };

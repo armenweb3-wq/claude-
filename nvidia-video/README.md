@@ -29,8 +29,8 @@ If Chrome Headless Shell can't be downloaded (sandboxed CI), point Remotion at a
 | 21–29 s | Revenue chart $68.1B → $81.6B → $96.2B (zero-based axis) | `S4Revenue.tsx` |
 | 29–36 s | Partnership network → earnings catalyst | `S5Partners.tsx` |
 | 36–43 s | Scenario price $218 → $235.44 (+8%) | `S6Price.tsx` |
-| 43–54 s | Split-screen reveal: $25k / 572 sh vs $50k / 1,720 sh | `S7Split.tsx` |
-| 54–60 s | Assumptions, downside, disclaimer, end card | `S8Disclaimer.tsx` |
+| 43–53.5 s | Split-screen reveal: $25k / 572 sh vs $50k / 1,720 sh | `S7Split.tsx` |
+| 53.5–60 s | Assumptions, downside, disclaimer, end card | `S8Disclaimer.tsx` |
 
 Scenes cross-dissolve over 14 frames (blur + scale). A chapter rail, burned-in subtitles,
 animated film grain and a vignette sit on top of every scene (`src/Video.tsx`).
@@ -42,9 +42,17 @@ animated film grain and a vignette sit on top of every scene (`src/Video.tsx`).
 - **Voiceover, subtitles and scene timing:** `src/data/voiceover.json`. Scene boundaries, VO cue windows,
   and subtitle text all come from this one file. Animation beats that must hit a spoken word
   live in `beats` in `src/data/timeline.ts` (absolute seconds).
-- **Audio:** `public/audio/music-placeholder.mp3` is a generated ambient **placeholder**. Swap in
-  a licensed track (same filename, or change `musicFile`). For voiceover, drop `public/audio/voiceover.mp3`
-  and set `"voiceoverFile": "audio/voiceover.mp3"`. Music automatically ducks under every VO cue.
+- **Audio:** four layers, all placed from the same timeline:
+  - **Narration** (`public/audio/voiceover.wav`). Generated with [Kokoro](https://github.com/thewh1teagle/kokoro-onnx),
+    an open-weight TTS model (Apache-2.0), voice `af_heart`. To regenerate after editing a line's `say` text:
+    put `kokoro-v1.0.onnx` + `voices-v1.0.bin` (from the kokoro-onnx `model-files-v1.0` release) in
+    `models/kokoro/`, `pip install kokoro-onnx soundfile numpy`, then `npm run voiceover && npm run captions`.
+    The script fits each scene's lines into the scene, rewrites the cue timings, and the subtitles and animation
+    beats follow automatically. To use a human voice actor instead, record to the timings in `VOICEOVER.md`
+    and replace `voiceover.wav`.
+  - **Music bed** (`music-placeholder.mp3`). A generated **placeholder**. Swap in a licensed track with the
+    same filename. It ducks automatically under every spoken line.
+  - **SFX:** `whoosh.wav` on every scene transition, `impact.wav` on the three big reveals (both generated).
 - **Brand:** `src/theme.ts` (NVIDIA green `#76B900`, black, charcoal, white; Inter / Inter Tight /
   JetBrains Mono bundled in `public/fonts`).
 

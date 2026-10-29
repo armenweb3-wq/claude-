@@ -6,7 +6,9 @@
   "scripts": {
     "studio": "remotion studio src/index.ts",
     "preview:stills": "node scripts/stills.mjs",
-    "render": "remotion render src/index.ts NvidiaExplainer out/nvidia-explainer.mp4 --codec h264 --crf 18",
+    "render": "remotion render src/index.ts NvidiaExplainer out/nvidia-explainer.mp4 --codec h264 --crf 18 --audio-codec aac --audio-bitrate 320k",
+    "voiceover": "python scripts/generate-voiceover.py --model ./models/kokoro",
+    "captions": "node scripts/export-captions.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

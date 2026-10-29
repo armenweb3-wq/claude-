@@ -3,3 +3,4 @@ out/*
 !out/.gitkeep
 !out/*.srt
 !out/*.vtt
+models

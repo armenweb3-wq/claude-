@@ -210,11 +210,11 @@ export const S1Intro: React.FC = () => {
       <Column top={210} gap={30}>
         <Kicker delay={6}>The AI era</Kicker>
         <div style={{ position: "relative", height: 320 }}>
-          <div style={{ position: "absolute", inset: 0, opacity: 1 - head2 }}>
+          <div style={{ position: "absolute", inset: 0, opacity: 1 - prog(f, retiree - 9, 8) }}>
             <Headline text="AI is already part of everyday life." accent={["AI"]} delay={10} size={100} />
           </div>
           <div style={{ position: "absolute", inset: 0, opacity: head2 }}>
-            <Headline text="Even at 80, AI is part of the daily routine." accent={["80"]} delay={retiree + 2} size={92} />
+            <Headline text="Even at 80, AI is part of the daily routine." accent={["80"]} delay={retiree + 1} size={92} />
           </div>
         </div>
       </Column>

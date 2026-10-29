@@ -196,11 +196,11 @@ export const S3DataCenter: React.FC = () => {
       <Column top={210} gap={28}>
         <Kicker delay={4}>The infrastructure</Kicker>
         <div style={{ position: "relative", height: 300 }}>
-          <div style={{ position: "absolute", inset: 0, opacity: 1 - textSwap }}>
+          <div style={{ position: "absolute", inset: 0, opacity: 1 - prog(f, r - 9, 8) }}>
             <Headline text="NVIDIA: a leading supplier of AI computing." accent={["NVIDIA:"]} delay={6} size={86} />
           </div>
           <div style={{ position: "absolute", inset: 0, opacity: textSwap }}>
-            <Headline text="From a single chip to entire AI data centers." accent={["AI", "data", "centers"]} delay={r + 2} size={86} />
+            <Headline text="From a single chip to entire AI data centers." accent={["AI", "data", "centers"]} delay={r + 1} size={86} />
           </div>
         </div>
       </Column>

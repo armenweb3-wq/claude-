@@ -4,9 +4,13 @@ import { NvidiaSimple, simpleDuration } from "./simple/SimpleVideo";
 import { totalFrames } from "./data/timeline";
 import { NvidiaExplainer } from "./Video";
 import { EduCompositions } from "./edu/Root";
+import { NvidiaExplainer as NvidiaOriginal } from "./v1/Video";
+import { VIDEO as V1 } from "./v1/theme";
 
 export const RemotionRoot: React.FC = () => (
   <>
+    {/* The original 60-second documentary cut (restored, with the updated return page and closing card). */}
+    <Composition id="NvidiaOriginal60" component={NvidiaOriginal} {...V1} />
     {/* Client education series (16:9). */}
     <EduCompositions />
     {/* Slow, storybook cut for older viewers (~2:45, length follows the narration). */}

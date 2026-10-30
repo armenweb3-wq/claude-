@@ -1,0 +1,167 @@
+{
+  "fps": 30,
+  "voiceoverFile": "audio/v1-voiceover.wav",
+  "musicFile": "audio/music-placeholder.mp3",
+  "scenes": [
+    {
+      "id": "intro",
+      "title": "AI in everyday life",
+      "start": 0,
+      "end": 8
+    },
+    {
+      "id": "gpu",
+      "title": "Why AI needs GPUs",
+      "start": 8,
+      "end": 15
+    },
+    {
+      "id": "datacenter",
+      "title": "GPU & data-center sequence",
+      "start": 15,
+      "end": 21
+    },
+    {
+      "id": "revenue",
+      "title": "Quarterly revenue",
+      "start": 21,
+      "end": 29
+    },
+    {
+      "id": "partners",
+      "title": "Partnerships & earnings catalyst",
+      "start": 29,
+      "end": 36
+    },
+    {
+      "id": "price",
+      "title": "Stock-price scenario",
+      "start": 36,
+      "end": 43
+    },
+    {
+      "id": "split",
+      "title": "Your potential return",
+      "start": 43,
+      "end": 53.5
+    },
+    {
+      "id": "disclaimer",
+      "title": "In summary",
+      "start": 53.5,
+      "end": 60
+    }
+  ],
+  "cues": [
+    {
+      "scene": "intro",
+      "start": 0.35,
+      "end": 2.54,
+      "text": "AI is already part of everyday life.",
+      "say": "AI is already part of everyday life."
+    },
+    {
+      "scene": "intro",
+      "start": 2.84,
+      "end": 6.38,
+      "text": "Even an 80-year-old retiree now asks AI for help.",
+      "say": "Even an eighty-year-old retiree now asks AI for help."
+    },
+    {
+      "scene": "gpu",
+      "start": 8.35,
+      "end": 10.99,
+      "text": "But every answer needs enormous computing power.",
+      "say": "But every answer needs enormous computing power."
+    },
+    {
+      "scene": "gpu",
+      "start": 11.29,
+      "end": 14.73,
+      "text": "That takes GPUs — thousands of calculations at once.",
+      "say": "That takes GPUs. Thousands of calculations, at once."
+    },
+    {
+      "scene": "datacenter",
+      "start": 15.35,
+      "end": 18.61,
+      "text": "NVIDIA is a leading supplier of AI chips and systems",
+      "say": "NVIDIA is a leading supplier of AI chips and systems"
+    },
+    {
+      "scene": "datacenter",
+      "start": 18.91,
+      "end": 20.55,
+      "text": "powering today's data centers.",
+      "say": "powering today's data centers."
+    },
+    {
+      "scene": "revenue",
+      "start": 21.35,
+      "end": 25.01,
+      "text": "Quarterly revenue rose from $68.1 billion,",
+      "say": "Quarterly revenue rose from sixty-eight point one billion dollars,"
+    },
+    {
+      "scene": "revenue",
+      "start": 25.31,
+      "end": 28.62,
+      "text": "to $81.6 billion, then $96.2 billion.",
+      "say": "to eighty-one point six, then ninety-six point two billion."
+    },
+    {
+      "scene": "partners",
+      "start": 29.35,
+      "end": 32.51,
+      "text": "NVIDIA partners across cloud, enterprise and AI,",
+      "say": "NVIDIA partners across cloud, enterprise and AI,"
+    },
+    {
+      "scene": "partners",
+      "start": 32.81,
+      "end": 35.45,
+      "text": "and its next earnings report is a key catalyst.",
+      "say": "and its next earnings report is a key catalyst."
+    },
+    {
+      "scene": "price",
+      "start": 36.35,
+      "end": 39.44,
+      "text": "Picture a scenario: the stock rises from $218",
+      "say": "Picture a scenario. The stock rises from two eighteen,"
+    },
+    {
+      "scene": "price",
+      "start": 39.74,
+      "end": 42.64,
+      "text": "to $235.44. Up 8%.",
+      "say": "to two thirty-five forty-four. Up eight percent."
+    },
+    {
+      "scene": "split",
+      "start": 43.35,
+      "end": 48.62,
+      "text": "Invest $25,000, and an 8% rise could return $9,975.68.",
+      "say": "Invest twenty-five thousand dollars, and an eight percent rise could return nearly ten thousand."
+    },
+    {
+      "scene": "split",
+      "start": 48.92,
+      "end": 52.99,
+      "text": "Invest $50,000, and it could return $29,996.80.",
+      "say": "Invest fifty thousand, and it could return almost thirty thousand dollars."
+    },
+    {
+      "scene": "disclaimer",
+      "start": 53.85,
+      "end": 57.34,
+      "text": "Illustrative figures, before costs. Always do your own research.",
+      "say": "Illustrative figures, before costs. Always do your own research."
+    }
+  ],
+  "voice": {
+    "engine": "kokoro-v1.0",
+    "voice": "af_heart",
+    "baseSpeed": 1.08
+  }
+}

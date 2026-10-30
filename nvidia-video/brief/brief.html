@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>NVIDIA: The AI Infrastructure Story</title>
+<style>
+  @font-face { font-family: "Inter"; src: url("../public/fonts/inter-400.woff2"); font-weight: 400; }
+  @font-face { font-family: "Inter"; src: url("../public/fonts/inter-500.woff2"); font-weight: 500; }
+  @font-face { font-family: "Inter"; src: url("../public/fonts/inter-600.woff2"); font-weight: 600; }
+  @font-face { font-family: "Inter"; src: url("../public/fonts/inter-700.woff2"); font-weight: 700; }
+  @font-face { font-family: "Inter Tight"; src: url("../public/fonts/inter-tight-700.woff2"); font-weight: 700; }
+  @font-face { font-family: "Inter Tight"; src: url("../public/fonts/inter-tight-800.woff2"); font-weight: 800; }
+  @font-face { font-family: "JetBrains Mono"; src: url("../public/fonts/jetbrains-mono-500.woff2"); font-weight: 500; }
+  @font-face { font-family: "JetBrains Mono"; src: url("../public/fonts/jetbrains-mono-700.woff2"); font-weight: 700; }
+  @font-face { font-family: "Caveat"; src: url("../public/fonts/caveat-700.woff2"); font-weight: 700; }
+
+  :root {
+    --green: #76B900; --green2: #9BE12A; --ink: #07090A; --char: #141617; --char2: #1E2122;
+    --line: rgba(255,255,255,0.12); --text: #F2F4F1; --muted: #A3A8A5; --dim: #6B706D; --red: #E5484D; --gold: #F6C451;
+  }
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--ink); }
+  body { font-family: "Inter", sans-serif; color: var(--text); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page {
+    width: 210mm; height: 297mm; position: relative; overflow: hidden; page-break-after: always;
+    padding: 20mm 18mm 18mm;
+    background:
+      radial-gradient(520px 520px at 85% 8%, rgba(118,185,0,0.16), transparent 65%),
+      radial-gradient(600px 500px at 0% 100%, rgba(118,185,0,0.07), transparent 70%),
+      var(--ink);
+  }
+  .page:last-child { page-break-after: auto; }
+  .grid-bg { position: absolute; inset: 0; opacity: 0.18; pointer-events: none;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 46px 46px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent); }
+  .rail { position: absolute; top: 10mm; left: 18mm; right: 18mm; display: flex; justify-content: space-between; font: 500 8.5pt "JetBrains Mono"; letter-spacing: 2.5px; color: var(--muted); text-transform: uppercase; }
+  .rail b { color: var(--green); font-weight: 700; }
+  .foot { position: absolute; bottom: 9mm; left: 18mm; right: 18mm; display: flex; justify-content: space-between; font: 500 7.5pt "JetBrains Mono"; letter-spacing: 1.5px; color: var(--dim); }
+  .kicker { display: flex; align-items: center; gap: 10px; font: 700 9pt "JetBrains Mono"; letter-spacing: 4px; color: var(--green); text-transform: uppercase; margin-bottom: 8px; }
+  .kicker::before { content: ""; width: 28px; height: 2px; background: var(--green); }
+  h1 { font: 800 34pt/1.02 "Inter Tight"; letter-spacing: -1px; margin: 0 0 10px; }
+  h2 { font: 800 27pt/1.05 "Inter Tight"; letter-spacing: -0.6px; margin: 0 0 8px; }
+  h3 { font: 700 14pt/1.2 "Inter Tight"; margin: 0 0 7px; }
+  .accent { color: var(--green2); }
+  p { font-size: 11.5pt; line-height: 1.55; color: #D6DAD7; margin: 0 0 10px; }
+  .lead { font-size: 13.5pt; line-height: 1.5; color: var(--text); }
+  .card { background: linear-gradient(160deg, var(--char2), var(--char)); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .card.glow { border-color: rgba(118,185,0,0.7); box-shadow: 0 0 40px rgba(118,185,0,0.18); }
+  .row { display: flex; gap: 12px; }
+  .col { flex: 1; }
+  .stat { font: 800 26pt/1 "Inter Tight"; color: var(--green2); letter-spacing: -0.5px; }
+  .stat.white { color: var(--text); }
+  .label { font: 500 7.5pt "JetBrains Mono"; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+  .small { font-size: 9.8pt; color: var(--muted); line-height: 1.45; }
+  .src { font: 500 7pt "JetBrains Mono"; color: var(--dim); letter-spacing: 0.5px; margin-top: 6px; }
+  ul.clean { list-style: none; padding: 0; margin: 0; }
+  ul.clean li { position: relative; padding-left: 18px; margin: 0 0 9px; font-size: 11.5pt; line-height: 1.45; color: #D6DAD7; }
+  ul.clean li::before { content: ""; position: absolute; left: 2px; top: 6px; width: 7px; height: 7px; border-radius: 2px; background: var(--green); }
+  .hand { font: 700 15pt "Caveat"; color: var(--green2); }
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 99px; background: var(--green); color: var(--ink); font: 800 10pt "Inter Tight"; }
+  .num { font-variant-numeric: tabular-nums; }
+  table.t { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  table.t td { padding: 7px 4px; border-bottom: 1px solid var(--line); color: #D6DAD7; }
+  table.t td:last-child { text-align: right; font: 700 11pt "Inter Tight"; color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- 1 · COVER -->
+<section class="page">
+  <div class="grid-bg"></div>
+  <div class="rail"><span><b>NVDA</b> · Investor briefing</span><span>October 2026</span></div>
+  <div style="margin-top: 38mm;">
+    <div class="kicker">The AI era</div>
+    <h1 style="font-size: 50pt;">The AI<br/>infrastructure<br/><span class="accent">story.</span></h1>
+    <p class="lead" style="max-width: 135mm; margin-top: 14px;">Why AI is now part of everyday life, even at 80. Why NVIDIA sits at the centre of it. And why the next quarterly report matters.</p>
+  </div>
+  <!-- chip line-art -->
+  <svg width="300" height="300" viewBox="-80 -80 760 760" style="position:absolute; right: 8mm; top: 138mm; opacity: 0.95">
+    <defs><filter id="g"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+    <g stroke="#76B900" stroke-width="3" opacity="0.5" fill="none">
+      <path d="M144 120 v-160 M196 120 v-120 M248 120 v-180 M300 120 v-140 M352 120 v-170 M404 120 v-110 M456 120 v-150"/>
+      <path d="M144 480 v150 M196 480 v120 M248 480 v170 M300 480 v130 M352 480 v160 M404 480 v120 M456 480 v140"/>
+      <path d="M120 144 h-150 M120 196 h-120 M120 248 h-170 M120 300 h-130 M120 352 h-160 M120 404 h-110 M120 456 h-140"/>
+      <path d="M480 144 h160 M480 196 h120 M480 248 h170 M480 300 h130 M480 352 h150 M480 404 h120 M480 456 h140"/>
+    </g>
+    <rect x="120" y="120" width="360" height="360" rx="18" fill="#0c0e0d" stroke="#3a3f3c" stroke-width="2"/>
+    <rect x="140" y="150" width="56" height="130" rx="6" fill="#1d2120" stroke="#444a47"/><rect x="140" y="300" width="56" height="130" rx="6" fill="#1d2120" stroke="#444a47"/>
+    <rect x="404" y="150" width="56" height="130" rx="6" fill="#1d2120" stroke="#444a47"/><rect x="404" y="300" width="56" height="130" rx="6" fill="#1d2120" stroke="#444a47"/>
+    <rect x="214" y="160" width="172" height="280" rx="8" fill="#1a2410" stroke="#76B900" stroke-width="2" filter="url(#g)"/>
+    <g fill="#76B900">
+      <rect x="226" y="174" width="32" height="36" rx="3" opacity=".7"/><rect x="266" y="174" width="32" height="36" rx="3" opacity=".35"/><rect x="306" y="174" width="32" height="36" rx="3" opacity=".55"/><rect x="346" y="174" width="32" height="36" rx="3" opacity=".25"/>
+      <rect x="226" y="218" width="32" height="36" rx="3" opacity=".3"/><rect x="266" y="218" width="32" height="36" rx="3" opacity=".65"/><rect x="306" y="218" width="32" height="36" rx="3" opacity=".4"/><rect x="346" y="218" width="32" height="36" rx="3" opacity=".7"/>
+      <rect x="226" y="262" width="32" height="36" rx="3" opacity=".55"/><rect x="266" y="262" width="32" height="36" rx="3" opacity=".25"/><rect x="306" y="262" width="32" height="36" rx="3" opacity=".7"/><rect x="346" y="262" width="32" height="36" rx="3" opacity=".35"/>
+      <rect x="226" y="306" width="32" height="36" rx="3" opacity=".4"/><rect x="266" y="306" width="32" height="36" rx="3" opacity=".7"/><rect x="306" y="306" width="32" height="36" rx="3" opacity=".3"/><rect x="346" y="306" width="32" height="36" rx="3" opacity=".6"/>
+      <rect x="226" y="350" width="32" height="36" rx="3" opacity=".7"/><rect x="266" y="350" width="32" height="36" rx="3" opacity=".45"/><rect x="306" y="350" width="32" height="36" rx="3" opacity=".6"/><rect x="346" y="350" width="32" height="36" rx="3" opacity=".3"/>
+      <rect x="226" y="394" width="32" height="36" rx="3" opacity=".35"/><rect x="266" y="394" width="32" height="36" rx="3" opacity=".6"/><rect x="306" y="394" width="32" height="36" rx="3" opacity=".25"/><rect x="346" y="394" width="32" height="36" rx="3" opacity=".7"/>
+    </g>
+  </svg>
+  <div class="row" style="position:absolute; left: 18mm; right: 18mm; bottom: 26mm;">
+    <div class="card col"><div class="label">Latest quarter revenue</div><div class="stat num">$96.2B</div><div class="small">Q2 fiscal 2027 · up 106% year on year</div></div>
+    <div class="card col"><div class="label">Next quarter guidance</div><div class="stat white num">$108B</div><div class="small">Q3 fiscal 2027 · ±2%</div></div>
+    <div class="card col glow"><div class="label">Next report</div><div class="stat num">17 Nov</div><div class="small">2026 · results &amp; earnings call</div></div>
+  </div>
+  <div class="foot"><span>NVDA · THE AI INFRASTRUCTURE STORY</span><span>01</span></div>
+</section>
+
+<!-- 2 · AI EVERYWHERE, EVEN AT 80 -->
+<section class="page">
+  <div class="grid-bg"></div>
+  <div class="rail"><span><b>01</b> / 06 · AI in everyday life</span><span>NVDA</span></div>
+  <div style="margin-top: 8mm;">
+    <div class="kicker">The AI era</div>
+    <h2>Even at <span class="accent">80</span>, AI is part of the daily routine.</h2>
+    <p class="lead">You no longer need technical skills to use AI. You simply ask, in your own words, by typing or by talking, and it answers like a patient helper.</p>
+  </div>
+
+  <h3 style="margin-top: 14px;">Why it's so easy for older adults</h3>
+  <div class="row" style="margin-bottom: 14px;">
+    <div class="card col"><h3>No menus to learn</h3><p class="small" style="margin:0">Ask a question as you'd ask a person. No apps to master, no settings to find.</p></div>
+    <div class="card col"><h3>Voice works</h3><p class="small" style="margin:0">Speak instead of type. That helps with small screens, eyesight and arthritis.</p></div>
+    <div class="card col"><h3>Endlessly patient</h3><p class="small" style="margin:0">Ask again, ask simpler, ask in another language. It never gets tired.</p></div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <h3>What a retiree actually uses it for</h3>
+      <ul class="clean">
+        <li>Explaining a letter from the bank, the council or an insurer in plain words</li>
+        <li>Understanding a doctor's note or a medicine leaflet, then preparing questions for the next appointment</li>
+        <li>Writing a birthday message or an email to the grandchildren</li>
+        <li>Recipes, gardening, travel plans and timetables</li>
+        <li>Translating while travelling, or chatting with family abroad</li>
+        <li>Spotting a suspicious message before clicking a link</li>
+      </ul>
+      <div class="card" style="margin-top: 10px;">
+        <div class="hand">“Can you explain this letter in simple words?”</div>
+        <div class="small">That single question, asked millions of times a day, runs on computers in a data center.</div>
+      </div>
+    </div>
+    <div class="col">
+      <h3>The numbers behind the trend</h3>
+      <div class="card" style="margin-bottom: 10px;">
+        <div class="label">Adults 50+ using AI tools (AARP)</div>
+        <svg width="100%" height="92" viewBox="0 0 300 92">
+          <text x="0" y="22" fill="#A3A8A5" font-family="JetBrains Mono" font-size="11">2024</text>
+          <rect x="44" y="10" width="72" height="18" rx="4" fill="#3E6300"/><text x="124" y="24" fill="#F2F4F1" font-family="Inter Tight" font-weight="800" font-size="14">18%</text>
+          <text x="0" y="62" fill="#A3A8A5" font-family="JetBrains Mono" font-size="11">2025</text>
+          <rect x="44" y="50" width="120" height="18" rx="4" fill="#76B900"/><text x="172" y="64" fill="#9BE12A" font-family="Inter Tight" font-weight="800" font-size="14">30%</text>
+          <text x="0" y="88" fill="#6B706D" font-family="JetBrains Mono" font-size="9">nearly doubled in one year</text>
+        </svg>
+      </div>
+      <div class="row" style="margin-bottom: 10px;">
+        <div class="card col"><div class="stat num" style="font-size: 21pt; white-space: nowrap">8 in 10</div><div class="small">adults 50+ have used some form of AI (AARP, Jan 2026)</div></div>
+        <div class="card col"><div class="stat white num" style="font-size: 21pt; white-space: nowrap">10%→19%</div><div class="small">adults 65+ who have used ChatGPT, 2025 → 2026 (Pew)</div></div>
+      </div>
+      <div class="card"><div class="label">Most common AI uses, adults 50+ (AARP, Jan 2025)</div>
+        <table class="t"><tr><td>Asking AI to answer questions</td><td>38%</td></tr><tr><td>Virtual assistants</td><td>36%</td></tr><tr><td>Voice-to-text</td><td>32%</td></tr></table>
+      </div>
+      <div class="src">Sources: AARP 2025 Tech Trends; AARP AI surveys 2025–2026; Pew Research Center 2025–2026. See page 7.</div>
+    </div>
+  </div>
+  <div class="foot"><span>NVDA · THE AI INFRASTRUCTURE STORY</span><span>02</span></div>
+</section>
+
+<!-- 3 · WHY GPUs / WHY NVIDIA -->
+<section class="page">
+  <div class="grid-bg"></div>
+  <div class="rail"><span><b>02</b> / 06 · Why AI needs NVIDIA</span><span>NVDA</span></div>
+  <div style="margin-top: 8mm;">
+    <div class="kicker">The infrastructure</div>
+    <h2>In a gold rush, <span class="accent">sell the shovels.</span></h2>
+    <p class="lead">Every AI answer needs enormous computing power. The chips that do this work best are GPUs, and NVIDIA is a leading supplier of them.</p>
+  </div>
+  <div class="row" style="margin-top: 12px;">
+    <div class="card col">
+      <div class="label">A regular chip (CPU)</div>
+      <svg width="100%" height="70" viewBox="0 0 300 70"><g fill="#1E2122" stroke="rgba(255,255,255,0.15)">
+        <rect x="0" y="10" width="30" height="50" rx="5"/><rect x="38" y="10" width="30" height="50" rx="5" fill="#76B900"/><rect x="76" y="10" width="30" height="50" rx="5"/><rect x="114" y="10" width="30" height="50" rx="5"/><rect x="152" y="10" width="30" height="50" rx="5"/><rect x="190" y="10" width="30" height="50" rx="5"/><rect x="228" y="10" width="30" height="50" rx="5"/><rect x="266" y="10" width="30" height="50" rx="5"/></g></svg>
+      <p class="small" style="margin:0">A few powerful cores, working through tasks largely one after another.</p>
+    </div>
+    <div class="card col glow">
+      <div class="label" style="color: var(--green)">A GPU</div>
+      <svg width="100%" height="70" viewBox="0 0 300 70" id="gpu"></svg>
+      <p class="small" style="margin:0">Thousands of small cores working at the same time. That is exactly what AI's maths needs.</p>
+    </div>
+  </div>
+  <div class="row" style="margin-top: 14px;">
+    <div class="col">
+      <h3>The gold-rush analogy</h3>
+      <p>In a gold rush, many people search for gold. The sellers of shovels do well no matter who finds it. In today's AI rush, the "shovels" are the chips and systems that AI is built on.</p>
+      <h3>From games to AI</h3>
+      <p>Jensen Huang co-founded NVIDIA in 1993 to make graphics chips for video games. The same parallel design turned out to be ideal for AI. Today those chips fill giant <b>data centers</b>, the buildings where AI actually runs.</p>
+    </div>
+    <div class="col">
+      <h3>Connecting the dots</h3>
+      <svg width="100%" height="220" viewBox="0 0 300 220">
+        <g stroke="#76B900" stroke-width="2.5" fill="none" stroke-dasharray="4 6"><path d="M60 30 L240 80 L60 140 L240 190"/></g>
+        <g font-family="Inter Tight" font-weight="700" font-size="13" fill="#F2F4F1">
+          <circle cx="60" cy="30" r="20" fill="#141617" stroke="#76B900" stroke-width="3"/><text x="88" y="35">Video games</text>
+          <circle cx="240" cy="80" r="20" fill="#141617" stroke="#76B900" stroke-width="3"/><text x="212" y="118" text-anchor="end">GPUs</text>
+          <circle cx="60" cy="140" r="20" fill="#141617" stroke="#76B900" stroke-width="3"/><text x="88" y="145">AI</text>
+          <circle cx="240" cy="190" r="20" fill="#76B900" stroke="#9BE12A" stroke-width="3"/><text x="212" y="196" text-anchor="end">Data centers</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <div class="card" style="margin-top: 8px;">
+    <div class="row" style="align-items: center;">
+      <div class="col"><div class="label">Data Center revenue, Q2 FY27</div><div class="stat num">$89.0B</div></div>
+      <div class="col"><div class="label">Share of total revenue</div><div class="stat white num">≈ 93%</div></div>
+      <div class="col"><div class="label">Year-on-year growth</div><div class="stat num">+117%</div></div>
+    </div>
+    <div class="src">Source: NVIDIA Q2 fiscal 2027 results, 26 Aug 2026.</div>
+  </div>
+  <div class="foot"><span>NVDA · THE AI INFRASTRUCTURE STORY</span><span>03</span></div>
+</section>
+
+<!-- 4 · WHY QUARTERLY REPORTS MATTER -->
+<section class="page">
+  <div class="grid-bg"></div>
+  <div class="rail"><span><b>03</b> / 06 · Why quarterly reports matter</span><span>NVDA</span></div>
+  <div style="margin-top: 8mm;">
+    <div class="kicker">Upcoming catalyst</div>
+    <h2>Four times a year, the company <span class="accent">shows its numbers.</span></h2>
+    <p class="lead">Listed companies report their results every quarter. For a fast-growing company like NVIDIA, these reports are often the biggest single moments of the year for the share price.</p>
+  </div>
+  <div class="row" style="margin-top: 10px;">
+    <div class="col">
+      <h3>What's inside a quarterly report</h3>
+      <ul class="clean">
+        <li><b>Revenue</b>: how much the company sold in the quarter</li>
+        <li><b>Profit &amp; margins</b>: how much of each dollar it keeps (NVIDIA's gross margin was 75.0% in Q2)</li>
+        <li><b>Segments</b>: where the money came from (for NVIDIA, mostly Data Center)</li>
+        <li><b>Guidance</b>: management's forecast for the next quarter</li>
+        <li><b>Earnings call</b>: executives explain the results and answer analysts' questions</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Why the share price reacts</h3>
+      <p>The price already reflects what investors <i>expect</i>. A report moves it when results or guidance come in <b>above or below</b> those expectations.</p>
+      <div class="card" style="margin-bottom: 8px;"><span class="pill">Beat &amp; raise</span> <span class="small">results above expectations <i>and</i> a stronger forecast; often supportive for the price.</span></div>
+      <div class="card"><span class="pill" style="background: var(--gold)">Miss or cautious guidance</span> <span class="small">can push the price down, even if the business is still growing.</span></div>
+    </div>
+  </div>
+  <div class="card glow" style="margin-top: 14px;">
+    <div class="label" style="color: var(--green)">A real example from this year</div>
+    <svg width="100%" height="150" viewBox="0 0 640 150">
+      <g font-family="Inter Tight" font-weight="800">
+        <text x="0" y="22" font-size="13" fill="#A3A8A5" font-family="JetBrains Mono" font-weight="500">Q1 REPORT (MAY) · NVIDIA'S Q2 FORECAST</text>
+        <rect x="0" y="34" width="455" height="34" rx="6" fill="#3E6300"/><text x="465" y="58" font-size="20" fill="#F2F4F1">$91.0B</text>
+        <text x="0" y="96" font-size="13" fill="#A3A8A5" font-family="JetBrains Mono" font-weight="500">Q2 REPORT (AUG) · WHAT IT ACTUALLY DELIVERED</text>
+        <rect x="0" y="108" width="481" height="34" rx="6" fill="#76B900"/><text x="491" y="132" font-size="20" fill="#9BE12A">$96.2B</text>
+        <text x="640" y="132" font-size="16" fill="#9BE12A" text-anchor="end">+$5.2B</text>
+      </g>
+    </svg>
+    <p class="small" style="margin: 2px 0 0">NVIDIA beat its own forecast by about $5.2 billion, then guided the next quarter to <b>$108 billion</b>. The next report will show whether it delivers again.</p>
+  </div>
+  <div class="row" style="margin-top: 12px;">
+    <div class="card col"><div class="label">Quarter ended</div><div class="stat white num" style="font-size: 18pt">25 Oct 2026</div><div class="small">Q3 fiscal 2027</div></div>
+    <div class="card col glow"><div class="label">Results &amp; call</div><div class="stat num" style="font-size: 18pt">17 Nov 2026</div><div class="small">2 p.m. Pacific time</div></div>
+    <div class="card col"><div class="label">Forecast to beat</div><div class="stat white num" style="font-size: 18pt">$108B ±2%</div><div class="small">range ≈ $105.8B – $110.2B</div></div>
+  </div>
+  <div class="foot"><span>NVDA · THE AI INFRASTRUCTURE STORY</span><span>04</span></div>
+</section>
+
+<!-- 5 · THE NUMBERS -->
+<section class="page">
+  <div class="grid-bg"></div>
+  <div class="rail"><span><b>04</b> / 06 · The numbers</span><span>NVDA</span></div>
+  <div style="margin-top: 8mm;">
+    <div class="kicker">Quarterly revenue · USD</div>
+    <h2>And the numbers <span class="accent">show it.</span></h2>
+    <p class="lead">Three reported quarters in a row of rising revenue, and a forecast for a fourth.</p>
+  </div>
+  <div class="card" style="margin-top: 10px;">
+    <svg width="100%" height="400" viewBox="0 0 640 330">
+      <g font-family="JetBrains Mono" font-size="11" fill="#6B706D">
+        <line x1="60" x2="630" y1="290" y2="290" stroke="#6B706D" stroke-width="1.5"/>
+        <line x1="60" x2="630" y1="230" y2="230" stroke="rgba(255,255,255,0.1)"/><text x="50" y="234" text-anchor="end">$25B</text>
+        <line x1="60" x2="630" y1="170" y2="170" stroke="rgba(255,255,255,0.1)"/><text x="50" y="174" text-anchor="end">$50B</text>
+        <line x1="60" x2="630" y1="110" y2="110" stroke="rgba(255,255,255,0.1)"/><text x="50" y="114" text-anchor="end">$75B</text>
+        <line x1="60" x2="630" y1="50" y2="50" stroke="rgba(255,255,255,0.1)"/><text x="50" y="54" text-anchor="end">$100B</text>
+        <text x="50" y="294" text-anchor="end">$0</text>
+      </g>
+      <!-- scale: 2.4 px per $1B, baseline 290 -->
+      <defs><pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#141617"/><line x1="0" y1="0" x2="0" y2="8" stroke="#76B900" stroke-width="3"/></pattern></defs>
+      <g font-family="Inter Tight" font-weight="800" text-anchor="middle">
+        <rect x="90" y="126.6" width="100" height="163.4" rx="6" fill="#3a4a26"/><text x="140" y="116" font-size="20" fill="#F2F4F1">$68.1B</text>
+        <rect x="225" y="94.2" width="100" height="195.8" rx="6" fill="#4d6a1e"/><text x="275" y="84" font-size="20" fill="#F2F4F1">$81.6B</text>
+        <rect x="360" y="59.1" width="100" height="230.9" rx="6" fill="#76B900"/><text x="410" y="49" font-size="20" fill="#9BE12A">$96.2B</text>
+        <rect x="495" y="30.8" width="100" height="259.2" rx="6" fill="url(#hatch)" stroke="#76B900" stroke-width="2" stroke-dasharray="6 5"/><text x="545" y="21" font-size="20" fill="#F2F4F1">$108B</text>
+      </g>
+      <g font-family="JetBrains Mono" font-size="11" fill="#A3A8A5" text-anchor="middle">
+        <text x="140" y="310">Q4 FY26</text><text x="140" y="324" fill="#6B706D">to Jan 2026</text>
+        <text x="275" y="310">Q1 FY27</text><text x="275" y="324" fill="#6B706D">to Apr 2026</text>
+        <text x="410" y="310">Q2 FY27</text><text x="410" y="324" fill="#6B706D">to Jul 2026</text>
+        <text x="545" y="310" fill="#9BE12A">Q3 FY27</text><text x="545" y="324" fill="#6B706D">guidance</text>
+      </g>
+    </svg>
+  </div>
+  <div class="row" style="margin-top: 12px;">
+    <div class="card col"><div class="label">Q4 → Q1</div><div class="stat num">+19.8%</div></div>
+    <div class="card col"><div class="label">Q1 → Q2</div><div class="stat num">+17.9%</div></div>
+    <div class="card col"><div class="label">Over two quarters</div><div class="stat num">+41%</div></div>
+    <div class="card col"><div class="label">Year on year (Q2)</div><div class="stat white num">+106%</div></div>
+  </div>
+  <div class="card" style="margin-top: 12px;">
+    <h3>What the chart tells us</h3>
+    <ul class="clean" style="margin: 0">
+      <li>Sales grew every quarter, from <b>$68.1B</b> to <b>$96.2B</b> in six months.</li>
+      <li>Almost all of it comes from <b>Data Center</b>: the chips behind AI.</li>
+      <li>NVIDIA expects <b>$108B</b> next. The report on 17 November will show whether it delivers.</li>
+    </ul>
+  </div>
+  <p class="small" style="margin-top: 12px;">NVIDIA's fiscal year ends in late January, so "fiscal 2027" mostly covers calendar 2026. The hatched bar is the company's forecast, not a result. Sources: NVIDIA quarterly results releases (Feb, May and Aug 2026).</p>
+  <div class="foot"><span>NVDA · THE AI INFRASTRUCTURE STORY</span><span>05</span></div>
+</section>
+
+<!-- 6 · WHAT TO WATCH + THE IDEA -->
+<section class="page">
+  <div class="grid-bg"></div>
+  <div class="rail"><span><b>05</b> / 06 · The investment idea</span><span>NVDA</span></div>
+  <div style="margin-top: 8mm;">
+    <div class="kicker">On 17 November, watch for</div>
+  </div>
+  <div class="row">
+    <div class="card col"><h3>Revenue vs $108B</h3><p class="small" style="margin:0">Did NVIDIA beat its own forecast again?</p></div>
+    <div class="card col"><h3>Data Center</h3><p class="small" style="margin:0">The engine of growth: $89.0B last quarter.</p></div>
+    <div class="card col"><h3>Next forecast</h3><p class="small" style="margin:0">Guidance for Q4 often matters most.</p></div>
+  </div>
+  <div style="margin-top: 16px;">
+    <div class="kicker">Your investment · potential return</div>
+    <h2>What it could <span class="accent">make you.</span></h2>
+    <p class="lead" style="margin-bottom: 12px;">The idea: buy NVIDIA shares at <b>$218</b>. If the price rises <b>8%</b> to <b>$235.44</b>, every share gains <b>$17.44</b>.</p>
+  </div>
+  <div class="card glow" style="margin-bottom: 12px; position: relative;">
+    <div style="display:flex; justify-content: space-between; align-items: baseline;"><span class="label">You invest</span><span class="stat white num" style="font-size: 26pt">$25,000</span></div>
+    <div class="hand">↓ if NVDA rises 8%</div>
+    <div class="label" style="color: var(--green)">Potential return</div>
+    <div style="display:flex; justify-content: space-between; align-items: center;">
+      <span class="stat num" style="font-size: 40pt">$9,975.68</span><span class="pill" style="font-size: 14pt">+40%</span>
+    </div>
+    <div class="small">572 shares · ≈5× leverage ($124,696 position) · before costs</div>
+  </div>
+  <div class="card glow" style="position: relative;">
+    <div style="display:flex; justify-content: space-between; align-items: baseline;"><span class="label">You invest</span><span class="stat white num" style="font-size: 26pt">$50,000</span></div>
+    <div class="hand">↓ if NVDA rises 8%</div>
+    <div class="label" style="color: var(--green)">Potential return</div>
+    <div style="display:flex; justify-content: space-between; align-items: center;">
+      <span class="stat num" style="font-size: 40pt">$29,996.80</span><span class="pill" style="font-size: 14pt">+60%</span>
+    </div>
+    <div class="small">1,720 shares · ≈7.5× leverage ($374,960 position) · before costs</div>
+  </div>
+  <div class="foot"><span>NVDA · THE AI INFRASTRUCTURE STORY</span><span>06</span></div>
+</section>
+
+<!-- 7 · SUMMARY, NOTES & SOURCES -->
+<section class="page">
+  <div class="grid-bg"></div>
+  <div class="rail"><span><b>06</b> / 06 · In summary</span><span>NVDA</span></div>
+  <div style="margin-top: 16mm; text-align: center;">
+    <div class="label" style="color: var(--green); letter-spacing: 8px;">NVDA</div>
+    <h1 style="font-size: 40pt; margin-top: 12px;">The AI<br/>infrastructure story.</h1>
+    <div style="width: 60px; height: 3px; background: var(--green); margin: 18px auto;"></div>
+  </div>
+  <div class="row" style="margin-top: 6px;">
+    <div class="card col"><div class="label">AI everywhere</div><p class="small" style="margin: 6px 0 0">8 in 10 adults over 50 have used some form of AI. Every answer runs in a data center.</p></div>
+    <div class="card col"><div class="label">The shovel seller</div><p class="small" style="margin: 6px 0 0">NVIDIA's chips power that work. Data Center revenue reached $89.0B last quarter.</p></div>
+    <div class="card col glow"><div class="label">The catalyst</div><p class="small" style="margin: 6px 0 0">Next results on 17 Nov 2026, against a $108B forecast.</p></div>
+  </div>
+
+  <div style="margin-top: 22px;">
+    <h3>Notes</h3>
+    <p class="small">The investment figures are an illustrative example based on an 8% price move from $218 and the leverage shown (≈5× and ≈7.5×). They are before interest, fees and taxes and aren't guaranteed; leverage can increase losses as well as gains. Check the current share price before acting, as share counts and returns depend on it. This brief is for information only and isn't financial advice.</p>
+  </div>
+  <div style="margin-top: 8px;">
+    <h3>Sources</h3>
+    <ul class="clean" style="font-size: 9pt;">
+      <li style="font-size: 9pt">NVIDIA, financial results releases for Q4 FY2026, Q1 FY2027 (May 2026) and Q2 FY2027 (26 Aug 2026), via nvidianews.nvidia.com / investor.nvidia.com</li>
+      <li style="font-size: 9pt">NVIDIA Q3 FY2027 results date announcement (17 Nov 2026, 2 p.m. PT), as reported by Investing.com, 28 Oct 2026</li>
+      <li style="font-size: 9pt">AARP, 2025 Technology Trends &amp; Adults 50+ (survey Sep–Oct 2025); AARP AI surveys of adults 50+ (Jan 2025, Jan 2026)</li>
+      <li style="font-size: 9pt">Pew Research Center, ChatGPT use by age (2025) and "How opinions and use of AI differ by age" (June 2026)</li>
+    </ul>
+    <p class="src">Figures were checked against published summaries of these sources in October 2026. Survey figures depend on how each survey defines "using AI".</p>
+  </div>
+  <div class="foot"><span>NVDA · THE AI INFRASTRUCTURE STORY</span><span>07</span></div>
+</section>
+
+<script>
+  // GPU core grid (deterministic)
+  const g = document.getElementById("gpu");
+  let s = "";
+  for (let r = 0; r < 6; r++) for (let c = 0; c < 30; c++) {
+    const v = (Math.sin(r * 3.1 + c * 1.7) + 1) / 2;
+    s += `<rect x="${c * 10}" y="${8 + r * 10}" width="8" height="8" rx="1.5" fill="#76B900" opacity="${(0.3 + v * 0.7).toFixed(2)}"/>`;
+  }
+  g.innerHTML = s;
+</script>
+</body>
+</html>

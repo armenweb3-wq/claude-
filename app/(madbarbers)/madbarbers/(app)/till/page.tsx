@@ -39,13 +39,13 @@ export default function TillPage() {
         sub="Record every cut as it's paid — cash or card."
         action={
           <Button size="lg" onClick={() => openWith({})}>
-            + Record payment
+            Done · record a cut
           </Button>
         }
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Today gross" value={t.gross} sub={`${t.count} cuts`} />
+        <Stat label="Today gross" value={t.gross} sub={`${t.count} cuts · ${eur(t.tips)} tips`} />
         <Stat label="Cash taken" value={t.cash} />
         <Stat label="Card (JCC)" value={t.card} />
         {mine ? (
@@ -142,7 +142,7 @@ export default function TillPage() {
         )}
       </Card>
 
-      <Sheet open={open} onClose={() => setOpen(false)} title="Record payment">
+      <Sheet open={open} onClose={() => setOpen(false)} title="Done">
         <SaleForm prefill={prefill} onDone={() => setOpen(false)} />
       </Sheet>
     </div>

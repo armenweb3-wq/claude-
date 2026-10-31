@@ -36,6 +36,7 @@ export interface Totals {
   walkIns: number;
   booked: number;
   ownClients: number;
+  tips: number;
 }
 
 export function totals(sales: Sale[]): Totals {
@@ -49,8 +50,10 @@ export function totals(sales: Sale[]): Totals {
     walkIns: 0,
     booked: 0,
     ownClients: 0,
+    tips: 0,
   };
   for (const s of sales) {
+    t.tips += s.tip ?? 0;
     t.count++;
     t.gross += s.amount;
     t.shop += s.shopShare;
@@ -66,6 +69,7 @@ export function totals(sales: Sale[]): Totals {
   t.barber = round2(t.barber);
   t.cash = round2(t.cash);
   t.card = round2(t.card);
+  t.tips = round2(t.tips);
   return t;
 }
 
@@ -372,4 +376,128 @@ export function noShowsIn(db: DB, opts: { from?: Date; to?: Date; barberId?: str
       (!opts.barberId || a.barberId === opts.barberId) &&
       (!opts.shopId || a.shopId === opts.shopId),
   );
+}
+
+// ---------------------------------------------------------------------------
+// Notifications are derived from the data, not stored: anything that happened
+// recently that the signed-in person would want to know about.
+
+export type NotificationKind = "booking" | "tip" | "no-show" | "card" | "slipping" | "cancelled";
+
+export interface Notification {
+  id: string;
+  kind: NotificationKind;
+  at: string;
+  title: string;
+  body: string;
+  /** Deep link target (hash route name). */
+  href: string;
+  clientId?: string | null;
+}
+
+export function notificationsFor(
+  db: DB,
+  who: { role: "owner" | "barber" | "client"; barberId?: string; clientId?: string },
+  now = new Date(),
+): Notification[] {
+  const out: Notification[] = [];
+  const since = addDays(now, -7).toISOString();
+  const name = (id: string | null | undefined, fallback?: string) =>
+    (id && db.clients.find((c) => c.id === id)?.name) || fallback || "Walk-in";
+  const barberName = (id: string) => db.barbers.find((b) => b.id === id)?.name ?? "";
+  const svc = (id: string) => db.services.find((s) => s.id === id)?.name ?? "";
+  const mine = (barberId: string) => (who.role === "owner" ? true : who.barberId === barberId);
+
+  if (who.role === "client") {
+    for (const a of db.appointments) {
+      if (a.clientId !== who.clientId || a.status !== "booked" || a.startsAt < now.toISOString()) continue;
+      out.push({
+        id: `n-${a.id}`,
+        kind: "booking",
+        at: a.createdAt,
+        title: `Booked: ${fmtWhen(a.startsAt)}`,
+        body: `${svc(a.serviceId)} with ${barberName(a.barberId)}`,
+        href: "visits",
+      });
+    }
+    return out.sort((a, b) => b.at.localeCompare(a.at));
+  }
+
+  for (const a of db.appointments) {
+    if (!mine(a.barberId)) continue;
+    if (a.bookedBy === "client" && a.createdAt >= since && a.status === "booked") {
+      out.push({
+        id: `n-book-${a.id}`,
+        kind: "booking",
+        at: a.createdAt,
+        title: `New booking · ${name(a.clientId, a.clientName)}`,
+        body: `${fmtWhen(a.startsAt)} · ${svc(a.serviceId)}${who.role === "owner" ? ` · ${barberName(a.barberId)}` : ""}`,
+        href: "calendar",
+        clientId: a.clientId,
+      });
+    }
+    if (a.status === "no-show" && a.startsAt >= since) {
+      out.push({
+        id: `n-ns-${a.id}`,
+        kind: "no-show",
+        at: a.startsAt,
+        title: `No-show · ${name(a.clientId, a.clientName)}`,
+        body: `${fmtWhen(a.startsAt)} · ${svc(a.serviceId)}${who.role === "owner" ? ` · ${barberName(a.barberId)}` : ""}`,
+        href: "clients",
+        clientId: a.clientId,
+      });
+    }
+  }
+  const today = startOfDay(now).toISOString();
+  for (const s of db.sales) {
+    if (!mine(s.barberId) || !s.tip || s.at < today) continue;
+    out.push({
+      id: `n-tip-${s.id}`,
+      kind: "tip",
+      at: s.at,
+      title: `Tip €${s.tip} · ${name(s.clientId)}`,
+      body: `${svc(s.serviceId)} · ${s.method}${who.role === "owner" ? ` · ${barberName(s.barberId)}` : ""}`,
+      href: who.role === "owner" ? "dashboard" : "chair",
+      clientId: s.clientId,
+    });
+  }
+  if (who.role === "owner") {
+    for (const e of db.cardEvents) {
+      if (e.status !== "unmatched") continue;
+      out.push({
+        id: `n-card-${e.id}`,
+        kind: "card",
+        at: e.at,
+        title: `Card payment €${e.amount} not assigned`,
+        body: `${db.shops.find((s) => s.id === e.shopId)?.name} · •••• ${e.last4}`,
+        href: "till",
+      });
+    }
+  }
+  const slipping = clientInsights(db, who.role === "owner" ? {} : { barberId: who.barberId }, now).filter(
+    (i) => i.status === "slipping",
+  );
+  if (slipping.length) {
+    out.push({
+      id: `n-slip-${dayKeyOf(now)}`,
+      kind: "slipping",
+      at: startOfDay(now).toISOString(),
+      title: `${slipping.length} client${slipping.length > 1 ? "s" : ""} slipping away`,
+      body: slipping
+        .slice(0, 3)
+        .map((i) => i.client.name.split(" ")[0])
+        .join(", ") + (slipping.length > 3 ? "…" : ""),
+      href: who.role === "owner" ? "clients" : "chair",
+    });
+  }
+  return out.sort((a, b) => b.at.localeCompare(a.at)).slice(0, 40);
+}
+
+function fmtWhen(iso: string) {
+  const d = new Date(iso);
+  return `${d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function dayKeyOf(d: Date) {
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }

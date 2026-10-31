@@ -38,7 +38,10 @@ export interface NewSaleInput {
   serviceId: string;
   amount: number;
   method: PayMethod;
+  tip?: number;
   source: SaleSource;
+  /** Force the deal used. Defaults to "own" when the client belongs to the barber. */
+  clientType?: ClientType;
   cardEventId?: string;
   appointmentId?: string;
   at?: string;
@@ -184,7 +187,8 @@ export function ChairbookProvider({ children }: { children: React.ReactNode }) {
           const barber = d.barbers.find((b) => b.id === input.barberId);
           if (!barber) return d;
           const client = input.clientId ? d.clients.find((c) => c.id === input.clientId) : null;
-          const clientType: ClientType = client && client.ownerBarberId === barber.id ? "own" : "walkin";
+          const clientType: ClientType =
+            input.clientType ?? (client && client.ownerBarberId === barber.id ? "own" : "walkin");
           const split = settle(input.amount, ruleFor(barber.deal, clientType));
           const sale: Sale = {
             id,
@@ -196,6 +200,7 @@ export function ChairbookProvider({ children }: { children: React.ReactNode }) {
             serviceId: input.serviceId,
             amount: input.amount,
             method: input.method,
+            tip: input.tip || undefined,
             cardEventId: input.cardEventId,
             appointmentId: input.appointmentId,
             at: input.at ?? new Date().toISOString(),
@@ -230,6 +235,7 @@ export function ChairbookProvider({ children }: { children: React.ReactNode }) {
             minutes: service?.minutes ?? 30,
             status: "booked",
             bookedBy: input.bookedBy,
+            createdAt: new Date().toISOString(),
           };
           return {
             ...d,

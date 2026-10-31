@@ -11,7 +11,7 @@ const sans = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Chairbook — barbershop ledger & bookings",
+  title: "Mad Barbers — bookings, till Mad Barbers — barbershop ledger & bookings barber deals",
   description:
     "Bookings, cash & card payments, barber deals and shop insights for multi-location barbershops.",
 };
@@ -26,7 +26,7 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function ChairbookLayout({ children }: { children: React.ReactNode }) {
+export default function MadBarbersLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={sans.variable}>
       <body className="min-h-screen bg-canvas font-sans text-ink antialiased">

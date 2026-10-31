@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import { describeRule, ruleFor, settle } from "@/lib/chairbook/deals";
 import { eur, fmtTime } from "@/lib/chairbook/format";
 import { useChairbook } from "@/lib/chairbook/store";
-import type { PayMethod } from "@/lib/chairbook/types";
-import { Badge, Button, Field, Input, Segmented, Select, cx } from "./ui";
+import type { ClientType, PayMethod } from "@/lib/chairbook/types";
+import { Badge, Button, Input, Select, cx } from "./ui";
 
 export interface SalePrefill {
   shopId?: string;
@@ -20,8 +20,15 @@ export interface SalePrefill {
   source?: "booked" | "walk-in";
 }
 
-type ClientMode = "walkin" | "existing" | "new";
+type Who = "own" | "walkin" | "shop";
+const QUICK_AMOUNTS = [15, 17, 18, 20, 25, 30, 40, 50];
+const QUICK_TIPS = [0, 1, 2, 5];
 
+/**
+ * The "Done" flow. Built for a barber on a phone between two clients:
+ * who was it → how much → tip → cash or card → Done. Everything else is
+ * optional. The split is shown live and saved on the ledger row.
+ */
 export function SaleForm({ prefill = {}, onDone }: { prefill?: SalePrefill; onDone: () => void }) {
   const { db, role, me, addSale, addClient } = useChairbook();
 
@@ -30,76 +37,70 @@ export function SaleForm({ prefill = {}, onDone }: { prefill?: SalePrefill; onDo
   const shopId = barber?.shopId ?? prefill.shopId ?? db.shops[0]?.id ?? "";
   const shop = db.shops.find((s) => s.id === shopId);
 
-  const [clientMode, setClientMode] = useState<ClientMode>(prefill.clientId ? "existing" : "walkin");
-  const [clientId, setClientId] = useState<string>(prefill.clientId ?? "");
-  const [clientQuery, setClientQuery] = useState("");
-  const [newName, setNewName] = useState(prefill.clientName ?? "");
-  const [newPhone, setNewPhone] = useState("");
-  const [newOwner, setNewOwner] = useState<string>(barberId); // who the new client belongs to
-
-  const [serviceId, setServiceId] = useState(prefill.serviceId ?? db.services[0]?.id ?? "");
-  const [amount, setAmount] = useState<string>(
-    String(prefill.amount ?? db.services.find((s) => s.id === (prefill.serviceId ?? db.services[0]?.id))?.price ?? ""),
+  const prefClient = prefill.clientId ? db.clients.find((c) => c.id === prefill.clientId) : null;
+  const [who, setWho] = useState<Who>(
+    prefClient ? (prefClient.ownerBarberId === barberId ? "own" : "shop") : prefill.clientName ? "walkin" : "walkin",
   );
+  const [clientId, setClientId] = useState<string>(prefill.clientId ?? "");
+  const [query, setQuery] = useState("");
+  const [newName, setNewName] = useState(prefill.clientName ?? "");
+  const [showPicker, setShowPicker] = useState(false);
+
+  const [serviceId, setServiceId] = useState(prefill.serviceId ?? "cut");
+  const [amount, setAmount] = useState<string>(
+    String(prefill.amount ?? db.services.find((s) => s.id === (prefill.serviceId ?? "cut"))?.price ?? 20),
+  );
+  const [tip, setTip] = useState<string>("0");
   const [method, setMethod] = useState<PayMethod>(prefill.method ?? "cash");
   const [cardEventId, setCardEventId] = useState<string | undefined>(prefill.cardEventId);
+  const [showTerminal, setShowTerminal] = useState(!!prefill.cardEventId);
 
   const amountNum = Number(amount) || 0;
-
+  const tipNum = Number(tip) || 0;
   const client = clientId ? db.clients.find((c) => c.id === clientId) : null;
-  const clientType: "own" | "walkin" =
-    clientMode === "new"
-      ? newOwner === barberId
-        ? "own"
-        : "walkin"
-      : client && client.ownerBarberId === barberId
-        ? "own"
-        : "walkin";
+  const clientType: ClientType = who === "own" ? "own" : "walkin";
   const rule = barber ? ruleFor(barber.deal, clientType) : null;
   const split = rule ? settle(amountNum, rule) : { shop: 0, barber: 0 };
 
-  const clientOptions = useMemo(() => {
-    const q = clientQuery.trim().toLowerCase();
+  const pool = useMemo(() => {
+    const q = query.trim().toLowerCase();
     return db.clients
-      .filter((c) => c.ownerBarberId === barberId || (c.shopId === shopId && (role === "owner" || c.ownerBarberId === null)))
+      .filter((c) => (who === "own" ? c.ownerBarberId === barberId : c.shopId === shopId && c.ownerBarberId === null))
       .filter((c) => !q || c.name.toLowerCase().includes(q) || c.phone.includes(q))
-      .sort((a, b) => {
-        // Barber's own clients first.
-        const ao = a.ownerBarberId === barberId ? 0 : 1;
-        const bo = b.ownerBarberId === barberId ? 0 : 1;
-        return ao - bo || a.name.localeCompare(b.name);
-      })
+      .sort((a, b) => a.name.localeCompare(b.name))
       .slice(0, 8);
-  }, [db.clients, clientQuery, shopId, barberId, role]);
+  }, [db.clients, query, who, barberId, shopId]);
 
   const unmatched = db.cardEvents
     .filter((e) => e.status === "unmatched" && e.shopId === shopId)
     .sort((a, b) => b.at.localeCompare(a.at));
 
-  const canSubmit =
-    !!barber &&
-    amountNum > 0 &&
-    (clientMode !== "existing" || !!clientId) &&
-    (clientMode !== "new" || newName.trim().length > 1);
+  const pickWho = (w: Who) => {
+    setWho(w);
+    setClientId("");
+    setQuery("");
+    setShowPicker(w !== "walkin");
+  };
 
   const submit = () => {
-    if (!barber || !canSubmit) return;
-    let finalClientId: string | null = null;
-    if (clientMode === "existing") finalClientId = clientId;
-    if (clientMode === "new") {
+    if (!barber || amountNum <= 0) return;
+    let finalClientId: string | null = clientId || null;
+    if (!finalClientId && newName.trim().length > 1 && who !== "walkin") {
       finalClientId = addClient({
         name: newName.trim(),
-        phone: newPhone.trim(),
+        phone: "",
         shopId,
-        ownerBarberId: newOwner || null,
+        ownerBarberId: who === "own" ? barberId : null,
       });
     }
     addSale({
       shopId,
       barberId,
       clientId: finalClientId,
+      clientType,
       serviceId,
       amount: amountNum,
+      tip: tipNum,
       method,
       source: prefill.source ?? (prefill.appointmentId ? "booked" : "walk-in"),
       cardEventId: method === "card" ? cardEventId : undefined,
@@ -108,113 +109,113 @@ export function SaleForm({ prefill = {}, onDone }: { prefill?: SalePrefill; onDo
     onDone();
   };
 
+  const whoLabel = client ? client.name : newName.trim() || (who === "own" ? "My client (no name)" : who === "shop" ? "Shop client (no name)" : "Walk-in");
+
   return (
     <div className="space-y-4">
       {role === "owner" && (
-        <Field label="Barber">
-          <Select value={barberId} onChange={(e) => setBarberId(e.target.value)}>
-            {db.barbers
-              .filter((b) => b.active)
-              .map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name} · {db.shops.find((s) => s.id === b.shopId)?.name}
-                </option>
-              ))}
-          </Select>
-        </Field>
-      )}
-
-      <div>
-        <span className="mb-1 block text-xs font-medium text-ink-2">Client</span>
-        <Segmented
-          className="w-full"
-          value={clientMode}
-          onChange={(v) => {
-            setClientMode(v);
-            if (v !== "existing") setClientId("");
-          }}
-          options={[
-            { value: "walkin", label: "Walk-in" },
-            { value: "existing", label: "Client list" },
-            { value: "new", label: "New client" },
-          ]}
-        />
-        {clientMode === "walkin" && (
-          <p className="mt-2 text-xs text-ink-3">
-            Unknown person off the street. Counts under the walk-in deal.
-          </p>
-        )}
-        {clientMode === "existing" && (
-          <div className="mt-2 space-y-2">
-            <Input
-              placeholder="Search name or phone"
-              value={clientQuery}
-              onChange={(e) => setClientQuery(e.target.value)}
-            />
-            <div className="max-h-44 overflow-y-auto rounded-xl border border-line">
-              {clientOptions.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => setClientId(c.id)}
-                  className={cx(
-                    "flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-surface-2",
-                    clientId === c.id && "bg-ink text-canvas hover:bg-ink",
-                  )}
-                >
-                  <span>
-                    {c.name}
-                    <span className={cx("ml-2 text-xs", clientId === c.id ? "text-canvas/70" : "text-ink-3")}>
-                      {c.phone}
-                    </span>
-                  </span>
-                  <span className={cx("text-xs", clientId === c.id ? "text-canvas/70" : "text-ink-3")}>
-                    {c.ownerBarberId === barberId
-                      ? "own client"
-                      : c.ownerBarberId
-                        ? `${db.barbers.find((b) => b.id === c.ownerBarberId)?.name}'s`
-                        : "shop client"}
-                  </span>
-                </button>
-              ))}
-              {clientOptions.length === 0 && (
-                <div className="px-3 py-3 text-xs text-ink-3">No match — add as new client.</div>
-              )}
-            </div>
-          </div>
-        )}
-        {clientMode === "new" && (
-          <div className="mt-2 grid gap-2 sm:grid-cols-2">
-            <Input placeholder="Full name" value={newName} onChange={(e) => setNewName(e.target.value)} />
-            <Input placeholder="Phone" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} />
-            <div className="sm:col-span-2">
-              <Select value={newOwner} onChange={(e) => setNewOwner(e.target.value)}>
-                <option value={barberId}>{barber?.name}&apos;s client (own deal)</option>
-                <option value="">Shop client (walk-in deal)</option>
-              </Select>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Service">
-          <Select
-            value={serviceId}
-            onChange={(e) => {
-              setServiceId(e.target.value);
-              const s = db.services.find((x) => x.id === e.target.value);
-              if (s) setAmount(String(s.price));
-            }}
-          >
-            {db.services.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name} · {eur(s.price)}
+        <Select value={barberId} onChange={(e) => setBarberId(e.target.value)} aria-label="Barber">
+          {db.barbers
+            .filter((b) => b.active)
+            .map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name} · {db.shops.find((s) => s.id === b.shopId)?.name}
               </option>
             ))}
-          </Select>
-        </Field>
-        <Field label="Charged (€)">
+        </Select>
+      )}
+
+      {/* WHO */}
+      <section>
+        <Label>Who was it?</Label>
+        <div className="grid grid-cols-3 gap-2">
+          <Choice active={who === "own"} onClick={() => pickWho("own")} title="My client" sub={rule && barber ? describeRule(barber.deal.ownClients) : ""} />
+          <Choice active={who === "walkin"} onClick={() => pickWho("walkin")} title="Walk-in" sub="unknown person" />
+          <Choice active={who === "shop"} onClick={() => pickWho("shop")} title="Shop client" sub={barber ? describeRule(barber.deal.walkIns) : ""} />
+        </div>
+        {who !== "walkin" && (
+          <div className="mt-2">
+            {client ? (
+              <div className="flex items-center justify-between rounded-xl bg-ink px-3 py-2 text-sm text-canvas">
+                <span>{client.name}</span>
+                <button
+                  className="text-xs text-canvas/70 underline"
+                  onClick={() => {
+                    setClientId("");
+                    setShowPicker(true);
+                  }}
+                >
+                  change
+                </button>
+              </div>
+            ) : showPicker ? (
+              <div className="space-y-2">
+                <Input
+                  autoFocus
+                  placeholder={who === "own" ? "Name (optional) — search or type a new one" : "Search shop clients, or type a name"}
+                  value={query || newName}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setNewName(e.target.value);
+                  }}
+                />
+                {pool.length > 0 && (
+                  <div className="max-h-40 overflow-y-auto rounded-xl border border-line">
+                    {pool.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => {
+                          setClientId(c.id);
+                          setNewName("");
+                          setQuery("");
+                        }}
+                        className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-surface-2"
+                      >
+                        {c.name}
+                        <span className="text-xs text-ink-3">{c.phone}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {newName.trim().length > 1 && !pool.some((c) => c.name.toLowerCase() === newName.trim().toLowerCase()) && (
+                  <p className="text-xs text-ink-3">
+                    &quot;{newName.trim()}&quot; will be added as {who === "own" ? "your" : "a shop"} client.
+                  </p>
+                )}
+              </div>
+            ) : null}
+          </div>
+        )}
+      </section>
+
+      {/* WHAT */}
+      <section>
+        <Label>Service</Label>
+        <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+          {db.services.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => {
+                setServiceId(s.id);
+                setAmount(String(s.price));
+              }}
+              className={cx(
+                "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium",
+                serviceId === s.id ? "border-ink bg-ink text-canvas" : "border-line-2 bg-surface text-ink-2",
+              )}
+            >
+              {s.name}
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* HOW MUCH */}
+      <section className="grid grid-cols-[1fr_auto] gap-3">
+        <div>
+          <Label>Charged (€)</Label>
           <Input
             type="number"
             inputMode="decimal"
@@ -222,94 +223,143 @@ export function SaleForm({ prefill = {}, onDone }: { prefill?: SalePrefill; onDo
             step={1}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
+            className="h-14 text-2xl font-semibold tabular-nums"
           />
-        </Field>
-      </div>
+          <div className="mt-1.5 flex flex-wrap gap-1">
+            {QUICK_AMOUNTS.map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setAmount(String(v))}
+                className={cx(
+                  "rounded-md border px-2 py-1 text-xs tabular-nums",
+                  amountNum === v ? "border-ink bg-ink text-canvas" : "border-line-2 text-ink-2",
+                )}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="w-28">
+          <Label>Tip (€)</Label>
+          <Input type="number" inputMode="decimal" min={0} value={tip} onChange={(e) => setTip(e.target.value)} className="h-14 text-2xl font-semibold tabular-nums" />
+          <div className="mt-1.5 flex gap-1">
+            {QUICK_TIPS.map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setTip(String(v))}
+                className={cx("flex-1 rounded-md border px-1 py-1 text-xs tabular-nums", tipNum === v ? "border-ink bg-ink text-canvas" : "border-line-2 text-ink-2")}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
 
-      <div>
-        <span className="mb-1 block text-xs font-medium text-ink-2">Paid by</span>
+      {/* HOW PAID */}
+      <section>
+        <Label>Paid by</Label>
         <div className="grid grid-cols-2 gap-2">
           {(["cash", "card"] as PayMethod[]).map((m) => (
             <button
               key={m}
               type="button"
-              onClick={() => setMethod(m)}
+              onClick={() => {
+                setMethod(m);
+                if (m === "card" && unmatched.length) setShowTerminal(true);
+              }}
               className={cx(
-                "h-12 rounded-xl border text-sm font-medium",
-                method === m
-                  ? "border-ink bg-ink text-canvas"
-                  : "border-line-2 bg-surface text-ink-2",
+                "h-14 rounded-xl border text-base font-semibold",
+                method === m ? "border-ink bg-ink text-canvas" : "border-line-2 bg-surface text-ink-2",
               )}
             >
-              {m === "cash" ? "💶 Cash" : "💳 Card (JCC)"}
+              {m === "cash" ? "Cash" : "Card"}
             </button>
           ))}
         </div>
         {method === "card" && (
-          <div className="mt-2 rounded-xl border border-line bg-canvas p-3">
-            <div className="mb-2 flex items-center justify-between text-xs text-ink-2">
-              <span>Match to terminal {shop?.terminalId}</span>
-              <Badge tone={unmatched.length ? "warn" : "neutral"}>
-                {unmatched.length} unmatched
-              </Badge>
-            </div>
-            <div className="space-y-1">
-              {unmatched.map((e) => (
-                <button
-                  key={e.id}
-                  type="button"
-                  onClick={() => {
-                    setCardEventId(cardEventId === e.id ? undefined : e.id);
-                    setAmount(String(e.amount));
-                  }}
-                  className={cx(
-                    "flex w-full items-center justify-between rounded-lg border px-3 py-2 text-sm",
-                    cardEventId === e.id
-                      ? "border-ink bg-surface"
-                      : "border-line bg-surface hover:border-ink-3",
-                  )}
-                >
-                  <span className="tabular-nums">
-                    {fmtTime(e.at)} · •••• {e.last4}
-                  </span>
-                  <span className="font-semibold tabular-nums">{eur(e.amount)}</span>
-                </button>
-              ))}
-              {unmatched.length === 0 && (
-                <p className="text-xs text-ink-3">No pending terminal payments. Recorded as a manual card entry.</p>
+          <div className="mt-2">
+            <button type="button" className="text-xs text-ink-3 underline" onClick={() => setShowTerminal((v) => !v)}>
+              {showTerminal ? "Hide" : "Match to"} terminal {shop?.terminalId}
+              {unmatched.length > 0 && (
+                <Badge tone="warn">
+                  {unmatched.length} unmatched
+                </Badge>
               )}
-            </div>
+            </button>
+            {showTerminal && (
+              <div className="mt-1 space-y-1">
+                {unmatched.map((e) => (
+                  <button
+                    key={e.id}
+                    type="button"
+                    onClick={() => {
+                      setCardEventId(cardEventId === e.id ? undefined : e.id);
+                      setAmount(String(e.amount));
+                    }}
+                    className={cx(
+                      "flex w-full items-center justify-between rounded-lg border px-3 py-2 text-sm",
+                      cardEventId === e.id ? "border-ink bg-surface" : "border-line bg-surface hover:border-ink-3",
+                    )}
+                  >
+                    <span className="tabular-nums">
+                      {fmtTime(e.at)} · •••• {e.last4}
+                    </span>
+                    <span className="font-semibold tabular-nums">{eur(e.amount)}</span>
+                  </button>
+                ))}
+                {unmatched.length === 0 && <p className="text-xs text-ink-3">No pending terminal payments — saved as a manual card entry.</p>}
+              </div>
+            )}
           </div>
         )}
-      </div>
+      </section>
 
+      {/* SUMMARY + DONE */}
       {barber && rule && (
-        <div className="rounded-xl bg-ink p-4 text-canvas">
-          <div className="flex items-center justify-between text-xs text-canvas/70">
-            <span>
-              {clientType === "own" ? `${barber.name}'s client` : "Walk-in deal"} · {describeRule(rule)}
-            </span>
+        <div className="rounded-xl border border-line bg-surface-2 p-3 text-sm">
+          <div className="flex items-center justify-between text-xs text-ink-3">
+            <span>{whoLabel}</span>
+            <span>{describeRule(rule)}</span>
           </div>
-          <div className="mt-2 grid grid-cols-3 gap-2">
-            <div>
-              <div className="text-[11px] uppercase tracking-wider text-ink-3">Charged</div>
-              <div className="text-lg font-semibold tabular-nums">{eur(amountNum)}</div>
-            </div>
-            <div>
-              <div className="text-[11px] uppercase tracking-wider text-ink-3">Shop</div>
-              <div className="text-lg font-semibold tabular-nums text-good">{eur(split.shop)}</div>
-            </div>
-            <div>
-              <div className="text-[11px] uppercase tracking-wider text-ink-3">{barber.name}</div>
-              <div className="text-lg font-semibold tabular-nums text-info">{eur(split.barber)}</div>
-            </div>
+          <div className="mt-1 flex items-baseline justify-between">
+            <span className="text-ink-2">
+              {role === "barber" ? "You keep" : `${barber.name} keeps`}{" "}
+              <strong className="tabular-nums text-info">{eur(split.barber + tipNum)}</strong>
+              {tipNum > 0 && <span className="text-xs text-ink-3"> (incl. €{tipNum} tip)</span>}
+            </span>
+            <span className="text-ink-2">
+              Shop <strong className="tabular-nums text-good">{eur(split.shop)}</strong>
+            </span>
           </div>
         </div>
       )}
-
-      <Button size="lg" className="w-full" disabled={!canSubmit} onClick={submit}>
-        Record {method === "cash" ? "cash" : "card"} payment · {eur(amountNum)}
+      <Button size="lg" className="h-14 w-full text-base" disabled={!barber || amountNum <= 0} onClick={submit}>
+        Done · {eur(amountNum + tipNum)} {method}
       </Button>
     </div>
+  );
+}
+
+function Label({ children }: { children: React.ReactNode }) {
+  return <span className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-3">{children}</span>;
+}
+
+function Choice({ active, onClick, title, sub }: { active: boolean; onClick: () => void; title: string; sub: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cx(
+        "rounded-xl border px-2 py-2.5 text-left",
+        active ? "border-ink bg-ink text-canvas" : "border-line-2 bg-surface text-ink",
+      )}
+    >
+      <div className="text-sm font-semibold">{title}</div>
+      <div className={cx("mt-0.5 truncate text-[10px]", active ? "text-canvas/70" : "text-ink-3")}>{sub}</div>
+    </button>
   );
 }

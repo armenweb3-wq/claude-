@@ -1,6 +1,6 @@
-# Chairbook — barbershop ledger & bookings (MVP)
+# Mad Barbers — bookings, till & barber deals (MVP)
 
-Served at **`/chairbook`**. A self-contained section of this Next.js app for
+Served at **`/madbarbers`**. A self-contained section of this Next.js app for
 running multi-location barbershops: bookings, a till that records every cut as
 cash or card, per-barber deals, end-of-day settlement, and walk-in insights.
 
@@ -11,6 +11,17 @@ cash or card, per-barber deals, end-of-day settlement, and walk-in insights.
 | Owner | `owner` / `1234` | Dashboard (gross, shop net, barber payouts, cash vs card, per-barber settlement), Calendar for every barber, Till + JCC inbox, Clients, Team & deals, Insights, shop switcher |
 | Barber | `andreas`, `kyriakos`, `marios`, `stelios` / `1111` | **My chair** (income, expenses, net, settlement, clients served, regulars, slipping/lost clients, no-shows, top clients, week pattern), Today, Till, their clients only, Expenses |
 | Client | `nikos` / `0000` | Book an appointment, upcoming & past visits |
+
+**The Done flow.** After a cut the barber taps *Done* on the appointment (or
+*Done · walk-in*): who it was (my client / walk-in / shop client, name
+optional), the amount with quick chips, a tip, cash or card. The split is
+shown live and saved on the ledger row, so the owner sees the same numbers
+with no end-of-day reconciliation. Tips go 100% to the barber.
+
+**Notifications.** Derived from the data, not stored (`notificationsFor()`):
+new online bookings, today's tips, no-shows, unassigned JCC card payments and
+a daily "clients slipping away" summary. Read state is per device
+(`chairbook.notifRead.<userId>`).
 
 **Deals.** Each barber has two rules: one for *clients they bring* and one for
 *walk-ins / shop clients*. A rule is either a flat amount to the shop
@@ -43,6 +54,10 @@ visits): *new*, *regular* (≥3 visits, gap ≤21 days), *occasional*, *slipping
 counted per client. Barbers only ever see their own clients and the shop
 clients they personally served, never a colleague's list.
 
+**Mobile.** The app is phone-first: bottom tab bar, bottom sheets (portaled
+to `<body>`), card lists instead of tables under 640px, a sticky Done /
+Book bar on the barber's Today screen.
+
 **Theme.** Light/dark toggle in the header; stored per device
 (`chairbook.theme`). Colors are semantic Tailwind tokens (`bg-surface`,
 `text-ink`, `text-good` …) backed by `--cb-*` CSS variables in
@@ -56,8 +71,8 @@ suggestion: weekdays with ≥40% walk-in share are flagged "keep slots open".
 
 ```
 app/(chairbook)/layout.tsx              third root layout (own <html>/<body>)
-app/(chairbook)/chairbook/page.tsx      login
-app/(chairbook)/chairbook/(app)/…       dashboard, calendar, till, clients, team, insights, expenses, chair, book, visits
+app/(chairbook)/madbarbers/page.tsx      login
+app/(chairbook)/madbarbers/(app)/…       dashboard, calendar, till, clients, team, insights, expenses, chair, book, visits
 lib/chairbook/types.ts                  data model (plain JSON, Postgres-ready)
 lib/chairbook/deals.ts                  settle(amount, rule) — the money math
 lib/chairbook/selectors.ts              totals, settlement, weekday/hour profiles, client retention, expenses
@@ -90,5 +105,5 @@ production.
 
 ```bash
 npm install
-npm run dev     # http://localhost:3000/chairbook
+npm run dev     # http://localhost:3000/madbarbers
 ```

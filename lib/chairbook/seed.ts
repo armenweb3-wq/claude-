@@ -14,7 +14,8 @@ import type {
   User,
 } from "./types";
 
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
+const DAY_MS = 86_400_000;
 
 // Deterministic PRNG so the demo looks the same on every reset.
 function mulberry32(seed: number) {
@@ -267,6 +268,7 @@ export function buildSeed(now = new Date()): DB {
             minutes: service.minutes,
             status: future ? "booked" : "done",
             bookedBy: rand() < 0.5 ? "client" : "owner",
+            createdAt: new Date(at.getTime() - Math.floor(1 + rand() * 9) * DAY_MS).toISOString(),
           };
           appointments.push(appt);
           if (future) continue;
@@ -315,7 +317,8 @@ export function buildSeed(now = new Date()): DB {
           startsAt: at.toISOString(),
           minutes: service.minutes,
           status: "booked",
-          bookedBy: rand() < 0.5 ? "client" : "owner",
+          bookedBy: rand() < 0.6 ? "client" : "owner",
+          createdAt: new Date(now.getTime() - (rand() < 0.4 ? rand() * 2 : 2 + rand() * 8) * DAY_MS).toISOString(),
         });
       }
     }
@@ -405,6 +408,8 @@ function makeSale(
 ): Sale {
   const method: PayMethod = rand() < 0.55 ? "cash" : "card";
   const split = settle(amount, ruleFor(barber.deal, clientType));
+  const r = rand();
+  const tip = r < 0.7 ? 0 : r < 0.85 ? 1 : r < 0.95 ? 2 : 5;
   return {
     id: `sl-${at.getTime().toString(36)}-${barber.id}`,
     shopId: shop.id,
@@ -415,6 +420,7 @@ function makeSale(
     serviceId: service.id,
     amount,
     method,
+    tip: tip || undefined,
     at: at.toISOString(),
     shopShare: split.shop,
     barberShare: split.barber,

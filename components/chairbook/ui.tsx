@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { eur } from "@/lib/chairbook/format";
 
 type Tone = "neutral" | "good" | "warn" | "bad" | "info";
@@ -25,7 +26,7 @@ export function Card({
   return (
     <section
       className={cx(
-        "rounded-2xl border border-line bg-surface shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
+        "min-w-0 rounded-2xl border border-line bg-surface shadow-[0_1px_2px_rgba(15,23,42,0.04)]",
         pad && "p-4 sm:p-5",
         className,
       )}
@@ -197,14 +198,18 @@ export function Sheet({
   title: string;
   children: React.ReactNode;
 }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
-  if (!open) return null;
-  return (
+  if (!open || !mounted) return null;
+  // Portal to <body>: a fixed overlay inside a blurred/transformed ancestor
+  // (the sticky header) would otherwise be positioned relative to it.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal>
       <button aria-label="Close" className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-surface p-5 shadow-xl sm:max-w-lg sm:rounded-3xl">
@@ -218,7 +223,8 @@ export function Sheet({
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

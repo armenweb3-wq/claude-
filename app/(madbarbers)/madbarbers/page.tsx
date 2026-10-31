@@ -7,9 +7,9 @@ import { ThemeToggle } from "@/components/chairbook/theme";
 import { useChairbook } from "@/lib/chairbook/store";
 
 const HOME: Record<string, string> = {
-  owner: "/chairbook/dashboard",
-  barber: "/chairbook/chair",
-  client: "/chairbook/book",
+  owner: "/madbarbers/dashboard",
+  barber: "/madbarbers/calendar",
+  client: "/madbarbers/book",
 };
 
 const DEMO = [
@@ -42,11 +42,11 @@ export default function LoginPage() {
       <ThemeToggle className="absolute right-4 top-4" />
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-ink text-lg font-bold text-canvas">
-            C
+          <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-ink text-2xl font-black text-canvas">
+            M
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight">Chairbook</h1>
-          <p className="mt-1 text-sm text-ink-3">Bookings, till and barber deals in one ledger.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Mad Barbers</h1>
+          <p className="mt-1 text-sm text-ink-3">Bookings, till and every barber&apos;s own numbers, in one place.</p>
         </div>
 
         <form

@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { BookingForm } from "./BookingForm";
+import { SaleForm } from "./SaleForm";
 import { eur, fmtDay, fmtTime } from "@/lib/chairbook/format";
 import type { ClientInsight, ClientStatus } from "@/lib/chairbook/selectors";
 import { useChairbook } from "@/lib/chairbook/store";
@@ -19,9 +22,24 @@ export function StatusBadge({ status }: { status: ClientStatus }) {
 }
 
 export function ClientDetail({ insight, onClose }: { insight: ClientInsight | null; onClose: () => void }) {
-  const { db, me, assignClient, setAppointmentStatus } = useChairbook();
+  const [mode, setMode] = useState<"view" | "book" | "pay">("view");
+  const { db, me, role, assignClient, setAppointmentStatus } = useChairbook();
   if (!insight) return null;
   const c = insight.client;
+  if (mode === "book") {
+    return (
+      <Sheet open onClose={() => setMode("view")} title={`Book · ${c.name}`}>
+        <BookingForm prefill={{ clientId: c.id, barberId: me?.id ?? c.ownerBarberId ?? undefined, shopId: c.shopId }} onDone={() => setMode("view")} />
+      </Sheet>
+    );
+  }
+  if (mode === "pay") {
+    return (
+      <Sheet open onClose={() => setMode("view")} title={`Done · ${c.name}`}>
+        <SaleForm prefill={{ clientId: c.id, barberId: me?.id ?? c.ownerBarberId ?? undefined, shopId: c.shopId }} onDone={onClose} />
+      </Sheet>
+    );
+  }
   const history = db.sales
     .filter((s) => s.clientId === c.id)
     .sort((a, b) => b.at.localeCompare(a.at))
@@ -58,6 +76,15 @@ export function ClientDetail({ insight, onClose }: { insight: ClientInsight | nu
           <div className="rounded-xl border border-warn/30 bg-warn/10 p-3 text-sm text-warn">
             Usually comes every {insight.gapDays ?? "~30"} days, last seen {fmtDay(insight.lastVisit)} ({insight.daysSince} days
             ago). Worth a message.
+          </div>
+        )}
+
+        {role !== "client" && (
+          <div className="grid grid-cols-2 gap-2">
+            <Button onClick={() => setMode("book")}>Book appointment</Button>
+            <Button variant="secondary" onClick={() => setMode("pay")}>
+              Done · record a cut
+            </Button>
           </div>
         )}
 

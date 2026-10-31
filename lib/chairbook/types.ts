@@ -1,4 +1,4 @@
-// Chairbook — data model for the barbershop ledger MVP.
+// Mad Barbers — data model for the barbershop ledger MVP.
 // Everything here is plain JSON so it can live in localStorage today and in
 // Postgres (Supabase) tomorrow without changing the UI.
 
@@ -86,6 +86,8 @@ export interface Sale {
   serviceId: string;
   amount: number;
   method: PayMethod;
+  /** Tip on top of `amount`. Goes 100% to the barber. */
+  tip?: number;
   /** Set when a card payment was matched to a JCC terminal event. */
   cardEventId?: string;
   at: string; // ISO datetime
@@ -109,6 +111,7 @@ export interface Appointment {
   minutes: number;
   status: ApptStatus;
   bookedBy: Role;
+  createdAt: string;
   saleId?: string;
 }
 

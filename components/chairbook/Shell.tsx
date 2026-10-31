@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useChairbook } from "@/lib/chairbook/store";
 import type { Role } from "@/lib/chairbook/types";
+import { NotificationBell } from "./Notifications";
 import { ThemeToggle } from "./theme";
 import { cx } from "./ui";
 
@@ -17,24 +18,24 @@ export const useShopFilter = () => useContext(ShopCtx);
 
 const NAV: Record<Role, { href: string; label: string; icon: keyof typeof ICONS }[]> = {
   owner: [
-    { href: "/chairbook/dashboard", label: "Home", icon: "home" },
-    { href: "/chairbook/calendar", label: "Calendar", icon: "calendar" },
-    { href: "/chairbook/till", label: "Till", icon: "till" },
-    { href: "/chairbook/clients", label: "Clients", icon: "people" },
-    { href: "/chairbook/team", label: "Team", icon: "team" },
-    { href: "/chairbook/insights", label: "Insights", icon: "chart" },
-    { href: "/chairbook/expenses", label: "Expenses", icon: "wallet" },
+    { href: "/madbarbers/dashboard", label: "Home", icon: "home" },
+    { href: "/madbarbers/calendar", label: "Calendar", icon: "calendar" },
+    { href: "/madbarbers/till", label: "Till", icon: "till" },
+    { href: "/madbarbers/clients", label: "Clients", icon: "people" },
+    { href: "/madbarbers/team", label: "Team", icon: "team" },
+    { href: "/madbarbers/insights", label: "Insights", icon: "chart" },
+    { href: "/madbarbers/expenses", label: "Expenses", icon: "wallet" },
   ],
   barber: [
-    { href: "/chairbook/chair", label: "My chair", icon: "chart" },
-    { href: "/chairbook/calendar", label: "Today", icon: "calendar" },
-    { href: "/chairbook/till", label: "Till", icon: "till" },
-    { href: "/chairbook/clients", label: "Clients", icon: "people" },
-    { href: "/chairbook/expenses", label: "Expenses", icon: "wallet" },
+    { href: "/madbarbers/calendar", label: "Today", icon: "calendar" },
+    { href: "/madbarbers/chair", label: "My chair", icon: "chart" },
+    { href: "/madbarbers/till", label: "Till", icon: "till" },
+    { href: "/madbarbers/clients", label: "Clients", icon: "people" },
+    { href: "/madbarbers/expenses", label: "Expenses", icon: "wallet" },
   ],
   client: [
-    { href: "/chairbook/book", label: "Book", icon: "calendar" },
-    { href: "/chairbook/visits", label: "My visits", icon: "people" },
+    { href: "/madbarbers/book", label: "Book", icon: "calendar" },
+    { href: "/madbarbers/visits", label: "My visits", icon: "people" },
   ],
 };
 
@@ -99,7 +100,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const [shopId, setShopId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (ready && !user) router.replace("/chairbook");
+    if (ready && !user) router.replace("/madbarbers");
   }, [ready, user, router]);
 
   // Barbers only ever see their own shop.
@@ -120,12 +121,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
     <ShopCtx.Provider value={{ shopId, setShopId }}>
       <div className="min-h-screen bg-canvas pb-20 sm:pb-0">
         <header className="sticky top-0 z-30 border-b border-line bg-surface/90 backdrop-blur">
-          <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4">
+          <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-4 sm:gap-3">
             <Link href={home} className="flex items-center gap-2 font-semibold tracking-tight text-ink">
-              <span className="grid h-7 w-7 place-items-center rounded-lg bg-ink text-xs font-bold text-canvas">
-                C
+              <span className="grid h-7 w-7 place-items-center rounded-lg bg-ink text-xs font-black text-canvas">
+                M
               </span>
-              Chairbook
+              <span className="hidden sm:inline">Mad Barbers</span>
             </Link>
             <nav className="ml-6 hidden items-center gap-1 sm:flex">
               {nav.map((n) => (
@@ -143,12 +144,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 </Link>
               ))}
             </nav>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
               {role === "owner" && (
                 <select
                   value={shopId ?? ""}
                   onChange={(e) => setShopId(e.target.value || null)}
-                  className="h-9 rounded-lg border border-line-2 bg-surface px-2 text-sm"
+                  className="h-9 max-w-[7.5rem] rounded-lg border border-line-2 bg-surface px-2 text-sm sm:max-w-none"
                   aria-label="Shop"
                 >
                   <option value="">All shops</option>
@@ -164,17 +165,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
                   {db.shops.find((s) => s.id === me.shopId)?.name}
                 </span>
               )}
+              <NotificationBell />
               <ThemeToggle />
               <button
                 onClick={() => {
                   logout();
-                  router.replace("/chairbook");
+                  router.replace("/madbarbers");
                 }}
                 title="Switch user / log out"
                 className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line-2 bg-surface px-2.5 text-sm text-ink-2 hover:text-ink"
               >
                 <Icon name="switch" className="h-4 w-4" />
-                <span className="max-w-[7rem] truncate">{user.name}</span>
+                <span className="hidden max-w-[7rem] truncate sm:inline">{user.name}</span>
                 <span className="hidden text-xs text-ink-3 sm:inline">· switch</span>
               </button>
             </div>

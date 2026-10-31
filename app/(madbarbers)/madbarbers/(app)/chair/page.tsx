@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { DailyBars, SERIES, ShareBar, StackedBars, Legend } from "@/components/chairbook/charts";
 import { ClientDetail, StatusBadge } from "@/components/chairbook/ClientDetail";
+import { ClientListSheet } from "@/components/chairbook/ClientList";
 import { ExpensesPanel } from "@/components/chairbook/ExpensesPanel";
 import { Badge, Card, Empty, Money, PageTitle, Row, Segmented, Stat } from "@/components/chairbook/ui";
 import { describeRule } from "@/lib/chairbook/deals";
@@ -26,6 +27,7 @@ export default function ChairPage() {
   const { db, me } = useChairbook();
   const [period, setPeriod] = useState<Period>("month");
   const [detail, setDetail] = useState<ClientInsight | null>(null);
+  const [list, setList] = useState<{ title: string; sub?: string; items: ClientInsight[] } | null>(null);
   if (!me) return <p className="text-sm text-ink-3">Sign in as a barber to see your chair.</p>;
 
   const { from, to } = periodRange(period);
@@ -33,7 +35,7 @@ export default function ChairPage() {
   const st = settlement(sales);
   const expenses = expensesIn(db.expenses, { from, to, barberId: me.id });
   const spent = sumExpenses(expenses);
-  const net = Math.round((st.barber - spent) * 100) / 100;
+  const net = Math.round((st.barber + st.tips - spent) * 100) / 100;
   const own = sales.filter((s) => s.clientType === "own");
   const walk = sales.filter((s) => s.clientType === "walkin");
   const sum = (xs: typeof sales, k: "amount" | "barberShare") => xs.reduce((a, s) => a + s[k], 0);
@@ -51,7 +53,11 @@ export default function ChairPage() {
   const noShows = noShowsIn(db, { from, to, barberId: me.id });
   const noShowByClient = new Map<string, number>();
   for (const a of noShows) if (a.clientId) noShowByClient.set(a.clientId, (noShowByClient.get(a.clientId) ?? 0) + 1);
-  const rebooked = mine.filter((i) => i.hasUpcoming).length;
+  const rebooked = mine.filter((i) => i.hasUpcoming);
+  const served = insights.filter((i) => periodClientIds.has(i.client.id));
+  const walkInsServed = insights.filter((i) => i.client.ownerBarberId !== me.id);
+  const activeList = insights.filter((i) => i.daysSince <= 30 && i.visits > 0);
+  const noShowClients = insights.filter((i) => noShowByClient.has(i.client.id));
 
   const weeks = weeklySeries(salesIn(db.sales, { barberId: me.id }), 8);
   const profile = weekdayProfile(db.sales.filter((s) => s.barberId === me.id)).filter((r) => r.days > 0);
@@ -78,7 +84,7 @@ export default function ChairPage() {
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Income (your share)" value={st.barber} tone="info" sub={`${st.count} cuts · charged ${eur(st.gross)}`} />
+        <Stat label="Income (your share)" value={st.barber + st.tips} tone="info" sub={`${st.count} cuts · ${eur(st.tips)} tips · charged ${eur(st.gross)}`} />
         <Stat label="Your expenses" value={spent} tone={spent ? "bad" : "neutral"} sub={`${expenses.length} items`} />
         <Stat label="Net in your pocket" value={net} tone={net >= 0 ? "good" : "bad"} sub="income minus expenses" />
         <Stat
@@ -88,11 +94,29 @@ export default function ChairPage() {
         />
       </div>
 
+      <p className="-mb-2 text-[11px] text-ink-3">Tap a number to see the names behind it.</p>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Clients served" value={`${periodClientIds.size}`} money={false} sub={`+ ${unknownWalkIns} unregistered walk-ins`} />
-        <Stat label="Your client list" value={`${mine.length}`} money={false} sub={`${regulars.length} regulars · ${newClients.length} new this period`} />
-        <Stat label="Active last 30 days" value={`${returning}`} money={false} sub={`${rebooked} have a booking coming`} />
-        <Stat label="No-shows" value={`${noShows.length}`} money={false} tone={noShows.length ? "warn" : "neutral"} sub={`${slipping.length} slipping · ${lost.length} lost`} />
+        <Tap onClick={() => setList({ title: `Clients served (${period})`, sub: `${unknownWalkIns} more were walk-ins you didn't register — add them from the Done screen next time.`, items: served })}>
+          <Stat label="Clients served" value={`${periodClientIds.size}`} money={false} sub={`+ ${unknownWalkIns} unregistered walk-ins ›`} />
+        </Tap>
+        <Tap onClick={() => setList({ title: "Your client list", sub: "People on your own deal.", items: [...mine].sort((a, b) => b.lastVisit.localeCompare(a.lastVisit)) })}>
+          <Stat label="Your client list" value={`${mine.length}`} money={false} sub={`${regulars.length} regulars · ${newClients.length} new ›`} />
+        </Tap>
+        <Tap onClick={() => setList({ title: "Active in the last 30 days", items: activeList.sort((a, b) => b.lastVisit.localeCompare(a.lastVisit)) })}>
+          <Stat label="Active last 30 days" value={`${returning}`} money={false} sub={`${rebooked.length} have a booking coming ›`} />
+        </Tap>
+        <Tap onClick={() => setList({ title: `No-shows (${period})`, items: noShowClients.sort((a, b) => b.noShows - a.noShows) })}>
+          <Stat label="No-shows" value={`${noShows.length}`} money={false} tone={noShows.length ? "warn" : "neutral"} sub={`${slipping.length} slipping · ${lost.length} lost ›`} />
+        </Tap>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Chip onClick={() => setList({ title: "Walk-ins & shop clients you've served", sub: "Not on your list. Tap one to make them your client.", items: walkInsServed.sort((a, b) => b.visits - a.visits) })}>
+          Walk-ins I&apos;ve served · {walkInsServed.length}
+        </Chip>
+        <Chip onClick={() => setList({ title: "Your regulars", sub: "3+ visits, usually within 3 weeks.", items: regulars })}>Regulars · {regulars.length}</Chip>
+        <Chip onClick={() => setList({ title: "Booked in", sub: "Your clients with an upcoming appointment.", items: rebooked })}>Booked in · {rebooked.length}</Chip>
+        <Chip onClick={() => setList({ title: "Slipping away", items: slipping })}>Slipping · {slipping.length}</Chip>
+        <Chip onClick={() => setList({ title: "Lost", items: lost })}>Lost · {lost.length}</Chip>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -274,8 +298,37 @@ export default function ChairPage() {
         )}
       </Card>
 
+      {list && !detail && (
+        <ClientListSheet
+          title={list.title}
+          sub={list.sub}
+          items={list.items}
+          onClose={() => setList(null)}
+          onPick={(i) => setDetail(i)}
+        />
+      )}
       <ClientDetail insight={detail} onClose={() => setDetail(null)} />
     </div>
+  );
+}
+
+function Tap({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="block w-full text-left [&>div]:transition-colors [&>div]:hover:border-ink">
+      {children}
+    </button>
+  );
+}
+
+function Chip({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-full border border-line-2 bg-surface px-3 py-1.5 text-xs font-medium text-ink-2 hover:border-ink hover:text-ink"
+    >
+      {children}
+    </button>
   );
 }
 

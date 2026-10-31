@@ -7,7 +7,7 @@
     --font-serif: "Cormorant Garamond", Georgia, serif;
     --font-sans: "Inter", system-ui, sans-serif;
 
-    /* Chairbook palette (RGB triplets so Tailwind can apply alpha). Light. */
+    /* Mad Barbers palette (RGB triplets so Tailwind can apply alpha). Light. */
     --cb-canvas: 248 250 252;
     --cb-surface: 255 255 255;
     --cb-surface-2: 241 245 249;

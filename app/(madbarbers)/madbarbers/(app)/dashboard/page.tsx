@@ -62,7 +62,7 @@ export default function DashboardPage() {
 
       {unmatched.length > 0 && (
         <Link
-          href="/chairbook/till"
+          href="/madbarbers/till"
           className="flex items-center justify-between rounded-2xl border border-warn/30 bg-warn/10 px-4 py-3 text-sm text-warn"
         >
           <span>
@@ -81,9 +81,9 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Cash in drawers" value={t.cash} sub={`${eur(t.card)} by card`} />
+        <Stat label="Cash in drawers" value={t.cash} sub={`${eur(t.card)} by card · ${eur(t.tips)} tips (barbers keep)`} />
         <Stat label="No-shows" value={`${noShows}`} money={false} tone={noShows ? "warn" : "neutral"} sub="missed bookings this period" />
-        <Link href="/chairbook/clients" className="block">
+        <Link href="/madbarbers/clients" className="block">
           <Stat label="Clients slipping away" value={`${slipping}`} money={false} tone={slipping ? "warn" : "neutral"} sub={`${lost} already lost · tap to see who`} />
         </Link>
         <Stat label="New clients" value={`${newClients}`} money={false} tone="info" sub={`${insights.filter((i) => i.status === "regular").length} regulars overall`} />
@@ -121,7 +121,31 @@ export default function DashboardPage() {
       </div>
 
       <Card title="By barber" pad={false}>
-        <div className="overflow-x-auto">
+        <div className="space-y-2 px-4 pb-3 sm:hidden">
+          {rows.map((r) => {
+            const st = settlement(sales.filter((s) => s.barberId === r.who.id));
+            return (
+              <div key={r.who.id} className="rounded-xl border border-line p-3">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-2 text-sm font-medium text-ink">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: r.who.color }} />
+                    {r.who.name}
+                    <span className="text-xs font-normal text-ink-3">{db.shops.find((s) => s.id === r.who.shopId)?.name}</span>
+                  </span>
+                  {st.net === 0 ? <Badge>even</Badge> : st.net > 0 ? <Badge tone="info">pay {eur(st.net)}</Badge> : <Badge tone="good">collect {eur(-st.net)}</Badge>}
+                </div>
+                <div className="mt-2 grid grid-cols-4 gap-1 text-center text-xs">
+                  <div><div className="text-ink-3">Cuts</div><div className="tabular-nums text-ink">{r.count}</div></div>
+                  <div><div className="text-ink-3">Gross</div><div className="tabular-nums text-ink">{eur(r.gross)}</div></div>
+                  <div><div className="text-ink-3">Shop</div><div className="tabular-nums font-medium text-good">{eur(r.shop)}</div></div>
+                  <div><div className="text-ink-3">Cash</div><div className="tabular-nums text-ink">{eur(r.cash)}</div></div>
+                </div>
+              </div>
+            );
+          })}
+          {rows.length === 0 && <p className="py-4 text-center text-sm text-ink-3">No sales in this period.</p>}
+        </div>
+        <div className="hidden overflow-x-auto sm:block">
           <table className="w-full text-sm">
             <thead className="text-left text-[11px] uppercase tracking-wider text-ink-3">
               <tr className="border-b border-line">

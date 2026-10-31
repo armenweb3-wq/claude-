@@ -13,11 +13,13 @@ Four unrelated things share this repo:
 2. **The Mkhitaryan Developers website** — the original cinematic, scroll-driven
    landing page for a Paphos, Cyprus luxury property developer. Still here, now
    served at `/property` (relocated into `app/(property)/`).
-3. **Chairbook — a barbershop ledger & bookings MVP** — served at `/chairbook`
+3. **Mad Barbers — a barbershop ledger & bookings MVP** — served at `/madbarbers`
    from `app/(chairbook)/`. Per-barber deals (flat fee or % split, separate
    for own clients vs walk-ins), a till that records cash/card payments with
    JCC terminal matching, bookings, expenses, settlement, client retention
-   (slipping/lost) and walk-in insights, light/dark theme. Runs
+   (slipping/lost), one-tap Done payments with tips, derived notifications
+   and walk-in insights, light/dark theme, phone-first. Code modules keep the
+   `chairbook` name; the product is Mad Barbers. Runs
    entirely in the browser on seeded demo data (`localStorage`); no backend
    yet. See `docs/CHAIRBOOK.md`. Money math lives in `lib/chairbook/deals.ts`;
    shares are snapshotted onto each sale, never recomputed.
@@ -32,7 +34,7 @@ Four unrelated things share this repo:
 - **Three root layouts.** There is no `app/layout.tsx`. Instead the repo uses
   Next.js multiple-root-layouts: `app/(marketplace)/layout.tsx` (the marketplace,
   at `/`), `app/(property)/layout.tsx` (the property site, at `/property`) and
-  `app/(chairbook)/layout.tsx` (the barbershop app, at `/chairbook`).
+  `app/(chairbook)/layout.tsx` (the barbershop app, at `/madbarbers`).
   Each renders its own `<html>`/`<body>`. Don't reintroduce a single root layout.
 - **Supabase** powers auth + Postgres. Clients live in `lib/supabase/`
   (`client.ts` browser, `server.ts` server components/actions, `middleware.ts`

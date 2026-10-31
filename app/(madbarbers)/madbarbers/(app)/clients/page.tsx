@@ -102,7 +102,36 @@ export default function ClientsPage() {
         ))}
       </div>
 
-      <Card pad={false}>
+      {/* Phone: one card per client. */}
+      <div className="space-y-2 sm:hidden">
+        {list.map((i) => {
+          const c = i.client;
+          const ownerB = c.ownerBarberId ? db.barbers.find((b) => b.id === c.ownerBarberId) : null;
+          return (
+            <button key={c.id} className="block w-full rounded-2xl border border-line bg-surface p-3 text-left" onClick={() => setDetail(i)}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-medium text-ink">{c.name}</div>
+                  <div className="text-xs text-ink-3">
+                    {i.visits ? `${i.visits} visits · last ${fmtDay(i.lastVisit)} (${i.daysSince}d)` : "no visits yet"}
+                    {i.gapDays ? ` · every ${i.gapDays}d` : ""}
+                  </div>
+                </div>
+                <div className="shrink-0 text-right text-sm tabular-nums text-ink">{eur(i.spend)}</div>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                <StatusBadge status={i.status} />
+                {i.hasUpcoming && <Badge tone="info">booked</Badge>}
+                {i.noShows > 0 && <Badge tone="bad">{i.noShows} no-show</Badge>}
+                {!me && (ownerB ? <Badge>{ownerB.name}&apos;s</Badge> : <Badge>shop</Badge>)}
+              </div>
+            </button>
+          );
+        })}
+        {list.length === 0 && <Card>No clients match.</Card>}
+      </div>
+
+      <Card pad={false} className="hidden sm:block">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-[11px] uppercase tracking-wider text-ink-3">

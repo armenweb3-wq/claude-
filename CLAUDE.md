@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-Three unrelated things share this repo:
+Four unrelated things share this repo:
 
 1. **Catalyst — the startup ⇄ investor marketplace** (primary) — a Next.js App
    Router app served at `/`. Accounts (Supabase auth), founder/investor listings,
@@ -13,7 +13,14 @@ Three unrelated things share this repo:
 2. **The Mkhitaryan Developers website** — the original cinematic, scroll-driven
    landing page for a Paphos, Cyprus luxury property developer. Still here, now
    served at `/property` (relocated into `app/(property)/`).
-3. **A live-scores automation** — `scripts/fetch-scores.mjs` plus
+3. **Chairbook — a barbershop ledger & bookings MVP** — served at `/chairbook`
+   from `app/(chairbook)/`. Per-barber deals (flat fee or % split, separate
+   for own clients vs walk-ins), a till that records cash/card payments with
+   JCC terminal matching, bookings, settlement and walk-in insights. Runs
+   entirely in the browser on seeded demo data (`localStorage`); no backend
+   yet. See `docs/CHAIRBOOK.md`. Money math lives in `lib/chairbook/deals.ts`;
+   shares are snapshotted onto each sale, never recomputed.
+4. **A live-scores automation** — `scripts/fetch-scores.mjs` plus
    `.github/workflows/scores.yml`, a standalone GitHub Action unrelated to the
    websites. It is *not* part of the Next.js build (it's excluded in `tsconfig`).
 
@@ -21,9 +28,10 @@ Three unrelated things share this repo:
 
 ## Marketplace (Catalyst) — architecture
 
-- **Two root layouts.** There is no `app/layout.tsx`. Instead the repo uses
+- **Three root layouts.** There is no `app/layout.tsx`. Instead the repo uses
   Next.js multiple-root-layouts: `app/(marketplace)/layout.tsx` (the marketplace,
-  at `/`) and `app/(property)/layout.tsx` (the property site, at `/property`).
+  at `/`), `app/(property)/layout.tsx` (the property site, at `/property`) and
+  `app/(chairbook)/layout.tsx` (the barbershop app, at `/chairbook`).
   Each renders its own `<html>`/`<body>`. Don't reintroduce a single root layout.
 - **Supabase** powers auth + Postgres. Clients live in `lib/supabase/`
   (`client.ts` browser, `server.ts` server components/actions, `middleware.ts`

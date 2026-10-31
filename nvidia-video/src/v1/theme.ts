@@ -20,6 +20,7 @@ export const colors = {
   muted: "#9EA3A0",
   dim: "#5E6361",
   red: "#E5484D",
+  gold: "#F6C451",
 };
 
 export const VIDEO = { width: 1080, height: 1920, fps: 30, durationInFrames: 1800 };

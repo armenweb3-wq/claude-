@@ -73,7 +73,7 @@ export default function TillPage() {
           </span>
         }
       >
-        <p className="mb-3 text-xs text-slate-500">
+        <p className="mb-3 text-xs text-ink-3">
           Card payments the terminal reported that aren&apos;t tied to a client yet. Assign each one so the barber gets
           credited and the client&apos;s history stays right.
         </p>
@@ -81,13 +81,13 @@ export default function TillPage() {
           <Empty>All card payments are matched.</Empty>
         ) : (
           unmatched.map((e) => (
-            <div key={e.id} className="flex items-center gap-3 border-b border-slate-100 py-2.5 last:border-0">
+            <div key={e.id} className="flex items-center gap-3 border-b border-line py-2.5 last:border-0">
               <div className="min-w-0 flex-1">
-                <div className="text-sm text-slate-900">
+                <div className="text-sm text-ink">
                   <span className="font-semibold tabular-nums">{eur(e.amount)}</span>{" "}
-                  <span className="text-slate-400">•••• {e.last4}</span>
+                  <span className="text-ink-3">•••• {e.last4}</span>
                 </div>
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-ink-3">
                   {fmtTime(e.at)} · {e.terminalId} · {db.shops.find((s) => s.id === e.shopId)?.name}
                 </div>
               </div>
@@ -124,14 +124,14 @@ export default function TillPage() {
               left={
                 <>
                   {clientLabel(db, s)}
-                  <span className="ml-2 text-xs text-slate-400">{db.services.find((x) => x.id === s.serviceId)?.name}</span>
+                  <span className="ml-2 text-xs text-ink-3">{db.services.find((x) => x.id === s.serviceId)?.name}</span>
                 </>
               }
               sub={`${fmtTime(s.at)} · ${db.barbers.find((b) => b.id === s.barberId)?.name} · ${s.clientType === "own" ? "own client" : "walk-in deal"} · ${s.source}`}
               right={
                 <>
                   <Money value={s.amount} className="font-medium" />
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-ink-3">
                     <Badge tone={s.method === "cash" ? "warn" : "info"}>{s.method}</Badge> shop {eur(s.shopShare)} ·{" "}
                     {role === "barber" ? "you" : "barber"} {eur(s.barberShare)}
                   </div>

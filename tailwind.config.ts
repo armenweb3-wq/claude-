@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: ["selector", '[data-theme="dark"]'],
   content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
@@ -9,6 +10,26 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Chairbook semantic tokens — values live in app/globals.css and flip
+        // with [data-theme="dark"]. Use these (not slate-*) inside chairbook.
+        canvas: "rgb(var(--cb-canvas) / <alpha-value>)",
+        surface: {
+          DEFAULT: "rgb(var(--cb-surface) / <alpha-value>)",
+          2: "rgb(var(--cb-surface-2) / <alpha-value>)",
+        },
+        line: {
+          DEFAULT: "rgb(var(--cb-line) / <alpha-value>)",
+          2: "rgb(var(--cb-line-2) / <alpha-value>)",
+        },
+        ink: {
+          DEFAULT: "rgb(var(--cb-ink) / <alpha-value>)",
+          2: "rgb(var(--cb-ink-2) / <alpha-value>)",
+          3: "rgb(var(--cb-ink-3) / <alpha-value>)",
+        },
+        good: "rgb(var(--cb-good) / <alpha-value>)",
+        warn: "rgb(var(--cb-warn) / <alpha-value>)",
+        bad: "rgb(var(--cb-bad) / <alpha-value>)",
+        info: "rgb(var(--cb-info) / <alpha-value>)",
         stone: {
           DEFAULT: "#F4F0E9", // warm canvas
           50: "#FBFAF6",
@@ -22,7 +43,6 @@ const config: Config = {
           light: "#1F3350",
           deep: "#101B2D",
         },
-        ink: "#0E1622",
         gold: {
           DEFAULT: "#B8995A", // accent
           soft: "#CDB984",

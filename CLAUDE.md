@@ -16,7 +16,8 @@ Four unrelated things share this repo:
 3. **Chairbook — a barbershop ledger & bookings MVP** — served at `/chairbook`
    from `app/(chairbook)/`. Per-barber deals (flat fee or % split, separate
    for own clients vs walk-ins), a till that records cash/card payments with
-   JCC terminal matching, bookings, settlement and walk-in insights. Runs
+   JCC terminal matching, bookings, expenses, settlement, client retention
+   (slipping/lost) and walk-in insights, light/dark theme. Runs
    entirely in the browser on seeded demo data (`localStorage`); no backend
    yet. See `docs/CHAIRBOOK.md`. Money math lives in `lib/chairbook/deals.ts`;
    shares are snapshotted onto each sale, never recomputed.

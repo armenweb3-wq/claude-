@@ -19,6 +19,7 @@ import type {
   Client,
   DB,
   Deal,
+  Expense,
   PayMethod,
   Role,
   SaleSource,
@@ -75,6 +76,8 @@ interface Store {
   addBarber: (b: Omit<Barber, "id">, username: string, pin: string) => void;
   addShop: (s: Omit<Shop, "id">) => void;
   ignoreCardEvent: (id: string) => void;
+  addExpense: (e: Omit<Expense, "id">) => void;
+  deleteExpense: (id: string) => void;
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -280,6 +283,15 @@ export function ChairbookProvider({ children }: { children: React.ReactNode }) {
       ignoreCardEvent(id) {
         update((d) => ({ ...d, cardEvents: d.cardEvents.filter((e) => e.id !== id) }));
       },
+      addExpense(e) {
+        update((d) => ({
+          ...d,
+          expenses: [...d.expenses, { ...e, id: uid("ex") }].sort((a, b) => a.at.localeCompare(b.at)),
+        }));
+      },
+      deleteExpense(id) {
+        update((d) => ({ ...d, expenses: d.expenses.filter((e) => e.id !== id) }));
+      },
     };
   }, [db, session, update]);
 
@@ -298,6 +310,7 @@ function emptyDb(): DB {
     sales: [],
     appointments: [],
     cardEvents: [],
+    expenses: [],
   };
 }
 

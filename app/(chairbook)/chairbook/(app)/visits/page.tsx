@@ -8,7 +8,7 @@ import { UpcomingList } from "@/components/chairbook/UpcomingList";
 
 export default function VisitsPage() {
   const { db, meClient } = useChairbook();
-  if (!meClient) return <p className="text-sm text-slate-500">Sign in as a client to see your visits.</p>;
+  if (!meClient) return <p className="text-sm text-ink-3">Sign in as a client to see your visits.</p>;
   const past = db.sales
     .filter((s) => s.clientId === meClient.id)
     .sort((a, b) => b.at.localeCompare(a.at))

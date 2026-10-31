@@ -61,7 +61,7 @@ export function SaleForm({ prefill = {}, onDone }: { prefill?: SalePrefill; onDo
   const clientOptions = useMemo(() => {
     const q = clientQuery.trim().toLowerCase();
     return db.clients
-      .filter((c) => c.shopId === shopId || c.ownerBarberId === barberId)
+      .filter((c) => c.ownerBarberId === barberId || (c.shopId === shopId && (role === "owner" || c.ownerBarberId === null)))
       .filter((c) => !q || c.name.toLowerCase().includes(q) || c.phone.includes(q))
       .sort((a, b) => {
         // Barber's own clients first.
@@ -70,7 +70,7 @@ export function SaleForm({ prefill = {}, onDone }: { prefill?: SalePrefill; onDo
         return ao - bo || a.name.localeCompare(b.name);
       })
       .slice(0, 8);
-  }, [db.clients, clientQuery, shopId, barberId]);
+  }, [db.clients, clientQuery, shopId, barberId, role]);
 
   const unmatched = db.cardEvents
     .filter((e) => e.status === "unmatched" && e.shopId === shopId)
@@ -125,7 +125,7 @@ export function SaleForm({ prefill = {}, onDone }: { prefill?: SalePrefill; onDo
       )}
 
       <div>
-        <span className="mb-1 block text-xs font-medium text-slate-600">Client</span>
+        <span className="mb-1 block text-xs font-medium text-ink-2">Client</span>
         <Segmented
           className="w-full"
           value={clientMode}
@@ -140,7 +140,7 @@ export function SaleForm({ prefill = {}, onDone }: { prefill?: SalePrefill; onDo
           ]}
         />
         {clientMode === "walkin" && (
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-ink-3">
             Unknown person off the street. Counts under the walk-in deal.
           </p>
         )}
@@ -151,24 +151,24 @@ export function SaleForm({ prefill = {}, onDone }: { prefill?: SalePrefill; onDo
               value={clientQuery}
               onChange={(e) => setClientQuery(e.target.value)}
             />
-            <div className="max-h-44 overflow-y-auto rounded-xl border border-slate-200">
+            <div className="max-h-44 overflow-y-auto rounded-xl border border-line">
               {clientOptions.map((c) => (
                 <button
                   key={c.id}
                   type="button"
                   onClick={() => setClientId(c.id)}
                   className={cx(
-                    "flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-slate-50",
-                    clientId === c.id && "bg-slate-900 text-white hover:bg-slate-900",
+                    "flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-surface-2",
+                    clientId === c.id && "bg-ink text-canvas hover:bg-ink",
                   )}
                 >
                   <span>
                     {c.name}
-                    <span className={cx("ml-2 text-xs", clientId === c.id ? "text-slate-300" : "text-slate-400")}>
+                    <span className={cx("ml-2 text-xs", clientId === c.id ? "text-canvas/70" : "text-ink-3")}>
                       {c.phone}
                     </span>
                   </span>
-                  <span className={cx("text-xs", clientId === c.id ? "text-slate-300" : "text-slate-500")}>
+                  <span className={cx("text-xs", clientId === c.id ? "text-canvas/70" : "text-ink-3")}>
                     {c.ownerBarberId === barberId
                       ? "own client"
                       : c.ownerBarberId
@@ -178,7 +178,7 @@ export function SaleForm({ prefill = {}, onDone }: { prefill?: SalePrefill; onDo
                 </button>
               ))}
               {clientOptions.length === 0 && (
-                <div className="px-3 py-3 text-xs text-slate-400">No match — add as new client.</div>
+                <div className="px-3 py-3 text-xs text-ink-3">No match — add as new client.</div>
               )}
             </div>
           </div>
@@ -227,7 +227,7 @@ export function SaleForm({ prefill = {}, onDone }: { prefill?: SalePrefill; onDo
       </div>
 
       <div>
-        <span className="mb-1 block text-xs font-medium text-slate-600">Paid by</span>
+        <span className="mb-1 block text-xs font-medium text-ink-2">Paid by</span>
         <div className="grid grid-cols-2 gap-2">
           {(["cash", "card"] as PayMethod[]).map((m) => (
             <button
@@ -237,8 +237,8 @@ export function SaleForm({ prefill = {}, onDone }: { prefill?: SalePrefill; onDo
               className={cx(
                 "h-12 rounded-xl border text-sm font-medium",
                 method === m
-                  ? "border-slate-900 bg-slate-900 text-white"
-                  : "border-slate-300 bg-white text-slate-700",
+                  ? "border-ink bg-ink text-canvas"
+                  : "border-line-2 bg-surface text-ink-2",
               )}
             >
               {m === "cash" ? "💶 Cash" : "💳 Card (JCC)"}
@@ -246,8 +246,8 @@ export function SaleForm({ prefill = {}, onDone }: { prefill?: SalePrefill; onDo
           ))}
         </div>
         {method === "card" && (
-          <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <div className="mb-2 flex items-center justify-between text-xs text-slate-600">
+          <div className="mt-2 rounded-xl border border-line bg-canvas p-3">
+            <div className="mb-2 flex items-center justify-between text-xs text-ink-2">
               <span>Match to terminal {shop?.terminalId}</span>
               <Badge tone={unmatched.length ? "warn" : "neutral"}>
                 {unmatched.length} unmatched
@@ -265,8 +265,8 @@ export function SaleForm({ prefill = {}, onDone }: { prefill?: SalePrefill; onDo
                   className={cx(
                     "flex w-full items-center justify-between rounded-lg border px-3 py-2 text-sm",
                     cardEventId === e.id
-                      ? "border-slate-900 bg-white"
-                      : "border-slate-200 bg-white hover:border-slate-400",
+                      ? "border-ink bg-surface"
+                      : "border-line bg-surface hover:border-ink-3",
                   )}
                 >
                   <span className="tabular-nums">
@@ -276,7 +276,7 @@ export function SaleForm({ prefill = {}, onDone }: { prefill?: SalePrefill; onDo
                 </button>
               ))}
               {unmatched.length === 0 && (
-                <p className="text-xs text-slate-400">No pending terminal payments. Recorded as a manual card entry.</p>
+                <p className="text-xs text-ink-3">No pending terminal payments. Recorded as a manual card entry.</p>
               )}
             </div>
           </div>
@@ -284,24 +284,24 @@ export function SaleForm({ prefill = {}, onDone }: { prefill?: SalePrefill; onDo
       </div>
 
       {barber && rule && (
-        <div className="rounded-xl bg-slate-900 p-4 text-white">
-          <div className="flex items-center justify-between text-xs text-slate-300">
+        <div className="rounded-xl bg-ink p-4 text-canvas">
+          <div className="flex items-center justify-between text-xs text-canvas/70">
             <span>
               {clientType === "own" ? `${barber.name}'s client` : "Walk-in deal"} · {describeRule(rule)}
             </span>
           </div>
           <div className="mt-2 grid grid-cols-3 gap-2">
             <div>
-              <div className="text-[11px] uppercase tracking-wider text-slate-400">Charged</div>
+              <div className="text-[11px] uppercase tracking-wider text-ink-3">Charged</div>
               <div className="text-lg font-semibold tabular-nums">{eur(amountNum)}</div>
             </div>
             <div>
-              <div className="text-[11px] uppercase tracking-wider text-slate-400">Shop</div>
-              <div className="text-lg font-semibold tabular-nums text-emerald-300">{eur(split.shop)}</div>
+              <div className="text-[11px] uppercase tracking-wider text-ink-3">Shop</div>
+              <div className="text-lg font-semibold tabular-nums text-good">{eur(split.shop)}</div>
             </div>
             <div>
-              <div className="text-[11px] uppercase tracking-wider text-slate-400">{barber.name}</div>
-              <div className="text-lg font-semibold tabular-nums text-sky-300">{eur(split.barber)}</div>
+              <div className="text-[11px] uppercase tracking-wider text-ink-3">{barber.name}</div>
+              <div className="text-lg font-semibold tabular-nums text-info">{eur(split.barber)}</div>
             </div>
           </div>
         </div>

@@ -57,8 +57,8 @@ export default function InsightsPage() {
         />
         <div className="mt-3 overflow-x-auto">
           <table className="w-full text-xs">
-            <thead className="text-left uppercase tracking-wider text-slate-500">
-              <tr className="border-b border-slate-100">
+            <thead className="text-left uppercase tracking-wider text-ink-3">
+              <tr className="border-b border-line">
                 <th className="py-1.5 font-medium">Day</th>
                 <th className="py-1.5 text-right font-medium">Booked</th>
                 <th className="py-1.5 text-right font-medium">Walk-ins</th>
@@ -69,8 +69,8 @@ export default function InsightsPage() {
             </thead>
             <tbody>
               {profile.map((r) => (
-                <tr key={r.dow} className="border-b border-slate-100 last:border-0">
-                  <td className="py-1.5 font-medium text-slate-900">{WEEKDAYS_LONG[r.dow]}</td>
+                <tr key={r.dow} className="border-b border-line last:border-0">
+                  <td className="py-1.5 font-medium text-ink">{WEEKDAYS_LONG[r.dow]}</td>
                   <td className="py-1.5 text-right tabular-nums">{r.avgBooked}</td>
                   <td className="py-1.5 text-right tabular-nums">{r.avgWalkIns}</td>
                   <td className="py-1.5 text-right tabular-nums">{r.walkInShare}%</td>
@@ -93,19 +93,19 @@ export default function InsightsPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Booking policy suggestion">
-          <ul className="space-y-2 text-sm text-slate-700">
+          <ul className="space-y-2 text-sm text-ink-2">
             {walkInDays.length > 0 && (
-              <li className="rounded-xl bg-orange-50 p-3 text-orange-900">
+              <li className="rounded-xl bg-warn/10 p-3 text-warn">
                 <strong>{walkInDays.map((r) => WEEKDAYS_LONG[r.dow]).join(" & ")}</strong>: walk-ins bring{" "}
                 {walkInDays.map((r) => `${r.avgWalkIns}`).join(" and ")} walk-ins a day on average. Limit online bookings to
                 mornings and leave the afternoon open.
               </li>
             )}
-            <li className="rounded-xl bg-blue-50 p-3 text-blue-900">
+            <li className="rounded-xl bg-info/10 p-3 text-info">
               <strong>{bookingDays.map((r) => WEEKDAYS_LONG[r.dow]).join(", ")}</strong>: few walk-ins — push clients to
               book these days so barbers stay busy.
             </li>
-            <li className="text-xs text-slate-500">
+            <li className="text-xs text-ink-3">
               Rules of thumb: a weekday with ≥40% walk-in share is flagged. Based on the last {weeks} weeks of recorded
               payments{shopId ? ` at ${shop?.name}` : " across both shops"}.
             </li>
@@ -124,7 +124,7 @@ export default function InsightsPage() {
               ],
             }))}
           />
-          <p className="mt-2 text-xs text-slate-500">Total visits per opening hour over the period.</p>
+          <p className="mt-2 text-xs text-ink-3">Total visits per opening hour over the period.</p>
         </Card>
       </div>
 
@@ -134,20 +134,20 @@ export default function InsightsPage() {
             {db.shops.map((s) => {
               const st = totals(all.filter((x) => x.shopId === s.id));
               return (
-                <div key={s.id} className="rounded-xl bg-slate-50 p-4">
-                  <div className="text-sm font-semibold text-slate-900">{s.name}</div>
-                  <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-slate-500">
+                <div key={s.id} className="rounded-xl bg-canvas p-4">
+                  <div className="text-sm font-semibold text-ink">{s.name}</div>
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-ink-3">
                     <div>
                       Gross
-                      <div className="text-sm font-semibold tabular-nums text-slate-900">{eur(st.gross)}</div>
+                      <div className="text-sm font-semibold tabular-nums text-ink">{eur(st.gross)}</div>
                     </div>
                     <div>
                       Shop net
-                      <div className="text-sm font-semibold tabular-nums text-emerald-700">{eur(st.shop)}</div>
+                      <div className="text-sm font-semibold tabular-nums text-good">{eur(st.shop)}</div>
                     </div>
                     <div>
                       Walk-in share
-                      <div className="text-sm font-semibold tabular-nums text-slate-900">
+                      <div className="text-sm font-semibold tabular-nums text-ink">
                         {Math.round((st.walkIns / (st.count || 1)) * 100)}%
                       </div>
                     </div>

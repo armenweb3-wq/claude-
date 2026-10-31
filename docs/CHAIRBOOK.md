@@ -9,7 +9,7 @@ cash or card, per-barber deals, end-of-day settlement, and walk-in insights.
 | Role | Login | What they see |
 |------|-------|---------------|
 | Owner | `owner` / `1234` | Dashboard (gross, shop net, barber payouts, cash vs card, per-barber settlement), Calendar for every barber, Till + JCC inbox, Clients, Team & deals, Insights, shop switcher |
-| Barber | `andreas`, `kyriakos`, `marios`, `stelios` / `1111` | Their day, Till (their payments), their clients, Earnings + settlement with the shop |
+| Barber | `andreas`, `kyriakos`, `marios`, `stelios` / `1111` | **My chair** (income, expenses, net, settlement, clients served, regulars, slipping/lost clients, no-shows, top clients, week pattern), Today, Till, their clients only, Expenses |
 | Client | `nikos` / `0000` | Book an appointment, upcoming & past visits |
 
 **Deals.** Each barber has two rules: one for *clients they bring* and one for
@@ -30,6 +30,24 @@ matched to an event from the JCC terminal (amount, time, last 4 digits). The
 lands in the shop account. `net = barber share − cash collected`. Positive →
 shop pays the barber; negative → barber hands cash to the shop.
 
+**Expenses.** Shop overheads (rent, utilities, supplies) are logged by the
+owner per shop; each barber logs their own costs (products, tools, transport).
+Owner sees *profit = shop net − shop expenses*; a barber sees *net = their
+share − their expenses*.
+
+**Client retention.** `clientInsights()` in `lib/chairbook/selectors.ts`
+gives every client a status from their own visit rhythm (median gap between
+visits): *new*, *regular* (≥3 visits, gap ≤21 days), *occasional*, *slipping*
+(overdue by >1.5× their gap, at least 14 days) and *lost* (>2.5× their gap and
+≥28 days, or >60 days). An upcoming booking clears slipping/lost. No-shows are
+counted per client. Barbers only ever see their own clients and the shop
+clients they personally served, never a colleague's list.
+
+**Theme.** Light/dark toggle in the header; stored per device
+(`chairbook.theme`). Colors are semantic Tailwind tokens (`bg-surface`,
+`text-ink`, `text-good` …) backed by `--cb-*` CSS variables in
+`app/globals.css`; don't use raw `slate-*` classes inside chairbook.
+
 **Insights.** Average booked vs walk-in visits per weekday (last 8 weeks),
 visits by hour, cash/card split, shop comparison, and a booking-policy
 suggestion: weekdays with ≥40% walk-in share are flagged "keep slots open".
@@ -39,10 +57,10 @@ suggestion: weekdays with ≥40% walk-in share are flagged "keep slots open".
 ```
 app/(chairbook)/layout.tsx              third root layout (own <html>/<body>)
 app/(chairbook)/chairbook/page.tsx      login
-app/(chairbook)/chairbook/(app)/…       dashboard, calendar, till, clients, team, insights, earnings, book, visits
+app/(chairbook)/chairbook/(app)/…       dashboard, calendar, till, clients, team, insights, expenses, chair, book, visits
 lib/chairbook/types.ts                  data model (plain JSON, Postgres-ready)
 lib/chairbook/deals.ts                  settle(amount, rule) — the money math
-lib/chairbook/selectors.ts              totals, settlement, weekday/hour profiles
+lib/chairbook/selectors.ts              totals, settlement, weekday/hour profiles, client retention, expenses
 lib/chairbook/seed.ts                   deterministic demo data (2 shops, 4 barbers, 8 weeks)
 lib/chairbook/store.tsx                 React context + localStorage persistence
 components/chairbook/                   UI kit, charts, SaleForm, BookingForm, Shell

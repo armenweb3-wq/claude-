@@ -6,6 +6,7 @@ import type {
   CardEvent,
   Client,
   DB,
+  Expense,
   PayMethod,
   Sale,
   Service,
@@ -13,7 +14,7 @@ import type {
   User,
 } from "./types";
 
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 
 // Deterministic PRNG so the demo looks the same on every reset.
 function mulberry32(seed: number) {
@@ -128,23 +129,28 @@ const LAST = [
 function makeClients(rand: () => number, now: Date): Client[] {
   const clients: Client[] = [];
   let n = 0;
-  const name = () =>
-    `${FIRST[n++ % FIRST.length]} ${LAST[Math.floor(rand() * LAST.length)]}`;
+  const name = () => {
+    const i = n++;
+    return `${FIRST[i % FIRST.length]} ${LAST[(Math.floor(i / FIRST.length) * 7 + Math.floor(rand() * LAST.length)) % LAST.length]}`;
+  };
   const phone = () => `99 ${Math.floor(100000 + rand() * 899999)}`;
   for (const b of BARBERS) {
-    for (let i = 0; i < 12; i++) {
+    // ~70 regulars per barber: with ~25 bookings a week that is a visit
+    // every 2–3 weeks, which is how real barbershop regulars behave.
+    for (let i = 0; i < 70; i++) {
       clients.push({
         id: `c-${b.id}-${i}`,
         name: name(),
         phone: phone(),
         shopId: b.shopId,
         ownerBarberId: b.id,
-        createdAt: addDays(now, -Math.floor(30 + rand() * 300)).toISOString(),
+        // Three freshly added clients per barber, the rest long-standing.
+        createdAt: addDays(now, i >= 3 && i < 6 ? -Math.floor(4 + rand() * 20) : -Math.floor(40 + rand() * 300)).toISOString(),
       });
     }
   }
   for (const s of SHOPS) {
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 30; i++) {
       clients.push({
         id: `c-${s.id}-shop-${i}`,
         name: name(),
@@ -175,6 +181,7 @@ export function buildSeed(now = new Date()): DB {
   const sales: Sale[] = [];
   const appointments: Appointment[] = [];
   const cardEvents: CardEvent[] = [];
+  const expenses: Expense[] = [];
   let id = 1;
   const nextId = (p: string) => `${p}${(id++).toString(36)}`;
 
@@ -190,7 +197,15 @@ export function buildSeed(now = new Date()): DB {
     for (const barber of BARBERS) {
       const shop = SHOPS.find((s) => s.id === barber.shopId)!;
       if (shop.closedDays.includes(dow)) continue;
-      const own = clients.filter((c) => c.ownerBarberId === barber.id);
+      const allOwn = clients.filter((c) => c.ownerBarberId === barber.id);
+      // A few of each barber's regulars stop showing up — at 45, 35 and 24
+      // days back — so the "slipping away" and "lost" lists have real cases.
+      const own = allOwn.filter((c, i) => {
+        if (i === allOwn.length - 1) return back > 45;
+        if (i === allOwn.length - 2) return back > 35;
+        if (i === allOwn.length - 3) return back > 24;
+        return true;
+      });
       const shopClients = clients.filter(
         (c) => c.shopId === shop.id && c.ownerBarberId === null,
       );
@@ -230,7 +245,7 @@ export function buildSeed(now = new Date()): DB {
         // Who is it? Booked visits are mostly the barber's own clients; walk-ins
         // are mostly unknown people or shop clients.
         let client: Client | null;
-        if (v.booked) client = rand() < 0.8 ? pick(own) : pick(shopClients);
+        if (v.booked) client = rand() < 0.8 ? (rand() < 0.45 ? own[Math.floor(rand() * Math.min(own.length, 20))] : pick(own)) : pick(shopClients);
         else client = rand() < 0.55 ? null : rand() < 0.3 ? pick(own) : pick(shopClients);
         const clientType = client && client.ownerBarberId === barber.id ? "own" : "walkin";
 
@@ -255,6 +270,10 @@ export function buildSeed(now = new Date()): DB {
           };
           appointments.push(appt);
           if (future) continue;
+          if (rand() < 0.06) {
+            appt.status = "no-show";
+            continue;
+          }
           const sale = makeSale(barber, shop, client, clientType, service, amount, at, "booked", rand);
           sale.appointmentId = appt.id;
           appt.saleId = sale.id;
@@ -302,6 +321,38 @@ export function buildSeed(now = new Date()): DB {
     }
   }
 
+  // Expenses: shop overheads monthly, barber's own costs a few times a month.
+  for (let back = 56; back >= 0; back--) {
+    const day = addDays(today, -back);
+    const key = day.toISOString();
+    if (day.getDate() === 1) {
+      for (const shop of SHOPS) {
+        expenses.push({ id: nextId("ex"), shopId: shop.id, barberId: null, category: "rent", amount: shop.id === "s1" ? 1400 : 1100, note: "Monthly rent", at: key });
+        expenses.push({ id: nextId("ex"), shopId: shop.id, barberId: null, category: "utilities", amount: 180 + Math.round(rand() * 90), note: "Electricity & water", at: key });
+      }
+    }
+    if (day.getDay() === 2 && rand() < 0.7) {
+      for (const shop of SHOPS) {
+        expenses.push({ id: nextId("ex"), shopId: shop.id, barberId: null, category: "supplies", amount: 25 + Math.round(rand() * 60), note: pick(["Towels & capes", "Cleaning", "Blades & foam", "Coffee & water"]), at: key });
+      }
+    }
+    for (const barber of BARBERS) {
+      if (rand() < 0.12) {
+        const cat = pick(["products", "tools", "transport", "other"] as const);
+        const amount = cat === "tools" ? 40 + Math.round(rand() * 120) : 10 + Math.round(rand() * 40);
+        expenses.push({
+          id: nextId("ex"),
+          shopId: barber.shopId,
+          barberId: barber.id,
+          category: cat,
+          amount,
+          note: { products: pick(["Pomade & clay", "Beard oil", "Hair spray"]), tools: pick(["Clipper blades", "Scissors sharpening", "Trimmer"]), transport: "Fuel", other: pick(["Phone top-up", "Lunch for client", "Uniform"]) }[cat],
+          at: key,
+        });
+      }
+    }
+  }
+
   // A few card payments the terminal reported that nobody has assigned yet.
   const unmatched: [string, number, number][] = [
     ["s1", 25, 35],
@@ -337,6 +388,7 @@ export function buildSeed(now = new Date()): DB {
     sales,
     appointments,
     cardEvents,
+    expenses,
   };
 }
 

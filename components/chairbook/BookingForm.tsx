@@ -101,7 +101,7 @@ export function BookingForm({ prefill = {}, onDone }: { prefill?: BookingPrefill
       )}
       {role !== "barber" && (
         <div>
-          <span className="mb-1 block text-xs font-medium text-slate-600">Barber</span>
+          <span className="mb-1 block text-xs font-medium text-ink-2">Barber</span>
           <div className="flex flex-wrap gap-2">
             {barbers.map((b) => (
               <button
@@ -110,7 +110,7 @@ export function BookingForm({ prefill = {}, onDone }: { prefill?: BookingPrefill
                 onClick={() => setBarberId(b.id)}
                 className={cx(
                   "flex items-center gap-2 rounded-xl border px-3 py-2 text-sm",
-                  effectiveBarberId === b.id ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300 bg-white",
+                  effectiveBarberId === b.id ? "border-ink bg-ink text-canvas" : "border-line-2 bg-surface",
                 )}
               >
                 <span className="h-2.5 w-2.5 rounded-full" style={{ background: b.color }} />
@@ -123,13 +123,13 @@ export function BookingForm({ prefill = {}, onDone }: { prefill?: BookingPrefill
 
       {role !== "client" && (
         <div>
-          <span className="mb-1 block text-xs font-medium text-slate-600">Client</span>
+          <span className="mb-1 block text-xs font-medium text-ink-2">Client</span>
           {selectedClient ? (
-            <div className="flex items-center justify-between rounded-xl border border-slate-900 bg-slate-900 px-3 py-2 text-sm text-white">
+            <div className="flex items-center justify-between rounded-xl border border-ink bg-ink px-3 py-2 text-sm text-canvas">
               <span>
-                {selectedClient.name} <span className="text-slate-300">{selectedClient.phone}</span>
+                {selectedClient.name} <span className="text-canvas/70">{selectedClient.phone}</span>
               </span>
-              <button className="text-xs text-slate-300 underline" onClick={() => setClientId("")}>
+              <button className="text-xs text-canvas/70 underline" onClick={() => setClientId("")}>
                 change
               </button>
             </div>
@@ -137,7 +137,7 @@ export function BookingForm({ prefill = {}, onDone }: { prefill?: BookingPrefill
             <div className="space-y-2">
               <Input placeholder="Search client list…" value={query} onChange={(e) => setQuery(e.target.value)} />
               {clientOptions.length > 0 && (
-                <div className="rounded-xl border border-slate-200">
+                <div className="rounded-xl border border-line">
                   {clientOptions.map((c) => (
                     <button
                       key={c.id}
@@ -146,10 +146,10 @@ export function BookingForm({ prefill = {}, onDone }: { prefill?: BookingPrefill
                         setClientId(c.id);
                         setQuery("");
                       }}
-                      className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-slate-50"
+                      className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-surface-2"
                     >
                       {c.name}
-                      <span className="text-xs text-slate-400">{c.phone}</span>
+                      <span className="text-xs text-ink-3">{c.phone}</span>
                     </button>
                   ))}
                 </div>
@@ -189,9 +189,9 @@ export function BookingForm({ prefill = {}, onDone }: { prefill?: BookingPrefill
       </div>
 
       <div>
-        <span className="mb-1 block text-xs font-medium text-slate-600">
+        <span className="mb-1 block text-xs font-medium text-ink-2">
           Time · {fmtDay(day)}
-          {closed && <span className="ml-2 text-rose-600">closed</span>}
+          {closed && <span className="ml-2 text-bad">closed</span>}
         </span>
         {!closed && (
           <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5">
@@ -204,10 +204,10 @@ export function BookingForm({ prefill = {}, onDone }: { prefill?: BookingPrefill
                 className={cx(
                   "h-9 rounded-lg border text-xs font-medium tabular-nums",
                   time === s.time
-                    ? "border-slate-900 bg-slate-900 text-white"
+                    ? "border-ink bg-ink text-canvas"
                     : s.free && !s.past
-                      ? "border-slate-300 bg-white text-slate-800 hover:border-slate-900"
-                      : "border-slate-100 bg-slate-50 text-slate-300 line-through",
+                      ? "border-line-2 bg-surface text-ink hover:border-ink"
+                      : "border-line bg-canvas text-canvas/70 line-through",
                 )}
               >
                 {s.time}

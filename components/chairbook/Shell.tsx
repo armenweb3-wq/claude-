@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useChairbook } from "@/lib/chairbook/store";
 import type { Role } from "@/lib/chairbook/types";
+import { ThemeToggle } from "./theme";
 import { cx } from "./ui";
 
 interface ShopFilter {
@@ -22,12 +23,14 @@ const NAV: Record<Role, { href: string; label: string; icon: keyof typeof ICONS 
     { href: "/chairbook/clients", label: "Clients", icon: "people" },
     { href: "/chairbook/team", label: "Team", icon: "team" },
     { href: "/chairbook/insights", label: "Insights", icon: "chart" },
+    { href: "/chairbook/expenses", label: "Expenses", icon: "wallet" },
   ],
   barber: [
+    { href: "/chairbook/chair", label: "My chair", icon: "chart" },
     { href: "/chairbook/calendar", label: "Today", icon: "calendar" },
     { href: "/chairbook/till", label: "Till", icon: "till" },
     { href: "/chairbook/clients", label: "Clients", icon: "people" },
-    { href: "/chairbook/earnings", label: "Earnings", icon: "chart" },
+    { href: "/chairbook/expenses", label: "Expenses", icon: "wallet" },
   ],
   client: [
     { href: "/chairbook/book", label: "Book", icon: "calendar" },
@@ -61,6 +64,13 @@ const ICONS = {
     </>
   ),
   chart: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
+  wallet: (
+    <>
+      <rect x="2" y="6" width="20" height="14" rx="2" />
+      <path d="M16 13h4M2 10h20" />
+    </>
+  ),
+  switch: <path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />,
 };
 
 export function Icon({ name, className }: { name: keyof typeof ICONS; className?: string }) {
@@ -99,7 +109,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   if (!ready || !user || !role) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-slate-400">Loading…</div>
+      <div className="flex min-h-screen items-center justify-center text-sm text-ink-3">Loading…</div>
     );
   }
 
@@ -108,11 +118,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <ShopCtx.Provider value={{ shopId, setShopId }}>
-      <div className="min-h-screen bg-slate-50 pb-20 sm:pb-0">
-        <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur">
+      <div className="min-h-screen bg-canvas pb-20 sm:pb-0">
+        <header className="sticky top-0 z-30 border-b border-line bg-surface/90 backdrop-blur">
           <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4">
-            <Link href={home} className="flex items-center gap-2 font-semibold tracking-tight text-slate-900">
-              <span className="grid h-7 w-7 place-items-center rounded-lg bg-slate-900 text-xs font-bold text-white">
+            <Link href={home} className="flex items-center gap-2 font-semibold tracking-tight text-ink">
+              <span className="grid h-7 w-7 place-items-center rounded-lg bg-ink text-xs font-bold text-canvas">
                 C
               </span>
               Chairbook
@@ -125,8 +135,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
                   className={cx(
                     "rounded-lg px-3 py-1.5 text-sm font-medium",
                     pathname.startsWith(n.href)
-                      ? "bg-slate-100 text-slate-900"
-                      : "text-slate-500 hover:text-slate-900",
+                      ? "bg-surface-2 text-ink"
+                      : "text-ink-3 hover:text-ink",
                   )}
                 >
                   {n.label}
@@ -138,7 +148,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <select
                   value={shopId ?? ""}
                   onChange={(e) => setShopId(e.target.value || null)}
-                  className="h-9 rounded-lg border border-slate-300 bg-white px-2 text-sm"
+                  className="h-9 rounded-lg border border-line-2 bg-surface px-2 text-sm"
                   aria-label="Shop"
                 >
                   <option value="">All shops</option>
@@ -150,25 +160,28 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 </select>
               )}
               {role === "barber" && me && (
-                <span className="hidden rounded-lg bg-slate-100 px-2 py-1 text-xs text-slate-600 sm:inline">
+                <span className="hidden rounded-lg bg-surface-2 px-2 py-1 text-xs text-ink-2 sm:inline">
                   {db.shops.find((s) => s.id === me.shopId)?.name}
                 </span>
               )}
-              <span className="hidden text-sm text-slate-600 sm:inline">{user.name}</span>
+              <ThemeToggle />
               <button
                 onClick={() => {
                   logout();
                   router.replace("/chairbook");
                 }}
-                className="rounded-lg px-2 py-1 text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                title="Switch user / log out"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line-2 bg-surface px-2.5 text-sm text-ink-2 hover:text-ink"
               >
-                Log out
+                <Icon name="switch" className="h-4 w-4" />
+                <span className="max-w-[7rem] truncate">{user.name}</span>
+                <span className="hidden text-xs text-ink-3 sm:inline">· switch</span>
               </button>
             </div>
           </div>
         </header>
         <main className="mx-auto max-w-6xl px-4 py-5 sm:py-8">{children}</main>
-        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur sm:hidden">
+        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 backdrop-blur sm:hidden">
           <div className="flex">
             {nav.map((n) => {
               const active = pathname.startsWith(n.href);
@@ -177,8 +190,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
                   key={n.href}
                   href={n.href}
                   className={cx(
-                    "flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium",
-                    active ? "text-slate-900" : "text-slate-400",
+                    "flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium",
+                    active ? "text-ink" : "text-ink-3",
                   )}
                 >
                   <Icon name={n.icon} />

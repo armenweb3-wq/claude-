@@ -17,7 +17,7 @@ export default function TeamPage() {
   const [addingShop, setAddingShop] = useState(false);
 
   if (role !== "owner") {
-    return <p className="text-sm text-slate-500">Only the owner can manage the team.</p>;
+    return <p className="text-sm text-ink-3">Only the owner can manage the team.</p>;
   }
 
   const { from, to } = periodRange("month");
@@ -32,9 +32,9 @@ export default function TeamPage() {
 
       {db.shops.map((shop) => (
         <div key={shop.id} className="space-y-3">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
             {shop.name}
-            <span className="font-normal text-slate-400">
+            <span className="font-normal text-ink-3">
               {shop.area} · {shop.terminalId} · {shop.openHour}:00–{shop.closeHour}:00
             </span>
           </h2>
@@ -47,12 +47,12 @@ export default function TeamPage() {
                   <Card key={b.id}>
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="flex items-center gap-2 text-base font-semibold text-slate-900">
+                        <div className="flex items-center gap-2 text-base font-semibold text-ink">
                           <span className="h-3 w-3 rounded-full" style={{ background: b.color }} />
                           {b.name}
                           {!b.active && <Badge>inactive</Badge>}
                         </div>
-                        <div className="mt-0.5 text-xs text-slate-500">
+                        <div className="mt-0.5 text-xs text-ink-3">
                           login: {db.users.find((u) => u.barberId === b.id)?.username ?? "—"}
                         </div>
                       </div>
@@ -64,18 +64,18 @@ export default function TeamPage() {
                       <DealTile label="Own clients" rule={b.deal.ownClients} />
                       <DealTile label="Walk-ins" rule={b.deal.walkIns} />
                     </div>
-                    <div className="mt-3 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                    <div className="mt-3 grid grid-cols-3 gap-2 border-t border-line pt-3 text-xs text-ink-3">
                       <div>
                         This month
-                        <div className="text-sm font-semibold tabular-nums text-slate-900">{t.count} cuts</div>
+                        <div className="text-sm font-semibold tabular-nums text-ink">{t.count} cuts</div>
                       </div>
                       <div>
                         Shop earned
-                        <div className="text-sm font-semibold tabular-nums text-emerald-700">{eur(t.shop)}</div>
+                        <div className="text-sm font-semibold tabular-nums text-good">{eur(t.shop)}</div>
                       </div>
                       <div>
                         Barber earned
-                        <div className="text-sm font-semibold tabular-nums text-slate-900">{eur(t.barber)}</div>
+                        <div className="text-sm font-semibold tabular-nums text-ink">{eur(t.barber)}</div>
                       </div>
                     </div>
                   </Card>
@@ -93,7 +93,7 @@ export default function TeamPage() {
           </Button>
         }
       >
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-ink-3">
           Buying a third location? Add it here, give it its JCC terminal ID, and move or hire barbers into it.
         </p>
       </Card>
@@ -134,10 +134,10 @@ export default function TeamPage() {
 function DealTile({ label, rule }: { label: string; rule: DealRule }) {
   const ex = settle(20, rule);
   return (
-    <div className="rounded-xl bg-slate-50 p-3">
-      <div className="text-[11px] uppercase tracking-wider text-slate-500">{label}</div>
-      <div className="mt-0.5 font-medium text-slate-900">{describeRule(rule)}</div>
-      <div className="mt-1 text-xs text-slate-500">
+    <div className="rounded-xl bg-canvas p-3">
+      <div className="text-[11px] uppercase tracking-wider text-ink-3">{label}</div>
+      <div className="mt-0.5 font-medium text-ink">{describeRule(rule)}</div>
+      <div className="mt-1 text-xs text-ink-3">
         On a €20 cut: shop {eur(ex.shop)} · barber {eur(ex.barber)}
       </div>
     </div>
@@ -146,15 +146,15 @@ function DealTile({ label, rule }: { label: string; rule: DealRule }) {
 
 function RuleEditor({ label, rule, onChange }: { label: string; rule: DealRule; onChange: (r: DealRule) => void }) {
   return (
-    <div className="rounded-xl border border-slate-200 p-3">
-      <div className="mb-2 text-sm font-medium text-slate-900">{label}</div>
+    <div className="rounded-xl border border-line p-3">
+      <div className="mb-2 text-sm font-medium text-ink">{label}</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => onChange({ kind: "flat", shopTakes: rule.kind === "flat" ? rule.shopTakes : 5 })}
           className={cx(
             "rounded-lg border px-3 py-2 text-sm",
-            rule.kind === "flat" ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300",
+            rule.kind === "flat" ? "border-ink bg-ink text-canvas" : "border-line-2",
           )}
         >
           Flat fee to shop
@@ -164,7 +164,7 @@ function RuleEditor({ label, rule, onChange }: { label: string; rule: DealRule; 
           onClick={() => onChange({ kind: "percent", shopPct: rule.kind === "percent" ? rule.shopPct : 50 })}
           className={cx(
             "rounded-lg border px-3 py-2 text-sm",
-            rule.kind === "percent" ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300",
+            rule.kind === "percent" ? "border-ink bg-ink text-canvas" : "border-line-2",
           )}
         >
           Percentage split
@@ -189,7 +189,7 @@ function RuleEditor({ label, rule, onChange }: { label: string; rule: DealRule; 
               step={5}
               value={rule.shopPct}
               onChange={(e) => onChange({ kind: "percent", shopPct: Number(e.target.value) })}
-              className="w-full accent-slate-900"
+              className="w-full accent-ink"
             />
           </Field>
         )}
@@ -204,7 +204,7 @@ function DealEditor({ initial, onSave }: { initial: Deal; onSave: (d: Deal) => v
     <div className="space-y-3">
       <RuleEditor label="Clients the barber brings" rule={deal.ownClients} onChange={(r) => setDeal({ ...deal, ownClients: r })} />
       <RuleEditor label="Walk-ins / shop clients" rule={deal.walkIns} onChange={(r) => setDeal({ ...deal, walkIns: r })} />
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-ink-3">
         Changes apply to new payments only. Past payments keep the split they were recorded with.
       </p>
       <Button size="lg" className="w-full" onClick={() => onSave(deal)}>

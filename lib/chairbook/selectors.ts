@@ -1,6 +1,6 @@
 import { round2 } from "./deals";
 import { addDays, startOfDay, startOfMonth, startOfWeek } from "./format";
-import type { Appointment, Barber, DB, Sale } from "./types";
+import type { Appointment, Barber, Client, DB, Expense, Sale } from "./types";
 
 export type Period = "today" | "week" | "month";
 
@@ -204,4 +204,172 @@ export function clientLabel(db: DB, sale: { clientId: string | null }) {
 
 export function barbersOf(db: DB, shopId: string | null): Barber[] {
   return db.barbers.filter((b) => b.active && (!shopId || b.shopId === shopId));
+}
+
+// ---------------------------------------------------------------------------
+// Client-level insights: who is a regular, who is slipping away, who is lost.
+
+
+export type ClientStatus = "new" | "regular" | "occasional" | "slipping" | "lost";
+
+export interface ClientInsight {
+  client: Client;
+  visits: number;
+  spend: number;
+  firstVisit: string;
+  lastVisit: string;
+  daysSince: number;
+  /** Typical days between visits (median), when there are ≥ 2 visits. */
+  gapDays: number | null;
+  noShows: number;
+  hasUpcoming: boolean;
+  status: ClientStatus;
+  /** For slipping/lost: how many usual intervals overdue. */
+  overdueBy: number;
+}
+
+const DAY = 86_400_000;
+
+function median(xs: number[]) {
+  if (!xs.length) return null;
+  const s = [...xs].sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+
+/**
+ * Status rules (deliberately simple so a barber can reason about them):
+ * - new:        added to the list within the last 30 days (≤ 2 visits)
+ * - regular:    ≥ 3 visits with a usual gap ≤ 21 days, and not overdue
+ * - occasional: everyone else who is not overdue
+ * - slipping:   overdue by more than 1.5× their usual gap and ≥ 14 days
+ *               since the last visit (or > 30 days for people without a rhythm)
+ * - lost:       overdue by more than 2.5× their usual gap and ≥ 28 days, or > 60 days
+ * An upcoming booking cancels slipping/lost.
+ */
+export function clientInsights(
+  db: DB,
+  opts: { barberId?: string | null; shopId?: string | null; servedByBarber?: boolean } = {},
+  now = new Date(),
+): ClientInsight[] {
+  const out: ClientInsight[] = [];
+  const nowMs = now.getTime();
+  const upcoming = new Set(
+    db.appointments
+      .filter((a) => a.status === "booked" && new Date(a.startsAt) >= now && a.clientId)
+      .map((a) => a.clientId as string),
+  );
+  const noShowCount = new Map<string, number>();
+  for (const a of db.appointments) {
+    if (a.status === "no-show" && a.clientId && (!opts.barberId || a.barberId === opts.barberId)) {
+      noShowCount.set(a.clientId, (noShowCount.get(a.clientId) ?? 0) + 1);
+    }
+  }
+
+  const byClient = new Map<string, Sale[]>();
+  for (const s of db.sales) {
+    if (!s.clientId) continue;
+    if (opts.barberId && opts.servedByBarber && s.barberId !== opts.barberId) continue;
+    const arr = byClient.get(s.clientId) ?? [];
+    arr.push(s);
+    byClient.set(s.clientId, arr);
+  }
+
+  for (const client of db.clients) {
+    if (opts.shopId && client.shopId !== opts.shopId) continue;
+    if (opts.barberId && !opts.servedByBarber && client.ownerBarberId !== opts.barberId) continue;
+    const sales = (byClient.get(client.id) ?? []).sort((a, b) => a.at.localeCompare(b.at));
+    if (sales.length === 0 && !opts.servedByBarber) {
+      out.push({
+        client,
+        visits: 0,
+        spend: 0,
+        firstVisit: client.createdAt,
+        lastVisit: client.createdAt,
+        daysSince: Math.floor((nowMs - new Date(client.createdAt).getTime()) / DAY),
+        gapDays: null,
+        noShows: noShowCount.get(client.id) ?? 0,
+        hasUpcoming: upcoming.has(client.id),
+        status: (nowMs - new Date(client.createdAt).getTime()) / DAY <= 30 ? "new" : upcoming.has(client.id) ? "occasional" : "lost",
+        overdueBy: 0,
+      });
+      continue;
+    }
+    if (sales.length === 0) continue;
+    const gaps: number[] = [];
+    for (let i = 1; i < sales.length; i++) {
+      gaps.push((new Date(sales[i].at).getTime() - new Date(sales[i - 1].at).getTime()) / DAY);
+    }
+    const gapDays = median(gaps);
+    const lastVisit = sales[sales.length - 1].at;
+    const firstVisit = sales[0].at;
+    const daysSince = Math.floor((nowMs - new Date(lastVisit).getTime()) / DAY);
+    const sinceCreated = Math.floor((nowMs - new Date(client.createdAt).getTime()) / DAY);
+    const overdueBy = gapDays ? daysSince / gapDays : 0;
+    let status: ClientStatus;
+    if (sinceCreated <= 30 && sales.length <= 2) status = "new";
+    else if (upcoming.has(client.id)) status = gapDays !== null && gapDays <= 21 && sales.length >= 3 ? "regular" : "occasional";
+    else if ((gapDays && overdueBy > 2.5 && daysSince >= 28) || daysSince > 60) status = "lost";
+    else if ((gapDays && overdueBy > 1.5 && daysSince >= 14) || (!gapDays && daysSince > 30)) status = "slipping";
+    else if (gapDays !== null && gapDays <= 21 && sales.length >= 3) status = "regular";
+    else status = "occasional";
+    out.push({
+      client,
+      visits: sales.length,
+      spend: round2(sales.reduce((a, s) => a + s.amount, 0)),
+      firstVisit,
+      lastVisit,
+      daysSince,
+      gapDays: gapDays === null ? null : Math.round(gapDays),
+      noShows: noShowCount.get(client.id) ?? 0,
+      hasUpcoming: upcoming.has(client.id),
+      status,
+      overdueBy: Math.round(overdueBy * 10) / 10,
+    });
+  }
+  return out;
+}
+
+export function expensesIn(
+  expenses: Expense[],
+  opts: { from?: Date; to?: Date; shopId?: string | null; barberId?: string | null; shopOnly?: boolean },
+) {
+  const from = opts.from?.toISOString();
+  const to = opts.to?.toISOString();
+  return expenses.filter(
+    (e) =>
+      (!from || e.at >= from) &&
+      (!to || e.at < to) &&
+      (!opts.shopId || e.shopId === opts.shopId) &&
+      (opts.barberId ? e.barberId === opts.barberId : true) &&
+      (opts.shopOnly ? e.barberId === null : true),
+  );
+}
+
+export const sumExpenses = (xs: Expense[]) => round2(xs.reduce((a, e) => a + e.amount, 0));
+
+/** Weekly totals for the last N weeks (Monday-based, oldest first). */
+export function weeklySeries(sales: Sale[], weeks: number, now = new Date()) {
+  const out: { start: Date; gross: number; barber: number; shop: number; count: number; walkIns: number }[] = [];
+  const thisWeek = startOfWeek(now);
+  for (let i = weeks - 1; i >= 0; i--) {
+    const start = addDays(thisWeek, -i * 7);
+    const inWeek = salesIn(sales, { from: start, to: addDays(start, 7) });
+    const t = totals(inWeek);
+    out.push({ start, gross: t.gross, barber: t.barber, shop: t.shop, count: t.count, walkIns: t.walkIns });
+  }
+  return out;
+}
+
+export function noShowsIn(db: DB, opts: { from?: Date; to?: Date; barberId?: string | null; shopId?: string | null }) {
+  const from = opts.from?.toISOString();
+  const to = opts.to?.toISOString();
+  return db.appointments.filter(
+    (a) =>
+      a.status === "no-show" &&
+      (!from || a.startsAt >= from) &&
+      (!to || a.startsAt < to) &&
+      (!opts.barberId || a.barberId === opts.barberId) &&
+      (!opts.shopId || a.shopId === opts.shopId),
+  );
 }

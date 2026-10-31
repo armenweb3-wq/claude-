@@ -124,6 +124,27 @@ export interface CardEvent {
   saleId?: string;
 }
 
+export type ExpenseCategory =
+  | "rent"
+  | "utilities"
+  | "supplies"
+  | "products"
+  | "tools"
+  | "marketing"
+  | "transport"
+  | "other";
+
+/** Money going out. Shop expenses have no barberId; a barber's own expenses do. */
+export interface Expense {
+  id: string;
+  shopId: string;
+  barberId: string | null;
+  category: ExpenseCategory;
+  amount: number;
+  note: string;
+  at: string; // ISO date
+}
+
 export interface DB {
   version: number;
   seededAt: string;
@@ -135,6 +156,7 @@ export interface DB {
   sales: Sale[];
   appointments: Appointment[];
   cardEvents: CardEvent[];
+  expenses: Expense[];
 }
 
 export interface Session {

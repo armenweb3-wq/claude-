@@ -17,7 +17,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f172a",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0f18" },
+  ],
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -26,7 +29,12 @@ export const viewport: Viewport = {
 export default function ChairbookLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={sans.variable}>
-      <body className="min-h-screen bg-slate-50 font-sans text-slate-900 antialiased">
+      <body className="min-h-screen bg-canvas font-sans text-ink antialiased">
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem("chairbook.theme");if(t!=="light"&&t!=="dark"){t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}document.documentElement.dataset.theme=t}catch(e){}`,
+          }}
+        />
         <ChairbookProvider>{children}</ChairbookProvider>
       </body>
     </html>

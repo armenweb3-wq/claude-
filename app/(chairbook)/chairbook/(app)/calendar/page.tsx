@@ -51,15 +51,15 @@ export default function CalendarPage() {
       />
 
       {busyWalkIns && role !== "client" && (
-        <div className="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-900">
+        <div className="rounded-2xl border border-warn/30 bg-warn/10 px-4 py-3 text-sm text-warn">
           <strong>Heavy walk-in day.</strong> {dowRow?.walkInShare}% of visits on this weekday are walk-ins (avg{" "}
           {dowRow?.avgWalkIns} per day). Keep slots free rather than filling the diary.
         </div>
       )}
 
       {isToday && (
-        <div className="text-sm text-slate-500">
-          So far today: <span className="font-medium text-slate-900">{dayTotals.count} cuts</span> ·{" "}
+        <div className="text-sm text-ink-3">
+          So far today: <span className="font-medium text-ink">{dayTotals.count} cuts</span> ·{" "}
           {dayTotals.walkIns} walk-ins · {dayTotals.booked} booked
         </div>
       )}
@@ -77,11 +77,11 @@ export default function CalendarPage() {
                 <span className="inline-flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full" style={{ background: b.color }} />
                   {b.name}
-                  <span className="font-normal text-slate-400">{db.shops.find((s) => s.id === b.shopId)?.name}</span>
+                  <span className="font-normal text-ink-3">{db.shops.find((s) => s.id === b.shopId)?.name}</span>
                 </span>
               }
               action={
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-ink-3">
                   {appts.length} booked · {walkIns.length} walk-in
                 </span>
               }
@@ -90,7 +90,7 @@ export default function CalendarPage() {
                 <Empty>
                   No bookings.{" "}
                   <button
-                    className="font-medium text-slate-900 underline"
+                    className="font-medium text-ink underline"
                     onClick={() => setBooking({ date: dayKey(day), barberId: b.id, shopId: b.shopId })}
                   >
                     Book one
@@ -117,7 +117,7 @@ export default function CalendarPage() {
                 ))
               )}
               <button
-                className="mt-3 w-full rounded-xl border border-dashed border-slate-300 py-2 text-xs font-medium text-slate-500 hover:border-slate-900 hover:text-slate-900"
+                className="mt-3 w-full rounded-xl border border-dashed border-line-2 py-2 text-xs font-medium text-ink-3 hover:border-ink hover:text-ink"
                 onClick={() => setBooking({ date: dayKey(day), barberId: b.id, shopId: b.shopId })}
               >
                 + Book for {b.name}
@@ -152,13 +152,13 @@ function ApptRow({
   const own = client && client.ownerBarberId === a.barberId;
   const sale = a.saleId ? db.sales.find((s) => s.id === a.saleId) : null;
   return (
-    <div className="flex items-center gap-3 border-b border-slate-100 py-2.5 last:border-0">
-      <div className="w-12 shrink-0 text-sm font-semibold tabular-nums text-slate-900">{fmtTime(a.startsAt)}</div>
+    <div className="flex items-center gap-3 border-b border-line py-2.5 last:border-0">
+      <div className="w-12 shrink-0 text-sm font-semibold tabular-nums text-ink">{fmtTime(a.startsAt)}</div>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm text-slate-900">
+        <div className="truncate text-sm text-ink">
           {name} {own && <Badge tone="info">own</Badge>}
         </div>
-        <div className="truncate text-xs text-slate-500">
+        <div className="truncate text-xs text-ink-3">
           {db.services.find((s) => s.id === a.serviceId)?.name} · {a.minutes} min · booked by {a.bookedBy}
         </div>
       </div>

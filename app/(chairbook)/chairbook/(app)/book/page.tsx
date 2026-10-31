@@ -17,7 +17,7 @@ export default function BookPage() {
         sub={barber ? `Your barber is ${barber.name} at ${db.shops.find((s) => s.id === barber.shopId)?.name}.` : "Pick a shop, a barber and a time."}
       />
       {done && (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+        <div className="rounded-2xl border border-good/30 bg-good/10 px-4 py-3 text-sm text-good">
           Booked. We&apos;ll see you then — it&apos;s in your visits below.
         </div>
       )}

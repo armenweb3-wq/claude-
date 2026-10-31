@@ -4,7 +4,7 @@ import { useState } from "react";
 import { eur } from "@/lib/chairbook/format";
 
 // Reference categorical palette, slots 1 & 2 (validated: CVD ΔE 37, normal 44).
-export const SERIES = { booked: "#2a78d6", walkIn: "#eb6834", single: "#2a78d6", muted: "#cbd5e1" };
+export const SERIES = { booked: "#2a78d6", walkIn: "#eb6834", single: "#2a78d6", muted: "rgb(var(--cb-line-2))" };
 
 export interface StackRow {
   label: string;
@@ -32,7 +32,7 @@ export function StackedBars({
   return (
     <div className="relative">
       {rows.length <= 8 && (
-        <div className="grid text-center text-[11px] font-semibold tabular-nums text-slate-700" style={cols}>
+        <div className="grid text-center text-[11px] font-semibold tabular-nums text-ink-2" style={cols}>
           {rows.map((r) => (
             <span key={r.label}>{format(r.parts.reduce((a, p) => a + p.value, 0))}</span>
           ))}
@@ -46,7 +46,7 @@ export function StackedBars({
             x2="100"
             y1={height - g * height}
             y2={height - g * height}
-            stroke="#e2e8f0"
+            stroke="rgb(var(--cb-line))"
             strokeWidth="0.3"
           />
         ))}
@@ -85,23 +85,23 @@ export function StackedBars({
           );
         })}
       </svg>
-      <div className="grid text-center text-[11px] text-slate-500" style={cols}>
+      <div className="grid text-center text-[11px] text-ink-3" style={cols}>
         {rows.map((r) => (
-          <span key={r.label} className={highlight?.(r) ? "font-semibold text-slate-900" : undefined}>
+          <span key={r.label} className={highlight?.(r) ? "font-semibold text-ink" : undefined}>
             {r.label}
           </span>
         ))}
       </div>
       {hover !== null && (
-        <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs shadow-md">
-          <div className="font-semibold text-slate-900">{rows[hover].label}</div>
+        <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 rounded-lg border border-line bg-surface px-3 py-2 text-xs shadow-md">
+          <div className="font-semibold text-ink">{rows[hover].label}</div>
           {rows[hover].parts.map((p) => (
-            <div key={p.key} className="flex items-center gap-2 text-slate-600">
+            <div key={p.key} className="flex items-center gap-2 text-ink-2">
               <span className="h-2 w-2 rounded-sm" style={{ background: p.color }} />
-              {p.key}: <span className="tabular-nums text-slate-900">{format(p.value)}</span>
+              {p.key}: <span className="tabular-nums text-ink">{format(p.value)}</span>
             </div>
           ))}
-          {rows[hover].note && <div className="mt-1 text-slate-500">{rows[hover].note}</div>}
+          {rows[hover].note && <div className="mt-1 text-ink-3">{rows[hover].note}</div>}
         </div>
       )}
     </div>
@@ -110,7 +110,7 @@ export function StackedBars({
 
 export function Legend({ items }: { items: { label: string; color: string }[] }) {
   return (
-    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
+    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-2">
       {items.map((i) => (
         <span key={i.label} className="inline-flex items-center gap-1.5">
           <span className="h-2.5 w-2.5 rounded-sm" style={{ background: i.color }} />
@@ -166,20 +166,20 @@ export function DailyBars({
           );
         })}
       </svg>
-      <div className="grid text-center text-[10px] text-slate-500" style={{ gridTemplateColumns: `repeat(${points.length}, minmax(0, 1fr))` }}>
+      <div className="grid text-center text-[10px] text-ink-3" style={{ gridTemplateColumns: `repeat(${points.length}, minmax(0, 1fr))` }}>
         {points.map((p, i) => (
           <span key={i}>{p.label}</span>
         ))}
       </div>
       {hover !== null && (
-        <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs shadow-md">
-          <div className="font-semibold text-slate-900">{points[hover].label}</div>
-          <div className="text-slate-600">
-            Gross <span className="tabular-nums text-slate-900">{eur(points[hover].value)}</span>
+        <div className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 rounded-lg border border-line bg-surface px-3 py-2 text-xs shadow-md">
+          <div className="font-semibold text-ink">{points[hover].label}</div>
+          <div className="text-ink-2">
+            Gross <span className="tabular-nums text-ink">{eur(points[hover].value)}</span>
           </div>
           {points[hover].sub !== undefined && (
-            <div className="text-slate-600">
-              Shop net <span className="tabular-nums text-slate-900">{eur(points[hover].sub!)}</span>
+            <div className="text-ink-2">
+              Shop net <span className="tabular-nums text-ink">{eur(points[hover].sub!)}</span>
             </div>
           )}
         </div>
@@ -198,12 +198,12 @@ export function ShareBar({ parts }: { parts: { label: string; value: number; col
           <div key={p.label} style={{ width: `${(p.value / total) * 100}%`, background: p.color }} />
         ))}
       </div>
-      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-2">
         {parts.map((p) => (
           <span key={p.label} className="inline-flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-sm" style={{ background: p.color }} />
             {p.label}{" "}
-            <span className="tabular-nums text-slate-900">
+            <span className="tabular-nums text-ink">
               {eur(p.value)} · {Math.round((p.value / total) * 100)}%
             </span>
           </span>

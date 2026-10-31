@@ -6,6 +6,36 @@
   :root {
     --font-serif: "Cormorant Garamond", Georgia, serif;
     --font-sans: "Inter", system-ui, sans-serif;
+
+    /* Chairbook palette (RGB triplets so Tailwind can apply alpha). Light. */
+    --cb-canvas: 248 250 252;
+    --cb-surface: 255 255 255;
+    --cb-surface-2: 241 245 249;
+    --cb-line: 226 232 240;
+    --cb-line-2: 203 213 225;
+    --cb-ink: 15 23 42;
+    --cb-ink-2: 71 85 105;
+    --cb-ink-3: 100 116 139;
+    --cb-good: 4 120 87;
+    --cb-warn: 180 83 9;
+    --cb-bad: 190 18 60;
+    --cb-info: 29 78 216;
+  }
+
+  :root[data-theme="dark"] {
+    --cb-canvas: 11 15 24;
+    --cb-surface: 20 26 38;
+    --cb-surface-2: 30 38 54;
+    --cb-line: 39 48 66;
+    --cb-line-2: 58 70 92;
+    --cb-ink: 236 240 246;
+    --cb-ink-2: 178 190 207;
+    --cb-ink-3: 134 147 168;
+    --cb-good: 52 211 153;
+    --cb-warn: 251 191 36;
+    --cb-bad: 251 113 133;
+    --cb-info: 96 165 250;
+    color-scheme: dark;
   }
 
   html {

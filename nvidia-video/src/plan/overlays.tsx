@@ -1,8 +1,8 @@
 import React from "react";
 import { AbsoluteFill, Audio, interpolate, Sequence, staticFile, useCurrentFrame } from "remotion";
 import type { Timeline } from "../edu/timeline";
-import { colors, fonts, SAFE } from "../v1/theme";
-import { clamp } from "../v1/components/primitives";
+import { colors, fonts, SAFE } from "./theme";
+import { clamp } from "./primitives";
 
 /** Overlays for the trading-plan film: same look as the original NVIDIA cut, driven by any timeline. */
 type P = { tl: Timeline; impacts?: number[] };
@@ -40,7 +40,8 @@ export const Subtitles: React.FC<P> = ({ tl }) => {
           textAlign: "center",
           padding: "18px 30px",
           borderRadius: 18,
-          background: "rgba(5,6,6,0.62)",
+          background: "rgba(5,14,28,0.78)",
+          border: `2px solid ${colors.green}55`,
           backdropFilter: "blur(10px)",
           maxWidth: 900,
           textShadow: "0 2px 12px rgba(0,0,0,0.6)",

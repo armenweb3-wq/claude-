@@ -278,7 +278,22 @@ export const pathPrice = (raw: { f: number; p: number }[], fr: number) => {
   return path[path.length - 1].p;
 };
 
-export type Level = { price: number; label: string; color: string; at: number; dash?: boolean; side?: "left" | "right" };
+export type Level = {
+  price: number;
+  label: string;
+  color: string;
+  at: number;
+  dash?: boolean;
+  side?: "left" | "right";
+  /** Animate the level to a new price (e.g. a stop loss moving to break-even). */
+  moveTo?: number;
+  moveAt?: number;
+  moveDur?: number;
+  moveLabel?: string;
+  moveColor?: string;
+  /** Fade the level out at this frame. */
+  until?: number;
+};
 export type Zone = { from: number; to: number; color: string; at: number; label?: string; side?: "left" | "right" | "center" };
 
 /**
@@ -299,7 +314,10 @@ export const Chart: React.FC<{
   history?: number;
   trend?: number;
   markers?: { f: number; label: string; color: string }[];
-}> = ({ lo, hi, start, path: rawPath, levels = [], zones = [], seed = "c", w = 880, h = 690, digits = 4, history = 26, trend = 0, markers = [] }) => {
+  /** A dashed "what if" path, drawn from `ghostAt`, using the same mapping as `path`. */
+  ghost?: { path: { f: number; p: number }[]; at: number; label: string; color: string };
+  dark?: boolean;
+}> = ({ lo, hi, start, path: rawPath, levels = [], zones = [], seed = "c", w = 880, h = 690, digits = 4, history = 26, trend = 0, markers = [], ghost }) => {
   const f = useCurrentFrame();
   const path = normPath(rawPath);
   const padL = 30;
@@ -371,14 +389,18 @@ export const Chart: React.FC<{
         );
       })}
       {levels.map((l, i) => {
-        const a = p(f, l.at, 14);
-        const yy = y(l.price);
+        const moved = l.moveTo !== undefined && l.moveAt !== undefined ? interpolate(f, [l.moveAt, l.moveAt + (l.moveDur ?? 30)], [0, 1], { ...clamp, easing: ease }) : 0;
+        const a = p(f, l.at, 14) * (l.until !== undefined ? 1 - p(f, l.until, 10) : 1);
+        const yy = y(l.moveTo !== undefined ? l.price + (l.moveTo - l.price) * moved : l.price);
+        const label = moved > 0.5 && l.moveLabel ? l.moveLabel : l.label;
+        const color = moved > 0.5 && l.moveColor ? l.moveColor : l.color;
+        l = { ...l, label, color };
         return (
           <g key={i} opacity={a}>
             <line x1={padL} x2={padL + (plotW + 10) * a} y1={yy} y2={yy} stroke={l.color} strokeWidth={3} strokeDasharray={l.dash ? "10 8" : undefined} />
             <rect x={w - padR + 8} y={yy - 20} width={padR - 12} height={40} rx={8} fill={l.color} />
             <text x={w - padR / 2 + 2} y={yy + 8} textAnchor="middle" fontFamily={EF.mono} fontWeight={700} fontSize={20} fill="white">
-              {l.price.toFixed(digits)}
+              {(l.moveTo !== undefined ? l.price + (l.moveTo - l.price) * moved : l.price).toFixed(digits)}
             </text>
             {/* dark backing so labels stay readable over candles and the price line */}
             <rect
@@ -403,6 +425,23 @@ export const Chart: React.FC<{
           <circle cx={curX} cy={y(cur)} r={22 + Math.sin(f / 5) * 4} fill="#E8EEF7" opacity={0.18} />
         </>
       )}
+      {ghost && f >= ghost.at && (() => {
+        const gp = normPath(ghost.path);
+        const endF = Math.min(f, gp[gp.length - 1].f);
+        const pts: string[] = [];
+        for (let fr = gp[0].f; fr <= endF; fr += 2) pts.push(`${xAt(fr)},${y(pathPrice(gp, fr))}`);
+        const lx = xAt(endF);
+        const ly = y(pathPrice(gp, endF));
+        return (
+          <g opacity={0.9}>
+            <polyline points={pts.join(" ")} fill="none" stroke={ghost.color} strokeWidth={4} strokeDasharray="10 10" strokeLinejoin="round" />
+            <circle cx={lx} cy={ly} r={9} fill={ghost.color} />
+            <text x={lx - 16} y={ly + 40} textAnchor="end" fontFamily={EF.display} fontWeight={700} fontSize={24} fill={ghost.color}>
+              {ghost.label}
+            </text>
+          </g>
+        );
+      })()}
       {markers.map((m, i) => {
         const a = p(f, m.f, 10);
         const mx = xAt(m.f);

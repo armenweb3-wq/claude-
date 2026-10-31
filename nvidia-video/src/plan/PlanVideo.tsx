@@ -1,14 +1,15 @@
 import React from "react";
 import { AbsoluteFill, Sequence } from "remotion";
-import { FilmFinish, SceneShell } from "../v1/components/primitives";
-import { colors } from "../v1/theme";
+import { FilmFinish, SceneShell } from "./primitives";
+import { colors } from "./theme";
 import { ChapterRail, Soundtrack, Subtitles } from "./overlays";
-import { SClose, SDay, SEdge, SGrowth, SRules, STitle, SWithdraw, tl } from "./scenes";
+import { SChart, SClose, SDay, SEdge, SGrowth, SRules, STitle, SWithdraw, tl } from "./scenes";
 
-const components: Record<string, React.FC> = { title: STitle, rules: SRules, day: SDay, edge: SEdge, growth: SGrowth, withdraw: SWithdraw, close: SClose };
+const components: Record<string, React.FC> = { title: STitle, rules: SRules, chart: SChart, day: SDay, edge: SEdge, growth: SGrowth, withdraw: SWithdraw, close: SClose };
 const OVERLAP = 14;
 /** Impact hits (frames): the day total, the six-month bar and the recovery banner. */
-const impacts = [tl.at("day", 4, 0.2) + tl.scenes.find((s) => s.id === "day")!.from, tl.at("growth", 2) + tl.scenes.find((s) => s.id === "growth")!.from, tl.at("withdraw", 1, 1.0) + tl.scenes.find((s) => s.id === "withdraw")!.from];
+const abs = (scene: string, n: number, off = 0) => tl.at(scene, n, off) + tl.scenes.find((s) => s.id === scene)!.from;
+const impacts = [abs("chart", 3, 0.2), abs("day", 3, 0.2), abs("growth", 2), abs("withdraw", 1, 2.4)];
 
 /** "A disciplined daily plan": same look and sound design as the original NVIDIA cut. */
 export const PlanVideo: React.FC = () => (

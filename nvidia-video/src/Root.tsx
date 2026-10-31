@@ -12,7 +12,7 @@ export const RemotionRoot: React.FC = () => (
   <>
     {/* The original 60-second documentary cut (restored, with the updated return page and closing card). */}
     <Composition id="NvidiaOriginal60" component={NvidiaOriginal} {...V1} />
-    {/* "A disciplined daily plan": 5 trades a day, 1% risk, 1:3–5 reward (~1:37). */}
+    {/* "A realistic daily plan": 3 trades a day, 3 days a week, 1% risk, 1:3 reward (~1:55). */}
     <Composition id="TradingPlan" component={PlanVideo} width={1080} height={1920} fps={30} durationInFrames={planFrames} />
     {/* Client education series (16:9). */}
     <EduCompositions />

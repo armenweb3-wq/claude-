@@ -19,12 +19,15 @@ const FACTS = {
   filed: "26 Oct 2026",
   revH1: 16.3, // $B, first half 2026 (S-1)
   revQ3: 16.8, // $B, reported to investors (FT / Bloomberg)
-  lossH1: 80.7, // $B net loss, first half 2026 (S-1)
   runRate: 65, // $B, end of July 2026 (Reuters)
   customers: 11_900, // $100K+ customers, 30 Sep 2026 (S-1)
   raise: 100, // $B, reported target
   valuation: 2, // $T, reported "up to"
-  spacex: 86, // $B, June 2026 record IPO (reported)
+  spacex: 75, // $B raised, June 2026 record IPO (most reports; ~$86B incl. over-allotment)
+  spacexPrice: 135,
+  spacexClose: 160.95,
+  spacexDay1: 19,
+  aramco: 29.4, // $B, 2019, the previous record
   roadshow: "Week of 9 Nov",
   trading: "Before 26 Nov",
 };
@@ -153,66 +156,59 @@ export const SIpo: React.FC = () => {
 
 // 3 ─ The business
 export const SNumbers: React.FC = () => {
-  const f = useCurrentFrame();
   const h1 = at("numbers", 0, 1.0);
-  const q3 = at("numbers", 1, 1.2);
-  const loss = at("numbers", 2, 1.4);
+  const q3 = at("numbers", 1, 1.0);
   return (
     <AbsoluteFill>
       <Backdrop />
       <Column top={210} gap={24}>
         <Kicker delay={4}>The business · from the filing</Kicker>
-        <Headline text="Big revenue. Bigger losses." accent={["Big", "revenue."]} delay={8} size={92} />
+        <Headline text="Revenue is growing fast." accent={["fast."]} delay={8} size={92} />
       </Column>
-      <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 520, display: "flex", flexDirection: "column", gap: 18 }}>
-        <Card delay={h1} glow>
+      <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 520, display: "flex", flexDirection: "column", gap: 20 }}>
+        <Card delay={h1} glow style={{ padding: "32px 34px" }}>
           <Label color={colors.orangeBright}>Revenue · first half 2026</Label>
-          <Big color={colors.orangeBright} size={96}>
+          <Big color={colors.orangeBright} size={120}>
             <Counter to={FACTS.revH1} start={h1} dur={34} format={usdB} />
           </Big>
-          <div style={{ fontFamily: fonts.body, fontSize: 24, color: colors.muted }}>run-rate reported at ${FACTS.runRate}B by end of July</div>
+          <div style={{ fontFamily: fonts.body, fontSize: 26, color: colors.muted, marginTop: 6 }}>run-rate reported at ${FACTS.runRate}B by the end of July</div>
         </Card>
-        <div style={{ display: "flex", gap: 18 }}>
-          <Card delay={q3} style={{ flex: 1 }}>
-            <Label>Q3 2026 · reported</Label>
-            <Big color={colors.text} size={64}>
-              <Counter to={FACTS.revQ3} start={q3} dur={30} format={usdB} />
-            </Big>
-            <div style={{ fontFamily: fonts.body, fontSize: 22, color: colors.muted }}>in one quarter</div>
-          </Card>
-          <Card delay={q3 + 8} style={{ flex: 1 }}>
-            <Label>Customers paying $100K+</Label>
-            <Big color={colors.text} size={64}>
-              <Counter to={FACTS.customers} start={q3 + 8} dur={30} format={(n) => Math.round(n).toLocaleString("en-US") + "+"} />
-            </Big>
-            <div style={{ fontFamily: fonts.body, fontSize: 22, color: colors.muted }}>as of 30 Sep 2026</div>
-          </Card>
-        </div>
-        <Card delay={loss} style={{ border: `1px solid ${colors.red}66`, background: `${colors.red}12` }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-            <div>
-              <Label color={colors.red}>Net loss · first half 2026</Label>
-              <div style={{ fontFamily: fonts.body, fontSize: 24, color: colors.muted, marginTop: 6 }}>growth is expensive: chips, data centers, talent</div>
-            </div>
-            <Big color={colors.red} size={84}>
-              −<Counter to={FACTS.lossH1} start={loss} dur={34} format={usdB} />
-            </Big>
+        <Card delay={q3} style={{ padding: "32px 34px" }}>
+          <Label>Q3 2026 · reported to investors</Label>
+          <Big color={colors.text} size={100}>
+            <Counter to={FACTS.revQ3} start={q3} dur={30} format={usdB} />
+          </Big>
+          <div style={{ fontFamily: fonts.body, fontSize: 26, color: colors.muted, marginTop: 6 }}>in a single quarter</div>
+        </Card>
+        <Card delay={q3 + 12} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <Label>Customers paying $100K+ a year</Label>
+            <div style={{ fontFamily: fonts.body, fontSize: 24, color: colors.muted, marginTop: 4 }}>as of 30 September 2026</div>
           </div>
+          <Big color={colors.text} size={72}>
+            <Counter to={FACTS.customers} start={q3 + 12} dur={30} format={(n) => Math.round(n).toLocaleString("en-US") + "+"} />
+          </Big>
         </Card>
       </div>
     </AbsoluteFill>
   );
 };
 
-// 4 ─ The deal
+// 4 ─ The deal: the biggest IPO ever, versus SpaceX
 export const SDeal: React.FC = () => {
   const f = useCurrentFrame();
-  const raise = at("deal", 0, 1.2);
-  const val = at("deal", 0, 3.4);
-  const record = at("deal", 1, 0.3);
-  const time = at("deal", 1, 3.0);
+  const raise = at("deal", 0, 1.0);
+  const val = at("deal", 0, 3.2);
+  const record = at("deal", 1, 0.2);
+  const spx = at("deal", 2, 0.3);
+  const spxDay = at("deal", 2, 2.6);
+  const time = at("deal", 3, 1.6);
   const barW = 936;
-  const spx = (FACTS.spacex / FACTS.raise) * barW;
+  const bars = [
+    { n: "Anthropic · expected", v: FACTS.raise, c: colors.orange, t: record, label: "~$100B" },
+    { n: "SpaceX · June 2026", v: FACTS.spacex, c: "#5a3b2e", t: spx, label: "~$75B" },
+    { n: "Saudi Aramco · 2019", v: FACTS.aramco, c: colors.charcoal2, t: spx + 8, label: "$29B" },
+  ];
   return (
     <AbsoluteFill>
       <Backdrop />
@@ -220,44 +216,49 @@ export const SDeal: React.FC = () => {
         <Kicker delay={4}>The deal · as reported</Kicker>
         <Headline text="The largest IPO ever." accent={["largest"]} delay={8} size={100} />
       </Column>
-      <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 500, display: "flex", gap: 18 }}>
+      <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 480, display: "flex", gap: 18 }}>
         <Card delay={raise} glow style={{ flex: 1 }}>
           <Label color={colors.orangeBright}>Raise · about</Label>
-          <Big color={colors.orangeBright} size={88}>
+          <Big color={colors.orangeBright} size={84}>
             $<Counter to={FACTS.raise} start={raise} dur={30} format={(n) => Math.round(n).toString()} />B
           </Big>
         </Card>
         <Card delay={val} style={{ flex: 1 }}>
           <Label>Valuation · up to</Label>
-          <Big color={colors.text} size={88}>
+          <Big color={colors.text} size={84}>
             $<Counter to={FACTS.valuation} start={val} dur={30} format={(n) => n.toFixed(1)} />T
           </Big>
         </Card>
       </div>
-      {/* record comparison */}
-      <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 800, opacity: prog(f, record, 16) }}>
-        <Label>Biggest IPOs · amount raised</Label>
-        {[
-          { n: "Anthropic (expected)", v: FACTS.raise, w: barW, c: colors.orange, t: record },
-          { n: "SpaceX · June 2026", v: FACTS.spacex, w: spx, c: colors.charcoal2, t: record + 10 },
-        ].map((b) => (
-          <div key={b.n} style={{ marginTop: 16 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", fontFamily: fonts.body, fontSize: 26, color: colors.text, marginBottom: 8 }}>
+      <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 730, opacity: prog(f, record, 16) }}>
+        <Label>Biggest IPOs in history · amount raised</Label>
+        {bars.map((b) => (
+          <div key={b.n} style={{ marginTop: 14, opacity: prog(f, b.t, 12) }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontFamily: fonts.body, fontSize: 25, color: colors.text, marginBottom: 6 }}>
               <span>{b.n}</span>
-              <span style={{ fontFamily: fonts.display, fontWeight: 800 }}>${b.v}B</span>
+              <span style={{ fontFamily: fonts.display, fontWeight: 800, color: b.c === colors.orange ? colors.orangeBright : colors.text }}>{b.label}</span>
             </div>
-            <div style={{ height: 40, borderRadius: 10, width: b.w * prog(f, b.t, 36), background: b.c, border: `1px solid ${colors.line}` }} />
+            <div style={{ height: 34, borderRadius: 9, width: (b.v / FACTS.raise) * barW * prog(f, b.t, 36), background: b.c, border: `1px solid ${colors.line}` }} />
           </div>
         ))}
       </div>
-      <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 1110, display: "flex", gap: 18 }}>
-        <Card delay={time} style={{ flex: 1 }}>
-          <Label>Investor roadshow</Label>
-          <Big size={44}>{FACTS.roadshow}</Big>
+      <Card delay={spxDay} style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 1065, display: "flex", alignItems: "center", gap: 22, padding: "18px 26px" }}>
+        <div style={{ flex: 1 }}>
+          <Label>SpaceX · SPCX · day one, 12 June 2026</Label>
+          <div style={{ fontFamily: fonts.body, fontSize: 26, color: colors.text, marginTop: 6 }}>
+            priced <b>${FACTS.spacexPrice}</b> → closed <b>${FACTS.spacexClose}</b>
+          </div>
+        </div>
+        <div style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 64, color: colors.orangeBright, whiteSpace: "nowrap" }}>▲ {FACTS.spacexDay1}%</div>
+      </Card>
+      <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 1230, display: "flex", gap: 18 }}>
+        <Card delay={time} style={{ flex: 1, padding: "16px 24px" }}>
+          <Label>Roadshow</Label>
+          <Big size={40}>{FACTS.roadshow}</Big>
         </Card>
-        <Card delay={time + 8} style={{ flex: 1 }} glow>
+        <Card delay={time + 8} style={{ flex: 1, padding: "16px 24px" }} glow>
           <Label color={colors.orangeBright}>First trading day</Label>
-          <Big size={44} color={colors.orangeBright}>{FACTS.trading}</Big>
+          <Big size={40} color={colors.orangeBright}>{FACTS.trading}</Big>
         </Card>
       </div>
     </AbsoluteFill>

@@ -7,12 +7,12 @@
     "engine": "kokoro-v1.0",
     "voice": "af_heart",
     "baseSpeed": 1.0,
-    "speed": 1.0
+    "speed": 1.109
   },
   "pacing": {
-    "lead": 0.5,
-    "gap": 0.38,
-    "tail": 0.6
+    "lead": 0.45,
+    "gap": 0.35,
+    "tail": 0.55
   },
   "scenes": [
     {
@@ -20,133 +20,140 @@
       "title": "Anthropic goes public",
       "minDuration": 6,
       "start": 0.0,
-      "end": 6.933
+      "end": 6.433
     },
     {
       "id": "ipo",
       "title": "What an IPO is",
       "minDuration": 7,
-      "start": 6.933,
-      "end": 15.6
+      "start": 6.433,
+      "end": 14.467
     },
     {
       "id": "numbers",
       "title": "The business",
-      "minDuration": 12,
-      "start": 15.6,
-      "end": 29.7
+      "minDuration": 8,
+      "start": 14.467,
+      "end": 23.933
     },
     {
       "id": "deal",
       "title": "The deal",
-      "minDuration": 11,
-      "start": 29.7,
-      "end": 42.033
+      "minDuration": 15,
+      "start": 23.933,
+      "end": 42.833
     },
     {
       "id": "price",
       "title": "The share price",
       "minDuration": 9,
-      "start": 42.033,
-      "end": 51.167
+      "start": 42.833,
+      "end": 51.867
     },
     {
       "id": "watch",
       "title": "What to watch",
       "minDuration": 8,
-      "start": 51.167,
+      "start": 51.867,
       "end": 60
     }
   ],
   "cues": [
     {
       "scene": "title",
-      "start": 0.5,
-      "end": 4.12,
+      "start": 0.45,
+      "end": 3.86,
       "text": "Anthropic, the company behind Claude, has filed to go public.",
       "say": "Anthropic, the company behind Claude, has filed to go public."
     },
     {
       "scene": "title",
-      "start": 4.5,
-      "end": 6.26,
+      "start": 4.21,
+      "end": 5.88,
       "text": "Ticker: ANT, on the Nasdaq.",
       "say": "Ticker: A N T, on the Nasdaq."
     },
     {
       "scene": "ipo",
-      "start": 7.43,
-      "end": 11.8,
+      "start": 6.88,
+      "end": 11.0,
       "text": "An IPO is the first time a private company sells shares to the public.",
       "say": "An IPO is the first time a private company sells shares to the public."
     },
     {
       "scene": "ipo",
-      "start": 12.18,
-      "end": 14.86,
+      "start": 11.35,
+      "end": 13.9,
       "text": "After that, anyone can trade them on the exchange.",
       "say": "After that, anyone can trade them on the exchange."
     },
     {
       "scene": "numbers",
-      "start": 16.1,
-      "end": 20.95,
+      "start": 14.92,
+      "end": 19.52,
       "text": "Revenue: $16.3 billion in the first half of 2026,",
       "say": "Revenue: sixteen point three billion dollars in the first half of twenty twenty-six,"
     },
     {
       "scene": "numbers",
-      "start": 21.33,
-      "end": 25.0,
+      "start": 19.87,
+      "end": 23.37,
       "text": "and a reported $16.8 billion in the third quarter alone.",
       "say": "and a reported sixteen point eight billion in the third quarter alone."
     },
     {
-      "scene": "numbers",
-      "start": 25.38,
-      "end": 28.91,
-      "text": "But also an $80.7 billion net loss in the first half.",
-      "say": "But also an eighty point seven billion net loss in the first half."
-    },
-    {
       "scene": "deal",
-      "start": 30.2,
-      "end": 36.16,
+      "start": 24.38,
+      "end": 29.96,
       "text": "The expectation: raise about $100 billion at a valuation of up to $2 trillion.",
       "say": "The expectation: raise about one hundred billion dollars, at a valuation of up to two trillion."
     },
     {
       "scene": "deal",
-      "start": 36.54,
-      "end": 41.3,
-      "text": "That would be the largest IPO in history, with trading possibly before Thanksgiving.",
-      "say": "That would be the largest IPO in history, with trading possibly before Thanksgiving."
+      "start": 30.31,
+      "end": 32.41,
+      "text": "That would be the largest IPO in history.",
+      "say": "That would be the largest IPO in history."
+    },
+    {
+      "scene": "deal",
+      "start": 32.76,
+      "end": 38.56,
+      "text": "SpaceX set the record in June: $75 billion raised, shares up 19% on day one.",
+      "say": "SpaceX set the record in June. Seventy-five billion raised, shares up nineteen percent on day one."
+    },
+    {
+      "scene": "deal",
+      "start": 38.91,
+      "end": 42.25,
+      "text": "Anthropic aims higher. Trading could start before Thanksgiving.",
+      "say": "Anthropic aims higher. Trading could start before Thanksgiving."
     },
     {
       "scene": "price",
-      "start": 42.53,
-      "end": 44.17,
+      "start": 43.28,
+      "end": 44.85,
       "text": "The share price is not set yet.",
       "say": "The share price is not set yet."
     },
     {
       "scene": "price",
-      "start": 44.55,
-      "end": 49.38,
-      "text": "It comes in an amended filing just before trading. Early estimates vary widely.",
-      "say": "It comes in an amended filing just before trading. Early estimates vary widely."
+      "start": 45.2,
+      "end": 47.89,
+      "text": "It comes in an amended filing just before trading.",
+      "say": "It comes in an amended filing just before trading."
     },
     {
       "scene": "watch",
-      "start": 51.67,
-      "end": 54.93,
+      "start": 52.32,
+      "end": 55.34,
       "text": "Watch the official price range, and the first day of trading.",
       "say": "Watch the official price range, and the first day of trading."
     },
     {
       "scene": "watch",
-      "start": 55.31,
-      "end": 59.29,
+      "start": 55.69,
+      "end": 59.45,
       "text": "Shares are highly speculative. This is information, not advice.",
       "say": "Shares are highly speculative. This is information, not advice."
     }

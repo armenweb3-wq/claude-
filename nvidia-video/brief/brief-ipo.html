@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Anthropic IPO: An investor briefing</title>
+<style>
+  @font-face { font-family: "Inter"; src: url("../public/fonts/inter-400.woff2"); font-weight: 400; }
+  @font-face { font-family: "Inter"; src: url("../public/fonts/inter-500.woff2"); font-weight: 500; }
+  @font-face { font-family: "Inter"; src: url("../public/fonts/inter-600.woff2"); font-weight: 600; }
+  @font-face { font-family: "Inter"; src: url("../public/fonts/inter-700.woff2"); font-weight: 700; }
+  @font-face { font-family: "Inter Tight"; src: url("../public/fonts/inter-tight-700.woff2"); font-weight: 700; }
+  @font-face { font-family: "Inter Tight"; src: url("../public/fonts/inter-tight-800.woff2"); font-weight: 800; }
+  @font-face { font-family: "JetBrains Mono"; src: url("../public/fonts/jetbrains-mono-500.woff2"); font-weight: 500; }
+  @font-face { font-family: "JetBrains Mono"; src: url("../public/fonts/jetbrains-mono-700.woff2"); font-weight: 700; }
+
+  :root {
+    --or: #DA7756; --or2: #F2A27E; --ink: #0A0807; --char: #181311; --char2: #231B18;
+    --line: rgba(255,210,180,0.14); --text: #F7F2EE; --muted: #B5A79F; --dim: #7A6D66; --red: #FF6B6B; --nv: #76B900;
+  }
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--ink); }
+  body { font-family: "Inter", sans-serif; color: var(--text); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page {
+    width: 210mm; height: 297mm; position: relative; overflow: hidden; page-break-after: always;
+    padding: 20mm 18mm 18mm;
+    background:
+      radial-gradient(520px 520px at 85% 8%, rgba(218,119,86,0.18), transparent 65%),
+      radial-gradient(600px 500px at 0% 100%, rgba(218,119,86,0.07), transparent 70%),
+      var(--ink);
+  }
+  .page:last-child { page-break-after: auto; }
+  .grid-bg { position: absolute; inset: 0; opacity: 0.18; pointer-events: none;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 46px 46px; -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent); }
+  .rail { position: absolute; top: 10mm; left: 18mm; right: 18mm; display: flex; justify-content: space-between; font: 500 8.5pt "JetBrains Mono"; letter-spacing: 2.5px; color: var(--muted); text-transform: uppercase; }
+  .rail b { color: var(--or); font-weight: 700; }
+  .foot { position: absolute; bottom: 9mm; left: 18mm; right: 18mm; display: flex; justify-content: space-between; font: 500 7.5pt "JetBrains Mono"; letter-spacing: 1.5px; color: var(--dim); }
+  .kicker { display: flex; align-items: center; gap: 10px; font: 700 9pt "JetBrains Mono"; letter-spacing: 4px; color: var(--or); text-transform: uppercase; margin-bottom: 8px; }
+  .kicker::before { content: ""; width: 28px; height: 2px; background: var(--or); }
+  .kicker.nv { color: var(--nv); } .kicker.nv::before { background: var(--nv); }
+  h1 { font: 800 34pt/1.02 "Inter Tight"; letter-spacing: -1px; margin: 0 0 10px; }
+  h2 { font: 800 27pt/1.05 "Inter Tight"; letter-spacing: -0.6px; margin: 0 0 8px; }
+  h3 { font: 700 14pt/1.2 "Inter Tight"; margin: 0 0 7px; }
+  .accent { color: var(--or2); }
+  p { font-size: 11.5pt; line-height: 1.55; color: #E3DAD4; margin: 0 0 10px; }
+  .lead { font-size: 13.5pt; line-height: 1.5; color: var(--text); }
+  .card { background: linear-gradient(160deg, var(--char2), var(--char)); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .card.glow { border-color: rgba(218,119,86,0.75); box-shadow: 0 0 40px rgba(218,119,86,0.16); }
+  .card.nv { border-color: rgba(118,185,0,0.6); box-shadow: 0 0 40px rgba(118,185,0,0.12); }
+  .row { display: flex; gap: 12px; }
+  .col { flex: 1; }
+  .stat { font: 800 26pt/1 "Inter Tight"; color: var(--or2); letter-spacing: -0.5px; }
+  .stat.white { color: var(--text); } .stat.nv { color: var(--nv); }
+  .label { font: 500 7.5pt "JetBrains Mono"; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+  .small { font-size: 9.8pt; color: var(--muted); line-height: 1.45; }
+  .src { font: 500 7pt "JetBrains Mono"; color: var(--dim); letter-spacing: 0.5px; margin-top: 6px; }
+  ul.clean { list-style: none; padding: 0; margin: 0; }
+  ul.clean li { position: relative; padding-left: 18px; margin: 0 0 9px; font-size: 11.5pt; line-height: 1.45; color: #E3DAD4; }
+  ul.clean li::before { content: ""; position: absolute; left: 2px; top: 6px; width: 7px; height: 7px; border-radius: 2px; background: var(--or); }
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 99px; background: var(--or); color: var(--ink); font: 800 10pt "Inter Tight"; }
+  .tag { display: inline-block; padding: 2px 9px; border-radius: 99px; border: 1px solid var(--line); font: 500 7.5pt "JetBrains Mono"; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
+  .num { font-variant-numeric: tabular-nums; }
+  .bar { height: 22px; border-radius: 6px; }
+  .step { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 12px; background: var(--char2); border: 1px solid var(--line); margin-bottom: 8px; }
+  .step .n { width: 28px; height: 28px; border-radius: 14px; background: var(--or); color: var(--ink); font: 800 12pt "Inter Tight"; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+</style>
+</head>
+<body>
+
+<!-- 1 · COVER -->
+<section class="page">
+  <div class="grid-bg"></div>
+  <div class="rail"><span><b>ANT</b> · IPO briefing</span><span>November 2026</span></div>
+  <svg width="150" height="150" viewBox="0 0 100 100" style="position:absolute; right: 18mm; top: 34mm;">
+    <g fill="#DA7756">
+      <rect x="46" y="8" width="8" height="38" rx="4"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(45 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(90 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(135 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(180 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(225 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(270 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(315 50 50)"/>
+    </g>
+    <circle cx="50" cy="50" r="9" fill="#0A0807" stroke="#DA7756" stroke-width="4"/>
+  </svg>
+  <div style="margin-top: 60mm;">
+    <div class="kicker">IPO explainer</div>
+    <h1 style="font-size: 50pt;">Anthropic<br/>goes <span class="accent">public.</span></h1>
+    <p class="lead" style="max-width: 135mm; margin-top: 14px;">What an IPO is, what the filing says, why this could be the largest listing in history, and what it means for NVIDIA.</p>
+  </div>
+  <div class="row" style="position:absolute; left: 18mm; right: 18mm; bottom: 26mm;">
+    <div class="card col glow"><div class="label">Ticker · exchange</div><div class="stat">ANT · Nasdaq</div><div class="small">S-1 filed 26 Oct 2026 · amended 2 Nov</div></div>
+    <div class="card col"><div class="label">Expected raise</div><div class="stat white num">~$100B</div><div class="small">valuation up to $2T · reported</div></div>
+    <div class="card col"><div class="label">Trading could begin</div><div class="stat white num">~20 Nov</div><div class="small">reported · not yet official</div></div>
+  </div>
+  <div class="foot"><span>ANT · ANTHROPIC IPO BRIEFING</span><span>01</span></div>
+</section>
+
+<!-- 2 · WHAT AN IPO IS -->
+<section class="page">
+  <div class="grid-bg"></div>
+  <div class="rail"><span><b>01</b> / 07 · What an IPO is</span><span>ANT</span></div>
+  <div style="margin-top: 8mm;">
+    <div class="kicker">The basics</div>
+    <h2>Private company, <span class="accent">public shares.</span></h2>
+    <p class="lead">An initial public offering (IPO) is the first time a private company sells its shares to the public. After that, anyone can buy and sell them on a stock exchange, any trading day.</p>
+  </div>
+  <div class="row" style="margin-top: 12px;">
+    <div class="col">
+      <h3>How an IPO works</h3>
+      <div class="step"><div class="n">1</div><div>The company files a prospectus (Form S-1) with the SEC: its business, finances and risks.</div></div>
+      <div class="step"><div class="n">2</div><div>Bankers hold a "roadshow", presenting the company to large investors to test demand.</div></div>
+      <div class="step"><div class="n">3</div><div>A price range and share count are published in an amended filing.</div></div>
+      <div class="step"><div class="n">4</div><div>The final price is set the evening before trading; the next morning the stock opens.</div></div>
+    </div>
+    <div class="col">
+      <h3>Words you'll hear</h3>
+      <ul class="clean">
+        <li><b>Valuation</b>: what the whole company is worth at the IPO price.</li>
+        <li><b>Amount raised</b>: cash from the shares sold in the offering.</li>
+        <li><b>Opening price</b>: the first traded price; it can differ a lot from the IPO price.</li>
+        <li><b>Lock-up</b>: a period when insiders can't sell. Its expiry can add supply to the market.</li>
+        <li><b>Anchor investor</b>: a large investor that commits early, signalling demand.</li>
+      </ul>
+      <div class="card" style="margin-top: 10px;"><div class="label">Who gets shares at the IPO price?</div><p class="small" style="margin: 6px 0 0">Mostly institutions through the underwriting banks. Most retail investors buy once trading starts, at the market price.</p></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top: 12px;">
+    <div class="row" style="align-items: center;">
+      <div class="col"><div class="label">Underwriters · reported</div><p class="small" style="margin: 6px 0 0">Morgan Stanley, Goldman Sachs, JPMorgan and Citi are reported to be working on the deal.</p></div>
+      <div class="col"><div class="label">Share structure · reported</div><p class="small" style="margin: 6px 0 0">Reports say Anthropic is considering super-voting shares for its founders, a common structure in tech IPOs.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>ANT · ANTHROPIC IPO BRIEFING</span><span>02</span></div>
+</section>
+
+<!-- 3 · THE BUSINESS -->
+<section class="page">
+  <div class="grid-bg"></div>
+  <div class="rail"><span><b>02</b> / 07 · The business</span><span>ANT</span></div>
+  <div style="margin-top: 8mm;">
+    <div class="kicker">From the filing · as reported</div>
+    <h2>Revenue is <span class="accent">growing fast.</span></h2>
+    <p class="lead">Anthropic builds Claude, the AI assistant, and sells it to businesses and consumers. The S-1 shows one of the fastest revenue ramps on record.</p>
+  </div>
+  <div class="row" style="margin-top: 10px;">
+    <div class="card col glow"><div class="label">Revenue · first half 2026</div><div class="stat num" style="font-size: 32pt">$16.3B</div><div class="small">run-rate reported at $65B by the end of July (Reuters)</div></div>
+    <div class="card col"><div class="label">Revenue · Q3 2026 · reported</div><div class="stat white num" style="font-size: 32pt">$16.8B</div><div class="small">in a single quarter, as told to investors (FT / Bloomberg)</div></div>
+  </div>
+  <div class="row" style="margin-top: 12px;">
+    <div class="card col"><div class="label">Customers paying $100K+ a year</div><div class="stat white num">11,900+</div><div class="small">up from ~950 a year earlier · as of 30 Sep 2026</div></div>
+    <div class="card col"><div class="label">Net revenue retention</div><div class="stat white num">~900%</div><div class="small">existing customers spending ~9× more than a year ago · as of 30 Sep 2026</div></div>
+    <div class="card col"><div class="label">Last private valuation</div><div class="stat white num">$965B</div><div class="small">Series H, May 2026</div></div>
+  </div>
+  <div class="card" style="margin-top: 12px;">
+    <div class="label">Quarterly revenue · USD billions</div>
+    <svg width="100%" height="190" viewBox="0 0 640 190">
+      <g font-family="JetBrains Mono" font-size="11" fill="#7A6D66">
+        <line x1="60" x2="630" y1="150" y2="150" stroke="#7A6D66" stroke-width="1.5"/>
+        <line x1="60" x2="630" y1="90" y2="90" stroke="rgba(255,210,180,0.12)"/><text x="50" y="94" text-anchor="end">$10B</text>
+        <line x1="60" x2="630" y1="30" y2="30" stroke="rgba(255,210,180,0.12)"/><text x="50" y="34" text-anchor="end">$20B</text>
+      </g>
+      <!-- 6 px per $1B, baseline 150 -->
+      <g font-family="Inter Tight" font-weight="800" font-size="18" text-anchor="middle">
+        <rect x="150" y="121.6" width="120" height="28.4" rx="5" fill="#5a3b2e"/><text x="210" y="112" fill="#F7F2EE">$4.7B</text>
+        <rect x="320" y="80.6" width="120" height="69.4" rx="5" fill="#A8583F"/><text x="380" y="71" fill="#F7F2EE">$11.6B</text>
+        <rect x="490" y="49.2" width="120" height="100.8" rx="5" fill="#DA7756"/><text x="550" y="40" fill="#F2A27E">$16.8B</text>
+      </g>
+      <g font-family="JetBrains Mono" font-size="11" fill="#B5A79F" text-anchor="middle">
+        <text x="210" y="172">Q1 2026</text><text x="380" y="172">Q2 2026</text><text x="550" y="172" fill="#F2A27E">Q3 2026 · reported</text>
+      </g>
+    </svg>
+    <p class="small" style="margin: 0">Q1 is derived: first-half revenue ($16.3B) minus Q2 ($11.6B). Q3 is as reported to investors, not yet in audited statements.</p>
+  </div>
+  <div class="src">Sources: Anthropic Form S-1 (26 Oct 2026) and S-1/A (2 Nov 2026) as reported by CNBC, MarketScale and Leverage Shares; Reuters (run-rate); FT / Bloomberg (Q3). See page 8.</div>
+  <div class="foot"><span>ANT · ANTHROPIC IPO BRIEFING</span><span>03</span></div>
+</section>
+
+<!-- 4 · THE DEAL -->
+<section class="page">
+  <div class="grid-bg"></div>
+  <div class="rail"><span><b>03</b> / 07 · The deal</span><span>ANT</span></div>
+  <div style="margin-top: 8mm;">
+    <div class="kicker">As reported</div>
+    <h2>The <span class="accent">largest IPO</span> ever.</h2>
+    <p class="lead">Reports say Anthropic aims to raise about $100 billion at a valuation of up to $2 trillion. SpaceX set the current record only five months ago.</p>
+  </div>
+  <div class="row" style="margin-top: 10px;">
+    <div class="card col glow"><div class="label">Raise · about</div><div class="stat num" style="font-size: 34pt">$100B</div></div>
+    <div class="card col"><div class="label">Valuation · up to</div><div class="stat white num" style="font-size: 34pt">$2.0T</div></div>
+  </div>
+  <div class="card" style="margin-top: 12px;">
+    <div class="label">Biggest IPOs in history · amount raised</div>
+    <div style="margin-top: 10px;">
+      <div style="display:flex; justify-content: space-between; font-size: 10.5pt; margin-bottom: 4px;"><span>Anthropic · expected</span><b class="accent">~$100B</b></div>
+      <div class="bar" style="width: 100%; background: var(--or);"></div>
+      <div style="display:flex; justify-content: space-between; font-size: 10.5pt; margin: 10px 0 4px;"><span>SpaceX · June 2026</span><b>~$75B</b></div>
+      <div class="bar" style="width: 75%; background: #5a3b2e;"></div>
+      <div style="display:flex; justify-content: space-between; font-size: 10.5pt; margin: 10px 0 4px;"><span>Saudi Aramco · 2019</span><b>$29.4B</b></div>
+      <div class="bar" style="width: 29.4%; background: var(--char2); border: 1px solid var(--line);"></div>
+    </div>
+    <p class="small" style="margin: 10px 0 0">SpaceX's raise is reported at about $75B; some reports put it near $86B including the over-allotment option.</p>
+  </div>
+  <div class="row" style="margin-top: 12px;">
+    <div class="card col">
+      <div class="label">SpaceX · SPCX · day one, 12 June 2026</div>
+      <div style="display:flex; justify-content: space-between; align-items: baseline;"><span class="small">priced <b style="color: var(--text)">$135</b> → closed <b style="color: var(--text)">$160.95</b></span><span class="stat" style="font-size: 22pt">▲ 19%</span></div>
+      <p class="small" style="margin: 6px 0 0">IPO valuation ≈ $1.75T; market value near $2.1T at the first close.</p>
+    </div>
+    <div class="card col">
+      <div class="label">Timeline · reported</div>
+      <table style="width:100%; border-collapse: collapse; font-size: 10.5pt; margin-top: 6px;">
+        <tr><td style="padding: 5px 0; color: var(--muted)">26 Oct</td><td style="padding: 5px 0">Public S-1 filed</td></tr>
+        <tr><td style="padding: 5px 0; color: var(--muted)">2 Nov</td><td style="padding: 5px 0">Amended S-1 (nine-month figures)</td></tr>
+        <tr><td style="padding: 5px 0; color: var(--muted)">Week of 9 Nov</td><td style="padding: 5px 0">Investor roadshow · reported</td></tr>
+        <tr><td style="padding: 5px 0; color: var(--or2)"><b>~20 Nov</b></td><td style="padding: 5px 0"><b>Trading could begin</b> · reported, not official</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="src">Sources: Bloomberg (via Bloomberg Law), IBTimes, Tastytrade (timeline, deal size); NBC News, NPR (SpaceX day one); TradingKey (prior records). See page 8.</div>
+  <div class="foot"><span>ANT · ANTHROPIC IPO BRIEFING</span><span>04</span></div>
+</section>
+
+<!-- 5 · NVIDIA -->
+<section class="page">
+  <div class="grid-bg"></div>
+  <div class="rail"><span><b>04</b> / 07 · What it means for NVIDIA</span><span>ANT</span></div>
+  <div style="margin-top: 8mm;">
+    <div class="kicker nv">What it means for NVIDIA</div>
+    <h2>A <span style="color: var(--nv)">$900B order book</span> for chips.</h2>
+    <p class="lead">Anthropic's amended filing shows nearly $900 billion of computing commitments, mostly chips and data centers, and NVIDIA is its largest chip supplier.</p>
+  </div>
+  <div class="row" style="margin-top: 10px;">
+    <div class="card col glow"><div class="label">Computing commitments · amended filing</div><div class="stat num" style="font-size: 32pt">~$895B</div><div class="small">purchase commitments alone rose to ~$314B, from $55B at end-2025</div></div>
+    <div class="card col nv"><div class="label" style="color: var(--nv)">NVIDIA's share of the ~11 GW footprint</div><div class="stat nv num" style="font-size: 32pt">~42%</div><div class="small">analyst estimate; NVIDIA is the largest supplier</div><div style="height: 10px; border-radius: 5px; background: var(--char2); margin-top: 8px;"><div style="width: 42%; height: 100%; border-radius: 5px; background: var(--nv);"></div></div></div>
+  </div>
+  <div class="row" style="margin-top: 12px;">
+    <div class="card col"><div class="label">NVDA on filing day</div><div class="stat nv num">▲ 2.4%</div><div class="small">chip index (SOXX) up nearly 3% · reported</div></div>
+    <div class="card col"><div class="label">Possible NVIDIA stake</div><div class="stat white num">~$10B</div><div class="small">anchor investment in the IPO · reported</div></div>
+    <div class="card col"><div class="label">Other suppliers</div><div style="display:flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;"><span class="tag">Google TPUs</span><span class="tag">Amazon Trainium</span><span class="tag">AMD</span></div></div>
+  </div>
+  <div class="row" style="margin-top: 12px;">
+    <div class="col">
+      <h3>Why it could help NVIDIA</h3>
+      <ul class="clean">
+        <li>Multi-year commitments give visibility on demand well beyond the next quarter.</li>
+        <li>A successful mega-IPO funds Anthropic's chip purchases with public money.</li>
+        <li>The filing is a public, audited picture of how much AI labs spend on compute.</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h3>Why it's not a guarantee</h3>
+      <ul class="clean">
+        <li>Commitments are not chip revenue booked by NVIDIA; terms and timing can change.</li>
+        <li>Anthropic deliberately buys from Google, Amazon and AMD too.</li>
+        <li>If the IPO disappoints, the whole AI trade can wobble, NVIDIA included.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="margin-top: 6px;"><div class="row" style="align-items:center;"><div class="col"><div class="label">Bottom line</div><p class="small" style="margin: 6px 0 0">A strong demand signal for NVIDIA's chips, and a reason the next NVIDIA earnings report (17 Nov) and the Anthropic debut will be read together.</p></div><div class="col" style="flex: 0 0 170px; text-align: right;"><span class="pill">signal, not guarantee</span></div></div></div>
+  <div class="src">Sources: Yahoo Finance (commitments, possible stake); TradingKey (supplier split); Motley Fool (filing-day move). See page 8.</div>
+  <div class="foot"><span>ANT · ANTHROPIC IPO BRIEFING</span><span>05</span></div>
+</section>
+
+<!-- 6 · THE SHARE PRICE -->
+<section class="page">
+  <div class="grid-bg"></div>
+  <div class="rail"><span><b>05</b> / 07 · The share price</span><span>ANT</span></div>
+  <div style="margin-top: 8mm;">
+    <div class="kicker">The share price</div>
+    <h2>Not set <span class="accent">yet.</span></h2>
+    <p class="lead">Both the public S-1 and the 2 November amendment leave the number of shares and the price range blank. That is normal at this stage.</p>
+  </div>
+  <div class="card glow" style="margin-top: 10px; text-align: center; padding: 22px;">
+    <div class="label">ANT · IPO price</div>
+    <div style="font: 800 54pt/1 'Inter Tight'; margin: 8px 0;"><span style="color: var(--dim)">$</span><span class="accent">TBD</span></div>
+    <div class="small">published in a further amended filing, days before trading</div>
+  </div>
+  <div class="row" style="margin-top: 12px;">
+    <div class="col">
+      <h3>How the price gets set</h3>
+      <div class="step"><div class="n">1</div><div>Bankers test demand on the roadshow.</div></div>
+      <div class="step"><div class="n">2</div><div>A price range is published in an amended filing.</div></div>
+      <div class="step"><div class="n">3</div><div>If demand is strong, the range can be raised.</div></div>
+      <div class="step"><div class="n">4</div><div>The final price is set the night before trading.</div></div>
+    </div>
+    <div class="col">
+      <h3>Why early estimates disagree</h3>
+      <p class="small">Blogs and brokers have published "implied" prices from footnotes in the filing. They range from roughly $70 to $100 per share, largely because of a 10-for-1 share split and different valuation assumptions. None of them is an offering term.</p>
+      <div class="card"><div class="label">What to do with estimates</div><p class="small" style="margin: 6px 0 0">Treat them as guesses. Only the price range in the amended filing, and the final price the night before, count. We will update this brief when they are published.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>ANT · ANTHROPIC IPO BRIEFING</span><span>06</span></div>
+</section>
+
+<!-- 7 · WHAT TO WATCH -->
+<section class="page">
+  <div class="grid-bg"></div>
+  <div class="rail"><span><b>06</b> / 07 · What to watch</span><span>ANT</span></div>
+  <div style="margin-top: 8mm;">
+    <div class="kicker">What to watch</div>
+    <h2>Three things <span class="accent">to watch.</span></h2>
+  </div>
+  <div class="card glow" style="margin-top: 8px;"><h3 style="margin:0">1 · The official price range</h3><p class="small" style="margin: 4px 0 0">Expected in an amended filing before the roadshow ends. It sets the valuation and how much is raised.</p></div>
+  <div class="card" style="margin-top: 10px;"><h3 style="margin:0">2 · The first day of trading</h3><p class="small" style="margin: 4px 0 0">The opening price can differ a lot from the IPO price. SpaceX opened at $150 against a $135 IPO price and closed up 19%. Early trading is often volatile in both directions.</p></div>
+  <div class="card" style="margin-top: 10px;"><h3 style="margin:0">3 · Demand from big investors</h3><p class="small" style="margin: 4px 0 0">Oversubscribed books often lift the range. Reports of anchor investors (NVIDIA is said to be weighing ~$10B) are one signal.</p></div>
+  <div class="row" style="margin-top: 14px;">
+    <div class="card col"><div class="label">Also on the calendar</div><table style="width:100%; border-collapse: collapse; font-size: 10.5pt; margin-top: 6px;"><tr><td style="padding: 5px 0; color: var(--muted)">17 Nov</td><td style="padding: 5px 0">NVIDIA Q3 FY2027 results</td></tr><tr><td style="padding: 5px 0; color: var(--muted)">~20 Nov</td><td style="padding: 5px 0">Anthropic trading could begin · reported</td></tr><tr><td style="padding: 5px 0; color: var(--muted)">Later</td><td style="padding: 5px 0">Lock-up expiries add supply to the market</td></tr></table></div>
+    <div class="card col"><div class="label">Keep in mind</div><ul class="clean" style="margin-top: 8px;"><li style="font-size: 10.5pt">A record-size IPO draws record attention; excitement is not an edge.</li><li style="font-size: 10.5pt">Anthropic is still loss-making despite fast growth.</li><li style="font-size: 10.5pt">Dates and terms are as reported and may change.</li></ul></div>
+  </div>
+  <div class="foot"><span>ANT · ANTHROPIC IPO BRIEFING</span><span>07</span></div>
+</section>
+
+<!-- 8 · SUMMARY, DISCLAIMER & SOURCES -->
+<section class="page">
+  <div class="grid-bg"></div>
+  <div class="rail"><span><b>07</b> / 07 · In summary</span><span>ANT</span></div>
+  <div style="margin-top: 16mm; text-align: center;">
+    <div class="label" style="color: var(--or); letter-spacing: 8px;">ANT · NASDAQ</div>
+    <h1 style="font-size: 40pt; margin-top: 12px;">Anthropic<br/>goes public.</h1>
+    <div style="width: 60px; height: 3px; background: var(--or); margin: 18px auto;"></div>
+  </div>
+  <div class="row" style="margin-top: 6px;">
+    <div class="card col"><div class="label">The business</div><p class="small" style="margin: 6px 0 0">$16.3B revenue in H1 2026, a reported $16.8B in Q3, 11,900+ customers paying $100K+.</p></div>
+    <div class="card col glow"><div class="label">The deal</div><p class="small" style="margin: 6px 0 0">~$100B raise at up to $2T: the largest IPO ever. Trading reported for ~20 Nov.</p></div>
+    <div class="card col nv"><div class="label" style="color: var(--nv)">NVIDIA</div><p class="small" style="margin: 6px 0 0">~$895B of compute commitments; NVIDIA the largest supplier. A signal, not a guarantee.</p></div>
+  </div>
+  <div style="margin-top: 22px;">
+    <h3>Risk Disclaimer</h3>
+    <p class="small">Trading CFDs and FX Contracts is highly speculative and involves significant risk of your capital. You should not risk more than you can afford. Before taking any market action, you need to be properly aware of the risk. Past performance is not a guarantee of future performance. The information above is intended to be general and is not to be considered investment advice. This information should not be understood as an offer. Should you proceed using the information above for opening market positions, it is considered you did so at your own risk.</p>
+  </div>
+  <div style="margin-top: 8px;">
+    <h3>Sources</h3>
+    <ul class="clean" style="font-size: 9pt;">
+      <li style="font-size: 9pt">Anthropic, PBC: Form S-1 (26 Oct 2026) and Form S-1/A (2 Nov 2026), SEC EDGAR, as reported by CNBC, MarketScale, Leverage Shares and PPC Land</li>
+      <li style="font-size: 9pt">Bloomberg (via Bloomberg Law): roadshow and listing timing, valuation; IBTimes, Tastytrade, Gradually: reported trading dates (16–20 Nov, before Thanksgiving)</li>
+      <li style="font-size: 9pt">Reuters: $65B run-rate (July 2026); Financial Times / Bloomberg: Q3 revenue as told to investors</li>
+      <li style="font-size: 9pt">NBC News, NPR, TradingKey: SpaceX IPO (12 June 2026) size, pricing and first-day trading; prior record (Saudi Aramco, 2019)</li>
+      <li style="font-size: 9pt">Yahoo Finance: ~$895B computing commitments, possible ~$10B NVIDIA stake; TradingKey: ~42% NVIDIA share of ~11 GW; Motley Fool: filing-day chip rally</li>
+    </ul>
+    <p class="src">Figures checked against published reports as of 3 November 2026. The SEC filings themselves could not be opened from this environment; figures marked "reported" come from press coverage. IPO terms and dates may change.</p>
+  </div>
+  <div class="foot"><span>ANT · ANTHROPIC IPO BRIEFING</span><span>08</span></div>
+</section>
+</body>
+</html>

@@ -28,8 +28,13 @@ const FACTS = {
   spacexClose: 160.95,
   spacexDay1: 19,
   aramco: 29.4, // $B, 2019, the previous record
-  roadshow: "Week of 9 Nov",
-  trading: "Before 26 Nov",
+  amended: "2 Nov 2026",
+  trading: "~20 Nov",
+  tradingNote: "reported · not yet official",
+  compute: 895, // $B of computing/data-center commitments per the amended filing (as reported)
+  nvidiaStake: 10, // $B, reported possible anchor investment
+  nvidiaShare: 42, // % of Anthropic's ~11 GW compute footprint (analyst estimate)
+  chipsDay: 2.4, // % NVDA move on filing day (reported)
 };
 
 const usdB = (n: number) => `$${n.toFixed(1)}B`;
@@ -202,7 +207,7 @@ export const SDeal: React.FC = () => {
   const record = at("deal", 1, 0.2);
   const spx = at("deal", 2, 0.3);
   const spxDay = at("deal", 2, 2.6);
-  const time = at("deal", 3, 1.6);
+  const time = at("deal", 3, 0.8);
   const barW = 936;
   const bars = [
     { n: "Anthropic · expected", v: FACTS.raise, c: colors.orange, t: record, label: "~$100B" },
@@ -253,12 +258,82 @@ export const SDeal: React.FC = () => {
       </Card>
       <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 1230, display: "flex", gap: 18 }}>
         <Card delay={time} style={{ flex: 1, padding: "16px 24px" }}>
-          <Label>Roadshow</Label>
-          <Big size={40}>{FACTS.roadshow}</Big>
+          <Label>Amended S-1 filed</Label>
+          <Big size={40}>{FACTS.amended}</Big>
         </Card>
-        <Card delay={time + 8} style={{ flex: 1, padding: "16px 24px" }} glow>
-          <Label color={colors.orangeBright}>First trading day</Label>
+        <Card delay={time + 10} style={{ flex: 1.1, padding: "16px 24px" }} glow>
+          <Label color={colors.orangeBright}>Trading could begin</Label>
           <Big size={40} color={colors.orangeBright}>{FACTS.trading}</Big>
+          <div style={{ fontFamily: fonts.mono, fontSize: 18, letterSpacing: 2, color: colors.muted, marginTop: 4 }}>{FACTS.tradingNote.toUpperCase()}</div>
+        </Card>
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+// 4b ─ What it means for NVIDIA
+const NV = "#76B900";
+export const SNvidia: React.FC = () => {
+  const f = useCurrentFrame();
+  const commit = at("nvidia", 0, 1.6);
+  const supplier = at("nvidia", 0, 4.6);
+  const rally = at("nvidia", 1, 0.3);
+  const stake = at("nvidia", 1, 2.8);
+  const others = at("nvidia", 2, 0.4);
+  const signal = at("nvidia", 2, 3.2);
+  return (
+    <AbsoluteFill>
+      <Backdrop />
+      <Column top={210} gap={24}>
+        <Kicker delay={4} color={NV}>What it means for NVIDIA</Kicker>
+        <Headline text="A $900B order book for chips." accent={["$900B"]} delay={8} size={84} />
+      </Column>
+      <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 500, display: "flex", flexDirection: "column", gap: 16 }}>
+        <Card delay={commit} glow style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <Label color={colors.orangeBright}>Computing commitments</Label>
+            <div style={{ fontFamily: fonts.body, fontSize: 24, color: colors.muted, marginTop: 4 }}>amended filing · mostly chips and data centers</div>
+          </div>
+          <Big color={colors.orangeBright} size={84}>
+            ~$<Counter to={FACTS.compute} start={commit} dur={34} format={(n) => Math.round(n).toString()} />B
+          </Big>
+        </Card>
+        <Card delay={supplier} style={{ border: `1px solid ${NV}88`, boxShadow: `0 0 50px ${NV}22` }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              <Label color={NV}>NVIDIA · largest chip supplier</Label>
+              <div style={{ fontFamily: fonts.body, fontSize: 24, color: colors.muted, marginTop: 4 }}>share of Anthropic's ~11 GW compute footprint · analyst estimate</div>
+            </div>
+            <Big color={NV} size={84}>
+              ~<Counter to={FACTS.nvidiaShare} start={supplier} dur={30} format={(n) => Math.round(n).toString()} />%
+            </Big>
+          </div>
+          <div style={{ height: 22, borderRadius: 11, background: colors.charcoal2, marginTop: 14, overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${FACTS.nvidiaShare * prog(f, supplier, 30)}%`, background: NV }} />
+          </div>
+        </Card>
+        <div style={{ display: "flex", gap: 16 }}>
+          <Card delay={rally} style={{ flex: 1 }}>
+            <Label>NVDA on filing day</Label>
+            <Big color={NV} size={60}>▲ {FACTS.chipsDay}%</Big>
+            <div style={{ fontFamily: fonts.body, fontSize: 22, color: colors.muted }}>chip stocks rallied · reported</div>
+          </Card>
+          <Card delay={stake} style={{ flex: 1 }}>
+            <Label>Possible NVIDIA stake</Label>
+            <Big color={colors.text} size={60}>~${FACTS.nvidiaStake}B</Big>
+            <div style={{ fontFamily: fonts.body, fontSize: 22, color: colors.muted }}>anchor investor · reported</div>
+          </Card>
+        </div>
+        <Card delay={others} style={{ display: "flex", alignItems: "center", gap: 18 }}>
+          <div style={{ flex: 1 }}>
+            <Label>But not the only supplier</Label>
+            <div style={{ display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" }}>
+              {["Google TPUs", "Amazon Trainium", "AMD"].map((n) => (
+                <span key={n} style={{ padding: "8px 16px", borderRadius: 100, border: `1px solid ${colors.line}`, fontFamily: fonts.mono, fontSize: 20, color: colors.text }}>{n}</span>
+              ))}
+            </div>
+          </div>
+          <div style={{ fontFamily: fonts.display, fontWeight: 700, fontSize: 30, color: colors.orangeBright, textAlign: "right", opacity: prog(f, signal, 14), maxWidth: 300 }}>A demand signal, not a guarantee.</div>
         </Card>
       </div>
     </AbsoluteFill>
@@ -289,7 +364,7 @@ export const SPrice: React.FC = () => {
       <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 900, display: "flex", flexDirection: "column", gap: 16 }}>
         {[
           { n: "1", t: "Bankers test demand on the roadshow", c: colors.text },
-          { n: "2", t: "A price range is published in an amended filing", c: colors.text },
+          { n: "2", t: "A price range is published in a further amended filing", c: colors.text },
           { n: "3", t: "The final price is set the night before trading", c: colors.orangeBright },
         ].map((s, i) => (
           <Card key={s.n} delay={how + i * 12} style={{ display: "flex", alignItems: "center", gap: 20, padding: "18px 26px" }}>
@@ -332,7 +407,7 @@ export const SWatch: React.FC = () => {
       <div style={{ position: "absolute", left: SAFE.x + 10, right: SAFE.x + 10, top: 1120, padding: "22px 26px", borderRadius: 22, background: "rgba(0,0,0,0.5)", border: `1px solid ${colors.line}`, opacity: prog(f, d, 20) }}>
         <div style={{ fontFamily: fonts.mono, fontSize: 20, letterSpacing: 3, color: colors.muted, marginBottom: 8 }}>RISK DISCLAIMER</div>
         <div style={{ fontFamily: fonts.body, fontSize: 21, lineHeight: 1.45, color: colors.muted }}>
-          Trading shares, CFDs and FX Contracts is highly speculative and involves significant risk of your capital. You should not risk more than you can afford. Past performance is not a guarantee of future performance. The information above is general and is not investment advice or an offer. Figures are as reported from Anthropic's S-1 and press reports in late October 2026; IPO terms may change.
+          Trading shares, CFDs and FX Contracts is highly speculative and involves significant risk of your capital. You should not risk more than you can afford. Past performance is not a guarantee of future performance. The information above is general and is not investment advice or an offer. Figures are as reported from Anthropic's S-1, its 2 November amendment and press reports as of early November 2026; IPO terms and dates may change.
         </div>
       </div>
     </AbsoluteFill>

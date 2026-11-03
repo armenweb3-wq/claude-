@@ -1,0 +1,67 @@
+1
+00:00:00,500 --> 00:00:04,000
+Anthropic, the company behind Claude, has filed to go public.
+
+2
+00:00:04,400 --> 00:00:06,080
+Ticker: ANT, on the Nasdaq.
+
+3
+00:00:07,200 --> 00:00:11,410
+An IPO is the first time a private company sells shares to the public.
+
+4
+00:00:11,810 --> 00:00:14,410
+After that, anyone can trade them on the exchange.
+
+5
+00:00:15,500 --> 00:00:20,200
+Revenue: $16.3 billion in the first half of 2026,
+
+6
+00:00:20,600 --> 00:00:24,190
+and a reported $16.8 billion in the third quarter alone.
+
+7
+00:00:25,300 --> 00:00:30,980
+The expectation: raise about $100 billion at a valuation of up to $2 trillion.
+
+8
+00:00:31,380 --> 00:00:33,490
+That would be the largest IPO in history.
+
+9
+00:00:33,890 --> 00:00:39,800
+SpaceX set the record in June: $75 billion raised, shares up 19% on day one.
+
+10
+00:00:40,200 --> 00:00:46,220
+Anthropic amended its filing on November 2. Trading is reported for around November 20.
+
+11
+00:00:47,330 --> 00:00:56,500
+And NVIDIA? The amended filing shows nearly $900 billion of computing commitments, with NVIDIA as Anthropic's largest chip supplier.
+
+12
+00:00:56,900 --> 00:01:02,760
+Chip stocks rose on the filing, and NVIDIA may take a stake of about $10 billion in the IPO.
+
+13
+00:01:03,160 --> 00:01:08,940
+But Anthropic also buys from Google, Amazon and AMD. A demand signal, not a guarantee.
+
+14
+00:01:10,070 --> 00:01:11,650
+The share price is not set yet.
+
+15
+00:01:12,050 --> 00:01:15,100
+It comes in a further amended filing just before trading.
+
+16
+00:01:18,070 --> 00:01:21,160
+Watch the official price range, and the first day of trading.
+
+17
+00:01:21,560 --> 00:01:25,380
+Shares are highly speculative. This is information, not advice.

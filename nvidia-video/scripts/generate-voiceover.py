@@ -74,7 +74,9 @@ for s in vo["scenes"]:
             continue
         a, sr = clips[i]
         c["start"], c["end"] = round(t, 2), round(t + len(a) / sr, 2)
-        track[int(t * SR): int(t * SR) + len(a)] += a
+        i0 = int(t * SR)
+        a = a[: max(0, len(track) - i0)]  # never write past the end of the track
+        track[i0 : i0 + len(a)] += a
         t = c["end"] + GAP
     print(f"{s['id']:<11} {s['start']:6.2f}–{s['end']:6.2f}s  ({s['end'] - s['start']:4.2f}s)  speech ends {t - GAP:6.2f}s")
 print(f"voice speed {speed:.2f}x; total needed {sum(need):.2f}s of {TOTAL}s")

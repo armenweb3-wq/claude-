@@ -29,8 +29,8 @@ const FACTS = {
   spacexDay1: 19,
   aramco: 29.4, // $B, 2019, the previous record
   amended: "2 Nov 2026",
-  trading: "~20 Nov",
-  tradingNote: "reported · not yet official",
+  trading: "16–20 Nov",
+  tradingNote: "expected window · reported, not official",
   compute: 895, // $B of computing/data-center commitments per the amended filing (as reported)
   nvidiaStake: 10, // $B, reported possible anchor investment
   nvidiaShare: 42, // % of Anthropic's ~11 GW compute footprint (analyst estimate)
@@ -262,7 +262,7 @@ export const SDeal: React.FC = () => {
           <Big size={40}>{FACTS.amended}</Big>
         </Card>
         <Card delay={time + 10} style={{ flex: 1.1, padding: "16px 24px" }} glow>
-          <Label color={colors.orangeBright}>Trading could begin</Label>
+          <Label color={colors.orangeBright}>Expected trading window</Label>
           <Big size={40} color={colors.orangeBright}>{FACTS.trading}</Big>
           <div style={{ fontFamily: fonts.mono, fontSize: 18, letterSpacing: 2, color: colors.muted, marginTop: 4 }}>{FACTS.tradingNote.toUpperCase()}</div>
         </Card>

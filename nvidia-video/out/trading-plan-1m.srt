@@ -1,0 +1,95 @@
+1
+00:00:00,700 --> 00:00:03,220
+Here is a realistic, disciplined trading plan.
+
+2
+00:00:03,770 --> 00:00:09,380
+A $1,000,000 balance. Three trades a day, three days a week. One percent risk on each.
+
+3
+00:00:11,070 --> 00:00:14,680
+Each trade risks $10,000. That is the stop loss.
+
+4
+00:00:15,230 --> 00:00:20,440
+The target is 3 percent: $30,000. A risk-to-reward of one to three.
+
+5
+00:00:20,990 --> 00:00:25,270
+And once a trade moves into profit, the stop loss moves to break-even.
+
+6
+00:00:26,970 --> 00:00:32,080
+Watch one trade. Entry here. Stop loss below. Target three times further above.
+
+7
+00:00:32,630 --> 00:00:37,500
+The price moves up, into profit. Now the stop loss moves up to the entry price.
+
+8
+00:00:38,050 --> 00:00:42,620
+From here, the trade cannot lose. If the price turns back, it closes at zero.
+
+9
+00:00:43,170 --> 00:00:46,920
+If it keeps going, it hits the target: plus $30,000.
+
+10
+00:00:48,970 --> 00:00:53,020
+A realistic day. One trade hits the target: plus $30,000.
+
+11
+00:00:53,570 --> 00:00:55,900
+One returns to break-even: zero.
+
+12
+00:00:56,450 --> 00:00:59,310
+One hits the stop loss: minus $10,000.
+
+13
+00:00:59,860 --> 00:01:02,770
+The day: plus $20,000. Two percent.
+
+14
+00:01:04,500 --> 00:01:08,020
+At one to three, you break even winning just one trade in four.
+
+15
+00:01:08,570 --> 00:01:13,950
+Even the worst day, three losses, costs $30,000. Three percent of the account.
+
+16
+00:01:15,630 --> 00:01:18,590
+Three days a week is about 13 trading days a month.
+
+17
+00:01:19,140 --> 00:01:23,980
+If the average day matched the example: $260,000 a month.
+
+18
+00:01:24,530 --> 00:01:29,480
+Month by month, the balance climbs to about $4.1 million after twelve months.
+
+19
+00:01:31,170 --> 00:01:33,780
+Now withdraw 3 percent of the balance every month.
+
+20
+00:01:34,330 --> 00:01:39,190
+Your initial $1,000,000 is fully withdrawn by month 14, while the account keeps growing.
+
+21
+00:01:43,170 --> 00:01:46,390
+These are projections from one example day, not results.
+
+22
+00:01:46,940 --> 00:01:55,980
+Trading CFDs and FX contracts is highly speculative and involves significant risk to your capital. Never risk more than you can afford.
+
+23
+00:01:57,700 --> 00:02:00,990
+Prefer hands-off? Try our new high-tech AI trading bot.
+
+24
+00:02:01,540 --> 00:02:07,690
+The same discipline, executed automatically, around the clock. You set the limits; it follows the plan.

@@ -8,6 +8,7 @@ import { NvidiaExplainer as NvidiaOriginal } from "./v1/Video";
 import { VIDEO as V1 } from "./v1/theme";
 import { plan100k, plan1m } from "./plan/PlanVideo";
 import { IpoVideo, ipoFrames } from "./ipo/IpoVideo";
+import { GoldVideo, goldFrames } from "./gold/GoldVideo";
 
 export const RemotionRoot: React.FC = () => (
   <>
@@ -17,6 +18,8 @@ export const RemotionRoot: React.FC = () => (
     <Composition id="TradingPlan" component={plan100k.Video} width={1080} height={1920} fps={30} durationInFrames={plan100k.frames} />
     {/* Same plan at $1,000,000 over 12 months, month by month, ending on the AI bot. */}
     <Composition id="TradingPlan1M" component={plan1m.Video} width={1080} height={1920} fps={30} durationInFrames={plan1m.frames} />
+    {/* "$2,500 on gold" pitch: today's +$50, 61 oz, +$3,050, 10% risk cap, account manager + AI bot. */}
+    <Composition id="GoldPitch" component={GoldVideo} width={1080} height={1920} fps={30} durationInFrames={goldFrames} />
     {/* Anthropic IPO explainer, 60 s, black + Claude orange. */}
     <Composition id="AnthropicIPO60" component={IpoVideo} width={1080} height={1920} fps={30} durationInFrames={ipoFrames} />
     {/* Client education series (16:9). */}

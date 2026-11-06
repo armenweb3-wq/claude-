@@ -1,0 +1,189 @@
+{
+  "fps": 30,
+  "totalDuration": null,
+  "voiceoverFile": "audio/gold-pitch-voice.mp3",
+  "musicFile": "audio/gold-pitch-music.mp3",
+  "voice": {
+    "engine": "kokoro-v1.0",
+    "voice": "af_heart",
+    "baseSpeed": 1.0,
+    "speed": 1.0
+  },
+  "pacing": {
+    "lead": 0.7,
+    "gap": 0.55,
+    "tail": 1.0
+  },
+  "scenes": [
+    {
+      "id": "today",
+      "title": "Today",
+      "minDuration": 10,
+      "start": 0.0,
+      "end": 10.0
+    },
+    {
+      "id": "ounce",
+      "title": "One ounce",
+      "minDuration": 10,
+      "start": 10.0,
+      "end": 20.0
+    },
+    {
+      "id": "position",
+      "title": "$2,500 on gold",
+      "minDuration": 12,
+      "start": 20.0,
+      "end": 35.433
+    },
+    {
+      "id": "profit",
+      "title": "+$50",
+      "minDuration": 10,
+      "start": 35.433,
+      "end": 46.633
+    },
+    {
+      "id": "risk",
+      "title": "The risk",
+      "minDuration": 10,
+      "start": 46.633,
+      "end": 60.067
+    },
+    {
+      "id": "next",
+      "title": "What's next",
+      "minDuration": 11,
+      "start": 60.067,
+      "end": 75.6
+    },
+    {
+      "id": "compare",
+      "title": "$100 vs $2,500",
+      "minDuration": 13,
+      "start": 75.6,
+      "end": 96.0
+    },
+    {
+      "id": "close",
+      "title": "Move forward",
+      "minDuration": 14,
+      "start": 96.0,
+      "end": 114.43333333333334
+    }
+  ],
+  "cues": [
+    {
+      "scene": "today",
+      "text": "Today, gold climbed $50 an ounce.",
+      "say": "Today, gold climbed fifty dollars an ounce.",
+      "start": 0.7,
+      "end": 3.09
+    },
+    {
+      "scene": "today",
+      "text": "From about $4,020 to $4,070. In a single day.",
+      "say": "From about four thousand and twenty, to four thousand and seventy. In a single day.",
+      "start": 3.64,
+      "end": 8.39
+    },
+    {
+      "scene": "ounce",
+      "text": "One ounce of gold, up $50, earns exactly $50.",
+      "say": "One ounce of gold, up fifty dollars, earns exactly fifty dollars.",
+      "start": 10.7,
+      "end": 14.77
+    },
+    {
+      "scene": "ounce",
+      "text": "The question is: how many ounces do you hold?",
+      "say": "The question is: how many ounces do you hold?",
+      "start": 15.32,
+      "end": 17.79
+    },
+    {
+      "scene": "position",
+      "text": "On the platform, 0.01 lot is one ounce. It needs about $41 of margin.",
+      "say": "On the platform, zero point zero one lot is one ounce. It needs about forty one dollars of margin.",
+      "start": 20.7,
+      "end": 27.04
+    },
+    {
+      "scene": "position",
+      "text": "So $2,500 of margin controls 61 ounces of gold: 0.61 lots.",
+      "say": "So two thousand five hundred dollars of margin controls sixty one ounces of gold. Zero point six one lots.",
+      "start": 27.59,
+      "end": 34.44
+    },
+    {
+      "scene": "profit",
+      "text": "Gold up $50, times 61 ounces: $3,050.",
+      "say": "Gold up fifty dollars, times sixty one ounces: three thousand and fifty dollars.",
+      "start": 36.13,
+      "end": 41.2
+    },
+    {
+      "scene": "profit",
+      "text": "That is what $2,500 on gold would have made today.",
+      "say": "That is what two thousand five hundred dollars on gold would have made today.",
+      "start": 41.75,
+      "end": 45.63
+    },
+    {
+      "scene": "risk",
+      "text": "Now the risk. We cap it at 10 percent: a maximum loss of $250.",
+      "say": "Now the risk. We cap it at ten percent. A maximum loss of two hundred and fifty dollars.",
+      "start": 47.33,
+      "end": 52.9
+    },
+    {
+      "scene": "risk",
+      "text": "With 61 ounces, that is a stop loss just $4.10 below the entry price.",
+      "say": "With sixty one ounces, that is a stop loss just four dollars and ten cents below the entry price.",
+      "start": 53.45,
+      "end": 59.06
+    },
+    {
+      "scene": "next",
+      "text": "That move has already happened. But according to TipRanks, top analysts expect gold to rise another $50.",
+      "say": "That move has already happened. But according to TipRanks, top analysts expect gold to rise another fifty dollars.",
+      "start": 60.77,
+      "end": 67.77
+    },
+    {
+      "scene": "next",
+      "text": "The same 61 ounces would make another $3,050, with $250 at risk.",
+      "say": "The same sixty one ounces would make another three thousand and fifty dollars, with two hundred and fifty at risk.",
+      "start": 68.32,
+      "end": 74.61
+    },
+    {
+      "scene": "compare",
+      "text": "With $100, you hold 2 ounces. A $50 move makes $100. And you do all the analysis and trading yourself.",
+      "say": "With one hundred dollars, you hold two ounces. A fifty dollar move makes one hundred dollars. And you do all the analysis and trading yourself.",
+      "start": 76.3,
+      "end": 84.72
+    },
+    {
+      "scene": "compare",
+      "text": "With $2,500, you hold 61 ounces. The same move makes $3,050. And the AI does the analysis and the trades for you.",
+      "say": "With two thousand five hundred, you hold sixty one ounces. The same move makes three thousand and fifty dollars. And the AI does the analysis and the trades for you.",
+      "start": 85.27,
+      "end": 94.97
+    },
+    {
+      "scene": "close",
+      "text": "Move forward with $2,500 and you qualify for a personal account manager and our AI trading bot.",
+      "say": "Move forward with two thousand five hundred dollars and you qualify for a personal account manager, and our AI trading bot.",
+      "start": 96.7,
+      "end": 103.86
+    },
+    {
+      "scene": "close",
+      "text": "Trading CFDs and FX contracts is highly speculative and involves significant risk to your capital. Never risk more than you can afford.",
+      "say": "Trading CFDs and FX contracts is highly speculative and involves significant risk to your capital. Never risk more than you can afford.",
+      "start": 104.41,
+      "end": 113.45
+    }
+  ]
+}

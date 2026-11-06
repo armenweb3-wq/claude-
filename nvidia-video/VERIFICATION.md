@@ -77,3 +77,10 @@ also shows what an 8% fall would lose (−$9,975.68).
 - New claims: partners include "cloud companies, AI labs, carmakers, and governments"; NVIDIA chips are what "many AI systems
   are built on"; "the biggest technology companies buy them". These are widely reported but should be confirmed.
 - The founder portrait shows a "JH" monogram until a licensed photo is set in `founder.photo`.
+
+## Gold pitch (`GoldPitch`, src/gold)
+
+- Platform figures come from the client's broker ticket screenshot (XAUUSD, 0.01 lot, margin 40.71 at 4,071.97 ask → 1 oz per 0.01 lot, leverage 1:100). All position maths derive from those constants in `src/gold/scenes.tsx`.
+- "Today gold rose $50" (4,020 → 4,070) is the example move the client asked for; it is not verified against a market feed. The closing card labels the $50 moves as examples.
+- "According to TipRanks, top analysts expect another $50": supplied by the client; could not be verified online (6 Nov 2026). On screen it is labelled "analyst view, reported".
+- A 10% max loss ($250) on 61 oz is a stop only $4.10 below entry; gold regularly moves that much intraday. Shown as asked, with the firm's Risk Disclaimer on the close.

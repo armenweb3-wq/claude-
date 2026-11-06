@@ -78,3 +78,7 @@ animated film grain and a vignette sit on top of every scene (`src/Video.tsx`).
   JetBrains Mono bundled in `public/fonts`).
 
 The video uses the NVDA ticker and the NVIDIA name only as text. It contains no NVIDIA logos or trademarks as artwork.
+
+## Gold pitch (`GoldPitch`)
+
+Black-and-gold pitch (~1:55): today's +$50 move, one ounce = $50, $2,500 margin = 61 oz (from the broker ticket), +$3,050, 10% risk cap, analyst view of another +$50, $100-DIY vs $2,500-with-AI, account manager + AI bot. Script `src/data/voiceover-gold-pitch.json`, scenes `src/gold/`.

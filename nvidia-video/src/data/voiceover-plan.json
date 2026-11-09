@@ -60,15 +60,15 @@
     {
       "id": "withdraw",
       "title": "Taking money out",
-      "minDuration": 12,
+      "minDuration": 16,
       "start": 88.167,
-      "end": 100.167
+      "end": 104.167
     },
     {
       "id": "close",
-      "title": "Monthly withdrawals",
-      "minDuration": 18,
-      "start": 100.167,
+      "title": "Risk disclaimer",
+      "minDuration": 14,
+      "start": 104.167,
       "end": 118.16666666666667
     }
   ],

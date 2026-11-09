@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-Three unrelated things share this repo:
+Four unrelated things share this repo:
 
 1. **Catalyst — the startup ⇄ investor marketplace** (primary) — a Next.js App
    Router app served at `/`. Accounts (Supabase auth), founder/investor listings,
@@ -16,6 +16,11 @@ Three unrelated things share this repo:
 3. **A live-scores automation** — `scripts/fetch-scores.mjs` plus
    `.github/workflows/scores.yml`, a standalone GitHub Action unrelated to the
    websites. It is *not* part of the Next.js build (it's excluded in `tsconfig`).
+4. **MT5 Trading Control Center** — `mt5-control-center/`, a standalone Python
+   (FastAPI) desktop-style dashboard for monitoring two MetaTrader 5 accounts on
+   Windows. One worker subprocess per account, read-only, loopback + token
+   protected, no Node tooling. Its own `README.md` covers setup; tests run with
+   `pytest tests` inside that folder. Not touched by `npm run build`.
 
 `npm run dev/build` operates on both web apps together.
 

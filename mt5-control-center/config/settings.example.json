@@ -1,0 +1,14 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8731,
+    "open_browser": true
+  },
+  "refresh_seconds": 2,
+  "history_refresh_seconds": 15,
+  "history_lookback_days": 365,
+  "equity_sample_seconds": 30,
+  "report_timezone": "local",
+  "mock_mode": false,
+  "log_level": "INFO"
+}

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MT5 Control Center</title>
+<link rel="stylesheet" href="/static/app.css">
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<div id="lock" class="overlay hidden">
+  <div class="lock">
+    <h2>Dashboard locked</h2>
+    <p>This control center only answers requests that carry your private access key. Open the dashboard through the link printed in the launcher window, or paste the key below.</p>
+    <input id="lock-token" type="password" placeholder="Paste access key" autocomplete="off" spellcheck="false">
+    <div class="row-end">
+      <button id="lock-go" class="btn primary">Unlock</button>
+    </div>
+    <p class="xs muted">The key is stored in <span class="mono">config/.api_token</span> on this computer. Nothing is sent anywhere except to this local server.</p>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">M5</div>
+      <div><h1>Control Center</h1><div class="sub">MetaTrader 5 · multi-account</div></div>
+    </div>
+    <nav class="nav" id="nav">
+      <button data-view="overview" class="active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview</button>
+      <button data-view="positions"><svg viewBox="0 0 24 24"><path d="M4 17l5-5 4 4 7-8"/><path d="M14 8h6v6"/></svg>Open positions</button>
+      <button data-view="performance"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Performance</button>
+      <button data-view="trades"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Trade history</button>
+      <button data-view="balance"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>Balance operations</button>
+      <button data-view="diagnostics"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Diagnostics</button>
+    </nav>
+    <div>
+      <div class="sidebar-section-title">Accounts</div>
+      <div class="acct-list" id="acct-list"></div>
+    </div>
+    <div class="sidebar-foot">
+      <div id="foot-version">MT5 Control Center</div>
+      <div>Read-only · local only</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <h2 id="view-title">Overview</h2>
+      <div class="scope" id="scope"></div>
+      <div class="spacer"></div>
+      <div class="clock" id="clock"><span class="live-dot off" id="live-dot"></span><span id="clock-text">–</span></div>
+    </header>
+    <div class="content" id="content">
+      <div class="loading-row"><div class="spinner"></div>Connecting to the local control center…</div>
+    </div>
+  </main>
+</div>
+
+<script src="/static/charts.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

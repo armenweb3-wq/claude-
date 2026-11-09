@@ -1,0 +1,28 @@
+{
+  "accounts": [
+    {
+      "id": "account1",
+      "label": "Account 1",
+      "color": "blue",
+      "terminal_path": "C:\\Program Files\\MetaTrader 5\\terminal64.exe",
+      "portable": false,
+      "login": 0,
+      "server": "",
+      "password_env": "MT5CC_ACCOUNT1_PASSWORD",
+      "server_utc_offset_hours": 0,
+      "enabled": true
+    },
+    {
+      "id": "account2",
+      "label": "Account 2",
+      "color": "orange",
+      "terminal_path": "C:\\Program Files\\MetaTrader 5 Second\\terminal64.exe",
+      "portable": true,
+      "login": 0,
+      "server": "",
+      "password_env": "MT5CC_ACCOUNT2_PASSWORD",
+      "server_utc_offset_hours": 0,
+      "enabled": true
+    }
+  ]
+}

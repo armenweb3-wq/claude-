@@ -1,0 +1,10 @@
+# Local, machine-specific files - never commit these
+.venv/
+__pycache__/
+*.pyc
+config/settings.json
+config/accounts.json
+config/.api_token
+data/
+logs/
+.pytest_cache/

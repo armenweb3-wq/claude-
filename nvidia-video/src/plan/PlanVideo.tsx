@@ -38,7 +38,7 @@ export const makePlanVideo = (cfg: PlanConfig) => {
 };
 
 /** $100,000 · 6 months (the original realistic plan). */
-export const plan100k = makePlanVideo({ vo: vo100k, balance: 100_000, months: 6 });
+export const plan100k = makePlanVideo({ vo: vo100k, balance: 100_000, months: 6, silentClose: true });
 /** $1,000,000 · 12 months, month by month, with the hands-off AI bot ending. */
 export const plan1m = makePlanVideo({ vo: vo1m, balance: 1_000_000, months: 12, cta: true });
 

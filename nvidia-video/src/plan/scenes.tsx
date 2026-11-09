@@ -7,7 +7,7 @@ import { colors, fonts, SAFE } from "./theme";
 
 import type { VoScript } from "../edu/timeline";
 
-export type PlanConfig = { vo: VoScript; balance: number; months: number; cta?: boolean };
+export type PlanConfig = { vo: VoScript; balance: number; months: number; cta?: boolean; silentClose?: boolean };
 
 /*
  * "A realistic daily plan": every figure on screen is derived from the config.
@@ -15,7 +15,7 @@ export type PlanConfig = { vo: VoScript; balance: number; months: number; cta?: 
  * `makePlan` builds the timeline and the scene components for one balance / horizon.
  */
 export const makePlan = (cfg: PlanConfig) => {
-  const { vo, cta } = cfg;
+  const { vo, cta, silentClose } = cfg;
     const tl = makeTimeline(vo);
   const BALANCE = cfg.balance;
   const RISK_PCT = 1;
@@ -469,6 +469,71 @@ export const makePlan = (cfg: PlanConfig) => {
     );
   };
 
+  // 8b ─ Silent close: month-by-month withdrawals as a bar chart, with the risk disclaimer on screen (no narration)
+  const SCloseChart: React.FC = () => {
+    const f = useCurrentFrame();
+    const rows = withdrawals.slice(0, RECOVER_MONTH);
+    const n = rows.length;
+    const W = 936;
+    const H = 620;
+    const padL = 20;
+    const padB = 56;
+    const padT = 70;
+    const maxV = Math.max(...rows.map((r) => r.out)) * 1.12;
+    const slot = (W - padL) / n;
+    const bw = slot * 0.66;
+    const barStart = 20;
+    const per = 9;
+    const shown = rows.filter((_, i) => f >= barStart + i * per).length;
+    const cum = rows.slice(0, shown).reduce((a, r) => a + r.out, 0);
+    const done = prog(f, barStart + n * per + 10, 20);
+    return (
+      <AbsoluteFill>
+        <Backdrop glow={0.8} />
+        <Column top={200} gap={22}>
+          <Kicker delay={4}>Withdraw {WITHDRAW_PCT}% of the balance each month</Kicker>
+          <Headline text="Your monthly withdrawals, month by month." accent={["month", "by", "month."]} delay={8} size={76} />
+        </Column>
+        <div style={{ position: "absolute", left: SAFE.x, top: 500, width: W, height: H, borderRadius: 30, background: colors.charcoal, border: `1px solid ${colors.line}`, opacity: prog(f, 10, 16) }}>
+          <svg width={W} height={H}>
+            {rows.map((r, i) => {
+              const p = prog(f, barStart + i * per, 22);
+              const h = (r.out / maxV) * (H - padB - padT) * p;
+              const x = padL + i * slot + (slot - bw) / 2;
+              const yTop = H - padB - h;
+              const rec = r.m === RECOVER_MONTH;
+              return (
+                <g key={r.m}>
+                  <rect x={x} y={yTop} width={bw} height={h} rx={7} fill={rec ? colors.greenBright : colors.green} opacity={rec ? 1 : 0.8} />
+                  <text x={x + bw / 2} y={yTop - 10} textAnchor="middle" fontFamily={fonts.display} fontWeight={800} fontSize={19} fill={rec ? colors.greenBright : colors.text} opacity={p}>
+                    {r.out >= 10_000 ? compact(r.out) : `$${(r.out / 1e3).toFixed(1)}K`}
+                  </text>
+                  <text x={x + bw / 2} y={H - 20} textAnchor="middle" fontFamily={fonts.mono} fontSize={18} fill={rec ? colors.greenBright : colors.dim}>
+                    M{r.m}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+          <div style={{ position: "absolute", left: 24, top: 18, fontFamily: fonts.mono, fontSize: 19, letterSpacing: 2, color: colors.muted }}>
+            MONTHLY WITHDRAWAL · TAKEN OUT SO FAR <span style={{ color: colors.greenBright, fontWeight: 700 }}>{usd(cum)}</span>
+          </div>
+        </div>
+        <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 1150, display: "flex", gap: 16 }}>
+          <Stat label="Month 1" value={usd(rows[0].out)} color={colors.greenBright} delay={barStart} size={44} />
+          <Stat label={`Month ${RECOVER_MONTH}`} value={usd(rows[n - 1].out)} color={colors.greenBright} delay={barStart + (n - 1) * per} size={44} />
+          <Stat label={`Total · ${RECOVER_MONTH} months`} value={usd(rows[n - 1].cum)} color={colors.gold} delay={barStart + n * per} size={44} sub={`your ${usd(BALANCE)} is back`} />
+        </div>
+        <div style={{ position: "absolute", left: SAFE.x + 10, right: SAFE.x + 10, top: 1330, padding: "16px 22px", borderRadius: 18, background: "rgba(0,0,0,0.45)", border: `1px solid ${colors.line}`, opacity: done }}>
+          <div style={{ fontFamily: fonts.mono, fontSize: 16, letterSpacing: 3, color: colors.muted, marginBottom: 6 }}>PROJECTION, NOT A RESULT · RISK DISCLAIMER</div>
+          <div style={{ fontFamily: fonts.body, fontSize: 16, lineHeight: 1.4, color: colors.muted }}>
+            Trading CFDs and FX Contracts is highly speculative and involves significant risk of your capital. You should not risk more than you can afford. Before taking any market action, you need to be properly aware of the risk. Past performance is not a guarantee of future performance. The information above is intended to be general and is not to be considered investment advice. This information should not be understood as an offer. Should you proceed using the information above for opening market positions, it is considered you did so at your own risk.
+          </div>
+        </div>
+      </AbsoluteFill>
+    );
+  };
+
     // 9 ─ Optional ending: the hands-off AI bot
     const SCta: React.FC = () => {
       const f = useCurrentFrame();
@@ -513,7 +578,7 @@ export const makePlan = (cfg: PlanConfig) => {
       );
     };
 
-    const scenes: Record<string, React.FC> = { title: STitle, rules: SRules, chart: SChart, day: SDay, edge: SEdge, growth: SGrowth, withdraw: SWithdraw, close: SClose, ...(cta ? { cta: SCta } : {}) };
+    const scenes: Record<string, React.FC> = { title: STitle, rules: SRules, chart: SChart, day: SDay, edge: SEdge, growth: SGrowth, withdraw: SWithdraw, close: silentClose ? SCloseChart : SClose, ...(cta ? { cta: SCta } : {}) };
     const abs = (scene: string, n: number, off = 0) => tl.at(scene, n, off) + tl.scenes.find((x) => x.id === scene)!.from;
     const impacts = [abs("chart", 3, 0.2), abs("day", 3, 0.2), abs("growth", 2), abs("withdraw", 1, 2.4), ...(cta ? [abs("cta", 0, 0.4)] : [])];
     return { tl, scenes, impacts, BALANCE, FINAL, MONTH_PL, DAY_PL, RECOVER_MONTH, withdrawals };

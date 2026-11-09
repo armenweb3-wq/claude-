@@ -9,6 +9,7 @@ import { VIDEO as V1 } from "./v1/theme";
 import { plan100k, plan1m } from "./plan/PlanVideo";
 import { IpoVideo, ipoFrames } from "./ipo/IpoVideo";
 import { GoldVideo, goldFrames } from "./gold/GoldVideo";
+import { StoryVideo, storyFrames } from "./story/StoryVideo";
 
 export const RemotionRoot: React.FC = () => (
   <>
@@ -18,6 +19,8 @@ export const RemotionRoot: React.FC = () => (
     <Composition id="TradingPlan" component={plan100k.Video} width={1080} height={1920} fps={30} durationInFrames={plan100k.frames} />
     {/* Same plan at $1,000,000 over 12 months, month by month, ending on the AI bot. */}
     <Composition id="TradingPlan1M" component={plan1m.Video} width={1080} height={1920} fps={30} durationInFrames={plan1m.frames} />
+    {/* "Your account, in ten weeks": paper-and-ink client account story (16:9). */}
+    <Composition id="AccountStory" component={StoryVideo} width={1920} height={1080} fps={30} durationInFrames={storyFrames} />
     {/* "$2,500 on gold" pitch: today's +$50, 61 oz, +$3,050, 10% risk cap, account manager + AI bot. */}
     <Composition id="GoldPitch" component={GoldVideo} width={1080} height={1920} fps={30} durationInFrames={goldFrames} />
     {/* Anthropic IPO explainer, 60 s, black + Claude orange. */}

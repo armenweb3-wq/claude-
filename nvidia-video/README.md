@@ -82,3 +82,7 @@ The video uses the NVDA ticker and the NVIDIA name only as text. It contains no 
 ## Gold pitch (`GoldPitch`)
 
 Black-and-gold pitch (~1:55): today's +$50 move, one ounce = $50, $2,500 margin = 61 oz (from the broker ticket), +$3,050, 10% risk cap, analyst view of another +$50, $100-DIY vs $2,500-with-AI, account manager + AI bot. Script `src/data/voiceover-gold-pitch.json`, scenes `src/gold/`.
+
+## Account story (`AccountStory`)
+
+16:9 paper-and-ink review of a client account (~2:55): cream paper, hand-drawn arrows, index cards, sticky notes and stamps. Figures transcribed from the Trade History Report into `src/story/scenes.tsx` (`D`); script `src/data/voiceover-story.json`.

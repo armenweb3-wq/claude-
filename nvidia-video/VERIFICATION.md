@@ -84,3 +84,10 @@ also shows what an 8% fall would lose (−$9,975.68).
 - "Today gold rose $50" (4,020 → 4,070) is the example move the client asked for; it is not verified against a market feed. The closing card labels the $50 moves as examples.
 - "According to TipRanks, top analysts expect another $50": supplied by the client; could not be verified online (6 Nov 2026). On screen it is labelled "analyst view, reported".
 - A 10% max loss ($250) on 61 oz is a stop only $4.10 below entry; gold regularly moves that much intraday. Shown as asked, with the firm's Risk Disclaimer on the close.
+
+## Account story (`AccountStory`, src/story)
+
+- Every figure comes from the client's Trade History Report (account •••175, 04.09.2026 – 09.11.2026, exported 09.11.2026 13:24), transcribed into `D` in `src/story/scenes.tsx`. Ledger check: deposits 133,949.05 − withdrawals 2,100 + bonuses/cashback/credit 237,075.95 + closed profit 49,412.61 = balance 418,337.61; minus open position −19,244.10 and swap −4,350.61 = equity 394,742.90.
+- "Bonuses, cashback & credit" includes the 185,000 credit facility (bonuses marked removable / signed deal), 52,075.95 of cashback entries. Shown on screen as one line with the credit facility noted.
+- The open gold position is shown as the platform reports it (floating −19,244.10, swap −4,350.61, margin level 7,993.84%).
+- Narration says "ten weeks"; the period is 66 days (4 Sep – 9 Nov).

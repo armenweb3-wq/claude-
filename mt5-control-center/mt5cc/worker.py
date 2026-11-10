@@ -48,6 +48,7 @@ class _Worker:
         self.running = True
         self.consecutive_failures = 0
         self.incomplete_positions: list[int] = []
+        self._last_conn_error: str | None = None
 
     # ------------------------------------------------------------------ #
     def send(self, msg: dict[str, Any]) -> None:
@@ -79,8 +80,13 @@ class _Worker:
             info = self.adapter.connect()
         except Exception as exc:
             self.status("error", str(exc))
-            self.log("ERROR", f"Connection failed: {exc}")
+            if str(exc) != self._last_conn_error:
+                self._last_conn_error = str(exc)
+                self.log("ERROR", f"Connection failed: {exc}")
+                if "initialize() failed" in str(exc):
+                    self.log("INFO", "Check terminal_path in config/accounts.json, or set \"mock_mode\": true in config/settings.json to run the demo. Retrying quietly in the background.")
             return False
+        self._last_conn_error = None
         mode = "DEMO/MOCK DATA" if self.cfg.get("mock") else "live terminal"
         self.log("INFO", f"Connected to account {info.get('login')} on {info.get('server')} ({mode})")
         self.status("connected", f"Connected to {info.get('server')}")

@@ -65,7 +65,10 @@ def main() -> int:
     print("=" * 72 + "\n")
     for a in accounts:
         print(f"  Account slot '{a.id}' ({a.label}): mode={a.auth_mode()}"
-              + (" [MOCK DATA]" if a.mock else ""))
+              + (" [DEMO DATA]" if a.mock else f" -> {a.terminal_path}"))
+    if all(a.mock for a in accounts):
+        print("\n  Demo mode is ON: all numbers are synthetic. To connect real terminals, edit")
+        print("  config\\accounts.json and set \"mock_mode\": false in config\\settings.json.")
     print("\n  Press Ctrl+C to stop.\n")
 
     supervisor.start()

@@ -137,8 +137,9 @@ Diagnostics page shows whether each variable was found (never its value).
 
 ### 3.4 Turn demo mode off
 
-In `config\settings.json` set `"mock_mode": false`. Start the launcher again.
-The yellow **DEMO DATA** banner disappears once no slot is synthetic.
+In `config\settings.json` change `"mock_mode": true` to `"mock_mode": false`.
+Start the launcher again. The yellow **DEMO DATA** banner disappears once no
+slot is synthetic.
 
 ## 4. `config\settings.json`
 
@@ -150,7 +151,7 @@ The yellow **DEMO DATA** banner disappears once no slot is synthetic.
   "history_lookback_days": 365,
   "equity_sample_seconds": 30,
   "report_timezone": "local",
-  "mock_mode": false,
+  "mock_mode": true,
   "log_level": "INFO"
 }
 ```

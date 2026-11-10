@@ -148,6 +148,45 @@ def _ignore(src: str, names: list[str]) -> set[str]:
     return out
 
 
+def data_folder_for(install_folder: Path) -> Path | None:
+    """The %APPDATA%\\MetaQuotes\\Terminal\\<hash> data folder of a (non-portable)
+    installation, found through its origin.txt."""
+    appdata = os.environ.get("APPDATA")
+    if not appdata:
+        return None
+    want = str(install_folder).rstrip("\\/").lower()
+    for origin in Path(appdata).joinpath("MetaQuotes", "Terminal").glob("*/origin.txt"):
+        try:
+            text = origin.read_text(encoding="utf-16", errors="ignore").strip("\ufeff \r\n\t")
+        except OSError:
+            continue
+        if text.rstrip("\\/").lower() == want:
+            return origin.parent
+    return None
+
+
+def seed_broker_config(source_folder: Path, dest: Path) -> list[str]:
+    """Copy the broker server list (and similar harmless config files) from the
+    original installation's data folder into the private copy, so the copy can
+    log in by server name straight away. Returns what was copied."""
+    copied: list[str] = []
+    candidates = [source_folder / "config"]
+    data = data_folder_for(source_folder)
+    if data is not None:
+        candidates.insert(0, data / "config")
+    (dest / "config").mkdir(parents=True, exist_ok=True)
+    for cfg in candidates:
+        for name in ("servers.dat", "servers.ini"):
+            src = cfg / name
+            if src.is_file() and not (dest / "config" / name).exists():
+                try:
+                    shutil.copy2(src, dest / "config" / name)
+                    copied.append(name)
+                except OSError:
+                    pass
+    return copied
+
+
 def copy_terminal(source_exe: str, slot_id: str) -> dict[str, Any]:
     """Start copying an MT5 installation into terminals/<slot_id>/ in the
     background. Returns the job state (poll ``copy_status``)."""
@@ -180,7 +219,9 @@ def copy_terminal(source_exe: str, slot_id: str) -> dict[str, Any]:
             # portable mode markers: a fresh config/ folder makes the terminal keep data here
             (dest / "config").mkdir(exist_ok=True)
             (dest / "MQL5").mkdir(exist_ok=True)
-            job.update(state="done", progress=1.0, message="Private terminal copy ready")
+            seeded = seed_broker_config(src.parent, dest)
+            job.update(state="done", progress=1.0,
+                       message="Private terminal copy ready" + (f" (broker server list copied: {', '.join(seeded)})" if seeded else ""))
         except Exception as exc:  # pragma: no cover
             job.update(state="error", error=str(exc), message=f"Copy failed: {exc}")
             shutil.rmtree(dest, ignore_errors=True)

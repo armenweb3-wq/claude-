@@ -91,7 +91,15 @@ class MT5Adapter:
             )
         ok = self.mt5.initialize(**kwargs)
         if not ok:
-            raise MT5Error(f"initialize() failed: {self.last_error()}")
+            err = self.last_error()
+            hint = ""
+            if "-10003" in err or "IPC" in err:
+                hint = " - the terminal did not start or did not answer. Check terminal_path, and that no other program is driving this terminal."
+            elif "-6" in err or "uthoriz" in err or "-10001" in err:
+                hint = " - login, password or server rejected. Check the server name exactly as in the MT5 login window, and that the password is the master password (investor password works for monitoring only)."
+            elif "-10005" in err or "-2" in err:
+                hint = " - the terminal could not reach the broker server. Open the private terminal window and check its connection status (bottom right)."
+            raise MT5Error(f"initialize() failed: {err}{hint}")
         self.connected = True
         info = self.account_info()
         if not info:

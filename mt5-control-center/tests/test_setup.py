@@ -74,3 +74,23 @@ def test_copy_terminal_skips_logs_and_marks_portable(cfg_files):
     assert S.copy_terminal(str(src / "terminal64.exe"), "acc1")["state"] == "done"
     with pytest.raises(ConfigError):
         S.copy_terminal(str(src / "nope.exe"), "acc2")
+
+
+def test_copy_seeds_server_list_from_data_folder(cfg_files, monkeypatch):
+    src = cfg_files / "Broker MT5"
+    src.mkdir()
+    (src / "terminal64.exe").write_bytes(b"x")
+    appdata = cfg_files / "AppData"
+    data = appdata / "MetaQuotes" / "Terminal" / "ABC123"
+    (data / "config").mkdir(parents=True)
+    (data / "origin.txt").write_text(str(src), encoding="utf-16")
+    (data / "config" / "servers.dat").write_bytes(b"servers")
+    monkeypatch.setenv("APPDATA", str(appdata))
+    S.copy_terminal(str(src / "terminal64.exe"), "acc9")
+    for _ in range(100):
+        if S.copy_status("acc9")["state"] in ("done", "error"):
+            break
+        time.sleep(0.05)
+    st = S.copy_status("acc9")
+    assert st["state"] == "done" and "servers.dat" in st["message"], st
+    assert (cfg_files / "terminals" / "acc9" / "config" / "servers.dat").read_bytes() == b"servers"

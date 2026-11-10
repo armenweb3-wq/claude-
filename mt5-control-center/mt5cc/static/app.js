@@ -585,7 +585,7 @@
               <label class="${TF.order_kind === "market" ? "hidden" : ""}" id="t-price-wrap">Entry price<input id="t-price" type="number" step="any" value="${esc(TF.price)}"></label>
             </div>
             <div class="form-row">
-              <label>Sizing<select id="t-sizing"><option value="risk" ${TF.sizing === "risk" ? "selected" : ""}>Risk % of equity</option><option value="lots" ${TF.sizing === "lots" ? "selected" : ""}>Fixed lots</option></select></label>
+              <label>Sizing<select id="t-sizing"><option value="risk" ${TF.sizing === "risk" ? "selected" : ""}>Risk % (sized from stop)</option><option value="lots" ${TF.sizing === "lots" ? "selected" : ""}>Fixed lots</option></select></label>
               <label class="${TF.sizing === "risk" ? "" : "hidden"}" id="t-risk-wrap">Risk %<input id="t-risk" type="number" step="0.05" min="0.05" max="${st.limits.max_risk_percent}" value="${esc(TF.risk_percent)}"></label>
               <label class="${TF.sizing === "risk" ? "" : "hidden"}" id="t-basis-wrap">% of<select id="t-basis"><option value="free_margin" ${TF.risk_basis === "free_margin" ? "selected" : ""}>Free margin</option><option value="equity" ${TF.risk_basis === "equity" ? "selected" : ""}>Equity</option><option value="balance" ${TF.risk_basis === "balance" ? "selected" : ""}>Balance</option></select></label>
               <label class="${TF.sizing === "lots" ? "" : "hidden"}" id="t-lots-wrap">Lots<input id="t-lots" type="number" step="0.01" min="0.01" max="${st.limits.max_lots}" value="${esc(TF.lots)}"></label>

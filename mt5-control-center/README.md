@@ -77,12 +77,15 @@ Use **Edit** to change a password or limits, **Remove** to forget an account
 (optionally deleting its private copy), **Reconnect** to restart its link.
 **Add two demo accounts** loads fake data if you want to explore first.
 
-### If a terminal shows "Degraded" or trading says "algorithmic trading disabled"
+### The private terminal windows
 
-Each private terminal copy opens its own MT5 window. In that window click the
-**Algo Trading** button in the toolbar so it turns green (or Tools → Options →
-Expert Advisors → *Allow algorithmic trading*). The Python bridge needs it;
-the dashboard tells you per account when it is missing.
+Each private copy opens its own MT5 window. The program starts it with a
+startup file that logs it into the account and enables algo trading, so
+normally there is nothing to click. If a window shows a dialog (first-run
+wizard, terms, "invalid account"), close it or log in by hand with
+File → Login to Trade Account, then press **Reconnect** on the Accounts page.
+If trading says "algorithmic trading disabled", click the **Algo Trading**
+button in that window's toolbar so it turns green.
 
 ### Editing `config\accounts.json` by hand (optional)
 
@@ -321,7 +324,9 @@ Python updated.
 
 | Symptom | What to check |
 |---------|---------------|
-| `initialize() failed` in Diagnostics | Wrong `terminal_path`; terminal not allowed to run algorithmic trading; wrong `portable` flag; the terminal is already being driven by another Python process. |
+| `initialize() failed: IPC timeout` | The terminal window did not answer in time. Look for the MT5 window of that account: close any wizard or dialog it shows, let it finish starting, then press **Reconnect**. First launches of a private copy can take a couple of minutes; the limit is 3 minutes. |
+| `initialize() failed: IPC initialize failed` | No terminal at that path. Check the path on the Accounts page (Edit), or remove and re-add the account. |
+| `initialize() failed: Authorization failed` | Login, password or server rejected. Server name must match the MT5 login window exactly. |
 | `Terminal is logged into account X, but this slot is configured for Y` | The terminal in that folder is logged into a different account. Log into the right one or fix `login`. |
 | `CryptUnprotectData failed` | The password was saved under a different Windows user. Edit the account and enter the password again. |
 | Account stays on *Connecting* after adding | The terminal copy is starting for the first time; give it up to a minute. If it then shows an error, check login/server/password with Edit. |

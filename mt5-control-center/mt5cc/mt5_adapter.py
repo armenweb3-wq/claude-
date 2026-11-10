@@ -7,7 +7,11 @@ inside a worker subprocess - never in the main (web) process.
 
 from __future__ import annotations
 
+import os
+import subprocess
+import time
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 DEAL_FIELDS = (
@@ -68,6 +72,7 @@ class MT5Adapter:
             ) from exc
         self.mt5 = mt5
         self.connected = False
+        self._prelaunched_at = 0.0
 
     # ------------------------------------------------------------------ #
     def last_error(self) -> str:
@@ -77,8 +82,52 @@ class MT5Adapter:
         except Exception:  # pragma: no cover
             return "unknown error"
 
+    def prelaunch(self) -> bool:
+        """Start a private (portable) terminal copy ourselves with a startup
+        file that logs it into the account and enables algo trading. This
+        skips the first-run "open an account" wizard, which otherwise blocks
+        the Python bridge until someone closes it."""
+        exe = Path(str(self.cfg.get("terminal_path") or ""))
+        if not (self.cfg.get("portable") and exe.is_file() and self.cfg.get("login") and self.cfg.get("password") and self.cfg.get("server")):
+            return False
+        if time.time() - self._prelaunched_at < 300:
+            return False
+        cfg_dir = exe.parent / "config"
+        cfg_dir.mkdir(exist_ok=True)
+        ini = cfg_dir / "mt5cc-start.ini"
+        ini.write_text(
+            "[Common]\n"
+            f"Login={int(self.cfg['login'])}\n"
+            f"Password={self.cfg['password']}\n"
+            f"Server={self.cfg['server']}\n"
+            "KeepPrivate=1\n"
+            "NewsEnable=0\n"
+            "[Experts]\n"
+            "AllowLiveTrading=1\n"
+            "AllowDllImport=0\n"
+            "Enabled=1\n"
+            "Account=0\n"
+            "Profile=0\n",
+            encoding="utf-16",
+        )
+        flags = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+        try:
+            subprocess.Popen([str(exe), "/portable", f"/config:{ini}"], cwd=str(exe.parent), creationflags=flags,
+                             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except OSError as exc:
+            raise MT5Error(f"Could not start the terminal at {exe}: {exc}")
+        self._prelaunched_at = time.time()
+        # give the terminal time to read the startup file, then remove the password from disk
+        time.sleep(10)
+        try:
+            ini.unlink()
+        except OSError:
+            pass
+        return True
+
     def connect(self) -> dict[str, Any]:
-        kwargs: dict[str, Any] = {"timeout": int(self.cfg.get("timeout_ms") or 60000)}
+        self.prelaunch()
+        kwargs: dict[str, Any] = {"timeout": int(self.cfg.get("timeout_ms") or 180000)}
         if self.cfg.get("terminal_path"):
             kwargs["path"] = self.cfg["terminal_path"]
         if self.cfg.get("portable"):

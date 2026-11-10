@@ -103,7 +103,7 @@ class AccountConfig:
     password_env: str | None = None      # name of an environment variable
     password_dpapi: str | None = None    # encrypted with Windows DPAPI (what the Accounts page writes)
     server_utc_offset_hours: float = 0.0
-    timeout_ms: int = 60000
+    timeout_ms: int = 180000
     mock: bool = False
     enabled: bool = True
     trading: TradingConfig = field(default_factory=TradingConfig)
@@ -264,7 +264,7 @@ def parse_accounts(entries: list[Any], settings: Settings) -> list[AccountConfig
             password_env=entry.get("password_env") or None,
             password_dpapi=entry.get("password_dpapi") or None,
             server_utc_offset_hours=float(entry.get("server_utc_offset_hours", 0.0)),
-            timeout_ms=int(entry.get("timeout_ms", 60000)),
+            timeout_ms=int(entry.get("timeout_ms", 180000)),
             mock=bool(entry.get("mock", False)) or settings.mock_mode,
             enabled=bool(entry.get("enabled", True)),
             trading=TradingConfig.from_raw(entry.get("trading")),

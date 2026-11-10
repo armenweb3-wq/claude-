@@ -444,15 +444,23 @@ const Z = { lo: 4_078, hi: 4_146, top: 440, bottom: LADDER.y + LADDER.h };
 const zoomY = (p: number) => (p > 4_200 ? LADDER.y + 10 : Z.bottom - ((p - Z.lo) / (Z.hi - Z.lo)) * (Z.bottom - Z.top));
 const SAverage: React.FC = () => {
   const f = useCurrentFrame();
-  const l0 = at("average", 0, 0.6); // buy 5.75
-  const l1 = at("average", 1, 0.4); // average entry
-  const l2 = at("average", 2, 0.4); // exits
-  const l3 = at("average", 3, 0.3); // close original, net
+  const a0 = at("average", 0, 0.4); // the original position
+  const l0 = at("average", 1, 0.5); // buy 5.75
+  const l1 = at("average", 2, 0.4); // average entry
+  const l2 = at("average", 3, 0.4); // exits
+  const l3 = at("average", 4, 0.3); // close original
+  const net = at("average", 5, 0.4); // net result
   const rows = [
-    { l: `Averaging leg · ${g.add.lots} lots`, s: `${num(g.add.open)} → ${num(g.add.close)}`, v: g.add.pl, at: l2 + 8 },
-    { l: `Extra buy · ${g.extra.lots.toFixed(2)} lot`, s: `${num(g.extra.open)} → ${num(g.extra.close)}`, v: g.extra.pl, at: l2 + 60 },
-    { l: `Original · ${g.first.lots} lots, incl. swap`, s: `${num(g.first.open)} → ${num(g.firstClose.price)}`, v: goldFirstTotal, at: l3 + 10 },
+    { l: `③ Sold ${g.add.lots} lots`, s: `${num(g.add.open)} → ${num(g.add.close)} · 09.11 16:05`, v: g.add.pl, at: l2 + 8 },
+    { l: `Extra ${g.extra.lots.toFixed(2)} lot`, s: `${num(g.extra.open)} → ${num(g.extra.close)}`, v: g.extra.pl, at: l2 + 150 },
+    { l: `④ Sold ${g.first.lots} lots`, s: `${num(g.first.open)} → ${num(g.firstClose.price)} · incl. ${usd(g.firstClose.swap, 2)} swap`, v: goldFirstTotal, at: l3 + 10 },
   ];
+  const LotBar: React.FC<{ lots: number; color: string; label: string; at: number }> = ({ lots, color, label, at: when }) => (
+    <In at={when} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ width: lots * 56, height: 22, background: color, borderRadius: 4, boxShadow: `inset 0 0 0 1px ${colors.ink}33` }} />
+      <span style={{ fontFamily: fonts.body, fontSize: 20, color: colors.ink2, whiteSpace: "nowrap" }}>{label}</span>
+    </In>
+  );
   const rise = prog(f, l2, 50);
   return (
     <AbsoluteFill>
@@ -500,31 +508,40 @@ const SAverage: React.FC = () => {
         />
       </svg>
       {/* ledger */}
-      <Card x={M} y={300} w={860} at={l0 - 10} rotate={-0.6}>
+      <Card x={M} y={270} w={860} at={a0 - 10} rotate={-0.6} style={{ padding: "18px 26px" }}>
         <div style={{ fontFamily: fonts.mono, fontSize: 17, letterSpacing: 3, color: colors.pencil }}>GOLD · THE AVERAGING PLAY · 09 – 10.11.2026</div>
-        <In at={l0} style={{ marginTop: 14, fontFamily: fonts.body, fontSize: 22, color: colors.ink2, lineHeight: 1.45 }}>
-          ① Original: <b>{g.first.lots} lots</b> bought at <b>{num(g.first.open)}</b>, about {usd(Math.abs(g.first.lowFloating))} under water.
-          <br />② 09.11 07:05: buy <b>{g.add.lots} lots</b> at <b>{num(g.add.open)}</b>, {num(g.first.open - g.add.open)} below the first entry.
+        <In at={a0} style={{ marginTop: 14, fontFamily: fonts.body, fontSize: 22, color: colors.ink2, lineHeight: 1.45 }}>
+          ① Original: <b>{g.first.lots} lots</b> bought at <b>{num(g.first.open)}</b> · about {usd(Math.abs(g.first.lowFloating))} under water
         </In>
-        <In at={l1} style={{ marginTop: 12, padding: "10px 14px", borderRadius: 6, background: `${colors.gold}22`, border: `1px solid ${colors.gold}66`, fontFamily: fonts.body, fontSize: 22, color: colors.ink2 }}>
-          Average entry: ({g.first.lots} × {num(g.first.open)} + {g.add.lots} × {num(g.add.open)}) ÷ {num(g.first.lots + g.add.lots, 2)} = <b style={{ color: colors.ink }}>{num(goldAvgEntry)}</b>
+        <In at={l0} style={{ marginTop: 6, fontFamily: fonts.body, fontSize: 22, color: colors.ink2, lineHeight: 1.45 }}>
+          ② 09.11 07:05: bought <b>{g.add.lots} lots</b> at <b>{num(g.add.open)}</b> · {num(g.first.open - g.add.open)} lower · {(g.add.lots / g.first.lots).toFixed(0)}× the size
+        </In>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
+          <LotBar lots={g.first.lots} color={colors.blue} label={`${g.first.lots} lots @ ${num(g.first.open)}`} at={a0 + 10} />
+          <LotBar lots={g.add.lots} color={colors.gold} label={`${g.add.lots} lots @ ${num(g.add.open)}`} at={l0 + 10} />
+          <LotBar lots={g.first.lots + g.add.lots} color={colors.green} label={`= ${num(g.first.lots + g.add.lots, 2)} lots @ ${num(goldAvgEntry)} average`} at={l1 + 10} />
+        </div>
+        <In at={l1 + 30} style={{ marginTop: 10, padding: "8px 14px", borderRadius: 6, background: `${colors.gold}22`, border: `1px solid ${colors.gold}66`, fontFamily: fonts.body, fontSize: 19.5, color: colors.ink2, whiteSpace: "nowrap" }}>
+          ({g.first.lots} × {num(g.first.open)} + {g.add.lots} × {num(g.add.open)}) ÷ {num(g.first.lots + g.add.lots, 2)} = <b style={{ color: colors.ink }}>{num(goldAvgEntry)}</b> · {num(g.first.open - goldAvgEntry)} closer to break-even
         </In>
         {rows.map((r) => (
-          <In key={r.l} at={r.at} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "10px 0 6px", borderBottom: `1px dashed ${colors.faint}` }}>
-            <span style={{ fontFamily: fonts.body, fontSize: 22, color: colors.ink2 }}>
-              {r.l} <span style={{ fontFamily: fonts.mono, fontSize: 16, color: colors.pencil, marginLeft: 10 }}>{r.s}</span>
+          <In key={r.l} at={r.at} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "7px 0 4px", borderBottom: `1px dashed ${colors.faint}` }}>
+            <span style={{ fontFamily: fonts.body, fontSize: 21, color: colors.ink2 }}>
+              {r.l} <span style={{ fontFamily: fonts.mono, fontSize: 15, color: colors.pencil, marginLeft: 10 }}>{r.s}</span>
             </span>
-            <span style={{ fontFamily: fonts.display, fontWeight: 700, fontSize: 30, color: r.v >= 0 ? colors.green : colors.red, fontVariantNumeric: "tabular-nums" }}>{signed(r.v, 2)}</span>
+            <span style={{ fontFamily: fonts.display, fontWeight: 700, fontSize: 30, color: r.v >= 0 ? colors.green : colors.red, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", flex: "0 0 auto", marginLeft: 16 }}>{signed(r.v, 2)}</span>
           </In>
         ))}
-        <In at={l3 + 70} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", paddingTop: 12 }}>
+        <In at={net} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", paddingTop: 12 }}>
           <span style={{ fontFamily: fonts.serif, fontWeight: 700, fontSize: 28, color: colors.ink }}>Net result on gold</span>
-          <span style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 42, color: colors.green, fontVariantNumeric: "tabular-nums" }}>
-            <Counter to={goldNet} start={l3 + 70} dur={36} format={(n) => signed(n, 2)} />
-          </span>
+          <Circled at={net + 40} color={colors.green} padX={18} padY={8}>
+            <span style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 42, color: colors.green, fontVariantNumeric: "tabular-nums" }}>
+              <Counter to={goldNet} start={net} dur={36} format={(n) => signed(n, 2)} />
+            </span>
+          </Circled>
         </In>
       </Card>
-      <Stamp text="Negative trade cleared" x={M + 470} y={838} at={l3 + 100} rotate={-6} size={26} color={colors.green} />
+      <Stamp text="Negative trade cleared" x={M + 470} y={880} at={net + 80} rotate={-6} size={26} color={colors.green} />
     </AbsoluteFill>
   );
 };
@@ -726,4 +743,4 @@ const SClose: React.FC = () => {
 
 export const scenes: Record<string, React.FC> = { cover: SCover, start: SStart, trust: STrust, scale: SScale, run: SRun, out: SOut, problem: SProblem, average: SAverage, onepct: SOnePct, record: SRecord, standing: SStanding, close: SClose };
 const abs = (scene: string, n: number, off = 0) => tl.at(scene, n, off) + tl.scenes.find((x) => x.id === scene)!.from;
-export const impacts = [abs("scale", 1, 2.6), abs("run", 2, 0.8), abs("average", 2, 0.4), abs("average", 3, 2.6), abs("onepct", 2, 0.6), abs("record", 1, 1.3), abs("standing", 1, 2.0)];
+export const impacts = [abs("scale", 1, 2.6), abs("run", 2, 0.8), abs("average", 3, 0.4), abs("average", 5, 0.4), abs("onepct", 2, 0.6), abs("record", 1, 1.3), abs("standing", 1, 2.0)];

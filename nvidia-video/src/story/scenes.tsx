@@ -70,10 +70,11 @@ export const D = {
   deposits: 149_198.49,
   depositCount: 9,
   withdrawn: 2_100,
-  credits: 237_075.95,
-  creditFacility: 185_000,
-  balance: 456_981.52,
-  equity: 456_981.52,
+  // The 125,000 "signed deal, removable" bonus has since been removed from the account, so it is excluded here.
+  credits: 237_075.95 - 125_000,
+  creditFacility: 185_000 - 125_000,
+  balance: 456_981.52 - 125_000,
+  equity: 456_981.52 - 125_000,
 };
 const cum14 = D.closed14.reduce<number[]>((a, v) => [...a, (a[a.length - 1] ?? 0) + v], []);
 const g = D.gold;
@@ -267,7 +268,7 @@ const SScale: React.FC = () => {
           <Fig label="23.09 → open" value="XAUUSD" size={36} />
           <Fig label="Type" value="BUY 1.15" size={30} color={colors.blue} />
           <Fig label="Open → TP" value="4,293.99 → 4,327.00" size={26} />
-          <div style={{ marginLeft: "auto", fontFamily: fonts.hand, fontSize: 32, color: colors.pencil }}>left open → p. 7</div>
+          <div style={{ marginLeft: "auto", fontFamily: fonts.hand, fontSize: 32, color: colors.pencil }}>kept open → p. 7</div>
         </div>
       </Card>
     </AbsoluteFill>
@@ -382,172 +383,118 @@ const Level: React.FC<{ price: number; label: string; color: string; at: number;
   );
 };
 
-// 7 ─ The one that lagged
-const SProblem: React.FC = () => {
-  const f = useCurrentFrame();
-  const a = at("problem", 0, 0.4);
-  const b = at("problem", 1, 0.3);
-  const c = at("problem", 1, 2.4);
-  const fall = prog(f, b, 70);
-  // sketched path: entry → drifts down to ~4,100 by early November
-  const pts = [
-    [0, g.first.open],
-    [0.12, 4_250],
-    [0.25, 4_300],
-    [0.4, 4_180],
-    [0.55, 4_220],
-    [0.7, 4_110],
-    [0.85, 4_140],
-    [1, 4_090],
-  ].filter((p) => p[0] <= fall + 0.001);
-  return (
-    <AbsoluteFill>
-      <Paper grid="graph" />
-      <Title text="The one that did not go to plan." size={62} width={1000} accent="did not go to plan" />
-      <Card x={M} y={320} w={840} at={a} rotate={-0.8}>
-        <div style={{ fontFamily: fonts.mono, fontSize: 17, letterSpacing: 3, color: colors.pencil }}>POSITION #593754 · OPENED {g.first.d}</div>
-        <div style={{ display: "flex", gap: 36, marginTop: 14 }}>
-          <Fig label="Symbol" value="XAUUSD" size={40} />
-          <Fig label="Type" value={`BUY ${g.first.lots}`} size={40} color={colors.blue} />
-          <Fig label="Entry" value={num(g.first.open)} size={40} />
-          <Fig label="Take profit" value={num(g.first.tp)} size={40} color={colors.green} />
-        </div>
-      </Card>
-      <Card x={M} y={560} w={840} at={b} rotate={0.5} tint="#FBF7EE">
-        <div style={{ display: "flex", gap: 36, alignItems: "flex-end" }}>
-          <Fig label="Gold by early November" value="≈ 4,090 – 4,130" size={36} />
-          <Fig label="Floating P/L" value={<Counter to={g.first.lowFloating} start={b + 10} dur={40} format={(n) => usd(n)} />} size={44} color={colors.red} />
-          <Fig label="Open for" value="7 weeks" size={36} />
-        </div>
-      </Card>
-      <Hand x={M + 10} y={760} at={c} size={36} color={colors.ink2} rotate={-1.5} width={840}>
-        Two choices: take the loss, or use the lower price to fix the average. We chose the second.
-      </Hand>
-      <Level price={g.first.open} label={`bought ${g.first.lots} lots · ${num(g.first.open)}`} color={colors.blue} at={a + 10} bold />
-      <Level price={g.first.tp} label={`take profit ${num(g.first.tp)}`} color={colors.green} at={a + 20} dash />
-      <svg width={W} height={H} style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none" }}>
-        <polyline points={pts.map((p) => `${LADDER.x + p[0] * LADDER.w},${ladderY(p[1])}`).join(" ")} fill="none" stroke={colors.ink} strokeWidth={4} strokeLinejoin="round" strokeLinecap="round" />
-        {fall >= 1 && <circle cx={LADDER.x + LADDER.w} cy={ladderY(4_090)} r={9} fill={colors.red} />}
-      </svg>
-      <Hand x={LADDER.x + LADDER.w - 300} y={ladderY(4_090) + 16} at={b + 72} size={28} color={colors.red} rotate={0} width={300} align="right">
-        early November ≈ 4,090
-      </Hand>
-      <Hand x={LADDER.x} y={LADDER.y + LADDER.h + 24} at={a} size={28} color={colors.pencil} rotate={0}>
-        gold, $ per ounce · 23.09 → 08.11 (sketch)
-      </Hand>
-    </AbsoluteFill>
-  );
-};
-
-// 8 ─ Averaging on gold: the action happens between 4,087 and 4,133, so the ladder zooms there and the first entry sits above a break.
-const Z = { lo: 4_078, hi: 4_146, top: 440, bottom: LADDER.y + LADDER.h };
-const zoomY = (p: number) => (p > 4_200 ? LADDER.y + 10 : Z.bottom - ((p - Z.lo) / (Z.hi - Z.lo)) * (Z.bottom - Z.top));
+// 7 ─ Gold: the first position stayed open; averaging brought the entry down; both closed in profit overall.
+const GX = { x: 1000, y: 290, w: 800, h: 520, lo: 4_060, hi: 4_320 };
+const gy = (p: number) => GX.y + GX.h - ((p - GX.lo) / (GX.hi - GX.lo)) * GX.h;
+const gx = (t: number) => GX.x + t * GX.w;
 const SAverage: React.FC = () => {
   const f = useCurrentFrame();
-  const a0 = at("average", 0, 0.4); // the original position
-  const l0 = at("average", 1, 0.5); // buy 5.75
-  const l1 = at("average", 2, 0.4); // average entry
-  const l2 = at("average", 3, 0.4); // exits
-  const l3 = at("average", 4, 0.3); // close original
-  const net = at("average", 5, 0.4); // net result
-  const rows = [
-    { l: `③ Sold ${g.add.lots} lots`, s: `${num(g.add.open)} → ${num(g.add.close)} · 09.11 16:05`, v: g.add.pl, at: l2 + 8 },
-    { l: `Extra ${g.extra.lots.toFixed(2)} lot`, s: `${num(g.extra.open)} → ${num(g.extra.close)}`, v: g.extra.pl, at: l2 + 150 },
-    { l: `④ Sold ${g.first.lots} lots`, s: `${num(g.first.open)} → ${num(g.firstClose.price)} · incl. ${usd(g.firstClose.swap, 2)} swap`, v: goldFirstTotal, at: l3 + 10 },
+  const a = at("average", 0, 0.3);
+  const b = at("average", 1, 0.3);
+  const c = at("average", 2, 0.3);
+  const net = at("average", 2, 6.0);
+  // One continuous sketch: 23.09 entry → lower → 09.11 averaging buy → recovery → both closed.
+  const path: [number, number][] = [
+    [0, g.first.open],
+    [0.1, 4_250],
+    [0.2, 4_300],
+    [0.32, 4_180],
+    [0.42, 4_220],
+    [0.52, 4_110],
+    [0.6, g.add.open],
+    [0.72, 4_105],
+    [0.84, g.add.close],
+    [0.92, 4_125],
+    [1, g.firstClose.price],
   ];
-  const LotBar: React.FC<{ lots: number; color: string; label: string; at: number }> = ({ lots, color, label, at: when }) => (
-    <In at={when} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-      <div style={{ width: lots * 56, height: 22, background: color, borderRadius: 4, boxShadow: `inset 0 0 0 1px ${colors.ink}33` }} />
-      <span style={{ fontFamily: fonts.body, fontSize: 20, color: colors.ink2, whiteSpace: "nowrap" }}>{label}</span>
+  const seg1 = interpolate(f, [a, a + 80], [0, 0.6], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const seg2 = interpolate(f, [c, c + 60], [0.6, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const t = f >= c ? seg2 : seg1;
+  const pts: string[] = [];
+  for (let i = 0; i < path.length; i++) {
+    const [tx, p] = path[i];
+    if (tx <= t) pts.push(`${gx(tx)},${gy(p)}`);
+    else {
+      const [px, pp] = path[i - 1];
+      const k = (t - px) / (tx - px);
+      if (k > 0) pts.push(`${gx(px + (tx - px) * k)},${gy(pp + (p - pp) * k)}`);
+      break;
+    }
+  }
+  const Lbl: React.FC<{ price: number; text: string; color: string; at: number; side: "left" | "right"; below?: boolean; dash?: boolean; w?: number }> = ({ price, text, color, at: when, side, below, dash, w = 3 }) => {
+    const p = prog(f, when, 24);
+    const y = gy(price);
+    return (
+      <>
+        <svg width={W} height={H} style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none" }}>
+          <line x1={GX.x} x2={GX.x + GX.w * p} y1={y} y2={y} stroke={color} strokeWidth={w} strokeDasharray={dash ? "10 8" : undefined} strokeLinecap="round" />
+        </svg>
+        <div style={{ position: "absolute", top: below ? y + 6 : y - 36, left: side === "left" ? GX.x + 8 : undefined, right: side === "right" ? W - (GX.x + GX.w) + 8 : undefined, fontFamily: fonts.hand, fontWeight: 700, fontSize: 28, color, opacity: p, whiteSpace: "nowrap" }}>
+          {text}
+        </div>
+      </>
+    );
+  };
+  const Row: React.FC<{ l: string; v: number; at: number }> = ({ l, v, at: when }) => (
+    <In at={when} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "8px 0 5px", borderBottom: `1px dashed ${colors.faint}` }}>
+      <span style={{ fontFamily: fonts.body, fontSize: 23, color: colors.ink2 }}>{l}</span>
+      <span style={{ fontFamily: fonts.display, fontWeight: 700, fontSize: 32, color: v >= 0 ? colors.green : colors.red, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", marginLeft: 16 }}>{signed(v)}</span>
     </In>
   );
-  const rise = prog(f, l2, 50);
   return (
     <AbsoluteFill>
       <Paper grid="graph" />
-      <Title text="Averaging on gold, step by step." size={62} width={1000} accent="Averaging" />
-      {/* ladder */}
-      <Hand x={LADDER.x} y={LADDER.y + LADDER.h + 24} at={4} size={28} color={colors.pencil} rotate={0}>
-        gold, $ per ounce · 9 – 10 November
-      </Hand>
-      <Level yOf={zoomY} price={g.first.open} label={`① bought ${g.first.lots} lots · ${num(g.first.open)}`} color={colors.blue} at={6} bold />
+      <Title text="Gold: patience, then averaging." size={62} width={1000} accent="averaging" />
+      {/* graph */}
       <svg width={W} height={H} style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none" }}>
-        {/* axis break between the first entry and the zoomed band */}
-        <path d={`M${LADDER.x + 30} ${Z.top - 60} l14 -10 l-14 -10 M${LADDER.x + 30} ${Z.top - 20} l14 -10 l-14 -10`} fill="none" stroke={colors.pencil} strokeWidth={2.5} strokeLinecap="round" />
-        <text x={LADDER.x + 60} y={Z.top - 36} fontFamily={fonts.hand} fontSize={24} fill={colors.pencil}>
-          axis break · {num(g.first.open - g.add.close)} between ① and ③
-        </text>
+        <line x1={GX.x} x2={GX.x + GX.w} y1={GX.y + GX.h} y2={GX.y + GX.h} stroke={colors.ink} strokeWidth={2} opacity={0.4} />
+        <text x={GX.x} y={GX.y + GX.h + 36} fontFamily={fonts.mono} fontSize={17} fill={colors.pencil}>23.09</text>
+        <text x={gx(0.6)} y={GX.y + GX.h + 36} textAnchor="middle" fontFamily={fonts.mono} fontSize={17} fill={colors.pencil}>09.11</text>
+        <text x={GX.x + GX.w} y={GX.y + GX.h + 36} textAnchor="end" fontFamily={fonts.mono} fontSize={17} fill={colors.pencil}>10.11</text>
+        <polyline points={pts.join(" ")} fill="none" stroke={colors.ink} strokeWidth={4} strokeLinejoin="round" strokeLinecap="round" />
+        {f >= a && <circle cx={gx(0)} cy={gy(g.first.open)} r={9} fill={colors.blue} />}
+        {f >= b && <circle cx={gx(0.6)} cy={gy(g.add.open)} r={9} fill={colors.blue} />}
+        {f >= c + 50 && <circle cx={gx(0.84)} cy={gy(g.add.close)} r={9} fill={colors.green} />}
+        {f >= c + 60 && <circle cx={gx(1)} cy={gy(g.firstClose.price)} r={9} fill={colors.green} />}
       </svg>
-      <Level yOf={zoomY} price={g.add.open} label={`② bought ${g.add.lots} lots · ${num(g.add.open)}`} color={colors.blue} at={l0} bold below />
-      <Arrow from={[LADDER.x + 440, zoomY(g.first.open) + 20]} to={[LADDER.x + 440, zoomY(g.add.open) - 14]} at={l0 + 10} bend={-70} color={colors.red} />
-      <Hand x={LADDER.x + 40} y={Z.top + 4} at={l0 + 30} size={28} color={colors.red} rotate={0} width={300} align="left">
-        {num(g.first.open - g.add.open)} lower · 5× the size
+      <Lbl price={g.first.open} text={`① bought ${g.first.lots} lots · ${num(g.first.open)}`} color={colors.blue} at={a} side="left" />
+      <Lbl price={g.add.open} text={`② bought ${g.add.lots} lots · ${num(g.add.open)}`} color={colors.blue} at={b} side="left" below />
+      <Lbl price={goldAvgEntry} text={`average entry · ${num(goldAvgEntry)}`} color={colors.gold} at={b + 30} side="right" below dash />
+      <Lbl price={g.add.close} text={`③ both positions closed · ${num(g.add.close)} / ${num(g.firstClose.price)}`} color={colors.green} at={c + 50} side="right" />
+      <Hand x={gx(0.67)} y={gy(4_300)} at={a + 40} size={30} color={colors.pencil} rotate={0} width={260}>
+        gold moved lower · position kept open, waiting for the market to come back
       </Hand>
-      <Level yOf={zoomY} price={goldAvgEntry} label={`average entry · ${num(goldAvgEntry)} · ${num(g.first.lots + g.add.lots, 2)} lots`} color={colors.gold} at={l1} dash bold />
-      <Level yOf={zoomY} price={g.add.close} label={`③ sold ${g.add.lots} lots · ${num(g.add.close)}`} color={colors.green} at={l2} side="right" />
-      <Level yOf={zoomY} price={g.firstClose.price} label={`④ sold ${g.first.lots} lots · ${num(g.firstClose.price)}`} color={colors.red} at={l3} side="right" below />
-      <svg width={W} height={H} style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none" }}>
-        <polyline
-          points={[
-            [0, 4_090],
-            [0.2, g.add.open],
-            [0.45, 4_105],
-            [0.7, g.add.close + 2],
-            [0.85, 4_125],
-            [1, g.firstClose.price],
-          ]
-            .filter((p) => p[0] <= rise + 0.001)
-            .map((p) => `${LADDER.x + p[0] * LADDER.w},${zoomY(p[1])}`)
-            .join(" ")}
-          fill="none"
-          stroke={colors.ink}
-          strokeWidth={4}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          opacity={prog(f, l2 - 10, 10)}
-        />
-      </svg>
-      {/* ledger */}
-      <Card x={M} y={270} w={860} at={a0 - 10} rotate={-0.6} style={{ padding: "18px 26px" }}>
-        <div style={{ fontFamily: fonts.mono, fontSize: 17, letterSpacing: 3, color: colors.pencil }}>GOLD · THE AVERAGING PLAY · 09 – 10.11.2026</div>
-        <In at={a0} style={{ marginTop: 14, fontFamily: fonts.body, fontSize: 22, color: colors.ink2, lineHeight: 1.45 }}>
-          ① Original: <b>{g.first.lots} lots</b> bought at <b>{num(g.first.open)}</b> · about {usd(Math.abs(g.first.lowFloating))} under water
+      <Arrow from={[gx(0.6) - 10, gy(g.first.open) + 30]} to={[gx(0.6) - 10, gy(g.add.open) - 16]} at={b + 6} bend={-50} color={colors.red} />
+      {/* card */}
+      <Card x={M} y={300} w={820} at={a - 6} rotate={-0.6} style={{ padding: "18px 26px" }}>
+        <div style={{ fontFamily: fonts.mono, fontSize: 17, letterSpacing: 3, color: colors.pencil }}>GOLD · XAUUSD · 23.09 → 10.11.2026</div>
+        <In at={a + 10} style={{ marginTop: 12, fontFamily: fonts.body, fontSize: 23, color: colors.ink2, lineHeight: 1.45 }}>
+          ① <b>{g.first.lots} lots</b> bought at <b>{num(g.first.open)}</b> · kept open while gold moved lower
         </In>
-        <In at={l0} style={{ marginTop: 6, fontFamily: fonts.body, fontSize: 22, color: colors.ink2, lineHeight: 1.45 }}>
-          ② 09.11 07:05: bought <b>{g.add.lots} lots</b> at <b>{num(g.add.open)}</b> · {num(g.first.open - g.add.open)} lower · {(g.add.lots / g.first.lots).toFixed(0)}× the size
+        <In at={b + 6} style={{ marginTop: 4, fontFamily: fonts.body, fontSize: 23, color: colors.ink2, lineHeight: 1.45 }}>
+          ② 09.11: <b>{g.add.lots} lots</b> bought at <b>{num(g.add.open)}</b> · {(g.add.lots / g.first.lots).toFixed(0)}× the size, {num(g.first.open - g.add.open)} lower
         </In>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 10 }}>
-          <LotBar lots={g.first.lots} color={colors.blue} label={`${g.first.lots} lots @ ${num(g.first.open)}`} at={a0 + 10} />
-          <LotBar lots={g.add.lots} color={colors.gold} label={`${g.add.lots} lots @ ${num(g.add.open)}`} at={l0 + 10} />
-          <LotBar lots={g.first.lots + g.add.lots} color={colors.green} label={`= ${num(g.first.lots + g.add.lots, 2)} lots @ ${num(goldAvgEntry)} average`} at={l1 + 10} />
-        </div>
-        <In at={l1 + 30} style={{ marginTop: 10, padding: "8px 14px", borderRadius: 6, background: `${colors.gold}22`, border: `1px solid ${colors.gold}66`, fontFamily: fonts.body, fontSize: 19.5, color: colors.ink2, whiteSpace: "nowrap" }}>
-          ({g.first.lots} × {num(g.first.open)} + {g.add.lots} × {num(g.add.open)}) ÷ {num(g.first.lots + g.add.lots, 2)} = <b style={{ color: colors.ink }}>{num(goldAvgEntry)}</b> · {num(g.first.open - goldAvgEntry)} closer to break-even
+        <In at={b + 30} style={{ marginTop: 10, padding: "8px 14px", borderRadius: 6, background: `${colors.gold}22`, border: `1px solid ${colors.gold}66`, fontFamily: fonts.body, fontSize: 22, color: colors.ink2, whiteSpace: "nowrap" }}>
+          {num(g.first.lots + g.add.lots, 2)} lots · average entry <b style={{ color: colors.ink }}>{num(goldAvgEntry)}</b> instead of {num(g.first.open)}
         </In>
-        {rows.map((r) => (
-          <In key={r.l} at={r.at} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "7px 0 4px", borderBottom: `1px dashed ${colors.faint}` }}>
-            <span style={{ fontFamily: fonts.body, fontSize: 21, color: colors.ink2 }}>
-              {r.l} <span style={{ fontFamily: fonts.mono, fontSize: 15, color: colors.pencil, marginLeft: 10 }}>{r.s}</span>
-            </span>
-            <span style={{ fontFamily: fonts.display, fontWeight: 700, fontSize: 30, color: r.v >= 0 ? colors.green : colors.red, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", flex: "0 0 auto", marginLeft: 16 }}>{signed(r.v, 2)}</span>
-          </In>
-        ))}
+        <In at={c + 50} style={{ marginTop: 12, fontFamily: fonts.mono, fontSize: 16, letterSpacing: 3, color: colors.pencil }}>③ BOTH POSITIONS CLOSED</In>
+        <Row l={`${g.add.lots} lots · ${num(g.add.open)} → ${num(g.add.close)}`} v={g.add.pl} at={c + 58} />
+        <Row l={`${g.first.lots} lots · ${num(g.first.open)} → ${num(g.firstClose.price)}, incl. swap`} v={goldFirstTotal} at={c + 90} />
+        <Row l={`1-lot add · ${num(g.extra.open)} → ${num(g.extra.close)}`} v={g.extra.pl} at={c + 120} />
         <In at={net} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", paddingTop: 12 }}>
-          <span style={{ fontFamily: fonts.serif, fontWeight: 700, fontSize: 28, color: colors.ink }}>Net result on gold</span>
-          <Circled at={net + 40} color={colors.green} padX={18} padY={8}>
+          <span style={{ fontFamily: fonts.serif, fontWeight: 700, fontSize: 28, color: colors.ink }}>Net on gold · still a profit</span>
+          <Circled at={net + 36} color={colors.green} padX={18} padY={8}>
             <span style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 42, color: colors.green, fontVariantNumeric: "tabular-nums" }}>
               <Counter to={goldNet} start={net} dur={36} format={(n) => signed(n, 2)} />
             </span>
           </Circled>
         </In>
       </Card>
-      <Stamp text="Negative trade cleared" x={M + 470} y={880} at={net + 80} rotate={-6} size={26} color={colors.green} />
     </AbsoluteFill>
   );
 };
 
 // 9 ─ The 1% day
-SAverage.displayName = "SAverage";
 const SOnePct: React.FC = () => {
   const a = at("onepct", 0, 0.5);
   const b = at("onepct", 1, 0.3);
@@ -557,7 +504,7 @@ const SOnePct: React.FC = () => {
     <AbsoluteFill>
       <Paper />
       <Title text="Then the 1% rule, across the board." size={62} width={1200} accent="1% rule" />
-      <Card x={M} y={300} w={1700} at={a} rotate={0} style={{ padding: "18px 26px 10px" }}>
+      <Card x={M} y={300} w={1700} at={b - 12} rotate={0} style={{ padding: "18px 26px 10px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "250px 170px 300px 180px 1fr 150px", gap: 16, fontFamily: fonts.mono, fontSize: 16, letterSpacing: 3, color: colors.pencil, textTransform: "uppercase", padding: "0 0 10px", borderBottom: `1.5px solid ${colors.ink}55` }}>
           <span>Market</span>
           <span>Type · lots</span>
@@ -611,7 +558,7 @@ const SRecord: React.FC = () => {
   const cells = [
     { l: "Closed trades", v: String(R.trades), at: a },
     { l: "Winning trades", v: `${R.wins} · ${((R.wins / R.trades) * 100).toFixed(0)}%`, c: colors.green, at: a + 8 },
-    { l: "Losing trades", v: `${R.losses} · gold, averaged out`, c: colors.red, at: a + 16 },
+    { l: "Losing trades", v: `${R.losses} · gold, averaged`, c: colors.red, at: a + 16 },
     { l: "Profit factor", v: R.pf.toFixed(2), at: b },
     { l: "Max. drawdown", v: `${R.ddPct.toFixed(1)}%`, at: b + 8 },
     { l: "Average winning trade", v: usd(R.avgWin, 2), at: b + 16 },
@@ -668,7 +615,7 @@ const SStanding: React.FC = () => {
   const rows = [
     { l: `Deposits (${D.depositCount})`, v: D.deposits, c: colors.ink, at: a },
     { l: "Withdrawals (2)", v: -D.withdrawn, c: colors.red, at: a + 26 },
-    { l: "Bonuses, cashback & credit", v: D.credits, c: colors.blue, at: a + 52, sub: `incl. credit facility ${usd(D.creditFacility)}` },
+    { l: "Bonuses, cashback & credit", v: D.credits, c: colors.blue, at: a + 52, sub: `incl. credit ${usd(D.creditFacility)}` },
     { l: "Closed trading profit (20 trades)", v: D.results.net, c: colors.green, at: b },
   ];
   return (
@@ -741,6 +688,6 @@ const SClose: React.FC = () => {
   );
 };
 
-export const scenes: Record<string, React.FC> = { cover: SCover, start: SStart, trust: STrust, scale: SScale, run: SRun, out: SOut, problem: SProblem, average: SAverage, onepct: SOnePct, record: SRecord, standing: SStanding, close: SClose };
+export const scenes: Record<string, React.FC> = { cover: SCover, start: SStart, trust: STrust, scale: SScale, run: SRun, out: SOut, average: SAverage, onepct: SOnePct, record: SRecord, standing: SStanding, close: SClose };
 const abs = (scene: string, n: number, off = 0) => tl.at(scene, n, off) + tl.scenes.find((x) => x.id === scene)!.from;
-export const impacts = [abs("scale", 1, 2.6), abs("run", 2, 0.8), abs("average", 3, 0.4), abs("average", 5, 0.4), abs("onepct", 2, 0.6), abs("record", 1, 1.3), abs("standing", 1, 2.0)];
+export const impacts = [abs("scale", 1, 2.6), abs("run", 2, 0.8), abs("average", 2, 0.3), abs("average", 2, 6.0), abs("onepct", 2, 0.6), abs("record", 1, 1.3), abs("standing", 1, 2.0)];

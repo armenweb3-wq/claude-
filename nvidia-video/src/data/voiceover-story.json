@@ -58,46 +58,39 @@
       "end": 100.967
     },
     {
-      "id": "problem",
-      "title": "The one that lagged",
-      "minDuration": 12,
-      "start": 100.967,
-      "end": 117.367
-    },
-    {
       "id": "average",
-      "title": "Averaging on gold",
-      "minDuration": 30,
-      "start": 117.367,
-      "end": 204.2
+      "title": "Gold: patience, then averaging",
+      "minDuration": 24,
+      "start": 100.967,
+      "end": 147.033
     },
     {
       "id": "onepct",
       "title": "The 1% day",
       "minDuration": 18,
-      "start": 204.2,
-      "end": 242.567
+      "start": 147.033,
+      "end": 185.4
     },
     {
       "id": "record",
       "title": "The record",
       "minDuration": 12,
-      "start": 242.567,
-      "end": 261.267
+      "start": 185.4,
+      "end": 204.067
     },
     {
       "id": "standing",
       "title": "Where we stand",
       "minDuration": 15,
-      "start": 261.267,
-      "end": 289.633
+      "start": 204.067,
+      "end": 232.2
     },
     {
       "id": "close",
       "title": "Next chapter",
       "minDuration": 16,
-      "start": 289.633,
-      "end": 305.6333333333333
+      "start": 232.2,
+      "end": 248.2
     }
   ],
   "cues": [
@@ -186,116 +179,81 @@
       "end": 99.67
     },
     {
-      "scene": "problem",
-      "text": "One position did not go to plan: 1.15 lots of gold, bought on 23 September at $4,293.99.",
-      "say": "One position did not go to plan. One point one five lots of gold, bought on the twenty third of September at four thousand two hundred and ninety four.",
+      "scene": "average",
+      "text": "Gold. The first position, 1.15 lots from 23 September, was still open: gold had moved lower, and we were waiting for the market to come back.",
+      "say": "Gold. The first position, one point one five lots from the twenty third of September, was still open. Gold had moved lower, and we were waiting for the market to come back.",
       "start": 101.87,
-      "end": 110.83
-    },
-    {
-      "scene": "problem",
-      "text": "Gold fell. For seven weeks the trade sat around $20,000 under water.",
-      "say": "Gold fell. For seven weeks the trade sat around twenty thousand dollars under water.",
-      "start": 111.48,
-      "end": 116.04
+      "end": 112.11
     },
     {
       "scene": "average",
-      "text": "The original position: 1.15 lots of gold at $4,293.99, about $20,000 under water.",
-      "say": "The original position. One point one five lots of gold at four thousand two hundred and ninety three, about twenty thousand dollars under water.",
-      "start": 118.27,
-      "end": 126.78
+      "text": "On 9 November we averaged: 5.75 lots at $4,087.24. The average entry dropped from $4,293.99 to $4,121.70.",
+      "say": "On the ninth of November we averaged. Five point seven five lots at four thousand and eighty seven. The average entry dropped from four thousand two hundred and ninety four, to four thousand one hundred and twenty two.",
+      "start": 112.76,
+      "end": 125.77
     },
     {
       "scene": "average",
-      "text": "On 9 November at 07:05 we bought a second position: 5.75 lots at $4,087.24. Five times the size, $206.75 lower.",
-      "say": "On the ninth of November at seven oh five, we bought a second position. Five point seven five lots at four thousand and eighty seven. Five times the size, two hundred and six dollars lower.",
-      "start": 127.43,
-      "end": 139.3
-    },
-    {
-      "scene": "average",
-      "text": "Together: 6.90 lots at an average entry of $4,121.70. Gold no longer had to return to $4,294; it only had to pass $4,122.",
-      "say": "Together, six point nine lots, at an average entry of four thousand one hundred and twenty one dollars and seventy cents. Gold no longer had to return to four thousand two hundred and ninety four. It only had to pass four thousand one hundred and twenty two.",
-      "start": 139.95,
-      "end": 155.35
-    },
-    {
-      "scene": "average",
-      "text": "Gold rose. At 16:05 the 5.75 lots were closed at $4,133.00: +$26,312. A separate 1-lot buy at $4,108.10 closed at $4,127.01: +$1,891.",
-      "say": "Gold rose. At four oh five in the afternoon the five point seven five lots were closed at four thousand one hundred and thirty three. Plus twenty six thousand three hundred and twelve. A separate one lot buy at four thousand one hundred and eight closed at four thousand one hundred and twenty seven. Plus one thousand eight hundred and ninety one.",
-      "start": 156.0,
-      "end": 176.34
-    },
-    {
-      "scene": "average",
-      "text": "Finally the original 1.15 lots were closed at $4,117.47: −$20,299.80, plus −$4,455.19 of swap. −$24,754.99 in total.",
-      "say": "Finally the original one point one five lots were closed at four thousand one hundred and seventeen. Minus twenty thousand two hundred and ninety nine, plus minus four thousand four hundred and fifty five of swap. Minus twenty four thousand seven hundred and fifty five in total.",
-      "start": 176.99,
-      "end": 194.22
-    },
-    {
-      "scene": "average",
-      "text": "Net result on gold: +$3,448.01. The position is gone, with a small profit, not a loss.",
-      "say": "Net result on gold. Plus three thousand four hundred and forty eight dollars. The position is gone, with a small profit, not a loss.",
-      "start": 194.87,
-      "end": 202.92
+      "text": "Gold came back, and we closed both positions: +$26,312 on the new lots, −$24,755 on the first, and +$1,891 on a 1-lot add. Net on gold: +$3,448. Still a profit.",
+      "say": "Gold came back, and we closed both positions. Plus twenty six thousand three hundred and twelve on the new lots. Minus twenty four thousand seven hundred and fifty five on the first. And plus one thousand eight hundred and ninety one on a one lot add. Net on gold, plus three thousand four hundred and forty eight. Still a profit.",
+      "start": 126.42,
+      "end": 145.72
     },
     {
       "scene": "onepct",
       "text": "The same day, the one-percent rule was applied across the board: every new trade sized to risk about 1% of the account.",
       "say": "The same day, the one percent rule was applied across the board. Every new trade sized to risk about one percent of the account.",
-      "start": 205.1,
-      "end": 212.47
+      "start": 147.93,
+      "end": 155.3
     },
     {
       "scene": "onepct",
       "text": "Nasdaq: +$7,352. Crude oil: +$9,237. Dow Jones: +$3,358. Gold: +$1,891 and +$26,312.",
       "say": "Nasdaq, plus seven thousand three hundred and fifty two. Crude oil, plus nine thousand two hundred and thirty seven. Dow Jones, plus three thousand three hundred and fifty eight. Gold, plus one thousand eight hundred and ninety one, and plus twenty six thousand three hundred and twelve.",
-      "start": 213.12,
-      "end": 230.1
+      "start": 155.95,
+      "end": 172.93
     },
     {
       "scene": "onepct",
       "text": "Five trades, five winners: +$48,149 in about 24 hours. That is 11.1% on the balance at the time.",
       "say": "Five trades, five winners. Plus forty eight thousand one hundred and forty nine dollars in about twenty four hours. That is eleven point one percent on the balance at the time.",
-      "start": 230.75,
-      "end": 241.28
+      "start": 173.58,
+      "end": 184.11
     },
     {
       "scene": "record",
       "text": "The record now reads: 20 closed trades, 19 winners, one loss, taken on purpose.",
       "say": "The record now reads. Twenty closed trades. Nineteen winners. One loss, taken on purpose.",
-      "start": 243.47,
-      "end": 249.15
+      "start": 186.3,
+      "end": 191.99
     },
     {
       "scene": "record",
       "text": "Profit factor 3.94. Maximum drawdown 7.4%. Net closed profit: $72,807.08.",
       "say": "Profit factor three point nine four. Maximum drawdown seven point four percent. Net closed profit, seventy two thousand, eight hundred and seven dollars.",
-      "start": 249.8,
-      "end": 259.93
+      "start": 192.64,
+      "end": 202.77
     },
     {
       "scene": "standing",
-      "text": "Where the account stands today. Deposits: $149,198. Withdrawals: $2,100. Bonuses, cashback and credit: $237,076.",
-      "say": "Where the account stands today. Deposits, one hundred and forty nine thousand, one hundred and ninety eight dollars. Withdrawals, two thousand one hundred. Bonuses, cashback and credit, two hundred and thirty seven thousand.",
-      "start": 262.17,
-      "end": 275.62
+      "text": "Where the account stands today. Deposits: $149,198. Withdrawals: $2,100. Bonuses, cashback and credit: $112,076.",
+      "say": "Where the account stands today. Deposits, one hundred and forty nine thousand, one hundred and ninety eight dollars. Withdrawals, two thousand one hundred. Bonuses, cashback and credit, one hundred and twelve thousand.",
+      "start": 204.97,
+      "end": 218.14
     },
     {
       "scene": "standing",
-      "text": "Closed trading profit: +$72,807. Equity: $456,981.52, with no open positions and nothing at risk.",
-      "say": "Closed trading profit, plus seventy two thousand eight hundred and seven. Equity, four hundred and fifty six thousand, nine hundred and eighty one dollars. With no open positions, and nothing at risk.",
-      "start": 276.27,
-      "end": 288.35
+      "text": "Closed trading profit: +$72,807. Equity: $331,981.52, with no open positions and nothing at risk.",
+      "say": "Closed trading profit, plus seventy two thousand eight hundred and seven. Equity, three hundred and thirty one thousand, nine hundred and eighty one dollars. With no open positions, and nothing at risk.",
+      "start": 218.79,
+      "end": 230.9
     },
     {
       "scene": "close",
       "text": "Ten weeks: from $100 to a funded account, a clean record, and a problem solved the right way. That is chapter one.",
       "say": "Ten weeks. From one hundred dollars to a funded account, a clean record, and a problem solved the right way. That is chapter one.",
-      "start": 290.53,
-      "end": 298.26
+      "start": 233.1,
+      "end": 240.83
     }
   ]
 }

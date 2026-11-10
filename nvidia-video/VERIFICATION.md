@@ -87,7 +87,7 @@ also shows what an 8% fall would lose (−$9,975.68).
 
 ## Account story (`AccountStory`, src/story)
 
-- Every figure comes from the client's Trade History Report (account •••175, 04.09.2026 – 10.11.2026, exported 10.11.2026 07:38), transcribed into `D` in `src/story/scenes.tsx`. Ledger check: deposits 149,198.49 − withdrawals 2,100 + bonuses/cashback/credit 237,075.95 + closed profit 72,807.08 = balance 456,981.52 = equity (no open positions).
+- Every figure comes from the client's Trade History Report (account •••175, 04.09.2026 – 10.11.2026, exported 10.11.2026 07:38), transcribed into `D` in `src/story/scenes.tsx`. Ledger check against the report: deposits 149,198.49 − withdrawals 2,100 + bonuses/cashback/credit 237,075.95 + closed profit 72,807.08 = balance 456,981.52 = equity (no open positions). The account manager confirmed the 125,000 "signed deal, removable" bonus has since been removed, so the video shows credits 112,075.95 (credit 60,000) and balance/equity 331,981.52.
 - "Bonuses, cashback & credit" = 185,000 credit facility (bonuses marked removable / signed deal) + 52,075.95 of cashback entries.
 - Gold averaging: 1.15 @ 4,293.99 + 5.75 @ 4,087.24 → average 4,121.70 (6.90 lots). Legs closed: 5.75 @ 4,133.00 = +26,312.00; 1.00 @ 4,108.10 → 4,127.01 = +1,891.00; 1.15 @ 4,117.47 = −20,299.80 − 4,455.19 swap = −24,754.99. Net +3,448.01.
 - "The 1% rule" on the 9–10 Nov trades is the account manager's description of position sizing; the report shows no stop-loss levels, so it is presented as the rule applied, not as a measured figure. Percentages are each trade's profit over the balance at the start of 9 Nov (433,587.05).

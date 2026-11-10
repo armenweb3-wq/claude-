@@ -4,6 +4,7 @@ import { makeTimeline } from "../edu/timeline";
 import vo from "../data/voiceover-story.json";
 import { Arrow, Card, Circled, Counter, Fig, Hand, In, Note, Paper, prog, Ring, signed, Stamp, Stroke, Title, usd } from "./primitives";
 import { colors, fonts, H, M, W } from "./theme";
+import { GoldChart } from "./GoldChart";
 
 /*
  * "Your account, in ten weeks": every figure is transcribed from the client's Trade History Report
@@ -70,11 +71,10 @@ export const D = {
   deposits: 149_198.49,
   depositCount: 9,
   withdrawn: 2_100,
-  // The 125,000 "signed deal, removable" bonus has since been removed from the account, so it is excluded here.
-  credits: 237_075.95 - 125_000,
-  creditFacility: 185_000 - 125_000,
-  balance: 456_981.52 - 125_000,
-  equity: 456_981.52 - 125_000,
+  credits: 237_075.95,
+  creditFacility: 185_000,
+  balance: 456_981.52,
+  equity: 456_981.52,
 };
 const cum14 = D.closed14.reduce<number[]>((a, v) => [...a, (a[a.length - 1] ?? 0) + v], []);
 const g = D.gold;
@@ -384,57 +384,11 @@ const Level: React.FC<{ price: number; label: string; color: string; at: number;
 };
 
 // 7 ─ Gold: the first position stayed open; averaging brought the entry down; both closed in profit overall.
-const GX = { x: 1000, y: 290, w: 800, h: 520, lo: 4_060, hi: 4_320 };
-const gy = (p: number) => GX.y + GX.h - ((p - GX.lo) / (GX.hi - GX.lo)) * GX.h;
-const gx = (t: number) => GX.x + t * GX.w;
 const SAverage: React.FC = () => {
-  const f = useCurrentFrame();
   const a = at("average", 0, 0.3);
   const b = at("average", 1, 0.3);
   const c = at("average", 2, 0.3);
   const net = at("average", 2, 6.0);
-  // One continuous sketch: 23.09 entry → lower → 09.11 averaging buy → recovery → both closed.
-  const path: [number, number][] = [
-    [0, g.first.open],
-    [0.1, 4_250],
-    [0.2, 4_300],
-    [0.32, 4_180],
-    [0.42, 4_220],
-    [0.52, 4_110],
-    [0.6, g.add.open],
-    [0.72, 4_105],
-    [0.84, g.add.close],
-    [0.92, 4_125],
-    [1, g.firstClose.price],
-  ];
-  const seg1 = interpolate(f, [a, a + 80], [0, 0.6], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const seg2 = interpolate(f, [c, c + 60], [0.6, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const t = f >= c ? seg2 : seg1;
-  const pts: string[] = [];
-  for (let i = 0; i < path.length; i++) {
-    const [tx, p] = path[i];
-    if (tx <= t) pts.push(`${gx(tx)},${gy(p)}`);
-    else {
-      const [px, pp] = path[i - 1];
-      const k = (t - px) / (tx - px);
-      if (k > 0) pts.push(`${gx(px + (tx - px) * k)},${gy(pp + (p - pp) * k)}`);
-      break;
-    }
-  }
-  const Lbl: React.FC<{ price: number; text: string; color: string; at: number; side: "left" | "right"; below?: boolean; dash?: boolean; w?: number }> = ({ price, text, color, at: when, side, below, dash, w = 3 }) => {
-    const p = prog(f, when, 24);
-    const y = gy(price);
-    return (
-      <>
-        <svg width={W} height={H} style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none" }}>
-          <line x1={GX.x} x2={GX.x + GX.w * p} y1={y} y2={y} stroke={color} strokeWidth={w} strokeDasharray={dash ? "10 8" : undefined} strokeLinecap="round" />
-        </svg>
-        <div style={{ position: "absolute", top: below ? y + 6 : y - 36, left: side === "left" ? GX.x + 8 : undefined, right: side === "right" ? W - (GX.x + GX.w) + 8 : undefined, fontFamily: fonts.hand, fontWeight: 700, fontSize: 28, color, opacity: p, whiteSpace: "nowrap" }}>
-          {text}
-        </div>
-      </>
-    );
-  };
   const Row: React.FC<{ l: string; v: number; at: number }> = ({ l, v, at: when }) => (
     <In at={when} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "8px 0 5px", borderBottom: `1px dashed ${colors.faint}` }}>
       <span style={{ fontFamily: fonts.body, fontSize: 23, color: colors.ink2 }}>{l}</span>
@@ -443,28 +397,9 @@ const SAverage: React.FC = () => {
   );
   return (
     <AbsoluteFill>
-      <Paper grid="graph" />
+      <Paper />
       <Title text="Gold: patience, then averaging." size={62} width={1000} accent="averaging" />
-      {/* graph */}
-      <svg width={W} height={H} style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none" }}>
-        <line x1={GX.x} x2={GX.x + GX.w} y1={GX.y + GX.h} y2={GX.y + GX.h} stroke={colors.ink} strokeWidth={2} opacity={0.4} />
-        <text x={GX.x} y={GX.y + GX.h + 36} fontFamily={fonts.mono} fontSize={17} fill={colors.pencil}>23.09</text>
-        <text x={gx(0.6)} y={GX.y + GX.h + 36} textAnchor="middle" fontFamily={fonts.mono} fontSize={17} fill={colors.pencil}>09.11</text>
-        <text x={GX.x + GX.w} y={GX.y + GX.h + 36} textAnchor="end" fontFamily={fonts.mono} fontSize={17} fill={colors.pencil}>10.11</text>
-        <polyline points={pts.join(" ")} fill="none" stroke={colors.ink} strokeWidth={4} strokeLinejoin="round" strokeLinecap="round" />
-        {f >= a && <circle cx={gx(0)} cy={gy(g.first.open)} r={9} fill={colors.blue} />}
-        {f >= b && <circle cx={gx(0.6)} cy={gy(g.add.open)} r={9} fill={colors.blue} />}
-        {f >= c + 50 && <circle cx={gx(0.84)} cy={gy(g.add.close)} r={9} fill={colors.green} />}
-        {f >= c + 60 && <circle cx={gx(1)} cy={gy(g.firstClose.price)} r={9} fill={colors.green} />}
-      </svg>
-      <Lbl price={g.first.open} text={`① bought ${g.first.lots} lots · ${num(g.first.open)}`} color={colors.blue} at={a} side="left" />
-      <Lbl price={g.add.open} text={`② bought ${g.add.lots} lots · ${num(g.add.open)}`} color={colors.blue} at={b} side="left" below />
-      <Lbl price={goldAvgEntry} text={`average entry · ${num(goldAvgEntry)}`} color={colors.gold} at={b + 30} side="right" below dash />
-      <Lbl price={g.add.close} text={`③ both positions closed · ${num(g.add.close)} / ${num(g.firstClose.price)}`} color={colors.green} at={c + 50} side="right" />
-      <Hand x={gx(0.67)} y={gy(4_300)} at={a + 40} size={30} color={colors.pencil} rotate={0} width={260}>
-        gold moved lower · position kept open, waiting for the market to come back
-      </Hand>
-      <Arrow from={[gx(0.6) - 10, gy(g.first.open) + 30]} to={[gx(0.6) - 10, gy(g.add.open) - 16]} at={b + 6} bend={-50} color={colors.red} />
+      <GoldChart x={980} y={270} w={840} h={600} at={a} buyAt={b + 10} closeAt={c + 10} entry={g.first.open} avg={goldAvgEntry} buy={g.add.open} closeNew={g.add.close} closeOld={g.firstClose.price} />
       {/* card */}
       <Card x={M} y={300} w={820} at={a - 6} rotate={-0.6} style={{ padding: "18px 26px" }}>
         <div style={{ fontFamily: fonts.mono, fontSize: 17, letterSpacing: 3, color: colors.pencil }}>GOLD · XAUUSD · 23.09 → 10.11.2026</div>
@@ -615,7 +550,7 @@ const SStanding: React.FC = () => {
   const rows = [
     { l: `Deposits (${D.depositCount})`, v: D.deposits, c: colors.ink, at: a },
     { l: "Withdrawals (2)", v: -D.withdrawn, c: colors.red, at: a + 26 },
-    { l: "Bonuses, cashback & credit", v: D.credits, c: colors.blue, at: a + 52, sub: `incl. credit ${usd(D.creditFacility)}` },
+    { l: "Bonuses, cashback & credit", v: D.credits, c: colors.blue, at: a + 52, sub: `incl. credit facility ${usd(D.creditFacility)}` },
     { l: "Closed trading profit (20 trades)", v: D.results.net, c: colors.green, at: b },
   ];
   return (

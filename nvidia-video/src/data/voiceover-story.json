@@ -76,21 +76,21 @@
       "title": "The record",
       "minDuration": 12,
       "start": 185.4,
-      "end": 204.067
+      "end": 204.1
     },
     {
       "id": "standing",
       "title": "Where we stand",
       "minDuration": 15,
-      "start": 204.067,
-      "end": 232.2
+      "start": 204.1,
+      "end": 232.467
     },
     {
       "id": "close",
       "title": "Next chapter",
       "minDuration": 16,
-      "start": 232.2,
-      "end": 248.2
+      "start": 232.467,
+      "end": 248.46666666666667
     }
   ],
   "cues": [
@@ -236,24 +236,24 @@
     },
     {
       "scene": "standing",
-      "text": "Where the account stands today. Deposits: $149,198. Withdrawals: $2,100. Bonuses, cashback and credit: $112,076.",
-      "say": "Where the account stands today. Deposits, one hundred and forty nine thousand, one hundred and ninety eight dollars. Withdrawals, two thousand one hundred. Bonuses, cashback and credit, one hundred and twelve thousand.",
-      "start": 204.97,
-      "end": 218.14
+      "text": "Where the account stands today. Deposits: $149,198. Withdrawals: $2,100. Bonuses, cashback and credit: $237,076.",
+      "say": "Where the account stands today. Deposits, one hundred and forty nine thousand, one hundred and ninety eight dollars. Withdrawals, two thousand one hundred. Bonuses, cashback and credit, two hundred and thirty seven thousand.",
+      "start": 205.0,
+      "end": 218.45
     },
     {
       "scene": "standing",
-      "text": "Closed trading profit: +$72,807. Equity: $331,981.52, with no open positions and nothing at risk.",
-      "say": "Closed trading profit, plus seventy two thousand eight hundred and seven. Equity, three hundred and thirty one thousand, nine hundred and eighty one dollars. With no open positions, and nothing at risk.",
-      "start": 218.79,
-      "end": 230.9
+      "text": "Closed trading profit: +$72,807. Equity: $456,981.52, with no open positions and nothing at risk.",
+      "say": "Closed trading profit, plus seventy two thousand eight hundred and seven. Equity, four hundred and fifty six thousand, nine hundred and eighty one dollars. With no open positions, and nothing at risk.",
+      "start": 219.1,
+      "end": 231.18
     },
     {
       "scene": "close",
       "text": "Ten weeks: from $100 to a funded account, a clean record, and a problem solved the right way. That is chapter one.",
       "say": "Ten weeks. From one hundred dollars to a funded account, a clean record, and a problem solved the right way. That is chapter one.",
-      "start": 233.1,
-      "end": 240.83
+      "start": 233.37,
+      "end": 241.09
     }
   ]
 }

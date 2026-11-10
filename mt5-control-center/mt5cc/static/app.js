@@ -14,7 +14,7 @@
     viewToken: 0,
   };
 
-  const VIEW_TITLES = { overview: "Overview", positions: "Open positions", trade: "Trade", performance: "Performance", trades: "Trade history", balance: "Balance operations", diagnostics: "Diagnostics" };
+  const VIEW_TITLES = { overview: "Overview", positions: "Open positions", trade: "Trade", performance: "Performance", trades: "Trade history", balance: "Balance operations", accounts: "Accounts", diagnostics: "Diagnostics" };
   const $ = (sel, root) => (root || document).querySelector(sel);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const COLOR_HEX = { blue: "#3987e5", orange: "#e0692f", aqua: "#1fb282", yellow: "#d29a1a", magenta: "#d55181", violet: "#9085e9" };
@@ -121,13 +121,13 @@
     clearTimeout(S.timers.view);
     const token = ++S.viewToken;
     const content = $("#content");
-    const fn = { overview: viewOverview, positions: viewPositions, trade: viewTrade, performance: viewPerformance, trades: viewTrades, balance: viewBalance, diagnostics: viewDiagnostics }[S.view];
+    const fn = { overview: viewOverview, positions: viewPositions, trade: viewTrade, performance: viewPerformance, trades: viewTrades, balance: viewBalance, accounts: viewAccounts, diagnostics: viewDiagnostics }[S.view];
     Promise.resolve(fn(content, token)).catch(err => {
       if (token !== S.viewToken) return;
       if (err.message !== "unauthorized") content.innerHTML = `<div class="banner bad">Could not load this view: ${esc(err.message)}</div>`;
     });
   }
-  function scheduleViewRefresh(ms) { clearTimeout(S.timers.view); S.timers.view = setTimeout(() => { if (!document.hidden && !$("#modal") && S.view !== "trade") renderView(); else scheduleViewRefresh(ms); }, ms); }
+  function scheduleViewRefresh(ms) { clearTimeout(S.timers.view); S.timers.view = setTimeout(() => { if (!document.hidden && !$("#modal") && S.view !== "trade" && !(S.view === "accounts" && document.activeElement && document.activeElement.closest && document.activeElement.closest("#add-form"))) renderView(); else scheduleViewRefresh(ms); }, ms); }
 
   /* ---------------- OVERVIEW ---------------- */
   function accountCard(a, opts = {}) {
@@ -199,9 +199,16 @@
     </tbody></table></div></section>`;
   }
 
+  function gotoView(v) { const b = document.querySelector(`#nav button[data-view="${v}"]`); if (b) b.click(); }
   async function viewOverview(content, token) {
     const ov = S.overview;
     const list = scopedAccounts();
+    if (!ov.accounts.length) {
+      content.innerHTML = `<section class="card welcome"><div class="card-body"><h3>Welcome</h3><p class="dim">No MetaTrader accounts are connected yet. Add them on the Accounts page: pick your MT5 installation, type the login, password and server, and the dashboard connects immediately. You can also load two demo accounts with fake data to look around first.</p><div class="form-actions mt14"><button class="btn primary" id="w-accounts">Open Accounts page</button></div></div></section>`;
+      $("#w-accounts").addEventListener("click", () => gotoView("accounts"));
+      scheduleViewRefresh(5000);
+      return;
+    }
     content.innerHTML = mockBanner() + offlineBanners() + (S.scope === "all" ? combinedStrip(ov) : "") +
       `<div class="grid ${list.length > 1 && S.scope === "all" ? "cols-2" : ""}">${list.map(a => accountCard(a, { equity: true })).join("")}</div>` +
       (S.scope === "all" ? compareTable(list) : "");
@@ -657,6 +664,124 @@
     if (e.action === "close") return `#${r.ticket} ${r.volume ? r.volume + " lots" : "full"}`;
     if (e.action === "modify") return `#${r.ticket} sl ${r.sl ?? "-"} tp ${r.tp ?? "-"}`;
     return "";
+  }
+
+  /* ---------------- ACCOUNTS (guided setup) ---------------- */
+  const AF = { terminal_path: "", make_copy: true, custom: false };
+  async function del(path) { return api(path, { method: "DELETE" }); }
+  async function put(path, body) { return api(path, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) }); }
+
+  function accountForm(info, current) {
+    const edit = !!current;
+    const t = (current && current.trading) || {};
+    const terms = info.terminals;
+    const selected = current ? current.terminal_path : (AF.terminal_path || (terms.find(x => !x.managed) || terms[0] || {}).path || "");
+    const known = terms.some(x => x.path === selected);
+    return `<div class="form">
+      <div class="form-row">
+        <label>Account name<input class="f-label" value="${esc(current ? current.label : "")}" placeholder="e.g. Exness main" autocomplete="off"></label>
+        <label>Login (account number)<input class="f-login" inputmode="numeric" value="${esc(current ? current.login : "")}" placeholder="12345678" autocomplete="off"></label>
+        <label>Server<input class="f-server" value="${esc(current ? current.server : "")}" placeholder="exactly as in the MT5 login window" autocomplete="off" spellcheck="false"></label>
+        <label>${edit ? "New password (leave blank to keep)" : "Password"}<input class="f-password" type="password" autocomplete="new-password" placeholder="${edit ? "unchanged" : "master = trade · investor = monitor only"}"></label>
+      </div>
+      ${edit ? "" : `<div class="form-row">
+        <label class="wide">MetaTrader 5 installation to use
+          <select class="f-terminal">${terms.map(x => `<option value="${esc(x.path)}" data-managed="${x.managed ? 1 : 0}" ${x.path === selected ? "selected" : ""}>${esc(x.name)} · ${esc(x.path)}${x.managed ? " (private copy, already in use)" : ""}</option>`).join("")}<option value="__custom" ${!known && !terms.length ? "selected" : ""}>Other… type the path to terminal64.exe</option></select></label>
+        <label class="wide f-custom-wrap ${known || terms.length ? "hidden" : ""}">Path to terminal64.exe<input class="f-custom" value="${esc(known ? "" : selected)}" placeholder="C:\\Program Files\\YourBroker MT5\\terminal64.exe" spellcheck="false"></label>
+        <label class="wide check"><input type="checkbox" class="f-copy" ${AF.make_copy ? "checked" : ""}><span>Make a private copy of this terminal for this account <span class="muted">(recommended; required when several accounts share one broker installation, because one terminal can only be logged into one account at a time. The copy goes into <span class="mono">terminals\\</span> inside this folder, about the size of the MT5 installation.)</span></span></label>
+      </div>`}
+      <div class="form-row">
+        <label>Colour<select class="f-color">${info.colors.map(c => `<option value="${c}" ${(current ? current.color : "") === c ? "selected" : ""}>${c}</option>`).join("")}</select></label>
+        <label>Broker server clock offset from UTC (hours)<input class="f-offset" type="number" step="0.5" value="${esc(current ? current.server_utc_offset_hours ?? 0 : 0)}"></label>
+      </div>
+      <div class="section-title my14"><h3 class="small dim">Trading from the dashboard</h3><div class="line"></div></div>
+      <div class="form-row">
+        <label class="check"><input type="checkbox" class="f-tenabled" ${t.enabled ? "checked" : ""}><span>Allow trading from this dashboard for this account</span></label>
+        <label>Max risk per trade (% )<input class="f-trisk" type="number" step="0.1" min="0.1" value="${esc(t.max_risk_percent ?? 1)}"></label>
+        <label>Max lots per order<input class="f-tlots" type="number" step="0.01" min="0.01" value="${esc(t.max_lots ?? 1)}"></label>
+        <label>Max open positions<input class="f-tpos" type="number" step="1" min="1" value="${esc(t.max_open_positions ?? 10)}"></label>
+        <label class="wide">Allowed symbols (comma separated, blank = any)<input class="f-tsym" value="${esc((t.allowed_symbols || []).join(", "))}" placeholder="EURUSD, XAUUSD"></label>
+      </div>
+    </div>`;
+  }
+  function readAccountForm(root, edit) {
+    const q = sel => root.querySelector(sel);
+    const body = {
+      label: q(".f-label").value.trim(), login: q(".f-login").value.trim(), server: q(".f-server").value.trim(), password: q(".f-password").value,
+      color: q(".f-color").value, server_utc_offset_hours: parseFloat(q(".f-offset").value) || 0,
+      trading: { enabled: q(".f-tenabled").checked, max_risk_percent: parseFloat(q(".f-trisk").value), max_lots: parseFloat(q(".f-tlots").value), max_open_positions: parseInt(q(".f-tpos").value, 10), allowed_symbols: q(".f-tsym").value },
+    };
+    if (!edit) {
+      const sel = q(".f-terminal").value;
+      body.terminal_path = sel === "__custom" ? q(".f-custom").value.trim() : sel;
+      body.make_copy = q(".f-copy").checked;
+    }
+    return body;
+  }
+  function bindTerminalSelect(root) {
+    const sel = root.querySelector(".f-terminal"); if (!sel) return;
+    sel.addEventListener("change", () => {
+      root.querySelector(".f-custom-wrap").classList.toggle("hidden", sel.value !== "__custom"); AF.terminal_path = sel.value;
+      const managed = sel.selectedOptions[0] && sel.selectedOptions[0].dataset.managed === "1";
+      const cp = root.querySelector(".f-copy"); if (cp && managed) { cp.checked = false; AF.make_copy = false; }
+    });
+    const cp = root.querySelector(".f-copy"); if (cp) cp.addEventListener("change", () => { AF.make_copy = cp.checked; });
+  }
+
+  function termShort(p) { const parts = String(p || "").split(/[\\/]/).filter(Boolean); if (parts.length && /terminal64\.exe/i.test(parts[parts.length - 1])) parts.pop(); return parts.pop() || p || ""; }
+  async function viewAccounts(content, token) {
+    const info = await api("/api/setup");
+    if (token !== S.viewToken) return;
+    const st = info.settings;
+    const pendingAny = info.accounts.some(a => a.pending);
+    content.innerHTML = `
+      ${info.platform !== "windows" ? `<div class="banner warn"><strong>Not Windows</strong><span>Real MetaTrader connections only work on Windows. Here you can only use demo accounts; passwords would be stored unencrypted.</span></div>` : ""}
+      <div class="grid cols-2">
+        <section class="card"><div class="card-head"><h3>Global switches</h3></div><div class="card-body">
+          <label class="check big-check"><input type="checkbox" id="g-trading" ${st.trading_enabled ? "checked" : ""}><span><b>Allow trading from this dashboard</b><br><span class="muted small">Master switch. Each account also has its own trading switch below. Off = the dashboard can only read.</span></span></label>
+          <div class="small muted mt6">Changing a switch restarts the account connections (takes a few seconds).</div>
+        </div></section>
+        <section class="card"><div class="card-head"><h3>Where things are stored</h3></div><div class="card-body"><dl class="kv">
+          <dt>Accounts file</dt><dd class="mono">config\\accounts.json</dd>
+          <dt>Passwords</dt><dd>${info.dpapi ? '<span class="tag ok">encrypted (Windows DPAPI)</span>' : '<span class="tag warn">plain text (non-Windows)</span>'}</dd>
+          <dt>Private terminal copies</dt><dd class="mono" title="${esc(info.terminals_dir)}">${esc(info.terminals_dir)}</dd>
+          <dt>Installations found</dt><dd>${info.terminals.length ? info.terminals.length : '<span class="warn-text">none found - type the path manually</span>'}</dd>
+        </dl><div class="form-actions mt14"><button class="btn" id="g-demo">Add two demo accounts (fake data)</button></div></div></section>
+      </div>
+      <section class="card"><div class="card-head"><h3>Configured accounts</h3><span class="sub">${info.accounts.length} account${info.accounts.length === 1 ? "" : "s"}</span></div>
+        ${info.accounts.length ? `<div class="table-wrap"><table class="data compact"><thead><tr><th>Account</th><th>Login · server</th><th>Terminal</th><th>Password</th><th>Trading</th><th>Status</th><th class="right">Actions</th></tr></thead><tbody>
+        ${info.accounts.map(a => `<tr data-id="${esc(a.id)}"><td><span class="dot c-${esc(a.color)} mr6"></span><b>${esc(a.label)}</b>${a.mock ? ' <span class="tag demo">demo</span>' : ""}</td><td class="dim">${a.mock ? "–" : `${esc(a.login)} · ${esc(a.server)}`}</td><td class="dim small" title="${esc(a.terminal_path || "")}">${a.mock ? "mock" : (a.managed_copy ? '<span class="tag neutral">private copy</span>' : esc(termShort(a.terminal_path)))}</td><td class="small dim">${esc(a.password_store)}</td><td>${a.trading && a.trading.enabled ? '<span class="tag warn">on</span>' : '<span class="tag ok">off</span>'}</td><td>${a.pending ? `<div class="progress" title="${esc(a.pending.message || "")}"><div class="bar" data-w="${Math.round((a.pending.progress || 0) * 100)}"></div></div><div class="xs muted">${esc(a.pending.stage === "error" ? "Error: " + a.pending.message : a.pending.message || "preparing…")}</div>` : `<span class="pill ${esc(a.state)}" title="${esc(a.message)}">${esc(stateLabel(a.state))}</span>`}</td><td class="right"><span class="actions"><button class="btn sm" data-edit="${esc(a.id)}">Edit</button><button class="btn sm" data-reconnect2="${esc(a.id)}">Reconnect</button><button class="btn sm danger" data-remove="${esc(a.id)}">Remove</button></span></td></tr>`).join("")}
+        </tbody></table></div>` : `<div class="empty"><div class="ico">＋</div>No accounts yet. Add your first account below.</div>`}
+      </section>
+      <section class="card"><div class="card-head"><h3>Add an account</h3><span class="sub">takes effect immediately, no restart</span></div><div class="card-body" id="add-form">${accountForm(info, null)}
+        <div class="form-actions mt14"><span class="small muted" id="add-msg"></span><span class="flex1"></span><button class="btn primary" id="add-go">Add account</button></div></div></section>`;
+    content.querySelectorAll(".progress .bar").forEach(b => { b.style.width = b.dataset.w + "%"; });
+    bindTerminalSelect($("#add-form"));
+    $("#g-trading").addEventListener("change", async e => { try { await put("/api/setup/settings", { trading_enabled: e.target.checked }); toast(e.target.checked ? "Trading switch ON" : "Trading switch OFF"); } catch (err) { toast(err.message, "bad"); } renderView(); });
+    $("#g-demo").addEventListener("click", async () => { try { await post("/api/setup/demo", {}); toast("Demo accounts added"); } catch (err) { toast(err.message, "bad"); } renderView(); });
+    $("#add-go").addEventListener("click", async () => {
+      const msg = $("#add-msg"); msg.textContent = "Saving…";
+      try {
+        const body = readAccountForm($("#add-form"), false);
+        const r = await post("/api/setup/accounts", body);
+        toast(r.status === "copying" ? "Copying the terminal for this account… this can take a minute" : "Account added, connecting…");
+        AF.terminal_path = ""; renderView();
+      } catch (err) { msg.innerHTML = `<span class="neg">${esc(err.message)}</span>`; }
+    });
+    content.querySelectorAll("[data-reconnect2]").forEach(b => b.addEventListener("click", async () => { await post(`/api/accounts/${b.dataset.reconnect2}/reconnect`, {}); toast("Reconnecting…"); }));
+    content.querySelectorAll("[data-remove]").forEach(b => b.addEventListener("click", () => {
+      const a = info.accounts.find(x => x.id === b.dataset.remove);
+      const form = document.createElement("div");
+      form.innerHTML = `<p>Remove <b>${esc(a.label)}</b> from the dashboard? Nothing happens to the account at the broker; only this program forgets it.</p>${a.managed_copy ? `<label class="check"><input type="checkbox" class="f-delcopy" checked><span>Also delete its private terminal copy from disk</span></label>` : ""}`;
+      openModal({ title: "Remove account", danger: true, confirmLabel: "Remove", body: form, onConfirm: async () => { const dc = form.querySelector(".f-delcopy"); await del(`/api/setup/accounts/${a.id}?delete_copy=${dc && dc.checked ? "true" : "false"}`); toast("Account removed"); renderView(); } });
+    }));
+    content.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => {
+      const a = info.accounts.find(x => x.id === b.dataset.edit);
+      const form = document.createElement("div"); form.innerHTML = accountForm(info, a);
+      openModal({ title: `Edit ${a.label}`, confirmLabel: "Save & reconnect", body: form, onConfirm: async () => { await put(`/api/setup/accounts/${a.id}`, readAccountForm(form, true)); toast("Saved, reconnecting…"); renderView(); } });
+      $("#modal .modal").classList.add("wide");
+    }));
+    scheduleViewRefresh(pendingAny ? 1500 : 10000);
   }
 
   /* ---------------- polling ---------------- */

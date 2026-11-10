@@ -314,3 +314,14 @@ table.data.compact th, table.data.compact td { padding: 6px 9px; font-size: 12px
 .ticket-grid { align-items: start; }
 .actions .btn.sm { padding: 3px 7px; }
 .modal-body label > span { display: block; }
+
+/* ---------- accounts page ---------- */
+label.check { flex-direction: row !important; align-items: flex-start; gap: 8px !important; color: var(--text) !important; font-size: 12.5px !important; cursor: pointer; }
+label.check input[type="checkbox"] { width: 16px; height: 16px; min-height: 0; margin-top: 2px; flex: none; }
+.big-check span { line-height: 1.4; }
+.progress { height: 6px; background: var(--surface-3); border-radius: 3px; overflow: hidden; width: 120px; }
+.progress .bar { height: 100%; background: var(--accent); width: 0; transition: width .4s; }
+.welcome h3 { font-size: 18px; margin-bottom: 8px; }
+.welcome p { max-width: 640px; margin: 0; }
+.modal.wide { width: min(760px, 100%); }
+.modal-body .form-row label { color: var(--text-3); }

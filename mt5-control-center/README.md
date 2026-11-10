@@ -27,7 +27,7 @@ MetaTrader 5 accounts at once** on your own Windows computer.
 |------|-------|
 | Windows 10 / 11 | The official `MetaTrader5` Python package only exists for Windows. |
 | Python 3.12 (or 3.11+) | From [python.org](https://www.python.org/downloads/windows/). During installation tick **"Add python.exe to PATH"**. |
-| Two MetaTrader 5 installations | One terminal per account, each installed in its own folder (see step 3). |
+| MetaTrader 5 installed | Your broker's normal MT5. The program makes a private copy of it per account (see step 3). |
 | Internet access, once | Only to download the Python packages the first time you start. |
 
 You do **not** need to know programming. Everything is driven by two small
@@ -35,67 +35,76 @@ settings files and a double-click launcher.
 
 ## 2. Install
 
-1. Download this folder (`mt5-control-center`) to your PC, for example to
+1. Unzip the `mt5-control-center` folder anywhere, for example
    `C:\Trading\mt5-control-center`. Avoid paths inside *Program Files*.
 2. Double-click **`start.bat`**.
    The first start creates a private Python environment inside the folder
-   (`.venv`), installs the dependencies and then starts the dashboard in demo
-   mode so you can see what it looks like. Later starts take a few seconds.
-3. The launcher window prints a line like
-   `Open this link in your browser (it carries your private access key)` and
-   opens your default browser automatically. Bookmark nothing yet - the link
-   changes if you ever rotate the key.
+   (`.venv`), installs the dependencies and opens the dashboard in your
+   browser. Later starts take a few seconds.
+3. The launcher window prints a link that carries your private access key and
+   opens it in your default browser.
 4. Press **Ctrl+C** in the launcher window (or close it) to stop everything.
 
-The first run also creates `config\settings.json` and `config\accounts.json`
-from the example files. Those two files are the only things you edit.
+## 3. Add your MT5 accounts (no file editing)
 
-## 3. Connect your real MT5 accounts
+Open the **Accounts** page in the dashboard.
 
-### 3.1 Prepare two terminals
+1. **Account name** - anything you like, e.g. "Exness main".
+2. **Login**, **Server**, **Password** - exactly what you type into the MT5
+   login window. Use the **master password** if you want to trade from the
+   dashboard, the **investor password** if you only want to monitor.
+3. **MetaTrader 5 installation to use** - the program lists every MT5
+   installation it finds on your PC. Pick your broker's. If none is listed,
+   choose *Other…* and type the path to `terminal64.exe` (right-click the MT5
+   desktop icon → Properties → Target).
+4. Leave **"Make a private copy of this terminal for this account"** ticked.
+   One MT5 terminal can only be logged into one account at a time, so for
+   several accounts the program copies the installation once per account into
+   `terminals\` inside this folder (about the size of the MT5 installation,
+   usually 100-300 MB) and runs each copy in portable mode. Those copies are
+   independent from your normal MT5 and from each other.
+5. Optionally tick **Allow trading** and set the limits (see section 6).
+6. Click **Add account**. The copy is made, the terminal starts, logs in, and
+   the account appears in the sidebar within a few seconds. Repeat for every
+   account; all accounts of one broker can use the same installation as the
+   source of their private copies.
 
-The `MetaTrader5` Python bridge can hold **one terminal per process**. This
-application starts one worker process per account, but each worker still needs
-its own terminal installation:
+Passwords are stored in `config\accounts.json` **encrypted with Windows
+DPAPI**, which ties them to your Windows user account; nobody else, and no
+other computer, can decrypt that file.
 
-* Install MetaTrader 5 a second time into a **different folder**
-  (e.g. `C:\MT5-Broker-A\` and `C:\MT5-Broker-B\`), or copy an existing
-  installation folder and run the copy with the `/portable` switch.
-* Start each terminal once by hand, log into the account it should serve, and
-  in **Tools → Options → Expert Advisors** tick **"Allow algorithmic trading"**
-  (the Python bridge needs it even though this program never trades).
-* Note the full path of each `terminal64.exe`.
+Use **Edit** to change a password or limits, **Remove** to forget an account
+(optionally deleting its private copy), **Reconnect** to restart its link.
+**Add two demo accounts** loads fake data if you want to explore first.
 
-### 3.2 Edit `config\accounts.json`
+### If a terminal shows "Degraded" or trading says "algorithmic trading disabled"
 
-Open the file in Notepad. It contains one block per account:
+Each private terminal copy opens its own MT5 window. In that window click the
+**Algo Trading** button in the toolbar so it turns green (or Tools → Options →
+Expert Advisors → *Allow algorithmic trading*). The Python bridge needs it;
+the dashboard tells you per account when it is missing.
+
+### Editing `config\accounts.json` by hand (optional)
+
+Everything the Accounts page does is written to this file, so you can also
+edit it in Notepad:
 
 ```json
 {
   "accounts": [
     {
-      "id": "account1",
-      "label": "Broker A - Main",
+      "id": "exness-main",
+      "label": "Exness main",
       "color": "blue",
-      "terminal_path": "C:\\MT5-Broker-A\\terminal64.exe",
-      "portable": false,
-      "login": 12345678,
-      "server": "BrokerA-Live",
-      "password_env": "MT5CC_ACCOUNT1_PASSWORD",
-      "server_utc_offset_hours": 2,
-      "enabled": true
-    },
-    {
-      "id": "account2",
-      "label": "Broker B - Swing",
-      "color": "orange",
-      "terminal_path": "C:\\MT5-Broker-B\\terminal64.exe",
+      "terminal_path": "C:\\Trading\\mt5-control-center\\terminals\\exness-main\\terminal64.exe",
       "portable": true,
-      "login": 87654321,
-      "server": "BrokerB-Real",
-      "password_env": "MT5CC_ACCOUNT2_PASSWORD",
-      "server_utc_offset_hours": 3,
-      "enabled": true
+      "login": 12345678,
+      "server": "Exness-MT5Real3",
+      "password_dpapi": "…written by the Accounts page…",
+      "server_utc_offset_hours": 0,
+      "enabled": true,
+      "trading": { "enabled": false, "max_risk_percent": 1.0, "max_lots": 1.0,
+                   "max_open_positions": 10, "allowed_symbols": [], "magic": 710001, "deviation_points": 20 }
     }
   ]
 }
@@ -104,42 +113,16 @@ Open the file in Notepad. It contains one block per account:
 | Field | Meaning |
 |-------|---------|
 | `id` | Short internal name (letters, digits, `-`, `_`). Used in URLs and exports. |
-| `label` | What the dashboard shows. |
-| `color` | `blue`, `orange`, `aqua`, `yellow`, `magenta` or `violet`. |
-| `terminal_path` | Full path to that account's `terminal64.exe`. Use double backslashes `\\` inside JSON. |
-| `portable` | `true` if that terminal is run with `/portable` (data folder next to the exe). |
-| `login`, `server` | Account number and trade server name exactly as shown in the terminal. |
-| `password_env` | Name of a Windows environment variable holding the **investor (read-only) or master password**. Recommended. See 3.3. |
-| `password` | Alternative to `password_env`: the password written directly in this file. Works, but anyone who can read the file can read it. |
-| `server_utc_offset_hours` | Your broker's server clock offset from UTC (often `2` or `3`). Used to place trades in the right day and trading session. |
-| `enabled` | Set to `false` to skip a slot without deleting it. |
+| `label`, `color` | What the dashboard shows. Colours: `blue`, `orange`, `aqua`, `yellow`, `magenta`, `violet`. |
+| `terminal_path` | Full path to that account's `terminal64.exe`. Use `\\` inside JSON. |
+| `portable` | `true` for private copies (data folder next to the exe). |
+| `login`, `server` | Account number and trade server name. If both are empty the worker attaches to whatever account the terminal is logged into. |
+| `password_dpapi` / `password_env` / `password` | Encrypted by the Accounts page / name of an environment variable / plain text (not recommended). |
+| `server_utc_offset_hours` | Broker server clock offset from UTC (often `2` or `3`), for day and session boundaries. |
+| `mock` | `true` = synthetic demo data for this slot. |
 
-**Attach mode (no password at all).** If you leave `login`, `server` and both
-password fields empty, the worker simply attaches to whatever account that
-terminal is already logged into. If you *do* set `login`, the worker verifies
-the terminal is logged into exactly that account and refuses to show data
-otherwise - this is the safeguard against mixing accounts.
-
-**Use the investor password** whenever you can. It grants read-only access,
-which is all this application ever needs.
-
-### 3.3 Store passwords as environment variables (recommended)
-
-In PowerShell (run once, per account, replacing the values):
-
-```powershell
-[Environment]::SetEnvironmentVariable("MT5CC_ACCOUNT1_PASSWORD", "your-investor-password", "User")
-[Environment]::SetEnvironmentVariable("MT5CC_ACCOUNT2_PASSWORD", "your-other-password", "User")
-```
-
-Close and reopen the launcher afterwards so it sees the new variables. The
-Diagnostics page shows whether each variable was found (never its value).
-
-### 3.4 Turn demo mode off
-
-In `config\settings.json` change `"mock_mode": true` to `"mock_mode": false`.
-Start the launcher again. The yellow **DEMO DATA** banner disappears once no
-slot is synthetic.
+Restart the launcher after editing by hand; changes made on the Accounts page
+apply immediately.
 
 ## 4. `config\settings.json`
 
@@ -220,11 +203,13 @@ slot is synthetic.
 
 ## 6. Trading (optional)
 
-Trading is **off by default** and stays off until *both* switches are on:
+Trading is **off by default** and stays off until *both* switches are on,
+both on the **Accounts** page:
 
-1. `config\settings.json` → `"trading_enabled": true` (global kill switch)
-2. `config\accounts.json` → inside the account block,
-   `"trading": { "enabled": true, ... }`
+1. **Allow trading from this dashboard** (global kill switch; also
+   `"trading_enabled"` in `settings.json`)
+2. The account's own **Allow trading** box (Edit → Trading from the dashboard;
+   also `"trading": { "enabled": true }` in `accounts.json`)
 
 Trading also needs the **master password** (or a terminal already logged in
 with it). With an investor password the broker reports "trade not allowed" and
@@ -338,7 +323,8 @@ Python updated.
 |---------|---------------|
 | `initialize() failed` in Diagnostics | Wrong `terminal_path`; terminal not allowed to run algorithmic trading; wrong `portable` flag; the terminal is already being driven by another Python process. |
 | `Terminal is logged into account X, but this slot is configured for Y` | The terminal in that folder is logged into a different account. Log into the right one or fix `login`. |
-| Password variable shown as *(not set)* | Set it with the PowerShell command in 3.3, then restart the launcher. |
+| `CryptUnprotectData failed` | The password was saved under a different Windows user. Edit the account and enter the password again. |
+| Account stays on *Connecting* after adding | The terminal copy is starting for the first time; give it up to a minute. If it then shows an error, check login/server/password with Edit. |
 | Realized today looks wrong by a few hours | Adjust `server_utc_offset_hours` for that broker and/or `report_timezone`. |
 | "Unverified · diff …" badge | The deal ledger and reconstructed trades disagree. Usually old positions whose entries predate `history_lookback_days`; press **Reload history** or raise the lookback. Please report persistent cases. |
 | Port already in use | Change `server.port` in `settings.json`. |
@@ -358,7 +344,8 @@ mt5-control-center/
 ├─ requirements.txt
 ├─ config/
 │   ├─ settings.example.json  copied to settings.json on first run
-│   └─ accounts.example.json  copied to accounts.json on first run
+│   └─ accounts.example.json  copied to accounts.json on first run (empty list)
+├─ terminals/                 private MT5 copies made by the Accounts page (one per account)
 ├─ mt5cc/                     the application
 │   ├─ __main__.py            entry point (python -m mt5cc)
 │   ├─ config.py              settings/accounts loading, access key
@@ -368,6 +355,7 @@ mt5-control-center/
 │   ├─ mt5_adapter.py         thin wrapper over the MetaTrader5 package
 │   ├─ mock_adapter.py        synthetic demo data source
 │   ├─ trading.py             position sizing, order/close/modify requests, guards
+│   ├─ setup.py               Accounts page backend: detect/copy terminals, DPAPI, config writes
 │   ├─ history.py             deal → trade reconstruction + reconciliation
 │   ├─ stats.py               realized P/L, statistics, curves, sessions
 │   ├─ store.py               SQLite store for live equity samples

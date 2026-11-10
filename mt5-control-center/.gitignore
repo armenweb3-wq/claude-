@@ -8,3 +8,4 @@ config/.api_token
 data/
 logs/
 .pytest_cache/
+terminals/

@@ -9,7 +9,7 @@
   "history_lookback_days": 365,
   "equity_sample_seconds": 30,
   "report_timezone": "local",
-  "mock_mode": true,
+  "mock_mode": false,
   "log_level": "INFO",
   "trading_enabled": false
 }

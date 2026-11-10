@@ -108,6 +108,51 @@ class Supervisor:
             self._thread.join(timeout=2)
 
     # ------------------------------------------------------------------ #
+    # Live add / remove / restart (used by the Accounts page)
+    # ------------------------------------------------------------------ #
+    def add_account(self, cfg: AccountConfig) -> None:
+        with self._lock:
+            self.states[cfg.id] = AccountState(cfg=cfg)
+        self._spawn(cfg.id)
+
+    def _kill(self, acc_id: str) -> None:
+        q = self._cmd_qs.pop(acc_id, None)
+        proc = self._procs.pop(acc_id, None)
+        self._out_qs.pop(acc_id, None)
+        if q is not None:
+            try:
+                q.put({"cmd": "shutdown"})
+            except Exception:
+                pass
+        if proc is not None:
+            proc.join(timeout=4)
+            if proc.is_alive():
+                proc.terminate()
+                proc.join(timeout=2)
+
+    def remove_account(self, acc_id: str) -> None:
+        with self._lock:
+            self.states.pop(acc_id, None)
+        self._kill(acc_id)
+
+    def restart_account(self, cfg: AccountConfig) -> None:
+        self._kill(cfg.id)
+        with self._lock:
+            old = self.states.get(cfg.id)
+            st = AccountState(cfg=cfg)
+            if old is not None:
+                st.restarts = old.restarts + 1
+                st.logs = old.logs
+            self.states[cfg.id] = st
+        self._spawn(cfg.id)
+
+    def apply_settings(self, settings: Settings) -> None:
+        """Replace settings and restart every worker so they pick them up."""
+        self.settings = settings
+        for acc_id in list(self.states):
+            self.restart_account(self.states[acc_id].cfg)
+
+    # ------------------------------------------------------------------ #
     def send_command(self, acc_id: str, cmd: str) -> bool:
         q = self._cmd_qs.get(acc_id)
         if q is None:
@@ -141,7 +186,9 @@ class Supervisor:
             got_any = False
             now = time.time()
             for acc_id, q in list(self._out_qs.items()):
-                st = self.states[acc_id]
+                st = self.states.get(acc_id)
+                if st is None or self._procs.get(acc_id) is None:
+                    continue
                 for _ in range(500):
                     try:
                         msg = q.get_nowait()
@@ -152,6 +199,8 @@ class Supervisor:
                     got_any = True
                     self._apply(st, msg)
                 proc = self._procs.get(acc_id)
+                if proc is not None and self._procs.get(acc_id) is not proc:
+                    continue
                 if proc is not None and not proc.is_alive() and not self._stop.is_set():
                     with self._lock:
                         st.state = "error"

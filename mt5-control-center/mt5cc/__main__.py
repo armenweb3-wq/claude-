@@ -66,7 +66,9 @@ def main() -> int:
     for a in accounts:
         print(f"  Account slot '{a.id}' ({a.label}): mode={a.auth_mode()}"
               + (" [DEMO DATA]" if a.mock else f" -> {a.terminal_path}"))
-    if all(a.mock for a in accounts):
+    if not accounts:
+        print("  No accounts configured yet. Use the Accounts page in the dashboard to add them.")
+    elif all(a.mock for a in accounts):
         print("\n  Demo mode is ON: all numbers are synthetic. To connect real terminals, edit")
         print("  config\\accounts.json and set \"mock_mode\": false in config\\settings.json.")
     print("\n  Press Ctrl+C to stop.\n")

@@ -20,7 +20,7 @@ from fastapi.staticfiles import StaticFiles
 
 from . import __version__
 from . import mt5_constants as C
-from .config import DATA_DIR, AccountConfig, Settings
+from .config import ACCOUNT_COLORS, DATA_DIR, AccountConfig, Settings
 from .history import TradeBook, build_trades, normalize_deals
 from .security import COOKIE_NAME, build_middleware
 from .stats import (balance_curve, balance_flows, by_session, by_symbol, daily_pl, filter_trades,
@@ -121,6 +121,7 @@ def create_app(supervisor: Supervisor, settings: Settings, token: str, store: Eq
     if host in ("127.0.0.1", "localhost", "::1"):
         allowed_hosts |= {f"localhost:{port}", f"127.0.0.1:{port}", "localhost", "127.0.0.1"}
     app.middleware("http")(build_middleware(token, allowed_hosts))
+    settings_ref: dict[str, Settings] = {"settings": settings}
     audit = AuditLog(DATA_DIR / "trading-audit.jsonl")
     intent_key = hashlib.sha256(("intent:" + token).encode()).digest()
 
@@ -147,10 +148,10 @@ def create_app(supervisor: Supervisor, settings: Settings, token: str, store: Eq
         t = st.cfg.trading
         a = st.account or {}
         reasons = []
-        if not settings.trading_enabled:
-            reasons.append("Global switch off: set \"trading_enabled\": true in settings.json")
+        if not settings_ref["settings"].trading_enabled:
+            reasons.append("Global trading switch is off (Accounts page)")
         if not t.enabled:
-            reasons.append("Account switch off: set trading.enabled to true in accounts.json")
+            reasons.append("Trading is off for this account (Accounts page > Edit)")
         if a and a.get("trade_allowed") is False:
             reasons.append("Broker reports trading not allowed (investor password or disabled account)")
         if st.terminal and st.terminal.get("trade_allowed") is False:
@@ -261,6 +262,7 @@ def create_app(supervisor: Supervisor, settings: Settings, token: str, store: Eq
             "report_timezone": str(tz),
             "refresh_seconds": settings.refresh_seconds,
             "mock_mode": any(st.cfg.mock for st in supervisor.states.values()),
+            "setup_needed": not supervisor.states,
             "accounts": accounts,
             "combined": combined,
         }
@@ -425,9 +427,9 @@ def create_app(supervisor: Supervisor, settings: Settings, token: str, store: Eq
                 "reconciliation": analytics.get(st)[1].reconciliation if st.deals else None,
                 "logs": [{**l, "time": _iso(l["ts"])} for l in list(st.logs)[-60:]],
             })
-        return {"accounts": out, "settings": {**settings.to_dict(), "report_timezone_resolved": str(tz)},
+        return {"accounts": out, "settings": {**settings_ref["settings"].to_dict(), "report_timezone_resolved": str(tz)},
                 "security": {"bind": f"{host}:{port}", "token_protected": True, "loopback_only": host in ("127.0.0.1", "localhost", "::1"),
-                             "trading_global": settings.trading_enabled,
+                             "trading_global": settings_ref["settings"].trading_enabled,
                              "trading_accounts": [st.cfg.id for st in supervisor.states.values() if trading_status(st)["enabled"]]},
                 "audit": audit.tail(40)}
 
@@ -529,5 +531,170 @@ def create_app(supervisor: Supervisor, settings: Settings, token: str, store: Eq
     async def index():
         return FileResponse(STATIC_DIR / "index.html")
 
+    install_setup_routes(app, supervisor, settings_ref)
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
     return app
+
+
+# --------------------------------------------------------------------------- #
+# Guided setup (Accounts page)
+# --------------------------------------------------------------------------- #
+
+def install_setup_routes(app: FastAPI, supervisor: Supervisor, settings_ref: dict[str, Settings]) -> None:
+    from . import setup as S
+    from .config import ConfigError, load_settings, parse_accounts
+
+    pending: dict[str, dict[str, Any]] = {}
+
+    def sanitized(entry: dict[str, Any]) -> dict[str, Any]:
+        e = {k: v for k, v in entry.items() if k not in ("password", "password_env", "password_dpapi")}
+        e["has_password"] = any(entry.get(k) for k in ("password", "password_env", "password_dpapi"))
+        e["password_store"] = "encrypted (Windows DPAPI)" if entry.get("password_dpapi") else "environment variable" if entry.get("password_env") else "plain text" if entry.get("password") else "none"
+        e["managed_copy"] = str(entry.get("terminal_path") or "").lower().startswith(str(S.TERMINALS_DIR).lower())
+        st = supervisor.states.get(entry.get("id"))
+        e["state"] = st.effective_state(time.time(), settings_ref["settings"].refresh_seconds) if st else "not running"
+        e["message"] = st.message if st else ""
+        e["live_login"] = (st.account or {}).get("login") if st else None
+        e["pending"] = pending.get(entry.get("id"))
+        return e
+
+    def parse_one(entry: dict[str, Any]) -> AccountConfig:
+        return parse_accounts([entry], settings_ref["settings"])[0]
+
+    @app.get("/api/setup")
+    async def setup_info():
+        try:
+            raw = S.list_raw_accounts()
+        except Exception as exc:
+            raise HTTPException(500, f"Cannot read accounts.json: {exc}")
+        st = settings_ref["settings"]
+        return {
+            "platform": "windows" if S.IS_WINDOWS else "other",
+            "dpapi": S.dpapi_available(),
+            "terminals": S.detect_terminals(),
+            "terminals_dir": str(S.TERMINALS_DIR),
+            "accounts": [sanitized(a) for a in raw],
+            "colors": list(ACCOUNT_COLORS),
+            "settings": {"trading_enabled": st.trading_enabled, "mock_mode": st.mock_mode, "refresh_seconds": st.refresh_seconds,
+                         "history_lookback_days": st.history_lookback_days, "report_timezone": st.report_timezone},
+        }
+
+    def _finish_add(entry: dict[str, Any], restart: bool) -> None:
+        S.save_account(entry)
+        cfg = parse_one(entry)
+        if restart or cfg.id in supervisor.states:
+            supervisor.restart_account(cfg)
+        else:
+            supervisor.add_account(cfg)
+
+    @app.post("/api/setup/accounts")
+    async def setup_add(body: dict[str, Any] = Body(...)):
+        try:
+            raw = S.list_raw_accounts()
+            existing = {a.get("id") for a in raw}
+            entry = S.build_account_entry(body, existing)
+            if any(int(a.get("login") or 0) == entry["login"] and (a.get("server") or "").lower() == entry["server"].lower() for a in raw):
+                raise ConfigError("That login on that server is already configured.")
+            if body.get("make_copy"):
+                job = S.copy_terminal(entry["terminal_path"], entry["id"])
+                entry["terminal_path"] = job["dest"]
+                entry["portable"] = True
+                if job["state"] == "done":
+                    _finish_add(entry, restart=False)
+                    return {"id": entry["id"], "status": "started"}
+                pending[entry["id"]] = {"stage": "copying", "message": job["message"], "progress": 0.0}
+
+                def waiter() -> None:
+                    while True:
+                        st = S.copy_status(entry["id"]) or {}
+                        pending[entry["id"]] = {"stage": "copying", "message": st.get("message"), "progress": st.get("progress", 0.0)}
+                        if st.get("state") == "done":
+                            try:
+                                _finish_add(entry, restart=False)
+                            except Exception as exc:
+                                pending[entry["id"]] = {"stage": "error", "message": str(exc)}
+                                return
+                            pending.pop(entry["id"], None)
+                            return
+                        if st.get("state") == "error":
+                            pending[entry["id"]] = {"stage": "error", "message": st.get("error")}
+                            return
+                        time.sleep(0.5)
+                threading.Thread(target=waiter, daemon=True).start()
+                return {"id": entry["id"], "status": "copying"}
+            else:
+                others = [a for a in raw if (a.get("terminal_path") or "").lower() == entry["terminal_path"].lower()]
+                if others:
+                    raise ConfigError(f"That terminal is already used by '{others[0].get('label')}'. One terminal can serve only one account; tick 'make a private copy'.")
+                _finish_add(entry, restart=False)
+                return {"id": entry["id"], "status": "started"}
+        except ConfigError as exc:
+            raise HTTPException(422, str(exc))
+
+    @app.get("/api/setup/accounts/{acc_id}/status")
+    async def setup_status(acc_id: str):
+        raw = next((a for a in S.list_raw_accounts() if a.get("id") == acc_id), None)
+        return {"id": acc_id, "pending": pending.get(acc_id), "account": sanitized(raw) if raw else None}
+
+    @app.put("/api/setup/accounts/{acc_id}")
+    async def setup_update(acc_id: str, body: dict[str, Any] = Body(...)):
+        raw = S.list_raw_accounts()
+        current = next((a for a in raw if a.get("id") == acc_id), None)
+        if current is None:
+            raise HTTPException(404, "Unknown account")
+        try:
+            entry = S.build_account_entry({**{k: current.get(k) for k in ("label", "login", "server", "terminal_path", "color", "portable", "server_utc_offset_hours")}, **body},
+                                          {a.get("id") for a in raw}, current)
+            if current.get("mock"):
+                entry["mock"] = True
+            _finish_add(entry, restart=True)
+        except ConfigError as exc:
+            raise HTTPException(422, str(exc))
+        return {"id": acc_id, "status": "restarted"}
+
+    @app.delete("/api/setup/accounts/{acc_id}")
+    async def setup_delete(acc_id: str, delete_copy: bool = False):
+        raw = next((a for a in S.list_raw_accounts() if a.get("id") == acc_id), None)
+        if raw is None:
+            raise HTTPException(404, "Unknown account")
+        supervisor.remove_account(acc_id)
+        S.delete_account(acc_id)
+        pending.pop(acc_id, None)
+        removed_copy = False
+        if delete_copy:
+            folder = Path(str(raw.get("terminal_path") or "")).parent
+            if folder.is_dir() and str(folder.resolve()).lower().startswith(str(S.TERMINALS_DIR.resolve()).lower()):
+                import shutil
+                shutil.rmtree(folder, ignore_errors=True)
+                removed_copy = True
+        return {"id": acc_id, "removed": True, "removed_copy": removed_copy}
+
+    @app.post("/api/setup/demo")
+    async def setup_demo():
+        raw = S.list_raw_accounts()
+        ids = {a.get("id") for a in raw}
+        added = []
+        for i, (label, color) in enumerate((("Demo account A", "blue"), ("Demo account B", "orange"))):
+            acc_id = f"demo{i + 1}"
+            if acc_id in ids:
+                continue
+            entry = {"id": acc_id, "label": label, "color": color, "mock": True, "enabled": True, "login": 0, "server": "",
+                     "trading": {"enabled": True, "max_risk_percent": 2.0, "max_lots": 2.0, "max_open_positions": 10, "allowed_symbols": [], "magic": 700000 + i, "deviation_points": 20}}
+            S.save_account(entry)
+            supervisor.add_account(parse_one(entry))
+            added.append(acc_id)
+        return {"added": added}
+
+    @app.put("/api/setup/settings")
+    async def setup_settings(body: dict[str, Any] = Body(...)):
+        allowed = {k: body[k] for k in ("trading_enabled", "mock_mode", "report_timezone", "history_lookback_days", "refresh_seconds") if k in body}
+        if not allowed:
+            raise HTTPException(400, "Nothing to change")
+        S.update_settings(allowed)
+        try:
+            new_settings = load_settings()
+        except ConfigError as exc:
+            raise HTTPException(422, str(exc))
+        settings_ref["settings"] = new_settings
+        supervisor.apply_settings(new_settings)
+        return {"ok": True, "settings": {"trading_enabled": new_settings.trading_enabled, "mock_mode": new_settings.mock_mode}}

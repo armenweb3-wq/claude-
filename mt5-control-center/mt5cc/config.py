@@ -99,8 +99,9 @@ class AccountConfig:
     portable: bool = False
     login: int | None = None
     server: str | None = None
-    password: str | None = None          # discouraged - prefer password_env
+    password: str | None = None          # plain text in accounts.json - discouraged
     password_env: str | None = None      # name of an environment variable
+    password_dpapi: str | None = None    # encrypted with Windows DPAPI (what the Accounts page writes)
     server_utc_offset_hours: float = 0.0
     timeout_ms: int = 60000
     mock: bool = False
@@ -108,6 +109,12 @@ class AccountConfig:
     trading: TradingConfig = field(default_factory=TradingConfig)
 
     def resolved_password(self) -> str | None:
+        if self.password_dpapi:
+            try:
+                from .setup import unprotect
+                return unprotect(self.password_dpapi) or None
+            except Exception:
+                return None
         if self.password_env:
             value = os.environ.get(self.password_env)
             return value if value else None
@@ -134,7 +141,8 @@ class AccountConfig:
             "server_utc_offset_hours": self.server_utc_offset_hours,
             "auth_mode": self.auth_mode(),
             "password_source": (
-                f"environment variable {self.password_env}" + ("" if os.environ.get(self.password_env or "") else " (not set)")
+                "encrypted in accounts.json (Windows DPAPI)" if self.password_dpapi
+                else f"environment variable {self.password_env}" + ("" if os.environ.get(self.password_env or "") else " (not set)")
                 if self.password_env
                 else "accounts.json" if self.password
                 else "none (terminal must already be logged in)"
@@ -153,6 +161,7 @@ class AccountConfig:
         d["trading"] = asdict(self.trading)
         d["password"] = self.resolved_password()
         d.pop("password_env", None)
+        d.pop("password_dpapi", None)
         return d
 
 
@@ -225,9 +234,12 @@ def load_settings() -> Settings:
 def load_accounts(settings: Settings) -> list[AccountConfig]:
     raw = _read_json(ACCOUNTS_FILE)
     entries = raw.get("accounts")
-    if not isinstance(entries, list) or not entries:
-        raise ConfigError("accounts.json must contain a non-empty \"accounts\" list")
+    if not isinstance(entries, list):
+        raise ConfigError("accounts.json must contain an \"accounts\" list")
+    return parse_accounts(entries, settings)
 
+
+def parse_accounts(entries: list[Any], settings: Settings) -> list[AccountConfig]:
     accounts: list[AccountConfig] = []
     seen_ids: set[str] = set()
     for index, entry in enumerate(entries):
@@ -250,6 +262,7 @@ def load_accounts(settings: Settings) -> list[AccountConfig]:
             server=entry.get("server") or None,
             password=entry.get("password") or None,
             password_env=entry.get("password_env") or None,
+            password_dpapi=entry.get("password_dpapi") or None,
             server_utc_offset_hours=float(entry.get("server_utc_offset_hours", 0.0)),
             timeout_ms=int(entry.get("timeout_ms", 60000)),
             mock=bool(entry.get("mock", False)) or settings.mock_mode,

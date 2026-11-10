@@ -685,6 +685,24 @@ def install_setup_routes(app: FastAPI, supervisor: Supervisor, settings_ref: dic
             added.append(acc_id)
         return {"added": added}
 
+    @app.get("/api/setup/autostart")
+    async def autostart_status():
+        from . import autostart
+        return autostart.status()
+
+    @app.put("/api/setup/autostart")
+    async def autostart_set(body: dict[str, Any] = Body(...)):
+        from . import autostart
+        try:
+            if "enabled" in body:
+                return autostart.enable() if body["enabled"] else autostart.disable()
+            if body.get("desktop_shortcut"):
+                url = getattr(app.state, "dashboard_url", None) or f"http://{settings_ref['settings'].server.host}:{settings_ref['settings'].server.port}/"
+                return autostart.create_desktop_shortcut(url)
+        except Exception as exc:
+            raise HTTPException(422, str(exc))
+        raise HTTPException(400, "Nothing to change")
+
     @app.put("/api/setup/settings")
     async def setup_settings(body: dict[str, Any] = Body(...)):
         allowed = {k: body[k] for k in ("trading_enabled", "mock_mode", "report_timezone", "history_lookback_days", "refresh_seconds") if k in body}

@@ -28,5 +28,5 @@ Write-Host "Checking dependencies ..." -ForegroundColor Cyan
 & $venvPython -m pip install --disable-pip-version-check --quiet -r requirements.txt
 if ($LASTEXITCODE -ne 0) { throw "Dependency installation failed. Check your internet connection and retry." }
 
-& $venvPython -m mt5cc
+& $venvPython -m mt5cc @args
 exit $LASTEXITCODE

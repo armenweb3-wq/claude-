@@ -34,7 +34,7 @@ echo  Checking dependencies ...
 if errorlevel 1 goto :fail
 
 echo.
-".venv\Scripts\python.exe" -m mt5cc
+".venv\Scripts\python.exe" -m mt5cc %*
 set "RC=%ERRORLEVEL%"
 echo.
 if not "%RC%"=="0" (

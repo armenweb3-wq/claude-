@@ -325,3 +325,4 @@ label.check input[type="checkbox"] { width: 16px; height: 16px; min-height: 0; m
 .welcome p { max-width: 640px; margin: 0; }
 .modal.wide { width: min(760px, 100%); }
 .modal-body .form-row label { color: var(--text-3); }
+hr.sep { border: 0; border-top: 1px solid var(--border); margin: 14px 0; }

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import logging
 import multiprocessing as mp
 import signal
@@ -35,6 +36,9 @@ def setup_logging(level: str) -> None:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(prog="mt5cc", description="MT5 Trading Control Center")
+    parser.add_argument("--no-browser", action="store_true", help="do not open the dashboard in a browser at start")
+    args = parser.parse_args()
     print(f"MT5 Trading Control Center v{__version__}")
     try:
         for note in ensure_config_files():
@@ -75,7 +79,8 @@ def main() -> int:
 
     supervisor.start()
 
-    if settings.server.open_browser:
+    app.state.dashboard_url = url
+    if settings.server.open_browser and not args.no_browser:
         threading.Timer(1.5, lambda: webbrowser.open(url)).start()
 
     config = uvicorn.Config(app, host=settings.server.host, port=settings.server.port,

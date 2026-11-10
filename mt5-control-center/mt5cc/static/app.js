@@ -731,6 +731,7 @@
   function termShort(p) { const parts = String(p || "").split(/[\\/]/).filter(Boolean); if (parts.length && /terminal64\.exe/i.test(parts[parts.length - 1])) parts.pop(); return parts.pop() || p || ""; }
   async function viewAccounts(content, token) {
     const info = await api("/api/setup");
+    const auto = await api("/api/setup/autostart").catch(() => ({ supported: false }));
     if (token !== S.viewToken) return;
     const st = info.settings;
     const pendingAny = info.accounts.some(a => a.pending);
@@ -740,6 +741,9 @@
         <section class="card"><div class="card-head"><h3>Global switches</h3></div><div class="card-body">
           <label class="check big-check"><input type="checkbox" id="g-trading" ${st.trading_enabled ? "checked" : ""}><span><b>Allow trading from this dashboard</b><br><span class="muted small">Master switch. Each account also has its own trading switch below. Off = the dashboard can only read.</span></span></label>
           <div class="small muted mt6">Changing a switch restarts the account connections (takes a few seconds).</div>
+          <hr class="sep">
+          <label class="check big-check"><input type="checkbox" id="g-autostart" ${auto.enabled ? "checked" : ""} ${auto.supported ? "" : "disabled"}><span><b>Start with Windows</b><br><span class="muted small">${auto.supported ? "Starts the control center minimized at every Windows login, which starts and logs in the private terminals. Open the dashboard from the desktop shortcut." : "Only available on Windows."}</span></span></label>
+          <div class="form-actions mt6"><button class="btn sm" id="g-desktop" ${auto.supported ? "" : "disabled"}>${auto.desktop_shortcut ? "Re-create desktop shortcut" : "Create desktop shortcut"}</button><span class="xs muted">${auto.desktop_shortcut ? "shortcut exists on the desktop" : ""}</span></div>
         </div></section>
         <section class="card"><div class="card-head"><h3>Where things are stored</h3></div><div class="card-body"><dl class="kv">
           <dt>Accounts file</dt><dd class="mono">config\\accounts.json</dd>
@@ -758,6 +762,8 @@
     content.querySelectorAll(".progress .bar").forEach(b => { b.style.width = b.dataset.w + "%"; });
     bindTerminalSelect($("#add-form"));
     $("#g-trading").addEventListener("change", async e => { try { await put("/api/setup/settings", { trading_enabled: e.target.checked }); toast(e.target.checked ? "Trading switch ON" : "Trading switch OFF"); } catch (err) { toast(err.message, "bad"); } renderView(); });
+    $("#g-autostart").addEventListener("change", async e => { try { await put("/api/setup/autostart", { enabled: e.target.checked }); toast(e.target.checked ? "Will start with Windows" : "Removed from Windows startup"); } catch (err) { toast(err.message, "bad"); e.target.checked = !e.target.checked; } });
+    $("#g-desktop").addEventListener("click", async () => { try { await put("/api/setup/autostart", { desktop_shortcut: true }); toast("Desktop shortcut created"); renderView(); } catch (err) { toast(err.message, "bad"); } });
     $("#g-demo").addEventListener("click", async () => { try { await post("/api/setup/demo", {}); toast("Demo accounts added"); } catch (err) { toast(err.message, "bad"); } renderView(); });
     $("#add-go").addEventListener("click", async () => {
       const msg = $("#add-msg"); msg.textContent = "Saving…";

@@ -127,6 +127,14 @@ edit it in Notepad:
 Restart the launcher after editing by hand; changes made on the Accounts page
 apply immediately.
 
+### Start with Windows
+
+On the Accounts page tick **Start with Windows**. This puts a shortcut in your
+Windows Startup folder (no administrator rights needed) that starts the
+control center minimized at every login, which in turn starts and logs in the
+private terminal copies. Click **Create desktop shortcut** to get an icon that
+opens the dashboard. Untick the box to remove the startup entry.
+
 ## 4. `config\settings.json`
 
 ```json

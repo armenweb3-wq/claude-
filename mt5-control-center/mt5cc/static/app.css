@@ -302,7 +302,7 @@ table.data.compact th, table.data.compact td { padding: 6px 9px; font-size: 12px
 .form { display: flex; flex-direction: column; gap: 12px; }
 .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
 .form-row label { display: flex; flex-direction: column; gap: 4px; font-size: 11.5px; color: var(--text-3); min-width: 0; }
-.form-row label.wide { grid-column: 1 / -1; }
+.form-row .wide { grid-column: 1 / -1; }
 .form-row .seg { min-height: 34px; }
 .form-row .seg button { flex: 1; }
 .form-row .seg button.active.buy { background: rgba(57,135,229,.25); color: #9cc4f5; }
@@ -326,3 +326,5 @@ label.check input[type="checkbox"] { width: 16px; height: 16px; min-height: 0; m
 .modal.wide { width: min(760px, 100%); }
 .modal-body .form-row label { color: var(--text-3); }
 hr.sep { border: 0; border-top: 1px solid var(--border); margin: 14px 0; }
+details summary { cursor: pointer; }
+.log { max-height: 320px; }

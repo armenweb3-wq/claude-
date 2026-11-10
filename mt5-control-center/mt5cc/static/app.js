@@ -14,7 +14,7 @@
     viewToken: 0,
   };
 
-  const VIEW_TITLES = { overview: "Overview", positions: "Open positions", trade: "Trade", performance: "Performance", trades: "Trade history", balance: "Balance operations", accounts: "Accounts", diagnostics: "Diagnostics" };
+  const VIEW_TITLES = { overview: "Overview", positions: "Open positions", trade: "Trade", bot: "Trading bot", performance: "Performance", trades: "Trade history", balance: "Balance operations", accounts: "Accounts", diagnostics: "Diagnostics" };
   const $ = (sel, root) => (root || document).querySelector(sel);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const COLOR_HEX = { blue: "#3987e5", orange: "#e0692f", aqua: "#1fb282", yellow: "#d29a1a", magenta: "#d55181", violet: "#9085e9" };
@@ -121,13 +121,13 @@
     clearTimeout(S.timers.view);
     const token = ++S.viewToken;
     const content = $("#content");
-    const fn = { overview: viewOverview, positions: viewPositions, trade: viewTrade, performance: viewPerformance, trades: viewTrades, balance: viewBalance, accounts: viewAccounts, diagnostics: viewDiagnostics }[S.view];
+    const fn = { overview: viewOverview, positions: viewPositions, trade: viewTrade, bot: viewBot, performance: viewPerformance, trades: viewTrades, balance: viewBalance, accounts: viewAccounts, diagnostics: viewDiagnostics }[S.view];
     Promise.resolve(fn(content, token)).catch(err => {
       if (token !== S.viewToken) return;
       if (err.message !== "unauthorized") content.innerHTML = `<div class="banner bad">Could not load this view: ${esc(err.message)}</div>`;
     });
   }
-  function scheduleViewRefresh(ms) { clearTimeout(S.timers.view); S.timers.view = setTimeout(() => { if (!document.hidden && !$("#modal") && S.view !== "trade" && !(S.view === "accounts" && document.activeElement && document.activeElement.closest && document.activeElement.closest("#add-form"))) renderView(); else scheduleViewRefresh(ms); }, ms); }
+  function scheduleViewRefresh(ms) { clearTimeout(S.timers.view); S.timers.view = setTimeout(() => { if (!document.hidden && !$("#modal") && S.view !== "trade" && !(S.view === "accounts" && document.activeElement && document.activeElement.closest && document.activeElement.closest("#add-form")) && !(S.view === "bot" && BF.cfgDirty)) renderView(); else scheduleViewRefresh(ms); }, ms); }
 
   /* ---------------- OVERVIEW ---------------- */
   function accountCard(a, opts = {}) {
@@ -788,6 +788,153 @@
       $("#modal .modal").classList.add("wide");
     }));
     scheduleViewRefresh(pendingAny ? 1500 : 10000);
+  }
+
+  /* ---------------- BOT ---------------- */
+  const BF = { account: null, bt: { symbol: "", timeframe: "", bars: 3000, risk: 1 }, lastBt: null, cfgDirty: false };
+
+  function paramInputs(strat, current) {
+    return Object.entries(strat.params).map(([k, v]) => `<label>${esc(k.replace(/_/g, " "))}<input class="bp" data-k="${esc(k)}" type="number" step="any" value="${esc(current && current[k] !== undefined ? current[k] : v)}"></label>`).join("");
+  }
+  function botCfgForm(info, cfg) {
+    const strat = info.strategies.find(s => s.key === cfg.strategy) || info.strategies[0];
+    return `<div class="form">
+      <div class="form-row">
+        <label class="wide">Strategy<select class="bc" data-k="strategy">${info.strategies.map(s => `<option value="${s.key}" ${s.key === cfg.strategy ? "selected" : ""}>${esc(s.name)}</option>`).join("")}</select></label>
+        <div class="wide small dim" id="bot-strat-desc">${esc(strat.description)}</div>
+      </div>
+      <div class="form-row">
+        <label>Symbols (comma separated)<input class="bc" data-k="symbols" value="${esc((cfg.symbols || []).join(", "))}" spellcheck="false"></label>
+        <label>Timeframe<select class="bc" data-k="timeframe">${info.timeframes.map(t => `<option ${t === cfg.timeframe ? "selected" : ""}>${t}</option>`).join("")}</select></label>
+        <label>Risk per trade (% of equity)<input class="bc" data-k="risk_percent" type="number" step="0.1" min="0.1" max="10" value="${esc(cfg.risk_percent)}"></label>
+        <label>Max open bot positions<input class="bc" data-k="max_positions" type="number" step="1" min="1" value="${esc(cfg.max_positions)}"></label>
+      </div>
+      <div class="form-row">
+        <label>Daily loss limit (% of day-start equity)<input class="bc" data-k="max_daily_loss_percent" type="number" step="0.1" min="0" value="${esc(cfg.max_daily_loss_percent)}"></label>
+        <label>Max lots per order<input class="bc" data-k="max_lots" type="number" step="0.01" min="0.01" value="${esc(cfg.max_lots)}"></label>
+        <label>Max spread (points, 0 = any)<input class="bc" data-k="max_spread_points" type="number" step="1" min="0" value="${esc(cfg.max_spread_points)}"></label>
+        <label>Trading hours (UTC)<input class="bc" data-k="trading_hours_utc" value="${esc(cfg.trading_hours_utc)}" placeholder="07:00-21:00"></label>
+        <label>Time exit after N bars (0 = none)<input class="bc" data-k="max_bars_held" type="number" step="1" min="0" value="${esc(cfg.max_bars_held)}"></label>
+        <label>Paper starting equity (0 = live equity)<input class="bc" data-k="paper_equity" type="number" step="100" min="0" value="${esc(cfg.paper_equity)}"></label>
+      </div>
+      <div class="section-title my14"><h3 class="small dim">Strategy parameters</h3><div class="line"></div></div>
+      <div class="form-row" id="bot-params">${paramInputs(strat, cfg.params)}</div>
+      <div class="form-row"><label class="check wide"><input type="checkbox" class="bc" data-k="autostart" ${cfg.autostart ? "checked" : ""}><span>Start the bot automatically whenever this account connects (e.g. after a PC restart), in the last used mode</span></label></div>
+    </div>`;
+  }
+  function readBotCfg(root, info) {
+    const cfg = {};
+    root.querySelectorAll(".bc").forEach(el => { cfg[el.dataset.k] = el.type === "checkbox" ? el.checked : el.value; });
+    cfg.params = {}; root.querySelectorAll(".bp").forEach(el => { if (el.value !== "") cfg.params[el.dataset.k] = el.value; });
+    return cfg;
+  }
+
+  async function viewBot(content, token) {
+    const list = accounts();
+    if (!list.length) { content.innerHTML = `<div class="empty">Add an account first (Accounts page).</div>`; return; }
+    if (S.scope !== "all") BF.account = S.scope;
+    if (!BF.account || !list.some(a => a.id === BF.account)) BF.account = list[0].id;
+    const a = acct(BF.account);
+    const info = await api(`/api/accounts/${a.id}/bot`);
+    if (token !== S.viewToken) return;
+    const cfg = info.config, st = info.state, cur = info.currency || "";
+    const running = !!(st && st.running);
+    const mode = st ? st.mode : cfg.mode;
+    if (!BF.bt.symbol) BF.bt.symbol = (cfg.symbols || [])[0] || "";
+    if (!BF.bt.timeframe) BF.bt.timeframe = cfg.timeframe;
+    const paper = st ? st.paper : null;
+    const paperNet = paper && paper.equity && paper.start_equity ? paper.equity - paper.start_equity : null;
+    content.innerHTML = mockBanner() + `
+      <div class="filters"><span class="small dim">Bot for</span><span class="seg" id="bot-acct">${list.map(x => `<button data-id="${esc(x.id)}" class="${x.id === a.id ? "active" : ""}"><span class="dot c-${esc(x.color)} mr6"></span>${esc(x.label)}</button>`).join("")}</span><span class="flex1"></span>
+        <span class="small dim">Account equity ${money(info.equity, cur)}</span></div>
+      <div class="banner ${running ? (mode === "live" ? "bad" : "info") : "info"}"><strong>${running ? (mode === "live" ? "LIVE bot running" : "Paper bot running") : "Bot stopped"}</strong><span>${running ? `${esc(st.strategy.name)} on ${esc((st.config.symbols || []).join(", "))} ${esc(st.config.timeframe)} since ${esc(dt(new Date(st.started_at * 1000).toISOString()))}${st.halt_reason ? ` · <b class="warn-text">${esc(st.halt_reason)}</b>` : ""}` : "Configure the strategy, run a backtest, then start in paper mode. Paper mode trades against the live price with pretend money so you can watch it for a while before letting it use the real account."}</span></div>
+      <div class="tiles">
+        <div class="tile"><div class="k">Mode</div><div class="v">${running ? (mode === "live" ? '<span class="tag bad">LIVE</span>' : '<span class="tag ok">PAPER</span>') : '<span class="tag neutral">stopped</span>'}</div><div class="s">magic ${esc(st ? st.magic : "–")}</div></div>
+        <div class="tile"><div class="k">Today's bot P/L</div><div class="v">${st && st.daily_pl !== null && st.daily_pl !== undefined ? signedMoney(st.daily_pl, cur) : "–"}</div><div class="s">limit −${esc(cfg.max_daily_loss_percent)}% of ${st && st.day_start_equity ? fmt(st.day_start_equity, 0) : "day-start equity"}</div></div>
+        <div class="tile"><div class="k">Paper equity</div><div class="v">${paper && paper.equity ? money(paper.equity, cur) : "–"}</div><div class="s">${paperNet !== null ? "since reset " + (paperNet >= 0 ? "+" : "−") + fmt(Math.abs(paperNet)) + ` · ${paper.trade_count} trades` : "not started"}</div></div>
+        <div class="tile"><div class="k">Open bot positions</div><div class="v">${st ? (mode === "paper" ? paper.positions.length : st.live_positions.length) : 0}</div><div class="s">max ${esc(cfg.max_positions)}</div></div>
+      </div>
+      <div class="grid cols-2">
+        <section class="card"><div class="card-head"><h3>Strategy & risk settings</h3><span class="sub">saved per account</span></div><div class="card-body" id="bot-cfg">${botCfgForm(info, cfg)}
+          <div class="form-actions mt14"><span class="small muted" id="bot-cfg-msg"></span><span class="flex1"></span><button class="btn primary" id="bot-save">Save settings</button></div></div></section>
+        <section class="card"><div class="card-head"><h3>Run</h3></div><div class="card-body">
+          <p class="small dim">Order of operations: <b>1</b> backtest below, <b>2</b> start in paper mode and watch it for days or weeks, <b>3</b> only then start live, with the same settings.</p>
+          <div class="form-actions mt14">
+            ${running ? `<button class="btn danger" id="bot-stop">Stop bot</button>` : `<button class="btn primary" id="bot-paper">Start PAPER</button><button class="btn danger" id="bot-live" ${info.trading.enabled ? "" : "disabled"} title="${esc(info.trading.enabled ? "" : info.trading.reasons.join("; "))}">Start LIVE…</button>`}
+            <span class="flex1"></span><button class="btn sm" id="bot-reset-paper">Reset paper ledger</button></div>
+          ${!info.trading.enabled ? `<div class="xs muted mt6">Live needs trading enabled for this account: ${esc(info.trading.reasons.join("; "))}</div>` : ""}
+          <div class="section-title my14"><h3 class="small dim">Open bot positions</h3><div class="line"></div></div>
+          ${botPositions(st, mode, cur)}
+          <div class="section-title my14"><h3 class="small dim">Last signals per symbol</h3><div class="line"></div></div>
+          ${st && Object.keys(st.symbols || {}).length ? `<dl class="kv">${Object.entries(st.symbols).map(([s, v]) => `<dt>${esc(s)}</dt><dd>${v.last_bar ? "bar " + esc(dt(new Date(v.last_bar * 1000).toISOString())) : "waiting for first bar"} · ${v.last_signal && v.last_signal.entry ? `<span class="tag ${v.last_signal.entry.direction > 0 ? "buy" : "sell"}">${v.last_signal.entry.direction > 0 ? "LONG" : "SHORT"}</span> ${esc(v.last_signal.entry.reason)}` : "no signal"}</dd>`).join("")}</dl>` : `<div class="small muted">No bars processed yet.</div>`}
+        </div></section>
+      </div>
+      <section class="card"><div class="card-head"><h3>Backtest</h3><span class="sub">uses your broker's price history from this terminal · includes spread and commission</span></div><div class="card-body">
+        <div class="filters">
+          <label>Symbol<input id="bt-symbol" value="${esc(BF.bt.symbol)}" spellcheck="false"></label>
+          <label>Timeframe<select id="bt-tf">${info.timeframes.map(t => `<option ${t === BF.bt.timeframe ? "selected" : ""}>${t}</option>`).join("")}</select></label>
+          <label>Bars<select id="bt-bars">${[1000, 2000, 3000, 5000, 10000, 20000].map(n => `<option ${n === BF.bt.bars ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+          <label>Risk %<input id="bt-risk" type="number" step="0.1" value="${esc(BF.bt.risk)}"></label>
+          <label>&nbsp;<button class="btn primary" id="bt-run">Run backtest with the settings above</button></label>
+        </div>
+        <div id="bt-out" class="mt14">${BF.lastBt ? "" : '<div class="small muted">Results appear here. A backtest tells you how the rules behaved on past prices; it is a sanity check, not a promise.</div>'}</div>
+      </div></section>
+      <section class="card"><div class="card-head"><h3>Bot log</h3><span class="sub">every decision, newest first</span></div><div class="log" id="bot-log">${st && st.decisions && st.decisions.length ? st.decisions.slice().reverse().map(d => `<div class="${esc(d.level)}"><span class="ts">${esc(dtShort(new Date(d.ts * 1000).toISOString()))}</span>${esc(d.message)}</div>`).join("") : '<span class="muted">No decisions yet</span>'}</div></section>
+      ${paper && paper.trades && paper.trades.length ? `<section class="card"><div class="card-head"><h3>Paper trades</h3><span class="sub">last ${paper.trades.length}</span></div><div class="table-wrap"><table class="data compact"><thead><tr><th>Symbol</th><th>Side</th><th>Entry</th><th>Exit</th><th class="num">Entry</th><th class="num">Exit</th><th class="num">Lots</th><th class="num">Net</th><th>Why in</th><th>Why out</th></tr></thead><tbody>${paper.trades.slice().reverse().map(t => `<tr><td class="sym">${esc(t.symbol)}</td><td><span class="tag ${t.direction.toLowerCase()}">${t.direction}</span></td><td class="dim">${dt2(new Date(t.entry_time * 1000).toISOString())}</td><td class="dim">${dt2(new Date(t.exit_time * 1000).toISOString())}</td><td class="num">${price(t.entry)}</td><td class="num">${price(t.exit)}</td><td class="num">${fmt(t.volume, 2)}</td><td class="num">${signedMoney(t.net, cur)}</td><td class="muted small">${esc(t.reason_in)}</td><td class="muted small">${esc(t.reason_out)}</td></tr>`).join("")}</tbody></table></div></section>` : ""}`;
+    content.querySelectorAll("#bot-acct button").forEach(b => b.addEventListener("click", () => { BF.account = b.dataset.id; BF.bt.symbol = ""; BF.lastBt = null; if (S.scope !== "all") { S.scope = "all"; renderShell(); } renderView(); }));
+    const cfgRoot = $("#bot-cfg");
+    cfgRoot.querySelector('[data-k="strategy"]').addEventListener("change", e => {
+      const strat = info.strategies.find(s => s.key === e.target.value); $("#bot-strat-desc").textContent = strat.description; $("#bot-params").innerHTML = paramInputs(strat, {});
+    });
+    cfgRoot.addEventListener("input", () => { BF.cfgDirty = true; });
+    $("#bot-save").addEventListener("click", async () => {
+      const msg = $("#bot-cfg-msg"); msg.textContent = "Saving…";
+      try { const r = await put(`/api/accounts/${a.id}/bot/config`, readBotCfg(cfgRoot, info)); BF.cfgDirty = false; toast(r.note || "Bot settings saved"); renderView(); }
+      catch (err) { msg.innerHTML = `<span class="neg">${esc(err.message)}</span>`; }
+    });
+    const startBot = async (m, confirm) => { try { await post(`/api/accounts/${a.id}/bot/start`, { mode: m, confirm }); toast(`Bot started in ${m.toUpperCase()} mode`); renderView(); } catch (err) { toast(err.message, "bad"); } };
+    if ($("#bot-paper")) $("#bot-paper").addEventListener("click", () => { if (BF.cfgDirty) { toast("Save the settings first", "bad"); return; } startBot("paper"); });
+    if ($("#bot-live")) $("#bot-live").addEventListener("click", () => {
+      if (BF.cfgDirty) { toast("Save the settings first", "bad"); return; }
+      openModal({ title: `Start the bot with REAL money on ${a.label}?`, danger: true, confirmLabel: "Start live bot", requireText: "LIVE",
+        body: `<dl class="kv"><dt>Strategy</dt><dd>${esc((info.strategies.find(s => s.key === cfg.strategy) || {}).name || cfg.strategy)}</dd><dt>Symbols</dt><dd>${esc((cfg.symbols || []).join(", "))} · ${esc(cfg.timeframe)}</dd><dt>Risk per trade</dt><dd>${esc(cfg.risk_percent)}% of equity</dd><dt>Daily loss limit</dt><dd>${esc(cfg.max_daily_loss_percent)}%</dd><dt>Max positions / lots</dt><dd>${esc(cfg.max_positions)} / ${esc(cfg.max_lots)}</dd></dl><p class="small dim">The bot will place real orders on this account whenever its rules trigger, including while you are away. Account limits (max risk, max lots, max positions) still apply on top.</p>`,
+        onConfirm: async () => { await post(`/api/accounts/${a.id}/bot/start`, { mode: "live", confirm: "LIVE" }); toast("LIVE bot started"); renderView(); } });
+    });
+    if ($("#bot-stop")) $("#bot-stop").addEventListener("click", async () => { try { await post(`/api/accounts/${a.id}/bot/stop`, {}); toast("Bot stopped"); renderView(); } catch (err) { toast(err.message, "bad"); } });
+    $("#bot-reset-paper").addEventListener("click", () => openModal({ title: "Reset paper ledger", confirmLabel: "Reset", body: `<p>Clears the paper trades and starts the paper equity again from the configured starting equity (or the live equity).</p>`, onConfirm: async () => { await post(`/api/accounts/${a.id}/bot/paper-reset`, {}); toast("Paper ledger reset"); renderView(); } }));
+    $("#bt-run").addEventListener("click", async () => {
+      BF.bt = { symbol: $("#bt-symbol").value.trim().toUpperCase(), timeframe: $("#bt-tf").value, bars: +$("#bt-bars").value, risk: +$("#bt-risk").value };
+      const c = readBotCfg(cfgRoot, info);
+      const out = $("#bt-out"); out.innerHTML = `<div class="loading-row"><div class="spinner"></div>Fetching ${BF.bt.bars} bars of ${esc(BF.bt.symbol)} ${esc(BF.bt.timeframe)} from the terminal and simulating…</div>`;
+      try { BF.lastBt = await post(`/api/accounts/${a.id}/bot/backtest`, { symbol: BF.bt.symbol, timeframe: BF.bt.timeframe, bars: BF.bt.bars, strategy: c.strategy, params: c.params, risk_percent: BF.bt.risk, max_lots: c.max_lots, max_bars_held: c.max_bars_held }); renderBacktest(out, BF.lastBt, cur); }
+      catch (err) { out.innerHTML = `<div class="banner bad"><span>${esc(err.message)}</span></div>`; }
+    });
+    if (BF.lastBt) renderBacktest($("#bt-out"), BF.lastBt, cur);
+    scheduleViewRefresh(running ? 5000 : 30000);
+  }
+  function botPositions(st, mode, cur) {
+    const rows = st ? (mode === "paper" ? st.paper.positions : st.live_positions) : [];
+    if (!rows.length) return `<div class="small muted">None</div>`;
+    return `<div class="table-wrap"><table class="data compact"><thead><tr><th>Symbol</th><th>Side</th><th class="num">Lots</th><th class="num">Entry</th><th class="num">Stop</th><th class="num">Target</th><th class="num">Floating</th></tr></thead><tbody>${rows.map(p => `<tr><td class="sym">${esc(p.symbol)}</td><td><span class="tag ${String(p.direction).toLowerCase()}">${esc(p.direction)}</span></td><td class="num">${fmt(p.volume, 2)}</td><td class="num">${price(p.entry)}</td><td class="num">${price(p.stop)}</td><td class="num">${p.target ? price(p.target) : "–"}</td><td class="num">${signedMoney(p.floating, cur)}</td></tr>`).join("")}</tbody></table></div>`;
+  }
+  function renderBacktest(out, r, cur) {
+    const s = r.stats;
+    out.innerHTML = `${r.mock ? '<div class="banner warn"><strong>Synthetic prices</strong><span>This account uses demo data, so these results say nothing about real markets.</span></div>' : ""}
+      <div class="small dim mb6">${esc(r.symbol)} ${esc(r.timeframe)} · ${esc(r.strategy.name)} · ${s.bars} bars from ${esc(dt(new Date(r.from * 1000).toISOString()))} to ${esc(dt(new Date(r.to * 1000).toISOString()))} (${s.days} days) · spread ${r.spec.spread_points} pts · commission ${r.spec.commission_per_lot}/lot/side</div>
+      <div class="tiles">
+        <div class="tile"><div class="k">Net result</div><div class="v">${signedMoney(s.net, cur)}</div><div class="s">${s.return_pct === null ? "" : (s.return_pct >= 0 ? "+" : "") + fmt(s.return_pct, 1) + "% on " + fmt(s.start_equity, 0)}</div></div>
+        <div class="tile"><div class="k">Trades</div><div class="v">${s.trades}</div><div class="s">${s.trades_per_month}/month · avg hold ${s.avg_bars_held ?? "–"} bars</div></div>
+        <div class="tile"><div class="k">Win rate</div><div class="v">${pct(s.win_rate)}</div><div class="s">${s.wins} won · ${s.losses} lost</div></div>
+        <div class="tile"><div class="k">Profit factor</div><div class="v">${pf(s.profit_factor)}</div><div class="s">avg R ${s.avg_r ?? "–"}</div></div>
+        <div class="tile"><div class="k">Max drawdown</div><div class="v neg">−${fmt(s.max_drawdown)}<span class="cur">${esc(cur)}</span></div><div class="s">${s.max_drawdown_pct ?? "–"}% · worst streak ${s.worst_losing_streak} losses</div></div>
+        <div class="tile"><div class="k">Avg win / loss</div><div class="v">${s.avg_win === null ? "–" : fmt(s.avg_win, 0)} / ${s.avg_loss === null ? "–" : fmt(s.avg_loss, 0)}</div><div class="s">expectancy ${s.expectancy === null ? "–" : fmt(s.expectancy)} per trade</div></div>
+      </div>
+      <div class="grid cols-2 mt14"><div><div class="small dim mb6">Equity curve</div><div id="bt-curve"></div></div><div><div class="small dim mb6">Drawdown</div><div id="bt-dd"></div></div></div>
+      ${r.trades.length ? `<details class="mt14"><summary class="small dim">Show ${r.trades.length} simulated trades</summary><div class="table-wrap"><table class="data compact"><thead><tr><th>Side</th><th>Entry</th><th>Exit</th><th class="num">Entry</th><th class="num">Exit</th><th class="num">Lots</th><th class="num">Net</th><th class="num">R</th><th>Why in</th><th>Why out</th></tr></thead><tbody>${r.trades.slice().reverse().map(t => `<tr><td><span class="tag ${t.direction > 0 ? "buy" : "sell"}">${t.direction > 0 ? "BUY" : "SELL"}</span></td><td class="dim">${dt2(new Date(t.entry_time * 1000).toISOString())}</td><td class="dim">${dt2(new Date(t.exit_time * 1000).toISOString())}</td><td class="num">${price(t.entry)}</td><td class="num">${price(t.exit)}</td><td class="num">${fmt(t.volume, 2)}</td><td class="num">${signedMoney(t.net, cur)}</td><td class="num">${fmt(t.r_multiple, 2)}</td><td class="muted small">${esc(t.reason_in)}</td><td class="muted small">${esc(t.reason_out)}</td></tr>`).join("")}</tbody></table></div></details>` : ""}
+      <ul class="notes mt14"><li>Entries fill at the next bar's open plus half the spread; stops and targets are checked against each bar's high/low, stop first when both are hit.</li><li>Position size = ${esc(BF.bt.risk)}% of running equity divided by the stop distance, rounded down to the lot step.</li><li>Past results do not predict future results. Use the paper mode for weeks before going live.</li></ul>`;
+    const c1 = $("#bt-curve"), c2 = $("#bt-dd"), col = "#3987e5";
+    Charts.responsive(c1, () => Charts.lineChart(c1, { height: 200, baseline: null, series: [{ name: "Equity", color: col, points: r.curve.map(p => ({ x: p.t, y: p.equity })) }], tipFormat: v => fmt(v, 2) + " " + cur }));
+    Charts.responsive(c2, () => Charts.lineChart(c2, { height: 160, baseline: 0, series: [{ name: "Drawdown", color: "#e04f4f", points: r.curve.map(p => ({ x: p.t, y: p.dd })) }], tipFormat: v => fmt(v, 2) + " " + cur }));
   }
 
   /* ---------------- polling ---------------- */

@@ -94,3 +94,7 @@ TRADE_RETCODE_NAMES = {
     10042: "Only long positions are allowed", 10043: "Only short positions are allowed", 10044: "Only position closing is allowed",
     10045: "Position closing is allowed only by FIFO rule", 10046: "Opposite positions on a single symbol are disabled",
 }
+
+# Timeframes (values of the MetaTrader5 package constants)
+TIMEFRAMES = {"M1": 1, "M5": 5, "M15": 15, "M30": 30, "H1": 16385, "H4": 16388, "D1": 16408}
+TIMEFRAME_SECONDS = {"M1": 60, "M5": 300, "M15": 900, "M30": 1800, "H1": 3600, "H4": 14400, "D1": 86400}

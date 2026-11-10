@@ -252,6 +252,22 @@ def _trading_methods(cls):
             raise MT5Error(f"order_send() failed: {self.last_error()}")
         return _pick(res, RESULT_FIELDS)
 
+    def rates(self, symbol: str, timeframe: str, count: int) -> list[dict[str, Any]]:
+        from . import mt5_constants as C
+        tf = C.TIMEFRAMES.get(timeframe.upper())
+        if tf is None:
+            raise MT5Error(f"Unknown timeframe '{timeframe}'")
+        self.mt5.symbol_select(symbol, True)
+        res = self.mt5.copy_rates_from_pos(symbol, tf, 0, int(count))
+        if res is None:
+            raise MT5Error(f"copy_rates_from_pos({symbol}, {timeframe}) failed: {self.last_error()}")
+        out = []
+        for r in res:
+            out.append({"time": int(r["time"]), "open": float(r["open"]), "high": float(r["high"]), "low": float(r["low"]),
+                        "close": float(r["close"]), "volume": float(r["tick_volume"]), "spread": int(r["spread"])})
+        return out
+
+    cls.rates = rates
     cls.symbol_info = symbol_info
     cls.symbol_tick = symbol_tick
     cls.order_check = order_check

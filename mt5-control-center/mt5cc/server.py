@@ -532,6 +532,7 @@ def create_app(supervisor: Supervisor, settings: Settings, token: str, store: Eq
         return FileResponse(STATIC_DIR / "index.html")
 
     install_setup_routes(app, supervisor, settings_ref)
+    install_bot_routes(app, supervisor, settings_ref, audit, trading_status, worker_call)
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
     return app
 
@@ -716,3 +717,115 @@ def install_setup_routes(app: FastAPI, supervisor: Supervisor, settings_ref: dic
         settings_ref["settings"] = new_settings
         supervisor.apply_settings(new_settings)
         return {"ok": True, "settings": {"trading_enabled": new_settings.trading_enabled, "mock_mode": new_settings.mock_mode}}
+
+
+# --------------------------------------------------------------------------- #
+# Trading bot
+# --------------------------------------------------------------------------- #
+
+def install_bot_routes(app: FastAPI, supervisor: Supervisor, settings_ref: dict[str, Settings], audit: "AuditLog",
+                       trading_status: Any, worker_call: Any) -> None:
+    from .bot.engine import DEFAULT_CONFIG
+    from .bot.strategies import STRATEGIES, catalogue
+    from .config import save_bot_config
+
+    def get_state(acc_id: str) -> AccountState:
+        st = supervisor.states.get(acc_id)
+        if st is None:
+            raise HTTPException(404, f"Unknown account '{acc_id}'")
+        return st
+
+    def validate(cfg: dict[str, Any]) -> dict[str, Any]:
+        out = {**DEFAULT_CONFIG}
+        for k in DEFAULT_CONFIG:
+            if k in cfg and cfg[k] is not None:
+                out[k] = cfg[k]
+        if out["strategy"] not in STRATEGIES:
+            raise HTTPException(422, f"Unknown strategy '{out['strategy']}'")
+        if out["mode"] not in ("paper", "live"):
+            raise HTTPException(422, "mode must be paper or live")
+        syms = out["symbols"]
+        if isinstance(syms, str):
+            syms = [s.strip() for s in syms.split(",")]
+        out["symbols"] = [s.strip().upper() for s in syms if s and s.strip()]
+        if not out["symbols"]:
+            raise HTTPException(422, "Add at least one symbol")
+        if str(out["timeframe"]).upper() not in C.TIMEFRAMES:
+            raise HTTPException(422, f"timeframe must be one of {', '.join(C.TIMEFRAMES)}")
+        out["timeframe"] = str(out["timeframe"]).upper()
+        try:
+            out["risk_percent"] = float(out["risk_percent"]); out["max_positions"] = int(out["max_positions"])
+            out["max_daily_loss_percent"] = float(out["max_daily_loss_percent"]); out["max_lots"] = float(out["max_lots"])
+            out["max_spread_points"] = float(out["max_spread_points"] or 0); out["max_bars_held"] = int(out["max_bars_held"] or 0)
+            out["paper_equity"] = float(out["paper_equity"] or 0); out["autostart"] = bool(out["autostart"])
+        except (TypeError, ValueError):
+            raise HTTPException(422, "Numeric bot settings must be numbers")
+        if not (0 < out["risk_percent"] <= 10):
+            raise HTTPException(422, "risk_percent must be between 0 and 10")
+        if out["max_positions"] < 1 or out["max_lots"] <= 0 or out["max_daily_loss_percent"] < 0:
+            raise HTTPException(422, "max_positions must be ≥ 1, max_lots > 0, max_daily_loss_percent ≥ 0")
+        out["params"] = {k: v for k, v in (out.get("params") or {}).items() if v not in (None, "")}
+        return out
+
+    @app.get("/api/bot/strategies")
+    async def bot_strategies():
+        return {"strategies": catalogue(), "timeframes": list(C.TIMEFRAMES), "defaults": DEFAULT_CONFIG}
+
+    @app.get("/api/accounts/{acc_id}/bot")
+    async def bot_get(acc_id: str):
+        st = get_state(acc_id)
+        return {"account_id": acc_id, "config": {**DEFAULT_CONFIG, **(st.cfg.bot or {})}, "state": st.bot or None,
+                "trading": trading_status(st), "strategies": catalogue(), "timeframes": list(C.TIMEFRAMES),
+                "currency": (st.account or {}).get("currency"), "equity": (st.account or {}).get("equity"), "mock": st.cfg.mock}
+
+    @app.put("/api/accounts/{acc_id}/bot/config")
+    async def bot_config(acc_id: str, body: dict[str, Any] = Body(...)):
+        st = get_state(acc_id)
+        cfg = validate(body)
+        save_bot_config(acc_id, cfg)
+        st.cfg.bot = cfg
+        audit.write({"account": acc_id, "action": "bot_config", "request": cfg, "stage": "saved"})
+        try:
+            state = worker_call(acc_id, "bot", {"op": "config", "config": cfg}, timeout=20)
+        except HTTPException as exc:
+            if exc.status_code == 502:
+                return {"ok": True, "config": cfg, "state": None, "note": "Saved; the worker is not connected yet, it will use this when it connects."}
+            raise
+        return {"ok": True, "config": cfg, "state": state}
+
+    @app.post("/api/accounts/{acc_id}/bot/start")
+    async def bot_start(acc_id: str, body: dict[str, Any] = Body(default={})):
+        st = get_state(acc_id)
+        mode = str(body.get("mode") or (st.cfg.bot or {}).get("mode") or "paper")
+        if mode == "live":
+            status = trading_status(st)
+            if not status["enabled"]:
+                raise HTTPException(403, "Live bot needs trading enabled for this account: " + "; ".join(status["reasons"]))
+            if body.get("confirm") != "LIVE":
+                raise HTTPException(400, "Type LIVE to confirm starting the bot with real money.")
+        audit.write({"account": acc_id, "action": "bot_start", "request": {"mode": mode}, "stage": "sent"})
+        state = worker_call(acc_id, "bot", {"op": "start", "mode": mode}, timeout=30)
+        cfg = {**DEFAULT_CONFIG, **(st.cfg.bot or {}), "mode": mode}
+        st.cfg.bot = cfg
+        save_bot_config(acc_id, cfg)
+        return {"ok": True, "state": state}
+
+    @app.post("/api/accounts/{acc_id}/bot/stop")
+    async def bot_stop(acc_id: str):
+        get_state(acc_id)
+        audit.write({"account": acc_id, "action": "bot_stop", "stage": "sent"})
+        return {"ok": True, "state": worker_call(acc_id, "bot", {"op": "stop"}, timeout=20)}
+
+    @app.post("/api/accounts/{acc_id}/bot/paper-reset")
+    async def bot_paper_reset(acc_id: str):
+        get_state(acc_id)
+        return {"ok": True, "state": worker_call(acc_id, "bot", {"op": "paper_reset"}, timeout=20)}
+
+    @app.post("/api/accounts/{acc_id}/bot/backtest")
+    async def bot_backtest(acc_id: str, body: dict[str, Any] = Body(...)):
+        get_state(acc_id)
+        args = {"op": "backtest", **{k: body.get(k) for k in ("symbol", "timeframe", "strategy", "params", "bars", "equity", "risk_percent",
+                                                               "max_lots", "max_bars_held", "spread_points", "commission_per_lot")}}
+        if not args.get("symbol"):
+            raise HTTPException(422, "symbol is required")
+        return worker_call(acc_id, "bot", args, timeout=240)

@@ -29,6 +29,7 @@ LOG_DIR = PROJECT_DIR / "logs"
 SETTINGS_FILE = CONFIG_DIR / "settings.json"
 ACCOUNTS_FILE = CONFIG_DIR / "accounts.json"
 TOKEN_FILE = CONFIG_DIR / ".api_token"
+BOT_FILE = CONFIG_DIR / "bot.json"
 
 # Named accent colours the UI understands (categorical slots, fixed order).
 ACCOUNT_COLORS = ("blue", "orange", "aqua", "yellow", "magenta", "violet")
@@ -107,6 +108,7 @@ class AccountConfig:
     mock: bool = False
     enabled: bool = True
     trading: TradingConfig = field(default_factory=TradingConfig)
+    bot: dict[str, Any] = field(default_factory=dict)
 
     def resolved_password(self) -> str | None:
         if self.password_dpapi:
@@ -159,6 +161,7 @@ class AccountConfig:
         """
         d = asdict(self)
         d["trading"] = asdict(self.trading)
+        d["bot"] = dict(self.bot or {})
         d["password"] = self.resolved_password()
         d.pop("password_env", None)
         d.pop("password_dpapi", None)
@@ -275,7 +278,33 @@ def parse_accounts(entries: list[Any], settings: Settings) -> list[AccountConfig
             # MetaTrader5 python package exists only for Windows.
             acc.mock = False  # keep as configured; the worker will report a clear error
         accounts.append(acc)
+    bots = load_bot_configs()
+    for a in accounts:
+        a.bot = bots.get(a.id, {})
     return [a for a in accounts if a.enabled]
+
+
+def load_bot_configs() -> dict[str, dict[str, Any]]:
+    """Per-account bot settings from config/bot.json ({"accounts": {id: {...}}})."""
+    if not BOT_FILE.exists():
+        return {}
+    try:
+        raw = _read_json(BOT_FILE)
+    except ConfigError:
+        return {}
+    accounts = raw.get("accounts")
+    return {k: dict(v) for k, v in accounts.items() if isinstance(v, dict)} if isinstance(accounts, dict) else {}
+
+
+def save_bot_config(acc_id: str, cfg: dict[str, Any]) -> None:
+    data = {"accounts": load_bot_configs()}
+    data["accounts"][acc_id] = cfg
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    tmp = BOT_FILE.with_suffix(".tmp")
+    with tmp.open("w", encoding="utf-8") as fh:
+        json.dump(data, fh, indent=2)
+        fh.write("\n")
+    os.replace(tmp, BOT_FILE)
 
 
 def load_or_create_token() -> str:

@@ -35,6 +35,7 @@ class AccountState:
     last_heartbeat_ts: float | None = None
     last_deals_ts: float | None = None
     restarts: int = 0
+    bot: dict[str, Any] = field(default_factory=dict)
     logs: deque = field(default_factory=lambda: deque(maxlen=200))
     started_ts: float = field(default_factory=time.time)
 
@@ -247,6 +248,8 @@ class Supervisor:
                 st.history_window = msg.get("window") or {}
                 st.incomplete_positions = msg.get("incomplete_positions") or []
                 st.last_deals_ts = ts
+            elif kind == "bot_state":
+                st.bot = msg.get("state") or {}
             elif kind == "result":
                 slot = self._pending.get(str(msg.get("req_id")))
                 if slot is not None:

@@ -9,3 +9,4 @@ data/
 logs/
 .pytest_cache/
 terminals/
+config/bot.json

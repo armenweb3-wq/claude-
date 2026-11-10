@@ -297,6 +297,51 @@ opposite side against that position ticket; each asks for confirmation.
 Trading involves risk. The application enforces the limits you configure, but
 it does not judge whether a trade is a good idea.
 
+## 6b. Trading bot (optional, off by default)
+
+The **Trading bot** page runs a systematic strategy for you, per account.
+
+**What it is.** Two classic, fully documented strategies, chosen because they
+are robust and explainable rather than clever:
+
+* **Trend breakout** - Donchian channel breakout in the direction of a long
+  EMA, filtered by ADX trend strength, ATR initial stop, ATR trailing stop.
+* **EMA pullback** - trend continuation: buys a pullback to the fast EMA in an
+  uptrend (sells in a downtrend) after RSI resets, stop beyond the pullback
+  with ATR padding, fixed reward:risk target, break-even after 1R then trail.
+
+Every parameter is editable on the page. Position size is always risk based:
+the stop distance and the symbol's tick value decide the lots so that a stop
+hit loses the configured percentage of equity, rounded down to the lot step.
+
+**Safety rails, always on.** Daily loss limit (no new entries for the rest of
+the UTC day once reached), max open bot positions, max lots per order, spread
+filter, trading hours, optional time exit, and in live mode everything the
+manual Trade page enforces as well (account limits, broker pre-check, audit
+log). The bot uses its own magic number so its trades are distinguishable
+from yours. Stopping the bot leaves open positions alone (their stops stay
+at the broker).
+
+**Order of operations.**
+
+1. **Backtest** - pulls your broker's own bar history from the terminal
+   (open that chart once in MT5 so history is downloaded), simulates the rules
+   with spread and commission, shows net result, win rate, profit factor,
+   drawdown, equity curve and every simulated trade. It is a sanity check,
+   not a forecast.
+2. **Start PAPER** - the bot runs on live prices with pretend money. Watch the
+   paper equity, trades and log for days or weeks.
+3. **Start LIVE…** - only after that. Needs trading enabled for the account
+   and a typed `LIVE` confirmation. Tick *start automatically* if the bot
+   should resume after a PC restart (together with *Start with Windows*).
+
+Bot settings live in `config\bot.json`; the paper ledger in
+`data\bot-paper-<account>.json`; every start/stop/config change is in the
+trading audit log.
+
+A bot turns rules into orders; it does not create an edge. Past results,
+including backtests, do not predict future results.
+
 ## 7. Security
 
 Threat model: something else on your PC (or a web page you visit) trying to
@@ -369,6 +414,8 @@ mt5-control-center/
 │   ├─ mock_adapter.py        synthetic demo data source
 │   ├─ trading.py             position sizing, order/close/modify requests, guards
 │   ├─ setup.py               Accounts page backend: detect/copy terminals, DPAPI, config writes
+│   ├─ autostart.py           Start-with-Windows shortcut, desktop shortcut
+│   ├─ bot/                   trading bot: indicators, strategies, backtester, live/paper engine
 │   ├─ history.py             deal → trade reconstruction + reconciliation
 │   ├─ stats.py               realized P/L, statistics, curves, sessions
 │   ├─ store.py               SQLite store for live equity samples

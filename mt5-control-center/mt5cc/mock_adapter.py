@@ -355,6 +355,40 @@ def _mock_trading(cls):
         return {"retcode": C.TRADE_RETCODE_DONE, "comment": "Request completed", "order": ticket_base + 1, "deal": ticket_base,
                 "volume": vol, "price": fill, "bid": t["bid"], "ask": t["ask"], "request_id": ticket_base}
 
+    def rates(self, symbol, timeframe, count):
+        """Deterministic synthetic bars: a random walk with slow regime changes,
+        seeded per symbol so every call returns the same history."""
+        from . import mt5_constants as C
+        sec = C.TIMEFRAME_SECONDS[timeframe.upper()]
+        s = self._spec(symbol)
+        base = next((px for sym, px, _, _ in SYMBOLS if sym == symbol.upper()), 1.0)
+        now = int(time.time())
+        last_closed = (now // sec) * sec - sec
+        first = last_closed - (int(count) - 1) * sec
+        rng = random.Random(symbol.upper() + "bars")
+        # regenerate from a fixed origin so bars are stable across calls
+        origin = (first // (sec * 5000)) * (sec * 5000)
+        price = base * 0.97
+        bars = []
+        drift = 0.0
+        t = origin
+        vol = base * (0.0012 if sec <= 900 else 0.003 if sec <= 3600 else 0.006)
+        i = 0
+        while t <= last_closed:
+            if i % 120 == 0:
+                drift = rng.gauss(0, 0.12) * vol
+            o = price
+            c = o + drift + rng.gauss(0, vol)
+            h = max(o, c) + abs(rng.gauss(0, vol * 0.6))
+            l = min(o, c) - abs(rng.gauss(0, vol * 0.6))
+            price = c
+            if t >= first:
+                bars.append({"time": t, "open": round(o, s["digits"]), "high": round(h, s["digits"]), "low": round(l, s["digits"]),
+                             "close": round(c, s["digits"]), "volume": float(rng.randint(50, 500)), "spread": s["spread"]})
+            t += sec
+            i += 1
+        return bars
+
     for name, fn in list(locals().items()):
         if callable(fn) and name not in ("cls",):
             setattr(cls, name, fn)

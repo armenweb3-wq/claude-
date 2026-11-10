@@ -49,6 +49,8 @@ class _Worker:
         self.consecutive_failures = 0
         self.incomplete_positions: list[int] = []
         self._last_conn_error: str | None = None
+        self.bot = None
+        self._bot_state_sent = 0.0
 
     # ------------------------------------------------------------------ #
     def send(self, msg: dict[str, Any]) -> None:
@@ -91,7 +93,116 @@ class _Worker:
         self.log("INFO", f"Connected to account {info.get('login')} on {info.get('server')} ({mode})")
         self.status("connected", f"Connected to {info.get('server')}")
         self.consecutive_failures = 0
+        self._ensure_bot()
         return True
+
+    # ------------------------------------------------------------------ #
+    # Trading bot
+    # ------------------------------------------------------------------ #
+    def _ensure_bot(self):
+        from .bot.engine import BotEngine
+        from .config import DATA_DIR
+        cfg = dict(self.cfg.get("bot") or {})
+        tcfg = self.cfg.get("trading") or {}
+        magic = int(cfg.get("magic") or (int(tcfg.get("magic") or 710000) + 500))
+        if self.bot is None:
+            self.bot = BotEngine(self.cfg["id"], self.adapter, cfg, data_dir=DATA_DIR, log=self.log,
+                                 live_open=self._bot_open, live_close=self._bot_close, live_modify=self._bot_modify,
+                                 magic=magic, deals=lambda: list(self.deals.values()))
+            if cfg.get("autostart") and cfg.get("mode") in ("paper", "live"):
+                try:
+                    self.bot.start(cfg.get("mode"))
+                except Exception as exc:
+                    self.log("ERROR", f"Bot autostart failed: {exc}")
+        else:
+            self.bot.adapter = self.adapter
+        return self.bot
+
+    def _bot_open(self, args: dict[str, Any]) -> dict[str, Any]:
+        try:
+            return self.call_trade_execute(args)
+        except T.TradeRejected as exc:
+            return {"ok": False, "error": str(exc), "result_text": str(exc)}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc), "result_text": str(exc)}
+
+    def _bot_close(self, ticket: int) -> dict[str, Any]:
+        try:
+            return self.call_close_position({"ticket": ticket})
+        except Exception as exc:
+            return {"ok": False, "error": str(exc), "result_text": str(exc)}
+
+    def _bot_modify(self, ticket: int, sl: float, tp: float | None) -> dict[str, Any]:
+        try:
+            return self.call_modify_position({"ticket": ticket, "sl": sl, "tp": tp})
+        except Exception as exc:
+            return {"ok": False, "error": str(exc), "result_text": str(exc)}
+
+    def _bot_tick(self) -> None:
+        if self.bot is None:
+            return
+        self.bot.tick()
+        now = _now()
+        if self.bot._dirty or now - self._bot_state_sent > 3.0:
+            self._bot_state_sent = now
+            try:
+                self.send({"type": "bot_state", "state": self.bot.state()})
+            except Exception as exc:
+                self.log("WARNING", f"bot state failed: {exc}")
+
+    def call_bot(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Bot commands: op = state|config|start|stop|paper_reset|backtest."""
+        op = str(args.get("op") or "state")
+        if self.adapter is None or not getattr(self.adapter, "connected", False):
+            raise T.TradeRejected("Not connected to the terminal.")
+        bot = self._ensure_bot()
+        if op == "config":
+            bot.update_config(args.get("config") or {})
+            self.cfg["bot"] = dict(args.get("config") or {})
+        elif op == "start":
+            mode = str(args.get("mode") or bot.mode)
+            if mode == "live":
+                self._trading_guard()
+            bot.start(mode)
+        elif op == "stop":
+            bot.stop()
+        elif op == "paper_reset":
+            bot.reset_paper()
+        elif op == "backtest":
+            return self._bot_backtest(args)
+        elif op != "state":
+            raise T.TradeRejected(f"Unknown bot operation '{op}'")
+        self._bot_state_sent = _now()
+        st = bot.state()
+        self.send({"type": "bot_state", "state": st})
+        return st
+
+    def _bot_backtest(self, args: dict[str, Any]) -> dict[str, Any]:
+        from .bot.backtest import SymbolSpec, run_backtest
+        from .bot.strategies import Bar, make_strategy
+        symbol = str(args.get("symbol") or "").upper()
+        timeframe = str(args.get("timeframe") or "H1").upper()
+        bars_n = max(300, min(int(args.get("bars") or 3000), 20000))
+        strategy = make_strategy(str(args.get("strategy") or "trend_breakout"), args.get("params") or {})
+        info = self.adapter.symbol_info(symbol)
+        raw = self.adapter.rates(symbol, timeframe, bars_n)
+        if len(raw) < strategy.warmup + 50:
+            raise T.TradeRejected(f"Only {len(raw)} bars of {symbol} {timeframe} available; need at least {strategy.warmup + 50}. Open that chart in the terminal once so it downloads history, then retry.")
+        spec = SymbolSpec(point=float(info["point"]), tick_size=float(info.get("trade_tick_size") or info["point"]),
+                          tick_value=float(info.get("trade_tick_value") or 0), volume_min=float(info.get("volume_min") or 0.01),
+                          volume_max=float(info.get("volume_max") or 100), volume_step=float(info.get("volume_step") or 0.01),
+                          spread_points=float(args.get("spread_points") or info.get("spread") or 0),
+                          commission_per_lot=float(args.get("commission_per_lot") if args.get("commission_per_lot") not in (None, "") else 3.5),
+                          contract_size=float(info.get("trade_contract_size") or 0))
+        acc = self.adapter.account_info() or {}
+        equity = float(args.get("equity") or acc.get("equity") or 10000.0)
+        res = run_backtest([Bar(**b) for b in raw if b["time"] + (0) <= _now()], strategy, spec, equity=equity,
+                           risk_pct=float(args.get("risk_percent") or 1.0), max_lots=float(args.get("max_lots") or 0) or None,
+                           max_bars_held=int(args.get("max_bars_held") or 0) or None)
+        res["symbol"] = symbol; res["timeframe"] = timeframe; res["strategy"] = strategy.describe()
+        res["spec"] = {"spread_points": spec.spread_points, "commission_per_lot": spec.commission_per_lot, "currency": acc.get("currency")}
+        res["from"] = raw[0]["time"]; res["to"] = raw[-1]["time"]; res["mock"] = bool(self.cfg.get("mock"))
+        return res
 
     def disconnect(self) -> None:
         if self.adapter is not None:
@@ -241,6 +352,7 @@ class _Worker:
                 "trade_execute": self.call_trade_execute,
                 "close_position": self.call_close_position,
                 "modify_position": self.call_modify_position,
+                "bot": self.call_bot,
             }.get(fn_name)
             if handler is None:
                 raise T.TradeRejected(f"Unknown call '{fn_name}'")
@@ -282,7 +394,9 @@ class _Worker:
 
     def _plan(self, args: dict[str, Any]) -> tuple[T.OrderPlan, dict, dict, dict]:
         account = self._trading_guard()
-        tcfg = self.cfg.get("trading") or {}
+        tcfg = dict(self.cfg.get("trading") or {})
+        if args.get("max_lots"):
+            tcfg["max_lots"] = min(float(tcfg.get("max_lots") or args["max_lots"]), float(args["max_lots"]))
         symbol = str(args.get("symbol") or "").strip().upper()
         info = self.adapter.symbol_info(symbol)
         tick = self.adapter.symbol_tick(symbol)
@@ -291,7 +405,7 @@ class _Worker:
         max_pos = int(tcfg.get("max_open_positions") or 0)
         if max_pos and len(positions) >= max_pos:
             raise T.TradeRejected(f"This account already has {len(positions)} open positions (max_open_positions = {max_pos}).")
-        request = T.build_order_request(plan, info, int(tcfg.get("magic") or 0), int(tcfg.get("deviation_points") or 20),
+        request = T.build_order_request(plan, info, int(args.get("magic") or tcfg.get("magic") or 0), int(tcfg.get("deviation_points") or 20),
                                         str(args.get("comment") or "mt5cc"))
         return plan, request, info, account
 
@@ -380,6 +494,11 @@ class _Worker:
             ok = self.poll_snapshot()
             if ok and _now() - self.last_history_fetch >= hist_every:
                 self.fetch_history()
+            if ok:
+                try:
+                    self._bot_tick()
+                except Exception as exc:
+                    self.log("ERROR", f"Bot tick crashed: {exc}")
             if self.consecutive_failures >= 5:
                 self.status("error", "Lost connection to terminal - reconnecting")
                 self.disconnect()

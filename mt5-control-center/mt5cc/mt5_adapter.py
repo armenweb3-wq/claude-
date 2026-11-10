@@ -147,3 +147,59 @@ class MT5Adapter:
         if res is None:
             return []
         return [_pick(d, DEAL_FIELDS) for d in res]
+
+SYMBOL_FIELDS = (
+    "name", "visible", "select", "digits", "point", "spread", "trade_mode", "trade_calc_mode",
+    "trade_contract_size", "trade_tick_size", "trade_tick_value", "trade_tick_value_profit",
+    "trade_tick_value_loss", "trade_stops_level", "trade_freeze_level", "volume_min", "volume_max",
+    "volume_step", "volume_limit", "filling_mode", "expiration_mode", "order_mode", "swap_long",
+    "swap_short", "margin_initial", "margin_maintenance", "currency_base", "currency_profit",
+    "currency_margin", "description", "path", "bid", "ask", "last", "time",
+)
+TICK_FIELDS = ("time", "bid", "ask", "last", "volume", "time_msc", "flags", "volume_real")
+RESULT_FIELDS = ("retcode", "deal", "order", "volume", "price", "bid", "ask", "comment", "request_id",
+                 "retcode_external", "margin", "margin_free", "margin_level", "balance", "equity", "profit")
+
+
+def _trading_methods(cls):
+    """Mixin-style extension: trading calls on the real adapter."""
+
+    def symbol_info(self, symbol: str) -> dict[str, Any]:
+        info = self.mt5.symbol_info(symbol)
+        if info is None:
+            # try to add the symbol to Market Watch, then retry once
+            if self.mt5.symbol_select(symbol, True):
+                info = self.mt5.symbol_info(symbol)
+        if info is None:
+            raise MT5Error(f"Unknown symbol '{symbol}': {self.last_error()}")
+        d = _pick(info, SYMBOL_FIELDS)
+        if not d.get("visible"):
+            self.mt5.symbol_select(symbol, True)
+        return d
+
+    def symbol_tick(self, symbol: str) -> dict[str, Any]:
+        t = self.mt5.symbol_info_tick(symbol)
+        if t is None:
+            raise MT5Error(f"No tick for '{symbol}': {self.last_error()}")
+        return _pick(t, TICK_FIELDS)
+
+    def order_check(self, request: dict[str, Any]) -> dict[str, Any]:
+        res = self.mt5.order_check(request)
+        if res is None:
+            raise MT5Error(f"order_check() failed: {self.last_error()}")
+        return _pick(res, RESULT_FIELDS)
+
+    def order_send(self, request: dict[str, Any]) -> dict[str, Any]:
+        res = self.mt5.order_send(request)
+        if res is None:
+            raise MT5Error(f"order_send() failed: {self.last_error()}")
+        return _pick(res, RESULT_FIELDS)
+
+    cls.symbol_info = symbol_info
+    cls.symbol_tick = symbol_tick
+    cls.order_check = order_check
+    cls.order_send = order_send
+    return cls
+
+
+_trading_methods(MT5Adapter)

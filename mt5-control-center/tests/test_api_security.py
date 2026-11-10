@@ -81,3 +81,76 @@ def test_csv_export_requires_token(client):
     assert client.get("/api/accounts/a1/trades.csv").status_code == 401
     r = client.get("/api/accounts/a1/trades.csv", headers={"x-api-token": TOKEN})
     assert r.status_code == 200 and r.text.startswith("account,position_id,symbol")
+
+
+# --------------------------------------------------------------------------- #
+# Trading endpoints
+# --------------------------------------------------------------------------- #
+
+def test_trading_endpoints_refuse_when_disabled(client):
+    h = {"x-api-token": TOKEN}
+    assert client.post("/api/accounts/a1/orders/preview", json={"symbol": "EURUSD", "side": "BUY"}, headers=h).status_code == 403
+    assert client.post("/api/accounts/a1/orders", json={"symbol": "EURUSD"}, headers=h).status_code == 403
+    assert client.post("/api/accounts/a1/positions/1/close", json={"confirm": True}, headers=h).status_code == 403
+    assert client.post("/api/accounts/a1/positions/1/modify", json={"sl": 1}, headers=h).status_code == 403
+
+
+@pytest.fixture
+def trading_client(tmp_path: Path, monkeypatch):
+    from mt5cc import server as srv
+    monkeypatch.setattr(srv, "DATA_DIR", tmp_path)
+    settings = Settings(trading_enabled=True)
+    from mt5cc.config import TradingConfig
+    accounts = [AccountConfig(id="a1", label="A", mock=True, trading=TradingConfig(enabled=True, max_risk_percent=2, max_lots=1))]
+    sup = FakeSupervisor(accounts, settings)
+    calls = []
+
+    def fake_call(acc_id, name, args=None, timeout=20.0):
+        calls.append((name, args))
+        if name == "trade_preview":
+            return {"ok": True, "data": {"plan": {"symbol": "EURUSD", "order_type": 0, "volume": 0.5}, "request": {}, "check": {"retcode": 0}, "check_ok": True, "check_text": "OK", "account": {}, "symbol": {}}}
+        if name == "trade_execute":
+            return {"ok": True, "data": {"ok": True, "plan": {}, "request": {}, "result": {"retcode": 10009}, "result_text": "Request completed"}}
+        if name == "close_position":
+            return {"ok": True, "data": {"ok": True, "result": {"retcode": 10009}, "result_text": "Request completed"}}
+        return {"ok": False, "error": "boom", "rejected": True}
+    sup.call = fake_call
+    app = srv.create_app(sup, settings, TOKEN, EquityStore(tmp_path / "eq.sqlite"))
+    c = TestClient(app, base_url=f"http://127.0.0.1:{settings.server.port}")
+    c.headers.update({"x-api-token": TOKEN})
+    c.calls = calls
+    c.audit_path = tmp_path / "trading-audit.jsonl"
+    return c
+
+
+def test_order_requires_fresh_matching_intent(trading_client):
+    c = trading_client
+    req = {"symbol": "EURUSD", "side": "BUY", "sizing": "risk", "risk_percent": 1, "sl_mode": "points", "sl": 200}
+    pv = c.post("/api/accounts/a1/orders/preview", json=req).json()
+    assert pv["intent"]["sig"] and pv["check_ok"]
+    # no intent
+    assert c.post("/api/accounts/a1/orders", json=req).status_code == 400
+    # tampered request
+    r = c.post("/api/accounts/a1/orders", json={**req, "risk_percent": 2, "intent": pv["intent"]})
+    assert r.status_code == 409
+    # expired
+    r = c.post("/api/accounts/a1/orders", json={**req, "intent": {**pv["intent"], "ts": pv["intent"]["ts"] - 1000}})
+    assert r.status_code == 409
+    # good
+    r = c.post("/api/accounts/a1/orders", json={**req, "intent": pv["intent"], "expected": {"symbol": "EURUSD", "order_type": 0, "volume": 0.5}})
+    assert r.status_code == 200 and r.json()["ok"]
+    assert [n for n, _ in c.calls] == ["trade_preview", "trade_execute"]
+    lines = c.audit_path.read_text().splitlines()
+    assert len(lines) == 2 and '"stage": "result"' in lines[-1]
+
+
+def test_close_needs_confirm_and_is_audited(trading_client):
+    c = trading_client
+    assert c.post("/api/accounts/a1/positions/42/close", json={}).status_code == 400
+    r = c.post("/api/accounts/a1/positions/42/close", json={"confirm": True, "volume": 0.1})
+    assert r.status_code == 200 and c.calls[-1] == ("close_position", {"ticket": 42, "volume": 0.1})
+
+
+def test_worker_rejection_maps_to_422(trading_client):
+    r = trading_client.post("/api/accounts/a1/positions/42/modify", json={"sl": 1})
+    assert r.status_code == 422 and r.json()["detail"] == "boom"

@@ -8,6 +8,7 @@ import multiprocessing as mp
 import queue
 import threading
 import time
+import uuid
 from collections import deque
 from dataclasses import dataclass, field
 from typing import Any
@@ -59,6 +60,7 @@ class Supervisor:
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self.listeners: list[Any] = []   # callables(account_id, state) called on snapshot
+        self._pending: dict[str, dict[str, Any]] = {}   # req_id -> {"event": Event, "result": msg}
 
     # ------------------------------------------------------------------ #
     def start(self) -> None:
@@ -115,6 +117,24 @@ class Supervisor:
             return True
         except Exception:
             return False
+
+    def call(self, acc_id: str, name: str, args: dict[str, Any] | None = None, timeout: float = 20.0) -> dict[str, Any]:
+        """Send a request to a worker and wait for its reply."""
+        q = self._cmd_qs.get(acc_id)
+        if q is None:
+            return {"ok": False, "error": "Worker is not running."}
+        req_id = uuid.uuid4().hex
+        slot = {"event": threading.Event(), "result": None}
+        with self._lock:
+            self._pending[req_id] = slot
+        try:
+            q.put({"cmd": "call", "req_id": req_id, "name": name, "args": args or {}})
+            if not slot["event"].wait(timeout):
+                return {"ok": False, "error": f"Worker did not answer within {timeout:.0f}s."}
+            return slot["result"] or {"ok": False, "error": "Empty reply."}
+        finally:
+            with self._lock:
+                self._pending.pop(req_id, None)
 
     def _pump(self) -> None:
         while not self._stop.is_set():
@@ -178,6 +198,11 @@ class Supervisor:
                 st.history_window = msg.get("window") or {}
                 st.incomplete_positions = msg.get("incomplete_positions") or []
                 st.last_deals_ts = ts
+            elif kind == "result":
+                slot = self._pending.get(str(msg.get("req_id")))
+                if slot is not None:
+                    slot["result"] = msg
+                    slot["event"].set()
             elif kind == "log":
                 st.logs.append({"ts": ts, "level": msg.get("level", "INFO"), "message": msg.get("message", "")})
                 getattr(log, str(msg.get("level", "info")).lower(), log.info)("[%s] %s", st.cfg.id, msg.get("message"))

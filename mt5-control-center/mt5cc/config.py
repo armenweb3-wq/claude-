@@ -55,9 +55,39 @@ class Settings:
     report_timezone: str = "local"
     mock_mode: bool = False
     log_level: str = "INFO"
+    trading_enabled: bool = False      # global kill switch; per-account trading.enabled must also be true
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+@dataclass
+class TradingConfig:
+    enabled: bool = False
+    max_risk_percent: float = 1.0
+    max_lots: float = 1.0
+    max_open_positions: int = 10
+    allowed_symbols: list[str] = field(default_factory=list)
+    magic: int = 710001
+    deviation_points: int = 20
+
+    @classmethod
+    def from_raw(cls, raw: Any) -> "TradingConfig":
+        raw = raw if isinstance(raw, dict) else {}
+        t = cls(
+            enabled=bool(raw.get("enabled", False)),
+            max_risk_percent=float(raw.get("max_risk_percent", 1.0)),
+            max_lots=float(raw.get("max_lots", 1.0)),
+            max_open_positions=int(raw.get("max_open_positions", 10)),
+            allowed_symbols=[str(x).upper() for x in (raw.get("allowed_symbols") or [])],
+            magic=int(raw.get("magic", 710001)),
+            deviation_points=int(raw.get("deviation_points", 20)),
+        )
+        if t.max_risk_percent <= 0 or t.max_risk_percent > 100:
+            raise ConfigError("trading.max_risk_percent must be between 0 and 100")
+        if t.max_lots <= 0:
+            raise ConfigError("trading.max_lots must be positive")
+        return t
 
 
 @dataclass
@@ -75,6 +105,7 @@ class AccountConfig:
     timeout_ms: int = 60000
     mock: bool = False
     enabled: bool = True
+    trading: TradingConfig = field(default_factory=TradingConfig)
 
     def resolved_password(self) -> str | None:
         if self.password_env:
@@ -110,6 +141,7 @@ class AccountConfig:
             ),
             "mock": self.mock,
             "enabled": self.enabled,
+            "trading": asdict(self.trading),
         }
 
     def worker_dict(self) -> dict[str, Any]:
@@ -118,6 +150,7 @@ class AccountConfig:
         This only ever crosses the process boundary (pipe), never the network.
         """
         d = asdict(self)
+        d["trading"] = asdict(self.trading)
         d["password"] = self.resolved_password()
         d.pop("password_env", None)
         return d
@@ -176,6 +209,7 @@ def load_settings() -> Settings:
         report_timezone=str(raw.get("report_timezone", "local")),
         mock_mode=bool(raw.get("mock_mode", False)),
         log_level=str(raw.get("log_level", "INFO")).upper(),
+        trading_enabled=bool(raw.get("trading_enabled", False)),
     )
     if os.environ.get("MT5CC_MOCK") == "1":
         settings.mock_mode = True
@@ -220,6 +254,7 @@ def load_accounts(settings: Settings) -> list[AccountConfig]:
             timeout_ms=int(entry.get("timeout_ms", 60000)),
             mock=bool(entry.get("mock", False)) or settings.mock_mode,
             enabled=bool(entry.get("enabled", True)),
+            trading=TradingConfig.from_raw(entry.get("trading")),
         )
         if acc.color not in ACCOUNT_COLORS:
             acc.color = ACCOUNT_COLORS[index % len(ACCOUNT_COLORS)]

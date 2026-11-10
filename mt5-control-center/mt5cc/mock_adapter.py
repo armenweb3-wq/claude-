@@ -228,3 +228,137 @@ class MockAdapter:
 
     def deals_for_position(self, position_id: int) -> list[dict[str, Any]]:
         return [dict(d) for d in self._deals if d["position_id"] == position_id]
+
+
+# --------------------------------------------------------------------------- #
+# Trading simulation for the mock
+# --------------------------------------------------------------------------- #
+_SYMBOL_SPECS = {
+    "EURUSD": dict(digits=5, point=0.00001, trade_contract_size=100000, trade_tick_size=0.00001, trade_tick_value=1.0, trade_stops_level=10, spread=8, currency_profit="USD", currency_base="EUR"),
+    "GBPUSD": dict(digits=5, point=0.00001, trade_contract_size=100000, trade_tick_size=0.00001, trade_tick_value=1.0, trade_stops_level=10, spread=12, currency_profit="USD", currency_base="GBP"),
+    "USDJPY": dict(digits=3, point=0.001, trade_contract_size=100000, trade_tick_size=0.001, trade_tick_value=0.645, trade_stops_level=10, spread=12, currency_profit="JPY", currency_base="USD"),
+    "XAUUSD": dict(digits=2, point=0.01, trade_contract_size=100, trade_tick_size=0.01, trade_tick_value=1.0, trade_stops_level=30, spread=25, currency_profit="USD", currency_base="XAU"),
+    "US500": dict(digits=2, point=0.01, trade_contract_size=10, trade_tick_size=0.01, trade_tick_value=0.1, trade_stops_level=50, spread=40, currency_profit="USD", currency_base="USD"),
+}
+
+
+def _mock_trading(cls):
+    def _spec(self, symbol):
+        s = _SYMBOL_SPECS.get(symbol.upper())
+        if not s:
+            raise ValueError(f"Unknown symbol '{symbol}' (mock knows {', '.join(_SYMBOL_SPECS)})")
+        return s
+
+    def _mid(self, symbol):
+        base = next((px for sym, px, _, _ in SYMBOLS if sym == symbol.upper()), None)
+        phase = time.time() / 60.0
+        wobble = math.sin(phase + len(symbol)) * 1.2
+        return base * (1 + wobble * 0.0008)
+
+    def symbol_tick(self, symbol):
+        s = self._spec(symbol)
+        mid = self._mid(symbol)
+        half = s["spread"] * s["point"] / 2
+        now = time.time()
+        return {"time": int(now), "bid": round(mid - half, s["digits"]), "ask": round(mid + half, s["digits"]),
+                "last": round(mid, s["digits"]), "volume": 0, "time_msc": int(now * 1000), "flags": 0, "volume_real": 0.0}
+
+    def symbol_info(self, symbol):
+        s = self._spec(symbol)
+        t = self.symbol_tick(symbol)
+        return {"name": symbol.upper(), "visible": True, "select": True, "trade_mode": C.SYMBOL_TRADE_MODE_FULL,
+                "trade_calc_mode": 0, "volume_min": 0.01, "volume_max": 100.0, "volume_step": 0.01, "volume_limit": 0.0,
+                "filling_mode": C.SYMBOL_FILLING_FOK | C.SYMBOL_FILLING_IOC, "expiration_mode": 15, "order_mode": 127,
+                "trade_freeze_level": 0, "swap_long": -0.8, "swap_short": -0.5, "margin_initial": 0.0,
+                "margin_maintenance": 0.0, "currency_margin": s["currency_base"], "description": f"{symbol} (mock)",
+                "path": "Mock\\" + symbol.upper(), "bid": t["bid"], "ask": t["ask"], "last": t["last"], "time": t["time"],
+                **{k: v for k, v in s.items()}}
+
+    def _margin_for(self, symbol, volume, price):
+        s = self._spec(symbol)
+        return round(volume * s["trade_contract_size"] * price / 100.0, 2)
+
+    def order_check(self, request):
+        a = self.account_info()
+        margin = self._margin_for(request["symbol"], request.get("volume", 0), request.get("price", 0)) if request.get("action") in (C.TRADE_ACTION_DEAL, C.TRADE_ACTION_PENDING) and not request.get("position") else 0.0
+        free_after = a["margin_free"] - margin
+        rc = 0 if free_after >= 0 else 10019
+        return {"retcode": rc, "comment": C.TRADE_RETCODE_NAMES.get(rc, "OK"), "margin": a["margin"] + margin,
+                "margin_free": free_after, "margin_level": a["margin_level"], "balance": a["balance"],
+                "equity": a["equity"], "profit": a["profit"], "request_id": 0}
+
+    def order_send(self, request):
+        time.sleep(0.2)
+        action = request.get("action")
+        now = datetime.now(timezone.utc)
+        ticket_base = max([d["ticket"] for d in self._deals] + [p["ticket"] for p in self._positions]) + 1
+        if action == C.TRADE_ACTION_SLTP:
+            for p in self._positions:
+                if p["ticket"] == request.get("position"):
+                    p["sl"], p["tp"] = float(request.get("sl") or 0), float(request.get("tp") or 0)
+                    p["time_update"] = int(now.timestamp())
+                    return {"retcode": C.TRADE_RETCODE_DONE, "comment": "Request completed", "order": 0, "deal": 0,
+                            "volume": p["volume"], "price": p["price_current"], "request_id": ticket_base}
+            return {"retcode": 10036, "comment": "Position already closed", "order": 0, "deal": 0}
+        if action == C.TRADE_ACTION_PENDING:
+            return {"retcode": C.TRADE_RETCODE_PLACED, "comment": "Order placed (mock: pending orders are not simulated further)",
+                    "order": ticket_base, "deal": 0, "volume": request["volume"], "price": request["price"], "request_id": ticket_base}
+        if action != C.TRADE_ACTION_DEAL:
+            return {"retcode": 10013, "comment": "Invalid request", "order": 0, "deal": 0}
+        symbol = request["symbol"].upper()
+        s = self._spec(symbol)
+        t = self.symbol_tick(symbol)
+        is_buy = request["type"] == C.ORDER_TYPE_BUY
+        fill = t["ask"] if is_buy else t["bid"]
+        vol = float(request["volume"])
+        comm = -round(vol * 3.5, 2)
+        if request.get("position"):
+            pos = next((p for p in self._positions if p["ticket"] == request["position"]), None)
+            if pos is None:
+                return {"retcode": 10036, "comment": "Position already closed", "order": 0, "deal": 0}
+            if vol > pos["volume"] + 1e-9:
+                return {"retcode": 10038, "comment": "Close volume exceeds position volume", "order": 0, "deal": 0}
+            direction = 1 if pos["type"] == C.POSITION_TYPE_BUY else -1
+            profit = round((fill - pos["price_open"]) * direction * vol * s["trade_contract_size"], 2)
+            swap_part = round(pos["swap"] * vol / pos["volume"], 2)
+            deal = {"ticket": ticket_base, "order": ticket_base + 1, "time": int(now.timestamp()), "time_msc": int(now.timestamp() * 1000),
+                    "type": C.DEAL_TYPE_SELL if direction > 0 else C.DEAL_TYPE_BUY, "entry": C.DEAL_ENTRY_OUT, "magic": request.get("magic", 0),
+                    "position_id": pos["ticket"], "reason": 0, "volume": vol, "price": fill, "commission": comm, "swap": swap_part,
+                    "profit": profit, "fee": 0.0, "symbol": symbol, "comment": request.get("comment", ""), "external_id": ""}
+            self._deals.append(deal)
+            self._balance = round(self._balance + profit + comm + swap_part, 2)
+            pos["volume"] = round(pos["volume"] - vol, 2)
+            pos["swap"] = round(pos["swap"] - swap_part, 2)
+            if pos["volume"] <= 1e-9:
+                self._positions.remove(pos)
+            return {"retcode": C.TRADE_RETCODE_DONE, "comment": "Request completed", "order": ticket_base + 1, "deal": ticket_base,
+                    "volume": vol, "price": fill, "bid": t["bid"], "ask": t["ask"], "request_id": ticket_base}
+        # open a new position
+        margin = self._margin_for(symbol, vol, fill)
+        if self.account_info()["margin_free"] < margin:
+            return {"retcode": 10019, "comment": "Not enough money", "order": 0, "deal": 0}
+        pos_id = ticket_base + 2
+        deal = {"ticket": ticket_base, "order": ticket_base + 1, "time": int(now.timestamp()), "time_msc": int(now.timestamp() * 1000),
+                "type": C.DEAL_TYPE_BUY if is_buy else C.DEAL_TYPE_SELL, "entry": C.DEAL_ENTRY_IN, "magic": request.get("magic", 0),
+                "position_id": pos_id, "reason": 0, "volume": vol, "price": fill, "commission": comm, "swap": 0.0, "profit": 0.0,
+                "fee": 0.0, "symbol": symbol, "comment": request.get("comment", ""), "external_id": ""}
+        self._deals.append(deal)
+        self._balance = round(self._balance + comm, 2)
+        contract = s["trade_contract_size"]
+        self._positions.append({
+            "ticket": pos_id, "time": deal["time"], "time_msc": deal["time_msc"], "time_update": deal["time"],
+            "type": C.POSITION_TYPE_BUY if is_buy else C.POSITION_TYPE_SELL, "magic": request.get("magic", 0), "identifier": pos_id,
+            "reason": 0, "volume": vol, "price_open": fill, "sl": float(request.get("sl") or 0), "tp": float(request.get("tp") or 0),
+            "price_current": fill, "swap": 0.0, "profit": 0.0, "symbol": symbol, "comment": request.get("comment", ""), "external_id": "",
+            "_contract": contract, "_vol": self._mid(symbol) * 0.0015,
+        })
+        return {"retcode": C.TRADE_RETCODE_DONE, "comment": "Request completed", "order": ticket_base + 1, "deal": ticket_base,
+                "volume": vol, "price": fill, "bid": t["bid"], "ask": t["ask"], "request_id": ticket_base}
+
+    for name, fn in list(locals().items()):
+        if callable(fn) and name not in ("cls",):
+            setattr(cls, name, fn)
+    return cls
+
+
+_mock_trading(MockAdapter)

@@ -7,11 +7,17 @@ MetaTrader 5 accounts at once** on your own Windows computer.
   **No Node.js, no npm, no build tools, no cloud.**
 * Each MT5 account runs in its **own isolated Python worker process**, so data
   from one terminal can never leak into the other.
-* **Read-only by design** - the application never places, modifies or closes
-  orders. It only reads account information, open positions and deal history.
-* **Local-only and key-protected** - see [Security](#security).
+* **Monitoring is read-only; trading is opt-in.** Out of the box the
+  application only reads account information, open positions and deal
+  history. A separate trading module (close / partial close / modify SL-TP /
+  place orders with risk-based sizing) must be switched on explicitly, per
+  account, and every order goes through a preview and a typed confirmation.
+  See [Trading](#6-trading-optional).
+* **Local-only and key-protected** - see [Security](#7-security).
 
 ![Overview screenshot](docs/overview.png)
+
+![Trade ticket screenshot](docs/trade.png)
 
 ---
 
@@ -159,6 +165,7 @@ The yellow **DEMO DATA** banner disappears once no slot is synthetic.
 | `equity_sample_seconds` | How often live equity is written to the local database for the equity chart. |
 | `report_timezone` | `local`, `UTC`, or an IANA name such as `Europe/Nicosia`. Day/week/month periods use it. |
 | `mock_mode` | `true` forces synthetic demo data for every slot (also `MT5CC_MOCK=1`). |
+| `trading_enabled` | Global trading switch, `false` by default. See section 6. |
 
 ## 5. What the dashboard shows
 
@@ -210,7 +217,86 @@ The yellow **DEMO DATA** banner disappears once no slot is synthetic.
 * The **equity chart** only contains values actually observed while the app was
   running. There is no back-filled "historical equity".
 
-## 6. Security
+## 6. Trading (optional)
+
+Trading is **off by default** and stays off until *both* switches are on:
+
+1. `config\settings.json` → `"trading_enabled": true` (global kill switch)
+2. `config\accounts.json` → inside the account block,
+   `"trading": { "enabled": true, ... }`
+
+Trading also needs the **master password** (or a terminal already logged in
+with it). With an investor password the broker reports "trade not allowed" and
+the application refuses to send anything. The Diagnostics page shows, per
+account, whether trading is possible and if not, why.
+
+### Per-account limits
+
+```json
+"trading": {
+  "enabled": true,
+  "max_risk_percent": 1.0,
+  "max_lots": 1.0,
+  "max_open_positions": 10,
+  "allowed_symbols": [],
+  "magic": 710001,
+  "deviation_points": 20
+}
+```
+
+| Field | Meaning |
+|-------|---------|
+| `max_risk_percent` | Hard cap on the loss-at-stop of any single order, as % of equity. Orders above it are refused before reaching the broker. |
+| `max_lots` | Hard cap on volume per order. |
+| `max_open_positions` | No new orders when the account already has this many positions. |
+| `allowed_symbols` | Empty = any symbol. Otherwise only these (e.g. `["EURUSD", "XAUUSD"]`). |
+| `magic` | Identifier stamped on every order from this app, so you can tell them apart in the terminal. |
+| `deviation_points` | Maximum slippage accepted for market orders. |
+
+### Placing an order (the **Trade** page)
+
+1. Pick the account, type the symbol, choose Buy/Sell and Market / Limit / Stop.
+2. Choose sizing:
+   * **Risk % of equity** - e.g. `1` means *"lose at most 1% of equity if the
+     stop is hit"*. The volume is calculated from the stop distance and the
+     symbol's tick value, then **rounded down** to the lot step so the real risk
+     is never above what you asked. This mode requires a stop-loss.
+   * **Fixed lots** - you type the volume.
+3. Stop-loss as a distance in points or a price; take-profit as reward:risk
+   (e.g. `2`), points, or price.
+4. **Preview order** shows the exact volume, entry, stop, target, money at
+   risk, reward, broker margin check and any warnings. Nothing is sent yet.
+5. **Place order…** opens a confirmation where you type `BUY` or `SELL`.
+   Only then is the order sent, and only if the market has not changed the
+   computed volume since the preview (previews expire after two minutes).
+
+### Managing positions (the **Open positions** page)
+
+Each position of a trading-enabled account has **SL/TP**, **Partial** and
+**Close** buttons. Close and partial close send a market order for the
+opposite side against that position ticket; each asks for confirmation.
+
+### What protects you
+
+* Both switches, the broker's own "trade allowed" flag and the terminal's
+  "algorithmic trading" setting are re-checked inside the worker before every
+  single order.
+* The worker refuses to trade if the terminal is logged into a different
+  account than configured.
+* Every order is validated locally (limits, stop side, broker minimum stop
+  distance, lot step) and then with the broker's `order_check` before
+  `order_send`.
+* The confirmation carries a signed copy of the previewed request; a changed
+  or replayed request is refused.
+* Every action (sent / rejected / result) is appended to
+  `data\trading-audit.jsonl` and shown on the Trade page.
+* Pending orders (limit/stop) are placed but not otherwise managed by this
+  application; cancel them in the terminal.
+
+Trading involves risk. The application enforces the limits you configure, but
+it does not judge whether a trade is a good idea.
+
+## 7. Security
 
 Threat model: something else on your PC (or a web page you visit) trying to
 read your trading data from the local server, and the usual mistakes of
@@ -230,8 +316,9 @@ local dashboards.
   no analytics, no chart libraries).
 * **No secrets leave the process.** Passwords are read inside the worker
   subprocess only; the API never returns them, and logs never print them.
-* **Read-only.** There is no code path that sends trade requests. The only
-  "write" actions are *Reconnect* and *Reload history* for a worker.
+* **Read-only unless you opt in.** With trading off (the default) there is no
+  code path that sends trade requests; the only "write" actions are
+  *Reconnect* and *Reload history*. With trading on, see section 6.
 * **No remote API docs.** The automatic FastAPI documentation pages are
   disabled.
 * **Dependencies**: `fastapi`, `uvicorn`, `MetaTrader5`. Nothing else.
@@ -240,7 +327,7 @@ Things you should still do: keep `config\accounts.json` and `config\.api_token`
 out of cloud-synced folders, prefer the investor password, and keep Windows and
 Python updated.
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 | Symptom | What to check |
 |---------|---------------|
@@ -251,10 +338,12 @@ Python updated.
 | "Unverified · diff …" badge | The deal ledger and reconstructed trades disagree. Usually old positions whose entries predate `history_lookback_days`; press **Reload history** or raise the lookback. Please report persistent cases. |
 | Port already in use | Change `server.port` in `settings.json`. |
 | Dashboard says *Dashboard locked* | Open it via the launcher link, or paste the key from `config\.api_token`. |
+| Trade page says trading is off | Both `trading_enabled` (settings) and `trading.enabled` (account) must be true, the account must use the master password, and the terminal must allow algorithmic trading. The page lists exactly which condition fails. |
+| Order refused: "exceeds max_lots / max_risk_percent" | Raise the limit in `accounts.json` or widen the stop / lower the risk. The refusal happens before anything reaches the broker. |
 
 Logs are in `logs\control-center.log`.
 
-## 8. Project layout
+## 9. Project layout
 
 ```
 mt5-control-center/
@@ -273,6 +362,7 @@ mt5-control-center/
 │   ├─ worker.py              the per-account subprocess (owns the MT5 link)
 │   ├─ mt5_adapter.py         thin wrapper over the MetaTrader5 package
 │   ├─ mock_adapter.py        synthetic demo data source
+│   ├─ trading.py             position sizing, order/close/modify requests, guards
 │   ├─ history.py             deal → trade reconstruction + reconciliation
 │   ├─ stats.py               realized P/L, statistics, curves, sessions
 │   ├─ store.py               SQLite store for live equity samples
@@ -281,9 +371,10 @@ mt5-control-center/
 └─ tests/                     pytest suite (reconstruction, stats, API security)
 ```
 
-## 9. Running the self-tests
+## 10. Running the self-tests
 
 Double-click `run-tests.bat` (or `.venv\Scripts\python -m pytest tests`). The
 tests cover round trips, partial closes with cost allocation, reversals,
 incomplete records, deposit separation, period statistics, the demo data's
-own reconciliation, and every security rule of the API.
+own reconciliation, position sizing and order validation, the preview /
+confirm protocol, and every security rule of the API.

@@ -3,20 +3,24 @@
 from __future__ import annotations
 
 import csv
+import hashlib
+import hmac
 import io
+import json
 import logging
+import threading
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import Body, FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
 from . import mt5_constants as C
-from .config import AccountConfig, Settings
+from .config import DATA_DIR, AccountConfig, Settings
 from .history import TradeBook, build_trades, normalize_deals
 from .security import COOKIE_NAME, build_middleware
 from .stats import (balance_curve, balance_flows, by_session, by_symbol, daily_pl, filter_trades,
@@ -65,6 +69,48 @@ def _parse_date(value: str | None, tz, end: bool = False) -> float | None:
     return d.timestamp()
 
 
+class AuditLog:
+    """Append-only record of every trading action requested through the API."""
+
+    def __init__(self, path: Path):
+        self.path = path
+        self._lock = threading.Lock()
+
+    def write(self, entry: dict[str, Any]) -> None:
+        entry = {"ts": _iso(time.time()), **entry}
+        try:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            with self._lock, self.path.open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps(entry, default=str) + "\n")
+        except OSError:
+            log.exception("Could not write trading audit log")
+
+    def tail(self, n: int = 50) -> list[dict[str, Any]]:
+        try:
+            lines = self.path.read_text(encoding="utf-8").splitlines()[-n:]
+        except OSError:
+            return []
+        out = []
+        for ln in lines:
+            try:
+                out.append(json.loads(ln))
+            except json.JSONDecodeError:
+                continue
+        return out
+
+
+INTENT_TTL_S = 120
+ORDER_FIELDS = ("symbol", "side", "order_kind", "price", "sizing", "risk_percent", "lots", "sl_mode", "sl", "tp_mode", "tp", "comment")
+
+
+def _order_request(body: dict[str, Any]) -> dict[str, Any]:
+    return {k: body.get(k) for k in ORDER_FIELDS if body.get(k) not in (None, "")}
+
+
+def _canonical(acc_id: str, action: str, payload: dict[str, Any]) -> str:
+    return f"{acc_id}|{action}|" + json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
+
+
 def create_app(supervisor: Supervisor, settings: Settings, token: str, store: EquityStore) -> FastAPI:
     app = FastAPI(title="MT5 Trading Control Center", version=__version__, docs_url=None, redoc_url=None, openapi_url=None)
     tz = resolve_timezone(settings.report_timezone)
@@ -75,6 +121,52 @@ def create_app(supervisor: Supervisor, settings: Settings, token: str, store: Eq
     if host in ("127.0.0.1", "localhost", "::1"):
         allowed_hosts |= {f"localhost:{port}", f"127.0.0.1:{port}", "localhost", "127.0.0.1"}
     app.middleware("http")(build_middleware(token, allowed_hosts))
+    audit = AuditLog(DATA_DIR / "trading-audit.jsonl")
+    intent_key = hashlib.sha256(("intent:" + token).encode()).digest()
+
+    def make_intent(acc_id: str, action: str, payload: dict[str, Any]) -> dict[str, Any]:
+        ts = int(time.time())
+        sig = hmac.new(intent_key, f"{ts}|{_canonical(acc_id, action, payload)}".encode(), hashlib.sha256).hexdigest()
+        return {"ts": ts, "sig": sig, "expires_in": INTENT_TTL_S}
+
+    def check_intent(acc_id: str, action: str, payload: dict[str, Any], intent: Any) -> None:
+        if not isinstance(intent, dict):
+            raise HTTPException(400, "Missing confirmation. Preview the order first, then confirm it.")
+        try:
+            ts = int(intent.get("ts"))
+            sig = str(intent.get("sig"))
+        except (TypeError, ValueError):
+            raise HTTPException(400, "Invalid confirmation.")
+        if abs(time.time() - ts) > INTENT_TTL_S:
+            raise HTTPException(409, "The preview has expired. Preview the order again.")
+        expected = hmac.new(intent_key, f"{ts}|{_canonical(acc_id, action, payload)}".encode(), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(sig, expected):
+            raise HTTPException(409, "The order details changed since the preview. Preview again.")
+
+    def trading_status(st: AccountState) -> dict[str, Any]:
+        t = st.cfg.trading
+        a = st.account or {}
+        reasons = []
+        if not settings.trading_enabled:
+            reasons.append("Global switch off: set \"trading_enabled\": true in settings.json")
+        if not t.enabled:
+            reasons.append("Account switch off: set trading.enabled to true in accounts.json")
+        if a and a.get("trade_allowed") is False:
+            reasons.append("Broker reports trading not allowed (investor password or disabled account)")
+        if st.terminal and st.terminal.get("trade_allowed") is False:
+            reasons.append("Algorithmic trading disabled in the terminal (Tools > Options > Expert Advisors)")
+        if st.effective_state(time.time(), settings.refresh_seconds) != "connected":
+            reasons.append("Account not connected")
+        return {"enabled": not reasons, "reasons": reasons, "limits": {
+            "max_risk_percent": t.max_risk_percent, "max_lots": t.max_lots,
+            "max_open_positions": t.max_open_positions, "allowed_symbols": t.allowed_symbols,
+            "magic": t.magic, "deviation_points": t.deviation_points}}
+
+    def worker_call(acc_id: str, name: str, args: dict[str, Any], timeout: float = 25.0) -> dict[str, Any]:
+        res = supervisor.call(acc_id, name, args, timeout=timeout)
+        if not res.get("ok"):
+            raise HTTPException(422 if res.get("rejected") else 502, res.get("error") or "Worker error")
+        return res.get("data") or {}
 
     def sample_listener(acc_id: str, st: AccountState) -> None:
         store.maybe_sample(acc_id, st.account, settings.equity_sample_seconds)
@@ -102,6 +194,7 @@ def create_app(supervisor: Supervisor, settings: Settings, token: str, store: Eq
             "deals_count": len(st.deals),
             "positions_count": len(st.positions),
             "restarts": st.restarts,
+            "trading": trading_status(st),
             "account": {
                 "login": a.get("login"), "name": a.get("name"), "server": a.get("server"),
                 "company": a.get("company"), "currency": a.get("currency"),
@@ -333,7 +426,10 @@ def create_app(supervisor: Supervisor, settings: Settings, token: str, store: Eq
                 "logs": [{**l, "time": _iso(l["ts"])} for l in list(st.logs)[-60:]],
             })
         return {"accounts": out, "settings": {**settings.to_dict(), "report_timezone_resolved": str(tz)},
-                "security": {"bind": f"{host}:{port}", "token_protected": True, "loopback_only": host in ("127.0.0.1", "localhost", "::1")}}
+                "security": {"bind": f"{host}:{port}", "token_protected": True, "loopback_only": host in ("127.0.0.1", "localhost", "::1"),
+                             "trading_global": settings.trading_enabled,
+                             "trading_accounts": [st.cfg.id for st in supervisor.states.values() if trading_status(st)["enabled"]]},
+                "audit": audit.tail(40)}
 
     @app.post("/api/accounts/{acc_id}/reconnect")
     async def reconnect(acc_id: str):
@@ -344,6 +440,89 @@ def create_app(supervisor: Supervisor, settings: Settings, token: str, store: Eq
     async def refresh_history(acc_id: str):
         get_state(acc_id)
         return {"ok": supervisor.send_command(acc_id, "refresh_history")}
+
+    # ------------------------------------------------------------------ #
+    # Trading
+    # ------------------------------------------------------------------ #
+    @app.get("/api/accounts/{acc_id}/trading")
+    async def trading_info(acc_id: str):
+        st = get_state(acc_id)
+        symbols = sorted({d.get("symbol") for d in st.deals if d.get("symbol")} | {p.get("symbol") for p in st.positions if p.get("symbol")})
+        return {"account_id": acc_id, "status": trading_status(st), "currency": (st.account or {}).get("currency"),
+                "equity": (st.account or {}).get("equity"), "margin_free": (st.account or {}).get("margin_free"),
+                "known_symbols": symbols, "audit": [e for e in audit.tail(100) if e.get("account") == acc_id][-20:]}
+
+    @app.post("/api/accounts/{acc_id}/symbol")
+    async def symbol_lookup(acc_id: str, body: dict[str, Any] = Body(...)):
+        get_state(acc_id)
+        return worker_call(acc_id, "symbol_info", {"symbol": body.get("symbol")}, timeout=15)
+
+    @app.post("/api/accounts/{acc_id}/orders/preview")
+    async def order_preview(acc_id: str, body: dict[str, Any] = Body(...)):
+        st = get_state(acc_id)
+        status = trading_status(st)
+        if not status["enabled"]:
+            raise HTTPException(403, "Trading is disabled for this account: " + "; ".join(status["reasons"]))
+        req = _order_request(body)
+        data = worker_call(acc_id, "trade_preview", req)
+        data["intent"] = make_intent(acc_id, "order", req)
+        data["request_echo"] = req
+        return data
+
+    @app.post("/api/accounts/{acc_id}/orders")
+    async def order_execute(acc_id: str, body: dict[str, Any] = Body(...)):
+        st = get_state(acc_id)
+        status = trading_status(st)
+        if not status["enabled"]:
+            raise HTTPException(403, "Trading is disabled for this account: " + "; ".join(status["reasons"]))
+        req = _order_request(body)
+        check_intent(acc_id, "order", req, body.get("intent"))
+        expected = body.get("expected") or {}
+        args = {**req, "expected": {k: expected.get(k) for k in ("symbol", "order_type", "volume")}}
+        audit.write({"account": acc_id, "action": "order", "request": req, "stage": "sent"})
+        try:
+            data = worker_call(acc_id, "trade_execute", args, timeout=60)
+        except HTTPException as exc:
+            audit.write({"account": acc_id, "action": "order", "request": req, "stage": "rejected", "error": exc.detail})
+            raise
+        audit.write({"account": acc_id, "action": "order", "request": req, "stage": "result", "ok": data.get("ok"),
+                     "result": data.get("result"), "plan": data.get("plan")})
+        return data
+
+    @app.post("/api/accounts/{acc_id}/positions/{ticket}/close")
+    async def close_position(acc_id: str, ticket: int, body: dict[str, Any] = Body(default={})):
+        st = get_state(acc_id)
+        status = trading_status(st)
+        if not status["enabled"]:
+            raise HTTPException(403, "Trading is disabled for this account: " + "; ".join(status["reasons"]))
+        if body.get("confirm") is not True:
+            raise HTTPException(400, "Close requests must be confirmed.")
+        vol = body.get("volume")
+        args = {"ticket": ticket, "volume": vol if vol not in (None, "") else None}
+        audit.write({"account": acc_id, "action": "close", "request": args, "stage": "sent"})
+        try:
+            data = worker_call(acc_id, "close_position", args, timeout=60)
+        except HTTPException as exc:
+            audit.write({"account": acc_id, "action": "close", "request": args, "stage": "rejected", "error": exc.detail})
+            raise
+        audit.write({"account": acc_id, "action": "close", "request": args, "stage": "result", "ok": data.get("ok"), "result": data.get("result")})
+        return data
+
+    @app.post("/api/accounts/{acc_id}/positions/{ticket}/modify")
+    async def modify_position(acc_id: str, ticket: int, body: dict[str, Any] = Body(...)):
+        st = get_state(acc_id)
+        status = trading_status(st)
+        if not status["enabled"]:
+            raise HTTPException(403, "Trading is disabled for this account: " + "; ".join(status["reasons"]))
+        args = {"ticket": ticket, "sl": body.get("sl"), "tp": body.get("tp")}
+        audit.write({"account": acc_id, "action": "modify", "request": args, "stage": "sent"})
+        try:
+            data = worker_call(acc_id, "modify_position", args, timeout=60)
+        except HTTPException as exc:
+            audit.write({"account": acc_id, "action": "modify", "request": args, "stage": "rejected", "error": exc.detail})
+            raise
+        audit.write({"account": acc_id, "action": "modify", "request": args, "stage": "result", "ok": data.get("ok"), "result": data.get("result")})
+        return data
 
     # ------------------------------------------------------------------ #
     @app.get("/")

@@ -14,7 +14,7 @@
     viewToken: 0,
   };
 
-  const VIEW_TITLES = { overview: "Overview", positions: "Open positions", performance: "Performance", trades: "Trade history", balance: "Balance operations", diagnostics: "Diagnostics" };
+  const VIEW_TITLES = { overview: "Overview", positions: "Open positions", trade: "Trade", performance: "Performance", trades: "Trade history", balance: "Balance operations", diagnostics: "Diagnostics" };
   const $ = (sel, root) => (root || document).querySelector(sel);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const COLOR_HEX = { blue: "#3987e5", orange: "#e0692f", aqua: "#1fb282", yellow: "#d29a1a", magenta: "#d55181", violet: "#9085e9" };
@@ -121,13 +121,13 @@
     clearTimeout(S.timers.view);
     const token = ++S.viewToken;
     const content = $("#content");
-    const fn = { overview: viewOverview, positions: viewPositions, performance: viewPerformance, trades: viewTrades, balance: viewBalance, diagnostics: viewDiagnostics }[S.view];
+    const fn = { overview: viewOverview, positions: viewPositions, trade: viewTrade, performance: viewPerformance, trades: viewTrades, balance: viewBalance, diagnostics: viewDiagnostics }[S.view];
     Promise.resolve(fn(content, token)).catch(err => {
       if (token !== S.viewToken) return;
       if (err.message !== "unauthorized") content.innerHTML = `<div class="banner bad">Could not load this view: ${esc(err.message)}</div>`;
     });
   }
-  function scheduleViewRefresh(ms) { clearTimeout(S.timers.view); S.timers.view = setTimeout(() => { if (!document.hidden) renderView(); else scheduleViewRefresh(ms); }, ms); }
+  function scheduleViewRefresh(ms) { clearTimeout(S.timers.view); S.timers.view = setTimeout(() => { if (!document.hidden && !$("#modal") && S.view !== "trade") renderView(); else scheduleViewRefresh(ms); }, ms); }
 
   /* ---------------- OVERVIEW ---------------- */
   function accountCard(a, opts = {}) {
@@ -238,13 +238,14 @@
       const cur = r?.currency;
       const rows = r?.positions || [];
       html += `<section class="card"><div class="card-head"><span class="dot c-${esc(a.color)}"></span><h3>${esc(a.label)}</h3><span class="sub">${rows.length} open · updated ${esc(ago(a.last_update_age_s))}</span><div class="spacer"></div><span class="dim small">Floating ${signedMoney(r?.floating_total, cur)}</span></div>
-      <div class="table-wrap">${rows.length ? `<table class="data"><thead><tr><th>Symbol</th><th>Side</th><th class="num">Volume</th><th class="num">Open price</th><th class="num">Current</th><th class="num">S/L</th><th class="num">T/P</th><th class="num">Swap</th><th class="num">Profit</th><th class="num">Net</th><th>Opened</th><th class="num">Ticket</th><th>Comment</th></tr></thead><tbody>
-        ${rows.map(p => `<tr><td class="sym">${esc(p.symbol)}</td><td><span class="tag ${p.direction.toLowerCase()}">${p.direction}</span></td><td class="num">${fmt(p.volume, 2)}</td><td class="num">${price(p.price_open)}</td><td class="num">${price(p.price_current)}</td><td class="num muted">${p.sl ? price(p.sl) : "–"}</td><td class="num muted">${p.tp ? price(p.tp) : "–"}</td><td class="num">${signedMoney(p.swap, null)}</td><td class="num">${signedMoney(p.profit, null)}</td><td class="num">${signedMoney(p.net, cur)}</td><td class="dim">${esc(dt(p.open_time))}</td><td class="num muted">${esc(p.ticket)}</td><td class="muted">${esc(p.comment || "")}</td></tr>`).join("")}
+      <div class="table-wrap">${rows.length ? `<table class="data compact"><thead><tr><th>Symbol</th><th>Side</th><th class="num">Volume</th><th class="num">Open price</th><th class="num">Current</th><th class="num">S/L</th><th class="num">T/P</th><th class="num">Swap</th><th class="num">Profit</th><th class="num">Net</th><th>Opened</th><th class="num">Ticket</th><th class="right">Actions</th></tr></thead><tbody>
+        ${rows.map(p => `<tr><td class="sym">${esc(p.symbol)}</td><td><span class="tag ${p.direction.toLowerCase()}">${p.direction}</span></td><td class="num">${fmt(p.volume, 2)}</td><td class="num">${price(p.price_open)}</td><td class="num">${price(p.price_current)}</td><td class="num muted">${p.sl ? price(p.sl) : "–"}</td><td class="num muted">${p.tp ? price(p.tp) : "–"}</td><td class="num">${signedMoney(p.swap, null)}</td><td class="num">${signedMoney(p.profit, null)}</td><td class="num">${signedMoney(p.net, cur)}</td><td class="dim">${dt2(p.open_time)}</td><td class="num muted" title="${esc(p.comment || "")}">${esc(p.ticket)}${p.comment ? '<span class="muted"> ✎</span>' : ""}</td><td class="right">${positionActions(a, p, cur)}</td></tr>`).join("")}
         </tbody><tfoot><tr><td colspan="2">Total</td><td class="num">${fmt(rows.reduce((s, p) => s + p.volume, 0), 2)}</td><td colspan="4"></td><td class="num">${signedMoney(rows.reduce((s, p) => s + (p.swap || 0), 0))}</td><td class="num">${signedMoney(rows.reduce((s, p) => s + (p.profit || 0), 0))}</td><td class="num">${signedMoney(r.floating_total, cur)}</td><td colspan="3"></td></tr></tfoot></table>` : `<div class="empty"><div class="ico">—</div>${r ? "No open positions" : "Account not available"}</div>`}</div></section>`;
     });
     content.innerHTML = html;
     bindReconnect(content);
-    scheduleViewRefresh(Math.max(3000, (S.overview.refresh_seconds || 2) * 1500));
+    list.forEach((a, i) => { const sec = content.querySelectorAll("section.card")[i]; if (sec && results[i]) bindPositionActions(sec, a, results[i].positions, results[i].currency); });
+    scheduleViewRefresh($("#modal") ? 60000 : Math.max(3000, (S.overview.refresh_seconds || 2) * 1500));
   }
 
   /* ---------------- PERFORMANCE ---------------- */
@@ -437,7 +438,8 @@
           <dt>Listening on</dt><dd class="mono">${esc(sec.bind)}</dd>
           <dt>Reachable from other computers</dt><dd>${sec.loopback_only ? '<span class="tag ok">No · loopback only</span>' : '<span class="tag bad">Yes · check settings.json</span>'}</dd>
           <dt>Access key required</dt><dd><span class="tag ok">Yes</span></dd>
-          <dt>Trading functions</dt><dd><span class="tag ok">None · read-only</span></dd>
+          <dt>Trading (global switch)</dt><dd>${sec.trading_global ? '<span class="tag warn">enabled</span>' : '<span class="tag ok">off · read-only</span>'}</dd>
+          <dt>Accounts able to trade now</dt><dd>${sec.trading_accounts.length ? sec.trading_accounts.map(esc).join(", ") : "none"}</dd>
           <dt>External resources loaded</dt><dd><span class="tag ok">None</span></dd>
         </dl></div></section>
         <section class="card"><div class="card-head"><h3>Settings</h3><span class="sub">config/settings.json</span></div><div class="card-body"><dl class="kv">
@@ -484,6 +486,7 @@
             <dt>Last history update</dt><dd>${esc(dt(a.last_history_update))}</dd>
             <dt>Reconciliation</dt><dd>${a.reconciliation ? (a.reconciliation.verified ? '<span class="tag ok">verified</span>' : `<span class="tag warn">diff ${fmt(a.reconciliation.difference)}</span>`) : "–"}</dd>
             <dt>Incomplete positions</dt><dd>${a.incomplete_positions.length}</dd>
+            <dt>Trading</dt><dd>${a.trading.enabled ? '<span class="tag warn">enabled</span>' : `<span class="tag ok" title="${esc(a.trading.reasons.join("; "))}">off</span>`}</dd>
           </dl>
         </div>
         <div class="section-title my14"><h3 class="small dim">Worker log</h3><div class="line"></div></div>
@@ -491,6 +494,168 @@
       </div></section>`).join("")}`;
     bindReconnect(content);
     scheduleViewRefresh(5000);
+  }
+
+  /* ---------------- MODAL ---------------- */
+  function openModal({ title, body, confirmLabel = "Confirm", cancelLabel = "Cancel", danger = false, requireText = null, onConfirm }) {
+    closeModal();
+    const wrap = document.createElement("div");
+    wrap.className = "modal-wrap"; wrap.id = "modal";
+    wrap.innerHTML = `<div class="modal ${danger ? "danger" : ""}" role="dialog" aria-modal="true">
+      <div class="modal-head"><h3>${esc(title)}</h3></div>
+      <div class="modal-body"></div>
+      ${requireText ? `<div class="modal-body pt0"><label class="small dim"><span>Type <strong class="mono">${esc(requireText)}</strong> to confirm</span><input class="confirm-input" autocomplete="off" spellcheck="false"></label></div>` : ""}
+      <div class="modal-foot"><span class="modal-err neg small"></span><span class="flex1"></span><button class="btn m-cancel">${esc(cancelLabel)}</button><button class="btn ${danger ? "danger" : "primary"} m-ok" ${requireText ? "disabled" : ""}>${esc(confirmLabel)}</button></div></div>`;
+    const bodyEl = wrap.querySelector(".modal-body");
+    if (typeof body === "string") bodyEl.innerHTML = body; else bodyEl.appendChild(body);
+    document.body.appendChild(wrap);
+    const ok = wrap.querySelector(".m-ok"), cancel = wrap.querySelector(".m-cancel"), input = wrap.querySelector(".confirm-input");
+    cancel.addEventListener("click", closeModal);
+    wrap.addEventListener("click", e => { if (e.target === wrap) closeModal(); });
+    if (input) { input.focus(); input.addEventListener("input", () => { ok.disabled = input.value.trim() !== requireText; }); }
+    ok.addEventListener("click", async () => {
+      ok.disabled = true; ok.textContent = "Working…";
+      try { await onConfirm(wrap); closeModal(); }
+      catch (err) { wrap.querySelector(".modal-err").textContent = err.message; ok.disabled = false; ok.textContent = confirmLabel; }
+    });
+    return wrap;
+  }
+  function closeModal() { const m = $("#modal"); if (m) m.remove(); }
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+  function toast(msg, kind = "ok") {
+    let host = $("#toasts"); if (!host) { host = document.createElement("div"); host.id = "toasts"; document.body.appendChild(host); }
+    const t = document.createElement("div"); t.className = `toast ${kind}`; t.textContent = msg; host.appendChild(t);
+    setTimeout(() => t.classList.add("show"), 10); setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 300); }, 6000);
+  }
+  async function post(path, body) { return api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) }); }
+
+  /* ---------------- POSITION ACTIONS ---------------- */
+  function positionActions(a, p, cur) {
+    if (!a.trading || !a.trading.enabled) return `<span class="xs muted" title="${esc((a.trading?.reasons || []).join("; "))}">trading off</span>`;
+    return `<span class="actions">
+      <button class="btn sm" data-act="modify" data-ticket="${p.ticket}">SL/TP</button>
+      <button class="btn sm" data-act="partial" data-ticket="${p.ticket}">Partial</button>
+      <button class="btn sm danger" data-act="close" data-ticket="${p.ticket}">Close</button></span>`;
+  }
+  function bindPositionActions(root, a, rows, cur) {
+    root.querySelectorAll("[data-act]").forEach(b => b.addEventListener("click", () => {
+      const p = rows.find(r => String(r.ticket) === b.dataset.ticket); if (!p) return;
+      const head = `<dl class="kv"><dt>Account</dt><dd>${esc(a.label)}</dd><dt>Position</dt><dd>#${p.ticket} · ${esc(p.symbol)} · <span class="tag ${p.direction.toLowerCase()}">${p.direction}</span> ${fmt(p.volume, 2)} lots</dd><dt>Open / current</dt><dd>${price(p.price_open)} / ${price(p.price_current)}</dd><dt>Floating net</dt><dd>${signedMoney(p.net, cur)}</dd></dl>`;
+      if (b.dataset.act === "close") {
+        openModal({ title: "Close position at market", danger: true, confirmLabel: "Close position", body: head + `<p class="small dim">The full volume will be closed with a market order. Slippage is limited by the account's deviation setting.</p>`,
+          onConfirm: async () => { const r = await post(`/api/accounts/${a.id}/positions/${p.ticket}/close`, { confirm: true }); if (!r.ok) throw new Error(r.result_text + (r.result?.comment ? ` · ${r.result.comment}` : "")); toast(`Closed #${p.ticket} ${p.symbol} @ ${price(r.result.price)}`); renderView(); } });
+      } else if (b.dataset.act === "partial") {
+        const form = document.createElement("div"); form.innerHTML = head + `<label class="small dim">Volume to close (max ${fmt(p.volume, 2)})<input class="in" type="number" step="0.01" min="0.01" max="${p.volume}" value="${(Math.round(p.volume / 2 * 100) / 100).toFixed(2)}"></label>`;
+        openModal({ title: "Partially close position", danger: true, confirmLabel: "Close volume", body: form,
+          onConfirm: async () => { const v = parseFloat(form.querySelector(".in").value); if (!(v > 0)) throw new Error("Enter a volume."); const r = await post(`/api/accounts/${a.id}/positions/${p.ticket}/close`, { confirm: true, volume: v }); if (!r.ok) throw new Error(r.result_text + (r.result?.comment ? ` · ${r.result.comment}` : "")); toast(`Closed ${v} lots of #${p.ticket} @ ${price(r.result.price)}`); renderView(); } });
+      } else {
+        const form = document.createElement("div"); form.innerHTML = head + `<div class="form-row"><label class="small dim">Stop loss (0 = none)<input class="sl" type="number" step="any" value="${p.sl || 0}"></label><label class="small dim">Take profit (0 = none)<input class="tp" type="number" step="any" value="${p.tp || 0}"></label></div>`;
+        openModal({ title: "Modify stop loss / take profit", confirmLabel: "Apply", body: form,
+          onConfirm: async () => { const sl = parseFloat(form.querySelector(".sl").value) || 0, tp = parseFloat(form.querySelector(".tp").value) || 0; const r = await post(`/api/accounts/${a.id}/positions/${p.ticket}/modify`, { sl, tp }); if (!r.ok) throw new Error(r.result_text + (r.result?.comment ? ` · ${r.result.comment}` : "")); toast(`Updated SL/TP on #${p.ticket}`); renderView(); } });
+      }
+    }));
+  }
+
+  /* ---------------- TRADE TICKET ---------------- */
+  const TF = { account: null, symbol: "", side: "BUY", order_kind: "market", price: "", sizing: "risk", risk_percent: "1", lots: "0.10", sl_mode: "points", sl: "", tp_mode: "rr", tp: "2", comment: "" };
+  let lastPreview = null;
+
+  async function viewTrade(content, token) {
+    const list = accounts();
+    if (!TF.account || !list.some(a => a.id === TF.account)) TF.account = (S.scope !== "all" ? S.scope : (list.find(a => a.trading?.enabled) || list[0] || {}).id);
+    if (S.scope !== "all") TF.account = S.scope;
+    const a = acct(TF.account);
+    if (!a) { content.innerHTML = `<div class="empty">No accounts configured</div>`; return; }
+    const info = await api(`/api/accounts/${a.id}/trading`);
+    if (token !== S.viewToken) return;
+    const st = info.status, cur = info.currency || "";
+    const disabled = !st.enabled;
+    content.innerHTML = mockBanner() + `
+      <div class="filters"><span class="small dim">Trade on</span><span class="seg" id="trade-acct">${list.map(x => `<button data-id="${esc(x.id)}" class="${x.id === a.id ? "active" : ""}"><span class="dot c-${esc(x.color)} mr6"></span>${esc(x.label)}</button>`).join("")}</span>
+        <span class="flex1"></span><span class="small dim">Equity ${money(info.equity, cur)} · free margin ${money(info.margin_free, cur)}</span></div>
+      ${disabled ? `<div class="banner warn"><strong>Trading is off for ${esc(a.label)}</strong><span><ul class="notes">${st.reasons.map(r => `<li>${esc(r)}</li>`).join("")}</ul></span></div>` : `<div class="banner bad"><strong>Live trading</strong><span>Orders placed here go straight to the broker through the <b>${esc(a.label)}</b> terminal${a.mock ? " (mock: simulated fills)" : ""}. Limits: max risk ${st.limits.max_risk_percent}% · max ${st.limits.max_lots} lots · max ${st.limits.max_open_positions} open positions${st.limits.allowed_symbols.length ? " · symbols " + st.limits.allowed_symbols.map(esc).join(", ") : ""}.</span></div>`}
+      <div class="grid cols-2 ticket-grid">
+        <section class="card"><div class="card-head"><h3>Order ticket</h3><span class="sub">${esc(a.label)}</span></div><div class="card-body">
+          <div class="form">
+            <div class="form-row">
+              <label>Symbol<input id="t-symbol" list="t-symbols" value="${esc(TF.symbol)}" placeholder="EURUSD" autocomplete="off" spellcheck="false"><datalist id="t-symbols">${info.known_symbols.map(s => `<option value="${esc(s)}">`).join("")}</datalist></label>
+              <label>Side<span class="seg" id="t-side"><button data-v="BUY" class="${TF.side === "BUY" ? "active buy" : ""}">Buy</button><button data-v="SELL" class="${TF.side === "SELL" ? "active sell" : ""}">Sell</button></span></label>
+              <label>Order<select id="t-kind"><option value="market" ${TF.order_kind === "market" ? "selected" : ""}>Market</option><option value="limit" ${TF.order_kind === "limit" ? "selected" : ""}>Limit</option><option value="stop" ${TF.order_kind === "stop" ? "selected" : ""}>Stop</option></select></label>
+              <label class="${TF.order_kind === "market" ? "hidden" : ""}" id="t-price-wrap">Entry price<input id="t-price" type="number" step="any" value="${esc(TF.price)}"></label>
+            </div>
+            <div class="form-row">
+              <label>Sizing<select id="t-sizing"><option value="risk" ${TF.sizing === "risk" ? "selected" : ""}>Risk % of equity</option><option value="lots" ${TF.sizing === "lots" ? "selected" : ""}>Fixed lots</option></select></label>
+              <label class="${TF.sizing === "risk" ? "" : "hidden"}" id="t-risk-wrap">Risk %<input id="t-risk" type="number" step="0.05" min="0.05" max="${st.limits.max_risk_percent}" value="${esc(TF.risk_percent)}"></label>
+              <label class="${TF.sizing === "lots" ? "" : "hidden"}" id="t-lots-wrap">Lots<input id="t-lots" type="number" step="0.01" min="0.01" max="${st.limits.max_lots}" value="${esc(TF.lots)}"></label>
+            </div>
+            <div class="form-row">
+              <label>Stop loss<select id="t-slmode"><option value="points" ${TF.sl_mode === "points" ? "selected" : ""}>Distance (points)</option><option value="price" ${TF.sl_mode === "price" ? "selected" : ""}>Price</option><option value="none" ${TF.sl_mode === "none" ? "selected" : ""}>None</option></select></label>
+              <label class="${TF.sl_mode === "none" ? "hidden" : ""}" id="t-sl-wrap">SL value<input id="t-sl" type="number" step="any" value="${esc(TF.sl)}"></label>
+              <label>Take profit<select id="t-tpmode"><option value="rr" ${TF.tp_mode === "rr" ? "selected" : ""}>Reward : risk</option><option value="points" ${TF.tp_mode === "points" ? "selected" : ""}>Distance (points)</option><option value="price" ${TF.tp_mode === "price" ? "selected" : ""}>Price</option><option value="none" ${TF.tp_mode === "none" ? "selected" : ""}>None</option></select></label>
+              <label class="${TF.tp_mode === "none" ? "hidden" : ""}" id="t-tp-wrap">TP value<input id="t-tp" type="number" step="any" value="${esc(TF.tp)}"></label>
+            </div>
+            <div class="form-row"><label class="wide">Comment (optional, max 31 chars)<input id="t-comment" maxlength="31" value="${esc(TF.comment)}"></label></div>
+            <div class="form-actions"><button class="btn" id="t-quote">Get quote</button><span class="flex1"></span><button class="btn primary" id="t-preview" ${disabled ? "disabled" : ""}>Preview order</button></div>
+            <div id="t-quote-out" class="small dim mt6"></div>
+          </div></div></section>
+        <section class="card"><div class="card-head"><h3>Preview</h3><span class="sub">nothing is sent until you confirm</span></div><div class="card-body" id="t-preview-out"><div class="empty"><div class="ico">◔</div>Fill in the ticket and press <b>Preview order</b>. The exact volume, stop, target, risk and margin are shown before anything is sent.</div></div></section>
+      </div>
+      <section class="card"><div class="card-head"><h3>Recent trading actions</h3><span class="sub">audit log · data/trading-audit.jsonl</span></div><div class="table-wrap">${info.audit.length ? `<table class="data compact"><thead><tr><th>Time</th><th>Action</th><th>Stage</th><th>Details</th><th>Result</th></tr></thead><tbody>${info.audit.slice().reverse().map(e => `<tr><td class="dim nowrap">${esc(dtShort(e.ts))}</td><td>${esc(e.action)}</td><td><span class="tag ${e.stage === "result" ? (e.ok ? "ok" : "bad") : e.stage === "rejected" ? "bad" : "neutral"}">${esc(e.stage)}</span></td><td class="muted">${esc(auditDetails(e))}</td><td class="muted">${esc(e.error || (e.result ? `${e.result.comment || ""} ${e.result.price ? "@ " + e.result.price : ""}` : ""))}</td></tr>`).join("")}</tbody></table>` : `<div class="empty">No trading actions yet</div>`}</div></section>`;
+    content.querySelectorAll("#trade-acct button").forEach(b => b.addEventListener("click", () => { TF.account = b.dataset.id; if (S.scope !== "all") { S.scope = "all"; renderShell(); } renderView(); }));
+    const read = () => {
+      TF.symbol = $("#t-symbol").value.trim().toUpperCase(); TF.order_kind = $("#t-kind").value; TF.price = $("#t-price").value;
+      TF.sizing = $("#t-sizing").value; TF.risk_percent = $("#t-risk").value; TF.lots = $("#t-lots").value;
+      TF.sl_mode = $("#t-slmode").value; TF.sl = $("#t-sl").value; TF.tp_mode = $("#t-tpmode").value; TF.tp = $("#t-tp").value; TF.comment = $("#t-comment").value;
+      $("#t-price-wrap").classList.toggle("hidden", TF.order_kind === "market");
+      $("#t-risk-wrap").classList.toggle("hidden", TF.sizing !== "risk"); $("#t-lots-wrap").classList.toggle("hidden", TF.sizing !== "lots");
+      $("#t-sl-wrap").classList.toggle("hidden", TF.sl_mode === "none"); $("#t-tp-wrap").classList.toggle("hidden", TF.tp_mode === "none");
+    };
+    content.querySelectorAll("#t-symbol,#t-kind,#t-price,#t-sizing,#t-risk,#t-lots,#t-slmode,#t-sl,#t-tpmode,#t-tp,#t-comment").forEach(el => { el.addEventListener("input", read); el.addEventListener("change", read); });
+    content.querySelectorAll("#t-side button").forEach(b => b.addEventListener("click", () => { TF.side = b.dataset.v; content.querySelectorAll("#t-side button").forEach(x => x.className = x === b ? "active " + TF.side.toLowerCase() : ""); }));
+    $("#t-quote").addEventListener("click", async () => {
+      read(); const out = $("#t-quote-out"); out.textContent = "Fetching…";
+      try { const q = await post(`/api/accounts/${a.id}/symbol`, { symbol: TF.symbol }); const i = q.info, t = q.tick;
+        out.innerHTML = `<b>${esc(i.name)}</b> bid <span class="n">${price(t.bid)}</span> · ask <span class="n">${price(t.ask)}</span> · spread ${i.spread} pts · point ${i.point} · lot ${i.volume_min}–${i.volume_max} step ${i.volume_step} · contract ${i.trade_contract_size} · tick value ${fmt(i.trade_tick_value, 2)} ${esc(cur)} · min stop ${i.trade_stops_level} pts · ${esc(i.description || "")}`;
+      } catch (e) { out.innerHTML = `<span class="neg">${esc(e.message)}</span>`; }
+    });
+    $("#t-preview").addEventListener("click", async () => {
+      read(); const out = $("#t-preview-out"); out.innerHTML = `<div class="loading-row"><div class="spinner"></div>Checking with the terminal…</div>`;
+      const body = { symbol: TF.symbol, side: TF.side, order_kind: TF.order_kind, price: TF.order_kind === "market" ? undefined : parseFloat(TF.price), sizing: TF.sizing, risk_percent: parseFloat(TF.risk_percent), lots: parseFloat(TF.lots), sl_mode: TF.sl_mode, sl: parseFloat(TF.sl), tp_mode: TF.tp_mode, tp: parseFloat(TF.tp), comment: TF.comment };
+      try {
+        const pv = await post(`/api/accounts/${a.id}/orders/preview`, body); lastPreview = pv;
+        const p = pv.plan, c = pv.check;
+        out.innerHTML = `<div class="preview-head"><span class="tag ${p.direction.toLowerCase()}">${p.direction}</span><b class="big">${esc(p.symbol)}</b><span class="big">${fmt(p.volume, 2)} lots</span><span class="dim">${esc(p.order_type_name)} @ ${price(p.entry)}</span></div>
+          <div class="tiles mt14">
+            <div class="tile"><div class="k">Risk if SL hit</div><div class="v neg">${p.risk_amount === null ? "uncapped" : "−" + fmt(p.risk_amount) + `<span class="cur">${esc(cur)}</span>`}</div><div class="s">${p.risk_percent === null ? "no stop loss" : fmt(p.risk_percent, 2) + "% of equity"}</div></div>
+            <div class="tile"><div class="k">Reward at TP</div><div class="v pos">${p.reward_amount === null ? "–" : "+" + fmt(p.reward_amount) + `<span class="cur">${esc(cur)}</span>`}</div><div class="s">${p.rr ? "R:R 1 : " + fmt(p.rr, 2) : "no take profit"}</div></div>
+            <div class="tile"><div class="k">Stop loss</div><div class="v">${p.sl === null ? "none" : price(p.sl)}</div><div class="s">${p.sl === null ? "" : Math.round(Math.abs(p.entry - p.sl) / pv.symbol.point) + " points"}</div></div>
+            <div class="tile"><div class="k">Take profit</div><div class="v">${p.tp === null ? "none" : price(p.tp)}</div><div class="s">${p.tp === null ? "" : Math.round(Math.abs(p.tp - p.entry) / pv.symbol.point) + " points"}</div></div>
+            <div class="tile"><div class="k">Margin (broker check)</div><div class="v">${c.margin !== undefined && c.margin !== null ? money(c.margin, cur) : "–"}</div><div class="s">free margin after: ${c.margin_free !== undefined && c.margin_free !== null ? fmt(c.margin_free) : "–"}</div></div>
+            <div class="tile"><div class="k">Broker pre-check</div><div class="v">${pv.check_ok ? '<span class="tag ok">passed</span>' : '<span class="tag bad">failed</span>'}</div><div class="s">${esc(pv.check_text)}${c.comment && c.comment !== pv.check_text ? " · " + esc(c.comment) : ""}</div></div>
+          </div>
+          ${p.warnings.length ? `<ul class="notes mt14">${p.warnings.map(w => `<li class="warn-text">${esc(w)}</li>`).join("")}</ul>` : ""}
+          <div class="small muted mt14">Loss per 1.00 lot at the stop: ${p.loss_per_lot === null ? "–" : fmt(p.loss_per_lot) + " " + esc(cur)} · spread ${pv.symbol.spread} pts · filling ${pv.request.type_filling} · deviation ${pv.request.deviation} pts · magic ${pv.request.magic}</div>
+          <div class="form-actions mt14"><span class="xs muted">Preview valid for ${pv.intent.expires_in}s</span><span class="flex1"></span><button class="btn danger" id="t-send" ${pv.check_ok ? "" : "disabled"}>Place order…</button></div>`;
+        $("#t-send").addEventListener("click", () => {
+          openModal({ title: `Send ${p.direction} ${fmt(p.volume, 2)} ${p.symbol} to ${a.label}?`, danger: true, confirmLabel: "Send order", requireText: p.direction,
+            body: `<dl class="kv"><dt>Account</dt><dd>${esc(a.label)}${a.mock ? " (mock)" : ""}</dd><dt>Order</dt><dd>${esc(p.order_type_name)} ${fmt(p.volume, 2)} lots ${esc(p.symbol)} @ ${price(p.entry)}</dd><dt>Stop loss</dt><dd>${p.sl === null ? "none" : price(p.sl)}</dd><dt>Take profit</dt><dd>${p.tp === null ? "none" : price(p.tp)}</dd><dt>Max loss at stop</dt><dd class="neg">${p.risk_amount === null ? "uncapped" : "−" + fmt(p.risk_amount) + " " + esc(cur) + " (" + fmt(p.risk_percent, 2) + "%)"}</dd></dl><p class="small dim">This sends a real order to the broker. Market orders fill immediately at the current price.</p>`,
+            onConfirm: async () => {
+              const r = await post(`/api/accounts/${a.id}/orders`, { ...pv.request_echo, intent: pv.intent, expected: { symbol: p.symbol, order_type: p.order_type, volume: p.volume } });
+              if (!r.ok) throw new Error(`${r.result_text}${r.result?.comment ? " · " + r.result.comment : ""}`);
+              toast(`${r.result_text}: ${p.direction} ${fmt(r.result.volume || p.volume, 2)} ${p.symbol} @ ${price(r.result.price || p.entry)} (deal ${r.result.deal || "–"})`);
+              lastPreview = null; renderView();
+            } });
+        });
+      } catch (e) { out.innerHTML = `<div class="banner bad"><span>${esc(e.message)}</span></div>`; }
+    });
+  }
+  function auditDetails(e) {
+    const r = e.request || {};
+    if (e.action === "order") return `${r.side || ""} ${r.symbol || ""} ${r.sizing === "lots" ? r.lots + " lots" : (r.risk_percent || "") + "% risk"} sl:${r.sl_mode || "none"} ${r.sl || ""} tp:${r.tp_mode || "none"} ${r.tp || ""}`.replace(/\s+/g, " ").trim();
+    if (e.action === "close") return `#${r.ticket} ${r.volume ? r.volume + " lots" : "full"}`;
+    if (e.action === "modify") return `#${r.ticket} sl ${r.sl ?? "-"} tp ${r.tp ?? "-"}`;
+    return "";
   }
 
   /* ---------------- polling ---------------- */

@@ -10,5 +10,6 @@
   "equity_sample_seconds": 30,
   "report_timezone": "local",
   "mock_mode": false,
-  "log_level": "INFO"
+  "log_level": "INFO",
+  "trading_enabled": false
 }

@@ -26,6 +26,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from . import mt5_constants as C
+from . import trading as T
 
 
 def _now() -> float:
@@ -215,6 +216,141 @@ class _Worker:
             elif name == "refresh_history":
                 self.last_history_fetch = 0.0
                 self.history_from = None
+            elif name == "call":
+                self.handle_call(cmd)
+
+    # ------------------------------------------------------------------ #
+    # Request/response calls (symbol lookups and trading)
+    # ------------------------------------------------------------------ #
+    def handle_call(self, cmd: dict[str, Any]) -> None:
+        req_id = cmd.get("req_id")
+        fn_name = str(cmd.get("name") or "")
+        args = cmd.get("args") or {}
+        try:
+            if self.adapter is None or not getattr(self.adapter, "connected", False):
+                raise T.TradeRejected("Not connected to the terminal.")
+            handler = {
+                "symbol_info": self.call_symbol_info,
+                "trade_preview": self.call_trade_preview,
+                "trade_execute": self.call_trade_execute,
+                "close_position": self.call_close_position,
+                "modify_position": self.call_modify_position,
+            }.get(fn_name)
+            if handler is None:
+                raise T.TradeRejected(f"Unknown call '{fn_name}'")
+            data = handler(args)
+            self.send({"type": "result", "req_id": req_id, "ok": True, "data": data})
+        except T.TradeRejected as exc:
+            self.send({"type": "result", "req_id": req_id, "ok": False, "error": str(exc), "rejected": True})
+        except Exception as exc:
+            self.log("ERROR", f"Call {fn_name} failed: {exc}")
+            self.send({"type": "result", "req_id": req_id, "ok": False, "error": str(exc)})
+
+    def _trading_guard(self) -> dict[str, Any]:
+        """Everything that must be true before any order leaves this worker."""
+        tcfg = self.cfg.get("trading") or {}
+        if not self.settings.get("trading_enabled"):
+            raise T.TradeRejected("Trading is switched off globally (settings.json: trading_enabled).")
+        if not tcfg.get("enabled"):
+            raise T.TradeRejected("Trading is switched off for this account (accounts.json: trading.enabled).")
+        account = self.adapter.account_info()
+        expected = self.cfg.get("login")
+        if expected and int(account.get("login") or 0) != int(expected):
+            raise T.TradeRejected("Terminal account does not match the configured login; refusing to trade.")
+        if account.get("trade_allowed") is False:
+            raise T.TradeRejected("The broker reports trading is not allowed on this account (investor password or disabled account).")
+        term = self.adapter.terminal_info()
+        if term and term.get("trade_allowed") is False:
+            raise T.TradeRejected("Algorithmic trading is disabled in the terminal (Tools > Options > Expert Advisors).")
+        if term and term.get("connected") is False:
+            raise T.TradeRejected("The terminal is not connected to the broker.")
+        return account
+
+    def call_symbol_info(self, args: dict[str, Any]) -> dict[str, Any]:
+        symbol = str(args.get("symbol") or "").strip().upper()
+        if not symbol:
+            raise T.TradeRejected("Symbol is required.")
+        info = self.adapter.symbol_info(symbol)
+        tick = self.adapter.symbol_tick(symbol)
+        return {"info": info, "tick": tick}
+
+    def _plan(self, args: dict[str, Any]) -> tuple[T.OrderPlan, dict, dict, dict]:
+        account = self._trading_guard()
+        tcfg = self.cfg.get("trading") or {}
+        symbol = str(args.get("symbol") or "").strip().upper()
+        info = self.adapter.symbol_info(symbol)
+        tick = self.adapter.symbol_tick(symbol)
+        plan = T.build_plan(args, info, tick, account, tcfg)
+        positions = self.adapter.positions()
+        max_pos = int(tcfg.get("max_open_positions") or 0)
+        if max_pos and len(positions) >= max_pos:
+            raise T.TradeRejected(f"This account already has {len(positions)} open positions (max_open_positions = {max_pos}).")
+        request = T.build_order_request(plan, info, int(tcfg.get("magic") or 0), int(tcfg.get("deviation_points") or 20),
+                                        str(args.get("comment") or "mt5cc"))
+        return plan, request, info, account
+
+    def call_trade_preview(self, args: dict[str, Any]) -> dict[str, Any]:
+        plan, request, info, account = self._plan(args)
+        check = self.adapter.order_check(request)
+        rc = check.get("retcode")
+        return {"plan": plan.to_dict(), "request": request, "check": check,
+                "check_ok": rc in C.TRADE_RETCODE_OK, "check_text": T.retcode_name(rc),
+                "account": {"equity": account.get("equity"), "margin_free": account.get("margin_free"), "currency": account.get("currency")},
+                "symbol": {k: info.get(k) for k in ("digits", "point", "volume_min", "volume_max", "volume_step", "trade_stops_level",
+                                                    "trade_contract_size", "trade_tick_value", "trade_tick_size", "spread", "currency_profit")}}
+
+    def call_trade_execute(self, args: dict[str, Any]) -> dict[str, Any]:
+        plan, request, info, account = self._plan(args)
+        expected = args.get("expected")
+        if expected:
+            # the user confirmed a specific plan; refuse if the market moved it materially
+            if abs(float(expected.get("volume") or 0) - plan.volume) > 1e-9:
+                raise T.TradeRejected(f"Volume changed since preview ({expected.get('volume')} -> {plan.volume}). Preview again.")
+            if expected.get("symbol") != plan.symbol or int(expected.get("order_type", -1)) != plan.order_type:
+                raise T.TradeRejected("Order details changed since preview. Preview again.")
+        check = self.adapter.order_check(request)
+        if check.get("retcode") not in C.TRADE_RETCODE_OK:
+            raise T.TradeRejected(f"Broker pre-check failed: {T.retcode_name(check.get('retcode'))} ({check.get('comment')})")
+        self.log("INFO", f"ORDER SEND {plan.symbol} {C.ORDER_TYPE_NAMES.get(plan.order_type)} {plan.volume} lots @ {plan.entry} sl={plan.sl} tp={plan.tp}")
+        result = self.adapter.order_send(request)
+        ok = result.get("retcode") in C.TRADE_RETCODE_OK
+        self.log("INFO" if ok else "ERROR", f"ORDER RESULT {T.retcode_name(result.get('retcode'))}: {result.get('comment')} deal={result.get('deal')} order={result.get('order')} price={result.get('price')}")
+        self.last_history_fetch = 0.0
+        return {"ok": ok, "plan": plan.to_dict(), "request": request, "result": result, "result_text": T.retcode_name(result.get("retcode"))}
+
+    def _find_position(self, ticket: int) -> dict[str, Any]:
+        for p in self.adapter.positions():
+            if int(p.get("ticket") or 0) == int(ticket):
+                return p
+        raise T.TradeRejected(f"Position {ticket} is not open on this account.")
+
+    def call_close_position(self, args: dict[str, Any]) -> dict[str, Any]:
+        self._trading_guard()
+        tcfg = self.cfg.get("trading") or {}
+        pos = self._find_position(int(args.get("ticket") or 0))
+        info = self.adapter.symbol_info(pos["symbol"])
+        tick = self.adapter.symbol_tick(pos["symbol"])
+        vol = args.get("volume")
+        request = T.build_close_request(pos, info, tick, float(vol) if vol not in (None, "", 0) else None,
+                                        int(tcfg.get("magic") or 0), int(tcfg.get("deviation_points") or 20))
+        self.log("INFO", f"CLOSE position {pos['ticket']} {pos['symbol']} volume {request['volume']}")
+        result = self.adapter.order_send(request)
+        ok = result.get("retcode") in C.TRADE_RETCODE_OK
+        self.log("INFO" if ok else "ERROR", f"CLOSE RESULT {T.retcode_name(result.get('retcode'))}: {result.get('comment')} price={result.get('price')}")
+        self.last_history_fetch = 0.0
+        return {"ok": ok, "request": request, "result": result, "result_text": T.retcode_name(result.get("retcode"))}
+
+    def call_modify_position(self, args: dict[str, Any]) -> dict[str, Any]:
+        self._trading_guard()
+        pos = self._find_position(int(args.get("ticket") or 0))
+        info = self.adapter.symbol_info(pos["symbol"])
+        sl = args.get("sl"); tp = args.get("tp")
+        request = T.build_modify_request(pos, info, float(sl) if sl not in (None, "") else None, float(tp) if tp not in (None, "") else None)
+        self.log("INFO", f"MODIFY position {pos['ticket']} sl={request['sl']} tp={request['tp']}")
+        result = self.adapter.order_send(request)
+        ok = result.get("retcode") in C.TRADE_RETCODE_OK
+        self.log("INFO" if ok else "ERROR", f"MODIFY RESULT {T.retcode_name(result.get('retcode'))}: {result.get('comment')}")
+        return {"ok": ok, "request": request, "result": result, "result_text": T.retcode_name(result.get("retcode"))}
 
     def run(self) -> None:
         refresh = float(self.settings.get("refresh_seconds") or 2.0)
@@ -242,7 +378,10 @@ class _Worker:
                 self.status("error", "Lost connection to terminal - reconnecting")
                 self.disconnect()
             self.send({"type": "heartbeat"})
-            time.sleep(refresh)
+            deadline = _now() + refresh
+            while self.running and _now() < deadline:
+                self.handle_commands()
+                time.sleep(0.1)
         self.disconnect()
         self.status("stopped", "Worker stopped")
 

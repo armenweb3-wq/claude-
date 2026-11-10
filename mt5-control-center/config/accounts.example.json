@@ -10,7 +10,16 @@
       "server": "",
       "password_env": "MT5CC_ACCOUNT1_PASSWORD",
       "server_utc_offset_hours": 0,
-      "enabled": true
+      "enabled": true,
+      "trading": {
+        "enabled": false,
+        "max_risk_percent": 1.0,
+        "max_lots": 1.0,
+        "max_open_positions": 10,
+        "allowed_symbols": [],
+        "magic": 710001,
+        "deviation_points": 20
+      }
     },
     {
       "id": "account2",
@@ -22,7 +31,16 @@
       "server": "",
       "password_env": "MT5CC_ACCOUNT2_PASSWORD",
       "server_utc_offset_hours": 0,
-      "enabled": true
+      "enabled": true,
+      "trading": {
+        "enabled": false,
+        "max_risk_percent": 1.0,
+        "max_lots": 1.0,
+        "max_open_positions": 10,
+        "allowed_symbols": [],
+        "magic": 710002,
+        "deviation_points": 20
+      }
     }
   ]
 }

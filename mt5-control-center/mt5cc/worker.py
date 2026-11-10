@@ -295,7 +295,7 @@ class _Worker:
         rc = check.get("retcode")
         return {"plan": plan.to_dict(), "request": request, "check": check,
                 "check_ok": rc in C.TRADE_RETCODE_OK, "check_text": T.retcode_name(rc),
-                "account": {"equity": account.get("equity"), "margin_free": account.get("margin_free"), "currency": account.get("currency")},
+                "account": {"equity": account.get("equity"), "balance": account.get("balance"), "margin_free": account.get("margin_free"), "currency": account.get("currency")},
                 "symbol": {k: info.get(k) for k in ("digits", "point", "volume_min", "volume_max", "volume_step", "trade_stops_level",
                                                     "trade_contract_size", "trade_tick_value", "trade_tick_size", "spread", "currency_profit")}}
 

@@ -80,6 +80,9 @@ class OrderPlan:
     risk_percent: float | None
     reward_amount: float | None
     sizing: str
+    risk_basis: str = "equity"
+    basis_amount: float | None = None
+    risk_percent_of_equity: float | None = None
     warnings: list[str] = field(default_factory=list)
     loss_per_lot: float | None = None
     requested_lots: float | None = None
@@ -94,7 +97,10 @@ class OrderPlan:
             "risk_percent": round(self.risk_percent, 3) if self.risk_percent is not None else None,
             "reward_amount": round(self.reward_amount, 2) if self.reward_amount is not None else None,
             "rr": round(self.reward_amount / self.risk_amount, 2) if self.reward_amount and self.risk_amount else None,
-            "sizing": self.sizing, "warnings": self.warnings,
+            "sizing": self.sizing, "risk_basis": self.risk_basis,
+            "basis_amount": round(self.basis_amount, 2) if self.basis_amount is not None else None,
+            "risk_percent_of_equity": round(self.risk_percent_of_equity, 3) if self.risk_percent_of_equity is not None else None,
+            "warnings": self.warnings,
             "loss_per_lot": round(self.loss_per_lot, 2) if self.loss_per_lot is not None else None,
             "requested_lots": self.requested_lots,
         }
@@ -105,7 +111,8 @@ def build_plan(req: dict[str, Any], info: dict[str, Any], tick: dict[str, Any], 
     """Turn a user request into a concrete, validated order plan.
 
     ``req`` keys: symbol, side ("BUY"/"SELL"), order_kind ("market"/"limit"/"stop"),
-    price (pending only), sizing ("risk"/"lots"), risk_percent, lots,
+    price (pending only), sizing ("risk"/"lots"), risk_percent,
+    risk_basis ("equity"/"balance"/"free_margin" - what the percentage is taken from), lots,
     sl_mode ("points"/"price"/"none"), sl, tp_mode ("points"/"price"/"rr"/"none"), tp.
     """
     symbol = str(req.get("symbol") or "").strip().upper()
@@ -179,6 +186,15 @@ def build_plan(req: dict[str, Any], info: dict[str, Any], tick: dict[str, Any], 
     # --- sizing
     sizing = str(req.get("sizing") or "risk").lower()
     equity = float(account.get("equity") or 0)
+    risk_basis = str(req.get("risk_basis") or "equity").lower()
+    basis_amount = {
+        "equity": equity,
+        "balance": float(account.get("balance") or 0),
+        "free_margin": float(account.get("margin_free") or 0),
+    }.get(risk_basis)
+    if basis_amount is None:
+        raise TradeRejected("risk_basis must be equity, balance or free_margin.")
+    basis_label = {"equity": "equity", "balance": "balance", "free_margin": "free margin"}[risk_basis]
     max_risk = float(limits.get("max_risk_percent") or 0)
     max_lots = float(limits.get("max_lots") or 0)
     lpl = loss_per_lot(abs(entry - sl), info) if sl is not None else None
@@ -192,9 +208,9 @@ def build_plan(req: dict[str, Any], info: dict[str, Any], tick: dict[str, Any], 
             raise TradeRejected("Risk percent must be positive.")
         if max_risk and risk_pct > max_risk + 1e-9:
             raise TradeRejected(f"Risk {risk_pct:g}% exceeds this account's max_risk_percent ({max_risk:g}%).")
-        if equity <= 0:
-            raise TradeRejected("Account equity is not positive; refusing to size a trade.")
-        risk_amount = equity * risk_pct / 100.0
+        if basis_amount <= 0:
+            raise TradeRejected(f"Account {basis_label} is not positive; refusing to size a trade.")
+        risk_amount = basis_amount * risk_pct / 100.0
         raw = risk_amount / lpl
         volume = round_volume(raw, info)
         if volume <= 0:
@@ -218,9 +234,12 @@ def build_plan(req: dict[str, Any], info: dict[str, Any], tick: dict[str, Any], 
         raise TradeRejected(f"Volume {volume:g} exceeds this account's max_lots ({max_lots:g}).")
 
     risk_amount = lpl * volume if lpl is not None else None
-    risk_percent = (risk_amount / equity * 100.0) if (risk_amount is not None and equity > 0) else None
+    risk_percent = (risk_amount / basis_amount * 100.0) if (risk_amount is not None and basis_amount > 0) else None
+    risk_percent_of_equity = (risk_amount / equity * 100.0) if (risk_amount is not None and equity > 0) else None
     if risk_percent is not None and max_risk and risk_percent > max_risk + 1e-6:
-        raise TradeRejected(f"Resulting risk {risk_percent:.2f}% exceeds max_risk_percent ({max_risk:g}%).")
+        raise TradeRejected(f"Resulting risk {risk_percent:.2f}% of {basis_label} exceeds max_risk_percent ({max_risk:g}%).")
+    if risk_basis != "equity" and risk_percent_of_equity is not None and max_risk and risk_percent_of_equity > max_risk + 1e-6:
+        raise TradeRejected(f"Resulting risk is {risk_percent_of_equity:.2f}% of equity, above max_risk_percent ({max_risk:g}%). The cap applies to equity as well as to the chosen basis.")
     if sl is None:
         warnings.append("No stop-loss: the risk of this trade is not capped.")
 
@@ -253,6 +272,7 @@ def build_plan(req: dict[str, Any], info: dict[str, Any], tick: dict[str, Any], 
 
     return OrderPlan(symbol=symbol, order_type=order_type, volume=volume, entry=round_price(entry, info), sl=sl, tp=tp,
                      risk_amount=risk_amount, risk_percent=risk_percent, reward_amount=reward, sizing=sizing,
+                     risk_basis=risk_basis, basis_amount=basis_amount, risk_percent_of_equity=risk_percent_of_equity,
                      warnings=warnings, loss_per_lot=lpl, requested_lots=requested_lots)
 
 

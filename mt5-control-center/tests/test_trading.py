@@ -97,3 +97,24 @@ def test_modify_request_validates_sides():
     assert req == {"action": C.TRADE_ACTION_SLTP, "symbol": "EURUSD", "position": 55, "sl": 1.105, "tp": 1.09}
     with pytest.raises(T.TradeRejected):
         T.build_modify_request(pos, INFO, 1.09, None)
+
+
+def test_risk_from_free_margin():
+    acc = {"equity": 10000.0, "balance": 10500.0, "margin_free": 4000.0}
+    req = {"symbol": "EURUSD", "side": "BUY", "sizing": "risk", "risk_percent": 1, "risk_basis": "free_margin", "sl_mode": "points", "sl": 200}
+    plan = T.build_plan(req, INFO, TICK, acc, LIMITS)
+    # 1% of free margin 4,000 = 40; 200/lot -> 0.2 lots
+    assert plan.volume == pytest.approx(0.2) and plan.risk_amount == pytest.approx(40.0)
+    assert plan.risk_basis == "free_margin" and plan.basis_amount == 4000.0
+    assert plan.risk_percent == pytest.approx(1.0) and plan.risk_percent_of_equity == pytest.approx(0.4)
+    bal = T.build_plan({**req, "risk_basis": "balance"}, INFO, TICK, acc, LIMITS)
+    assert bal.volume == pytest.approx(0.52)
+    with pytest.raises(T.TradeRejected, match="risk_basis"):
+        T.build_plan({**req, "risk_basis": "margin"}, INFO, TICK, acc, LIMITS)
+
+
+def test_free_margin_basis_still_capped_by_equity():
+    # free margin larger than equity (credit / bonus) must not let risk exceed the cap on equity
+    acc = {"equity": 1000.0, "balance": 1000.0, "margin_free": 5000.0}
+    with pytest.raises(T.TradeRejected, match="of equity"):
+        T.build_plan({"symbol": "EURUSD", "side": "BUY", "sizing": "risk", "risk_percent": 2, "risk_basis": "free_margin", "sl_mode": "points", "sl": 100}, INFO, TICK, acc, LIMITS)

@@ -558,7 +558,7 @@
   }
 
   /* ---------------- TRADE TICKET ---------------- */
-  const TF = { account: null, symbol: "", side: "BUY", order_kind: "market", price: "", sizing: "risk", risk_percent: "1", lots: "0.10", sl_mode: "points", sl: "", tp_mode: "rr", tp: "2", comment: "" };
+  const TF = { account: null, symbol: "", side: "BUY", order_kind: "market", price: "", sizing: "risk", risk_percent: "1", risk_basis: "free_margin", lots: "0.10", sl_mode: "points", sl: "", tp_mode: "rr", tp: "2", comment: "" };
   let lastPreview = null;
 
   async function viewTrade(content, token) {
@@ -587,6 +587,7 @@
             <div class="form-row">
               <label>Sizing<select id="t-sizing"><option value="risk" ${TF.sizing === "risk" ? "selected" : ""}>Risk % of equity</option><option value="lots" ${TF.sizing === "lots" ? "selected" : ""}>Fixed lots</option></select></label>
               <label class="${TF.sizing === "risk" ? "" : "hidden"}" id="t-risk-wrap">Risk %<input id="t-risk" type="number" step="0.05" min="0.05" max="${st.limits.max_risk_percent}" value="${esc(TF.risk_percent)}"></label>
+              <label class="${TF.sizing === "risk" ? "" : "hidden"}" id="t-basis-wrap">% of<select id="t-basis"><option value="free_margin" ${TF.risk_basis === "free_margin" ? "selected" : ""}>Free margin</option><option value="equity" ${TF.risk_basis === "equity" ? "selected" : ""}>Equity</option><option value="balance" ${TF.risk_basis === "balance" ? "selected" : ""}>Balance</option></select></label>
               <label class="${TF.sizing === "lots" ? "" : "hidden"}" id="t-lots-wrap">Lots<input id="t-lots" type="number" step="0.01" min="0.01" max="${st.limits.max_lots}" value="${esc(TF.lots)}"></label>
             </div>
             <div class="form-row">
@@ -605,13 +606,13 @@
     content.querySelectorAll("#trade-acct button").forEach(b => b.addEventListener("click", () => { TF.account = b.dataset.id; if (S.scope !== "all") { S.scope = "all"; renderShell(); } renderView(); }));
     const read = () => {
       TF.symbol = $("#t-symbol").value.trim().toUpperCase(); TF.order_kind = $("#t-kind").value; TF.price = $("#t-price").value;
-      TF.sizing = $("#t-sizing").value; TF.risk_percent = $("#t-risk").value; TF.lots = $("#t-lots").value;
+      TF.sizing = $("#t-sizing").value; TF.risk_percent = $("#t-risk").value; TF.risk_basis = $("#t-basis").value; TF.lots = $("#t-lots").value;
       TF.sl_mode = $("#t-slmode").value; TF.sl = $("#t-sl").value; TF.tp_mode = $("#t-tpmode").value; TF.tp = $("#t-tp").value; TF.comment = $("#t-comment").value;
       $("#t-price-wrap").classList.toggle("hidden", TF.order_kind === "market");
-      $("#t-risk-wrap").classList.toggle("hidden", TF.sizing !== "risk"); $("#t-lots-wrap").classList.toggle("hidden", TF.sizing !== "lots");
+      $("#t-risk-wrap").classList.toggle("hidden", TF.sizing !== "risk"); $("#t-basis-wrap").classList.toggle("hidden", TF.sizing !== "risk"); $("#t-lots-wrap").classList.toggle("hidden", TF.sizing !== "lots");
       $("#t-sl-wrap").classList.toggle("hidden", TF.sl_mode === "none"); $("#t-tp-wrap").classList.toggle("hidden", TF.tp_mode === "none");
     };
-    content.querySelectorAll("#t-symbol,#t-kind,#t-price,#t-sizing,#t-risk,#t-lots,#t-slmode,#t-sl,#t-tpmode,#t-tp,#t-comment").forEach(el => { el.addEventListener("input", read); el.addEventListener("change", read); });
+    content.querySelectorAll("#t-symbol,#t-kind,#t-price,#t-sizing,#t-risk,#t-basis,#t-lots,#t-slmode,#t-sl,#t-tpmode,#t-tp,#t-comment").forEach(el => { el.addEventListener("input", read); el.addEventListener("change", read); });
     content.querySelectorAll("#t-side button").forEach(b => b.addEventListener("click", () => { TF.side = b.dataset.v; content.querySelectorAll("#t-side button").forEach(x => x.className = x === b ? "active " + TF.side.toLowerCase() : ""); }));
     $("#t-quote").addEventListener("click", async () => {
       read(); const out = $("#t-quote-out"); out.textContent = "Fetching…";
@@ -621,13 +622,13 @@
     });
     $("#t-preview").addEventListener("click", async () => {
       read(); const out = $("#t-preview-out"); out.innerHTML = `<div class="loading-row"><div class="spinner"></div>Checking with the terminal…</div>`;
-      const body = { symbol: TF.symbol, side: TF.side, order_kind: TF.order_kind, price: TF.order_kind === "market" ? undefined : parseFloat(TF.price), sizing: TF.sizing, risk_percent: parseFloat(TF.risk_percent), lots: parseFloat(TF.lots), sl_mode: TF.sl_mode, sl: parseFloat(TF.sl), tp_mode: TF.tp_mode, tp: parseFloat(TF.tp), comment: TF.comment };
+      const body = { symbol: TF.symbol, side: TF.side, order_kind: TF.order_kind, price: TF.order_kind === "market" ? undefined : parseFloat(TF.price), sizing: TF.sizing, risk_percent: parseFloat(TF.risk_percent), risk_basis: TF.risk_basis, lots: parseFloat(TF.lots), sl_mode: TF.sl_mode, sl: parseFloat(TF.sl), tp_mode: TF.tp_mode, tp: parseFloat(TF.tp), comment: TF.comment };
       try {
         const pv = await post(`/api/accounts/${a.id}/orders/preview`, body); lastPreview = pv;
         const p = pv.plan, c = pv.check;
         out.innerHTML = `<div class="preview-head"><span class="tag ${p.direction.toLowerCase()}">${p.direction}</span><b class="big">${esc(p.symbol)}</b><span class="big">${fmt(p.volume, 2)} lots</span><span class="dim">${esc(p.order_type_name)} @ ${price(p.entry)}</span></div>
           <div class="tiles mt14">
-            <div class="tile"><div class="k">Risk if SL hit</div><div class="v neg">${p.risk_amount === null ? "uncapped" : "−" + fmt(p.risk_amount) + `<span class="cur">${esc(cur)}</span>`}</div><div class="s">${p.risk_percent === null ? "no stop loss" : fmt(p.risk_percent, 2) + "% of equity"}</div></div>
+            <div class="tile"><div class="k">Risk if SL hit</div><div class="v neg">${p.risk_amount === null ? "uncapped" : "−" + fmt(p.risk_amount) + `<span class="cur">${esc(cur)}</span>`}</div><div class="s">${p.risk_percent === null ? "no stop loss" : fmt(p.risk_percent, 2) + "% of " + ({ free_margin: "free margin", balance: "balance", equity: "equity" }[p.risk_basis] || p.risk_basis) + (p.risk_basis !== "equity" && p.risk_percent_of_equity !== null ? " · " + fmt(p.risk_percent_of_equity, 2) + "% of equity" : "")}</div></div>
             <div class="tile"><div class="k">Reward at TP</div><div class="v pos">${p.reward_amount === null ? "–" : "+" + fmt(p.reward_amount) + `<span class="cur">${esc(cur)}</span>`}</div><div class="s">${p.rr ? "R:R 1 : " + fmt(p.rr, 2) : "no take profit"}</div></div>
             <div class="tile"><div class="k">Stop loss</div><div class="v">${p.sl === null ? "none" : price(p.sl)}</div><div class="s">${p.sl === null ? "" : Math.round(Math.abs(p.entry - p.sl) / pv.symbol.point) + " points"}</div></div>
             <div class="tile"><div class="k">Take profit</div><div class="v">${p.tp === null ? "none" : price(p.tp)}</div><div class="s">${p.tp === null ? "" : Math.round(Math.abs(p.tp - p.entry) / pv.symbol.point) + " points"}</div></div>
@@ -639,7 +640,7 @@
           <div class="form-actions mt14"><span class="xs muted">Preview valid for ${pv.intent.expires_in}s</span><span class="flex1"></span><button class="btn danger" id="t-send" ${pv.check_ok ? "" : "disabled"}>Place order…</button></div>`;
         $("#t-send").addEventListener("click", () => {
           openModal({ title: `Send ${p.direction} ${fmt(p.volume, 2)} ${p.symbol} to ${a.label}?`, danger: true, confirmLabel: "Send order", requireText: p.direction,
-            body: `<dl class="kv"><dt>Account</dt><dd>${esc(a.label)}${a.mock ? " (mock)" : ""}</dd><dt>Order</dt><dd>${esc(p.order_type_name)} ${fmt(p.volume, 2)} lots ${esc(p.symbol)} @ ${price(p.entry)}</dd><dt>Stop loss</dt><dd>${p.sl === null ? "none" : price(p.sl)}</dd><dt>Take profit</dt><dd>${p.tp === null ? "none" : price(p.tp)}</dd><dt>Max loss at stop</dt><dd class="neg">${p.risk_amount === null ? "uncapped" : "−" + fmt(p.risk_amount) + " " + esc(cur) + " (" + fmt(p.risk_percent, 2) + "%)"}</dd></dl><p class="small dim">This sends a real order to the broker. Market orders fill immediately at the current price.</p>`,
+            body: `<dl class="kv"><dt>Account</dt><dd>${esc(a.label)}${a.mock ? " (mock)" : ""}</dd><dt>Order</dt><dd>${esc(p.order_type_name)} ${fmt(p.volume, 2)} lots ${esc(p.symbol)} @ ${price(p.entry)}</dd><dt>Stop loss</dt><dd>${p.sl === null ? "none" : price(p.sl)}</dd><dt>Take profit</dt><dd>${p.tp === null ? "none" : price(p.tp)}</dd><dt>Max loss at stop</dt><dd class="neg">${p.risk_amount === null ? "uncapped" : "−" + fmt(p.risk_amount) + " " + esc(cur) + " (" + fmt(p.risk_percent, 2) + "% of " + ({ free_margin: "free margin", balance: "balance", equity: "equity" }[p.risk_basis] || p.risk_basis) + ")"}</dd></dl><p class="small dim">This sends a real order to the broker. Market orders fill immediately at the current price.</p>`,
             onConfirm: async () => {
               const r = await post(`/api/accounts/${a.id}/orders`, { ...pv.request_echo, intent: pv.intent, expected: { symbol: p.symbol, order_type: p.order_type, volume: p.volume } });
               if (!r.ok) throw new Error(`${r.result_text}${r.result?.comment ? " · " + r.result.comment : ""}`);
@@ -652,7 +653,7 @@
   }
   function auditDetails(e) {
     const r = e.request || {};
-    if (e.action === "order") return `${r.side || ""} ${r.symbol || ""} ${r.sizing === "lots" ? r.lots + " lots" : (r.risk_percent || "") + "% risk"} sl:${r.sl_mode || "none"} ${r.sl || ""} tp:${r.tp_mode || "none"} ${r.tp || ""}`.replace(/\s+/g, " ").trim();
+    if (e.action === "order") return `${r.side || ""} ${r.symbol || ""} ${r.sizing === "lots" ? r.lots + " lots" : (r.risk_percent || "") + "% of " + (r.risk_basis || "equity").replace("_", " ")} sl:${r.sl_mode || "none"} ${r.sl || ""} tp:${r.tp_mode || "none"} ${r.tp || ""}`.replace(/\s+/g, " ").trim();
     if (e.action === "close") return `#${r.ticket} ${r.volume ? r.volume + " lots" : "full"}`;
     if (e.action === "modify") return `#${r.ticket} sl ${r.sl ?? "-"} tp ${r.tp ?? "-"}`;
     return "";

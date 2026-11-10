@@ -257,10 +257,14 @@ account, whether trading is possible and if not, why.
 
 1. Pick the account, type the symbol, choose Buy/Sell and Market / Limit / Stop.
 2. Choose sizing:
-   * **Risk % of equity** - e.g. `1` means *"lose at most 1% of equity if the
-     stop is hit"*. The volume is calculated from the stop distance and the
-     symbol's tick value, then **rounded down** to the lot step so the real risk
-     is never above what you asked. This mode requires a stop-loss.
+   * **Risk %** of **free margin**, **equity** or **balance** (your choice in
+     the "% of" box) - e.g. `1` of free margin means *"lose at most 1% of the
+     current free margin if the stop is hit"*. The volume is calculated from
+     the stop distance and the symbol's tick value, then **rounded down** to
+     the lot step so the real risk is never above what you asked. This mode
+     requires a stop-loss. `max_risk_percent` is enforced against the chosen
+     basis *and* against equity, so a large free margin from credit or bonus
+     cannot push the loss past the cap.
    * **Fixed lots** - you type the volume.
 3. Stop-loss as a distance in points or a price; take-profit as reward:risk
    (e.g. `2`), points, or price.

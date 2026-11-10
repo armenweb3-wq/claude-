@@ -100,7 +100,7 @@ class AuditLog:
 
 
 INTENT_TTL_S = 120
-ORDER_FIELDS = ("symbol", "side", "order_kind", "price", "sizing", "risk_percent", "lots", "sl_mode", "sl", "tp_mode", "tp", "comment")
+ORDER_FIELDS = ("symbol", "side", "order_kind", "price", "sizing", "risk_percent", "risk_basis", "lots", "sl_mode", "sl", "tp_mode", "tp", "comment")
 
 
 def _order_request(body: dict[str, Any]) -> dict[str, Any]:

@@ -1,13 +1,13 @@
 import React from "react";
 import { AbsoluteFill, Sequence } from "remotion";
 import { Soundtrack, Subtitles } from "./overlays";
-import { Page } from "./primitives";
-import { impacts, scenes, tl } from "./scenes";
+import { Header, Page } from "./primitives";
+import { impacts, PERIOD, scenes, tl } from "./scenes";
 import { colors } from "./theme";
 
-const OVERLAP = 12;
+const OVERLAP = 26;
 
-/** "Your account, in ten weeks": a paper-and-ink review of one client's trade history (16:9, ~2:55). */
+/** "Your account, in ten weeks": a paper-and-ink review of one client's trade history (16:9, ~3:30). */
 export const StoryVideo: React.FC = () => (
   <AbsoluteFill style={{ background: colors.paper }}>
     {tl.scenes.map((s, i) => {
@@ -23,6 +23,7 @@ export const StoryVideo: React.FC = () => (
         </Sequence>
       );
     })}
+    <Header pages={tl.scenes} period={PERIOD} />
     <Subtitles tl={tl} />
     <Soundtrack tl={tl} impacts={impacts} />
   </AbsoluteFill>

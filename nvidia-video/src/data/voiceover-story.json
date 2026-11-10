@@ -10,222 +10,285 @@
     "speed": 1.0
   },
   "pacing": {
-    "lead": 0.8,
-    "gap": 0.6,
-    "tail": 1.2
+    "lead": 0.9,
+    "gap": 0.65,
+    "tail": 1.3
   },
   "scenes": [
     {
       "id": "cover",
       "title": "Cover",
-      "minDuration": 9,
+      "minDuration": 10,
       "start": 0.0,
-      "end": 11.967
+      "end": 11.6
     },
     {
       "id": "start",
       "title": "The first step",
-      "minDuration": 11,
-      "start": 11.967,
-      "end": 26.8
+      "minDuration": 12,
+      "start": 11.6,
+      "end": 26.667
     },
     {
       "id": "trust",
       "title": "Building trust",
-      "minDuration": 13,
-      "start": 26.8,
-      "end": 44.733
+      "minDuration": 14,
+      "start": 26.667,
+      "end": 44.867
     },
     {
       "id": "scale",
       "title": "Scaling up",
-      "minDuration": 14,
-      "start": 44.733,
-      "end": 69.7
+      "minDuration": 15,
+      "start": 44.867,
+      "end": 70.067
     },
     {
       "id": "run",
       "title": "The run",
       "minDuration": 16,
-      "start": 69.7,
-      "end": 90.667
-    },
-    {
-      "id": "stats",
-      "title": "The record",
-      "minDuration": 11,
-      "start": 90.667,
-      "end": 103.767
+      "start": 70.067,
+      "end": 91.8
     },
     {
       "id": "out",
       "title": "Money out",
-      "minDuration": 8,
-      "start": 103.767,
-      "end": 112.733
+      "minDuration": 9,
+      "start": 91.8,
+      "end": 100.967
     },
     {
-      "id": "open",
-      "title": "The open position",
+      "id": "problem",
+      "title": "The one that lagged",
       "minDuration": 12,
-      "start": 112.733,
-      "end": 131.867
+      "start": 100.967,
+      "end": 117.333
+    },
+    {
+      "id": "average",
+      "title": "Averaging on gold",
+      "minDuration": 20,
+      "start": 117.333,
+      "end": 169.267
+    },
+    {
+      "id": "onepct",
+      "title": "The 1% day",
+      "minDuration": 18,
+      "start": 169.267,
+      "end": 207.667
+    },
+    {
+      "id": "record",
+      "title": "The record",
+      "minDuration": 12,
+      "start": 207.667,
+      "end": 226.333
     },
     {
       "id": "standing",
       "title": "Where we stand",
       "minDuration": 15,
-      "start": 131.867,
-      "end": 156.833
+      "start": 226.333,
+      "end": 254.7
     },
     {
       "id": "close",
       "title": "Next chapter",
       "minDuration": 13,
-      "start": 156.833,
-      "end": 173.5
+      "start": 254.7,
+      "end": 272.46666666666664
     }
   ],
   "cues": [
     {
       "scene": "cover",
-      "text": "This is the story of your account, from 4 September to 9 November 2026.",
-      "say": "This is the story of your account, from the fourth of September to the ninth of November, twenty twenty six.",
-      "start": 0.8,
-      "end": 6.58
+      "text": "This is the story of your account, from 4 September to 10 November 2026.",
+      "say": "This is the story of your account, from the fourth of September to the tenth of November, twenty twenty six.",
+      "start": 0.9,
+      "end": 6.61
     },
     {
       "scene": "cover",
-      "text": "Ten weeks. Fourteen trades. And a few numbers worth remembering.",
-      "say": "Ten weeks. Fourteen trades. And a few numbers worth remembering.",
-      "start": 7.18,
-      "end": 10.78
+      "text": "Ten weeks. Twenty trades. One lesson in discipline.",
+      "say": "Ten weeks. Twenty trades. One lesson in discipline.",
+      "start": 7.26,
+      "end": 10.3
     },
     {
       "scene": "start",
       "text": "It began with a single deposit of $100.",
       "say": "It began with a single deposit of one hundred dollars.",
-      "start": 12.77,
-      "end": 15.72
+      "start": 12.5,
+      "end": 15.45
     },
     {
       "scene": "start",
       "text": "The first trade was deliberately small: 0.01 lots of crude oil. It closed the next day at +$9.24.",
       "say": "The first trade was deliberately small. Zero point zero one lots of crude oil. It closed the next day, plus nine dollars and twenty four cents.",
-      "start": 16.32,
-      "end": 25.58
+      "start": 16.1,
+      "end": 25.36
     },
     {
       "scene": "trust",
       "text": "Over the next week you added $950, and three more oil trades closed in profit: +$65, +$50, +$76.",
       "say": "Over the next week you added nine hundred and fifty dollars, and three more oil trades closed in profit. Plus sixty five. Plus fifty. Plus seventy six.",
-      "start": 27.6,
-      "end": 37.29
+      "start": 27.57,
+      "end": 37.25
     },
     {
       "scene": "trust",
       "text": "On 15 September you tested a withdrawal of $100. It was paid the same day.",
       "say": "On the fifteenth of September you tested a withdrawal of one hundred dollars. It was paid the same day.",
-      "start": 37.89,
-      "end": 43.55
+      "start": 37.9,
+      "end": 43.56
     },
     {
       "scene": "scale",
       "text": "On 21 and 23 September the account was funded properly: $29,600 in deposits, plus cashback and a deposit bonus.",
       "say": "On the twenty first and twenty third of September, the account was funded properly. Twenty nine thousand six hundred dollars in deposits, plus cashback and a deposit bonus.",
-      "start": 45.53,
-      "end": 55.69
+      "start": 45.77,
+      "end": 55.92
     },
     {
       "scene": "scale",
       "text": "Three positions were opened that evening. Crude oil hit its take profit: +$5,226. The Nasdaq hit its take profit: +$3,712.",
       "say": "Three positions were opened that evening. Crude oil hit its take profit. Plus five thousand two hundred and twenty six. The Nasdaq hit its take profit. Plus three thousand seven hundred and twelve.",
-      "start": 56.29,
-      "end": 68.49
+      "start": 56.57,
+      "end": 68.77
     },
     {
       "scene": "run",
-      "text": "From there, the rhythm held. Every one of the 14 closed trades finished in profit.",
-      "say": "From there, the rhythm held. Every one of the fourteen closed trades finished in profit.",
-      "start": 70.5,
-      "end": 75.47
+      "text": "Through October the rhythm held: fourteen closed trades, fourteen in profit.",
+      "say": "Through October the rhythm held. Fourteen closed trades, fourteen in profit.",
+      "start": 70.97,
+      "end": 75.57
     },
     {
       "scene": "run",
-      "text": "The largest: a 14-lot short on crude oil, closed 24 minutes later at +$8,540.",
-      "say": "The largest. A fourteen lot short on crude oil, closed twenty four minutes later. Plus eight thousand five hundred and forty.",
-      "start": 76.07,
-      "end": 83.61
+      "text": "The largest of them: a 14-lot short on crude oil, closed 24 minutes later at +$8,540.",
+      "say": "The largest of them. A fourteen lot short on crude oil, closed twenty four minutes later. Plus eight thousand five hundred and forty.",
+      "start": 76.22,
+      "end": 84.19
     },
     {
       "scene": "run",
-      "text": "Closed trading profit, after swaps: $49,412.61.",
-      "say": "Closed trading profit, after swaps. Forty nine thousand, four hundred and twelve dollars.",
-      "start": 84.21,
-      "end": 89.46
-    },
-    {
-      "scene": "stats",
-      "text": "14 trades. 14 winners. Average profit per trade: $3,529.",
-      "say": "Fourteen trades. Fourteen winners. Average profit per trade, three thousand five hundred and twenty nine dollars.",
-      "start": 91.47,
-      "end": 98.18
-    },
-    {
-      "scene": "stats",
-      "text": "Twelve trades on crude oil, one on the Nasdaq, one on gold.",
-      "say": "Twelve trades on crude oil. One on the Nasdaq. One on gold.",
-      "start": 98.78,
-      "end": 102.58
+      "text": "By 3 November, closed profit stood at $49,412.61.",
+      "say": "By the third of November, closed profit stood at forty nine thousand, four hundred and twelve dollars.",
+      "start": 84.84,
+      "end": 90.51
     },
     {
       "scene": "out",
       "text": "Money moved out as well as in: $100 in September, $2,000 in October. Both paid.",
       "say": "Money moved out as well as in. One hundred dollars in September. Two thousand dollars in October. Both paid.",
-      "start": 104.57,
-      "end": 111.54
+      "start": 92.7,
+      "end": 99.67
     },
     {
-      "scene": "open",
-      "text": "One position remains open: gold, bought on 23 September at $4,294.",
-      "say": "One position remains open. Gold, bought on the twenty third of September at four thousand two hundred and ninety four.",
-      "start": 113.53,
-      "end": 120.51
+      "scene": "problem",
+      "text": "One position did not go to plan: 1.15 lots of gold, bought on 23 September at $4,293.99.",
+      "say": "One position did not go to plan. One point one five lots of gold, bought on the twenty third of September at four thousand two hundred and ninety four.",
+      "start": 101.87,
+      "end": 110.83
     },
     {
-      "scene": "open",
-      "text": "At today's price it shows −$19,244. It is covered many times over: the margin level is above 7,000%.",
-      "say": "At today's price it shows minus nineteen thousand two hundred and forty four. It is covered many times over. The margin level is above seven thousand percent.",
-      "start": 121.11,
-      "end": 130.65
+      "scene": "problem",
+      "text": "Gold fell. For seven weeks the trade sat around $20,000 under water.",
+      "say": "Gold fell. For seven weeks the trade sat around twenty thousand dollars under water.",
+      "start": 111.48,
+      "end": 116.04
+    },
+    {
+      "scene": "average",
+      "text": "On 9 November we averaged it. At $4,087.24, over $200 below the first entry, we bought 5.75 lots: five times the original size.",
+      "say": "On the ninth of November, we averaged it. At four thousand and eighty seven, over two hundred dollars below the first entry, we bought five point seven five lots. Five times the original size.",
+      "start": 118.23,
+      "end": 130.21
+    },
+    {
+      "scene": "average",
+      "text": "That pulled the average entry down to about $4,122. Gold only had to recover a fraction of the fall.",
+      "say": "That pulled the average entry down to about four thousand one hundred and twenty two. Gold only had to recover a fraction of the fall.",
+      "start": 130.86,
+      "end": 138.73
+    },
+    {
+      "scene": "average",
+      "text": "It did. The 5.75 lots closed at $4,133 for +$26,312. A further 1-lot buy added +$1,891.",
+      "say": "It did. The five point seven five lots closed at four thousand one hundred and thirty three, for plus twenty six thousand three hundred and twelve. A further one lot buy added plus one thousand eight hundred and ninety one.",
+      "start": 139.38,
+      "end": 152.07
+    },
+    {
+      "scene": "average",
+      "text": "Then the original position was closed at $4,117.47: −$24,755 including swap. Net result on gold: +$3,448. The negative trade is gone.",
+      "say": "Then the original position was closed at four thousand one hundred and seventeen. Minus twenty four thousand seven hundred and fifty five, including swap. Net result on gold: plus three thousand four hundred and forty eight. The negative trade is gone.",
+      "start": 152.72,
+      "end": 167.96
+    },
+    {
+      "scene": "onepct",
+      "text": "The same day, the one-percent rule was applied across the board: every new trade sized to risk about 1% of the account.",
+      "say": "The same day, the one percent rule was applied across the board. Every new trade sized to risk about one percent of the account.",
+      "start": 170.17,
+      "end": 177.53
+    },
+    {
+      "scene": "onepct",
+      "text": "Nasdaq: +$7,352. Crude oil: +$9,237. Dow Jones: +$3,358. Gold: +$1,891 and +$26,312.",
+      "say": "Nasdaq, plus seven thousand three hundred and fifty two. Crude oil, plus nine thousand two hundred and thirty seven. Dow Jones, plus three thousand three hundred and fifty eight. Gold, plus one thousand eight hundred and ninety one, and plus twenty six thousand three hundred and twelve.",
+      "start": 178.18,
+      "end": 195.16
+    },
+    {
+      "scene": "onepct",
+      "text": "Five trades, five winners: +$48,149 in about 24 hours. That is 11.1% on the balance at the time.",
+      "say": "Five trades, five winners. Plus forty eight thousand one hundred and forty nine dollars in about twenty four hours. That is eleven point one percent on the balance at the time.",
+      "start": 195.81,
+      "end": 206.34
+    },
+    {
+      "scene": "record",
+      "text": "The record now reads: 20 closed trades, 19 winners, one loss, taken on purpose.",
+      "say": "The record now reads. Twenty closed trades. Nineteen winners. One loss, taken on purpose.",
+      "start": 208.57,
+      "end": 214.25
+    },
+    {
+      "scene": "record",
+      "text": "Profit factor 3.94. Maximum drawdown 7.4%. Net closed profit: $72,807.08.",
+      "say": "Profit factor three point nine four. Maximum drawdown seven point four percent. Net closed profit, seventy two thousand, eight hundred and seven dollars.",
+      "start": 214.9,
+      "end": 225.03
     },
     {
       "scene": "standing",
-      "text": "Where the account stands today. Deposits: $133,949. Bonuses, cashback and credit: $237,076.",
-      "say": "Where the account stands today. Deposits, one hundred and thirty three thousand, nine hundred and forty nine dollars. Bonuses, cashback and credit, two hundred and thirty seven thousand.",
-      "start": 132.67,
-      "end": 144.07
+      "text": "Where the account stands today. Deposits: $149,198. Withdrawals: $2,100. Bonuses, cashback and credit: $237,076.",
+      "say": "Where the account stands today. Deposits, one hundred and forty nine thousand, one hundred and ninety eight dollars. Withdrawals, two thousand one hundred. Bonuses, cashback and credit, two hundred and thirty seven thousand.",
+      "start": 227.23,
+      "end": 240.68
     },
     {
       "scene": "standing",
-      "text": "Closed profit: +$49,413. Equity, including the open position: $394,743.",
-      "say": "Closed profit, plus forty nine thousand four hundred and thirteen. Equity, including the open position, three hundred and ninety four thousand, seven hundred and forty three dollars.",
-      "start": 144.67,
-      "end": 155.62
+      "text": "Closed trading profit: +$72,807. Equity: $456,981.52, with no open positions and nothing at risk.",
+      "say": "Closed trading profit, plus seventy two thousand eight hundred and seven. Equity, four hundred and fifty six thousand, nine hundred and eighty one dollars. With no open positions, and nothing at risk.",
+      "start": 241.33,
+      "end": 253.41
     },
     {
       "scene": "close",
-      "text": "Ten weeks: from $100 to a fully funded account with a clean trading record. That is the first chapter.",
-      "say": "Ten weeks. From one hundred dollars to a fully funded account with a clean trading record. That is the first chapter.",
-      "start": 157.63,
-      "end": 164.52
+      "text": "Ten weeks: from $100 to a funded account, a clean record, and a problem solved the right way. That is chapter one.",
+      "say": "Ten weeks. From one hundred dollars to a funded account, a clean record, and a problem solved the right way. That is chapter one.",
+      "start": 255.6,
+      "end": 263.33
     },
     {
       "scene": "close",
       "text": "Past performance is not a guarantee of future performance. Trading CFDs involves significant risk to your capital.",
       "say": "Past performance is not a guarantee of future performance. Trading CFDs involves significant risk to your capital.",
-      "start": 165.12,
-      "end": 172.31
+      "start": 263.98,
+      "end": 271.17
     }
   ]
 }

@@ -15,8 +15,14 @@ export const Page: React.FC<{ duration: number; overlap: number; first?: boolean
   const f = useCurrentFrame();
   const inP = first ? 1 : prog(f, 0, overlap, easeInOut);
   const outP = last ? 0 : interpolate(f, [duration - overlap, duration], [0, 1], { ...clamp, easing: easeInOut });
+  // Incoming sheet glides in from the right and settles; the outgoing one drifts left and softens.
+  const x = (1 - inP) * 90 - outP * 70;
+  const scale = interpolate(inP, [0, 1], [0.985, 1]) * interpolate(outP, [0, 1], [1, 0.992]);
+  const blur = (1 - inP) * 6 + outP * 5;
   return (
-    <AbsoluteFill style={{ opacity: Math.min(inP, 1 - outP), transform: `translateY(${(1 - inP) * 40 - outP * 30}px)` }}>{children}</AbsoluteFill>
+    <AbsoluteFill style={{ opacity: Math.min(inP, 1 - outP), transform: `translateX(${x}px) scale(${scale})`, filter: blur > 0.3 ? `blur(${blur}px)` : undefined }}>
+      {children}
+    </AbsoluteFill>
   );
 };
 
@@ -46,16 +52,21 @@ export const Paper: React.FC<{ grid?: "dots" | "graph" | "none" }> = ({ grid = "
   );
 };
 
-/** Small running header + page number, like a printed report. */
-export const Header: React.FC<{ page: number; pages: number; title: string }> = ({ page, pages, title }) => {
+/** Persistent running header: stays on screen across page turns, only the page title cross-fades. */
+export const Header: React.FC<{ pages: { from: number; duration: number; title: string }[]; period: string }> = ({ pages, period }) => {
   const f = useCurrentFrame();
   const p = prog(f, 4, 18);
+  const idx = Math.max(0, pages.findIndex((s) => f >= s.from && f < s.from + s.duration));
+  const cur = pages[idx];
+  const local = f - cur.from;
+  const fadeIn = interpolate(local, [0, 14], [0, 1], clamp);
+  const fadeOut = interpolate(local, [cur.duration - 14, cur.duration], [1, 0], clamp);
   return (
     <>
       <div style={{ position: "absolute", left: M, right: M, top: 52, display: "flex", justifyContent: "space-between", alignItems: "baseline", opacity: p, fontFamily: fonts.mono, fontSize: 20, letterSpacing: 3, color: colors.pencil, textTransform: "uppercase" }}>
-        <span>Account •••175 · Trade history 04.09.2026 – 09.11.2026</span>
-        <span style={{ fontFamily: fonts.hand, fontSize: 34, letterSpacing: 0, textTransform: "none", color: colors.ink2 }}>
-          {title} · p. {page}/{pages}
+        <span>Account •••175 · Trade history {period}</span>
+        <span style={{ fontFamily: fonts.hand, fontSize: 34, letterSpacing: 0, textTransform: "none", color: colors.ink2, opacity: idx === pages.length - 1 ? fadeIn : Math.min(fadeIn, fadeOut) }}>
+          {cur.title} · p. {idx + 1}/{pages.length}
         </span>
       </div>
       <div style={{ position: "absolute", left: M, right: M, top: 92, height: 1.5, background: colors.ink, opacity: 0.35 * p, transform: `scaleX(${p})`, transformOrigin: "left" }} />

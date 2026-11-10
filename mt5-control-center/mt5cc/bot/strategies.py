@@ -206,3 +206,63 @@ def make_strategy(key: str, params: dict[str, Any] | None = None) -> Strategy:
 
 def catalogue() -> list[dict[str, Any]]:
     return [cls().describe() for cls in STRATEGIES.values()]
+
+
+class FixedExits(Strategy):
+    """Wraps an entry strategy and replaces its exits with fixed percentages:
+
+    * stop loss  = ``sl_percent`` price move against the entry (whole position),
+    * take profit = ``tp_percent`` price move in favour (0 = none),
+    * once the trade is ``breakeven_percent`` in profit the stop moves to the
+      entry price (break-even) and stays there; no trailing.
+    """
+
+    def __init__(self, inner: Strategy, sl_percent: float = 1.0, tp_percent: float = 3.0, breakeven_percent: float = 1.0):
+        self.inner = inner
+        self.key = inner.key
+        self.name = f"{inner.name} · fixed exits {sl_percent:g}% SL / {tp_percent:g}% TP / BE at +{breakeven_percent:g}%"
+        self.description = inner.description
+        self.p = inner.p
+        self.warmup = inner.warmup
+        self.sl = float(sl_percent); self.tp = float(tp_percent); self.be = float(breakeven_percent)
+        if self.sl <= 0:
+            raise ValueError("stop-loss percent must be positive")
+
+    def prepare(self, bars: list[Bar]) -> Series:
+        return self.inner.prepare(bars)
+
+    def levels(self, price: float, direction: int) -> tuple[float, float | None]:
+        stop = price * (1 - direction * self.sl / 100.0)
+        target = price * (1 + direction * self.tp / 100.0) if self.tp > 0 else None
+        return stop, target
+
+    def entry(self, s: Series, i: int) -> Entry | None:
+        e = self.inner.entry(s, i)
+        if e is None:
+            return None
+        stop, target = self.levels(s.bars[i].close, e.direction)
+        return Entry(e.direction, stop, target, e.reason)
+
+    def manage(self, s: Series, i: int, direction: int, entry_price: float, stop: float, bars_held: int) -> tuple[float, bool]:
+        if self.be > 0 and entry_price:
+            move_pct = (s.bars[i].close - entry_price) * direction / entry_price * 100.0
+            at_loss_side = (direction > 0 and stop < entry_price) or (direction < 0 and stop > entry_price)
+            if move_pct >= self.be and at_loss_side:
+                return entry_price, False
+        return stop, False
+
+    def describe(self) -> dict[str, Any]:
+        d = self.inner.describe()
+        d.update({"name": self.name, "exits": {"mode": "fixed", "sl_percent": self.sl, "tp_percent": self.tp, "breakeven_percent": self.be}})
+        return d
+
+
+def build_strategy(cfg: dict[str, Any]) -> Strategy:
+    """Strategy from a bot config dict (entry strategy + exit model)."""
+    inner = make_strategy(str(cfg.get("strategy") or "trend_breakout"), cfg.get("params") or {})
+    if str(cfg.get("exits") or "strategy") == "fixed":
+        def num(key: str, default: float) -> float:
+            v = cfg.get(key)
+            return default if v is None or v == "" else float(v)
+        return FixedExits(inner, num("sl_percent", 1.0), num("tp_percent", 0.0), num("breakeven_percent", 0.0))
+    return inner

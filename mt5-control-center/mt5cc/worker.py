@@ -179,11 +179,13 @@ class _Worker:
 
     def _bot_backtest(self, args: dict[str, Any]) -> dict[str, Any]:
         from .bot.backtest import SymbolSpec, run_backtest
-        from .bot.strategies import Bar, make_strategy
+        from .bot.strategies import Bar, build_strategy
         symbol = str(args.get("symbol") or "").upper()
         timeframe = str(args.get("timeframe") or "H1").upper()
         bars_n = max(300, min(int(args.get("bars") or 3000), 20000))
-        strategy = make_strategy(str(args.get("strategy") or "trend_breakout"), args.get("params") or {})
+        strategy = build_strategy({"strategy": args.get("strategy") or "trend_breakout", "params": args.get("params") or {},
+                                   "exits": args.get("exits") or "strategy", "sl_percent": args.get("sl_percent") or 1.0,
+                                   "tp_percent": args.get("tp_percent") or 0.0, "breakeven_percent": args.get("breakeven_percent") or 0.0})
         info = self.adapter.symbol_info(symbol)
         raw = self.adapter.rates(symbol, timeframe, bars_n)
         if len(raw) < strategy.warmup + 50:

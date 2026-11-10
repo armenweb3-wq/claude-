@@ -115,6 +115,7 @@ def create_app(supervisor: Supervisor, settings: Settings, token: str, store: Eq
     app = FastAPI(title="MT5 Trading Control Center", version=__version__, docs_url=None, redoc_url=None, openapi_url=None)
     tz = resolve_timezone(settings.report_timezone)
     analytics = Analytics()
+    app.state.analytics = analytics
     host = settings.server.host
     port = settings.server.port
     allowed_hosts = {f"{host}:{port}".lower(), host.lower()}
@@ -744,6 +745,16 @@ def install_bot_routes(app: FastAPI, supervisor: Supervisor, settings_ref: dict[
             raise HTTPException(422, f"Unknown strategy '{out['strategy']}'")
         if out["mode"] not in ("paper", "live"):
             raise HTTPException(422, "mode must be paper or live")
+        if out["exits"] not in ("strategy", "fixed"):
+            raise HTTPException(422, "exits must be strategy or fixed")
+        if out["risk_basis"] not in ("equity", "free_margin", "balance"):
+            raise HTTPException(422, "risk_basis must be equity, free_margin or balance")
+        try:
+            out["sl_percent"] = float(out["sl_percent"]); out["tp_percent"] = float(out["tp_percent"] or 0); out["breakeven_percent"] = float(out["breakeven_percent"] or 0)
+        except (TypeError, ValueError):
+            raise HTTPException(422, "Exit percentages must be numbers")
+        if out["exits"] == "fixed" and out["sl_percent"] <= 0:
+            raise HTTPException(422, "Stop-loss percent must be positive")
         syms = out["symbols"]
         if isinstance(syms, str):
             syms = [s.strip() for s in syms.split(",")]
@@ -821,11 +832,30 @@ def install_bot_routes(app: FastAPI, supervisor: Supervisor, settings_ref: dict[
         get_state(acc_id)
         return {"ok": True, "state": worker_call(acc_id, "bot", {"op": "paper_reset"}, timeout=20)}
 
+    @app.get("/api/accounts/{acc_id}/bot/performance")
+    async def bot_performance(acc_id: str):
+        from .stats import by_symbol, realized_curve, trade_stats
+        st = get_state(acc_id)
+        magic = (st.bot or {}).get("magic") or int(st.cfg.trading.magic) + 500
+        if not st.deals:
+            return {"available": False, "magic": magic, "trades": [], "stats": None}
+        deals, book = app.state.analytics.get(st)
+        trades = [t for t in book.trades if t.magic == magic]
+        rows = [{**t.to_dict(), "entry_time_iso": _iso(t.entry_time), "exit_time_iso": _iso(t.exit_time)} for t in trades]
+        rows.sort(key=lambda r: r["exit_time"], reverse=True)
+        open_pos = [{"symbol": p.get("symbol"), "direction": "BUY" if p.get("type") == C.POSITION_TYPE_BUY else "SELL", "volume": p.get("volume"),
+                     "entry": p.get("price_open"), "stop": p.get("sl"), "target": p.get("tp"), "floating": round(float(p.get("profit") or 0) + float(p.get("swap") or 0), 2),
+                     "ticket": p.get("ticket")} for p in st.positions if p.get("magic") == magic]
+        return {"available": True, "magic": magic, "currency": (st.account or {}).get("currency"), "stats": trade_stats(trades),
+                "by_symbol": by_symbol(trades), "curve": realized_curve(trades), "trades": rows[:200], "open_positions": open_pos,
+                "floating": round(sum(p["floating"] for p in open_pos), 2)}
+
     @app.post("/api/accounts/{acc_id}/bot/backtest")
     async def bot_backtest(acc_id: str, body: dict[str, Any] = Body(...)):
         get_state(acc_id)
         args = {"op": "backtest", **{k: body.get(k) for k in ("symbol", "timeframe", "strategy", "params", "bars", "equity", "risk_percent",
-                                                               "max_lots", "max_bars_held", "spread_points", "commission_per_lot")}}
+                                                               "max_lots", "max_bars_held", "spread_points", "commission_per_lot",
+                                                               "exits", "sl_percent", "tp_percent", "breakeven_percent")}}
         if not args.get("symbol"):
             raise HTTPException(422, "symbol is required")
         return worker_call(acc_id, "bot", args, timeout=240)

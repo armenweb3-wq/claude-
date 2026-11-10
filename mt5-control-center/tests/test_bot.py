@@ -155,3 +155,51 @@ def test_daily_loss_halts_new_entries(tmp_path: Path):
     eng.paper["trades"].append({"net": -60.0, "exit_time": time.time(), "symbol": "X"})   # already lost 0.6% today
     eng.tick()
     assert not eng.paper["positions"] and eng.halt_reason and "daily loss" in eng.halt_reason
+
+
+def test_fixed_exits_levels_and_breakeven():
+    from mt5cc.bot.strategies import FixedExits, build_strategy
+    st = build_strategy({"strategy": "trend_breakout", "exits": "fixed", "sl_percent": 1, "tp_percent": 3, "breakeven_percent": 1, "params": {"ema": 50, "adx_min": 0}})
+    assert isinstance(st, FixedExits)
+    stop, target = st.levels(100.0, +1); assert stop == pytest.approx(99.0) and target == pytest.approx(103.0)
+    stop, target = st.levels(100.0, -1); assert stop == pytest.approx(101.0) and target == pytest.approx(97.0)
+    bars = synth_bars(300)
+    s = st.prepare(bars)
+    # below +1%: stop unchanged; at +1%: stop to entry; never moves back
+    bars[-1].close = 100.5; assert st.manage(s, len(bars) - 1, +1, 100.0, 99.0, 3) == (99.0, False)
+    bars[-1].close = 101.2; assert st.manage(s, len(bars) - 1, +1, 100.0, 99.0, 3) == (100.0, False)
+    bars[-1].close = 100.2; assert st.manage(s, len(bars) - 1, +1, 100.0, 100.0, 4) == (100.0, False)
+    bars[-1].close = 98.9;  assert st.manage(s, len(bars) - 1, -1, 100.0, 101.0, 3) == (100.0, False)
+    # entries carry the fixed levels
+    found = [st.entry(s, i) for i in range(st.warmup, len(bars))]
+    e = next((x for x in found if x), None)
+    assert e is not None and e.target is not None
+    with pytest.raises(ValueError):
+        build_strategy({"strategy": "trend_breakout", "exits": "fixed", "sl_percent": 0})
+
+
+def test_backtest_with_fixed_exits_respects_levels():
+    from mt5cc.bot.strategies import build_strategy
+    st = build_strategy({"strategy": "trend_breakout", "exits": "fixed", "sl_percent": 1, "tp_percent": 3, "breakeven_percent": 1, "params": {"ema": 50, "adx_min": 0}})
+    r = run_backtest(synth_bars(900, seed=3, trend=0.0006), st, SPEC, equity=10000, risk_pct=1.0)
+    assert r["stats"]["trades"] > 0
+    for t in r["trades"]:
+        # loss never worse than ~1% of equity at entry plus costs (allowing gap/slippage model = none here)
+        assert t["net"] > -(10000 * 1.3 / 100)
+        if t["reason_out"] == "target":
+            assert t["r_multiple"] > 2.5
+
+
+def test_paper_engine_with_fixed_exits_uses_fill_price(tmp_path: Path):
+    ad = ScriptedAdapter()
+    eng = BotEngine("t", ad, {"strategy": "trend_breakout", "symbols": ["EURUSD"], "timeframe": "M1", "risk_percent": 1.0,
+                              "params": {"ema": 50, "adx_min": 0}, "exits": "fixed", "sl_percent": 1, "tp_percent": 3, "breakeven_percent": 1},
+                    data_dir=tmp_path, log=lambda *a: None, live_open=lambda a: {"ok": False}, live_close=lambda t: {},
+                    live_modify=lambda t, s, p: {}, magic=99, deals=lambda: [])
+    eng.start("paper"); eng.tick()
+    pos = eng.paper["positions"]["EURUSD"]
+    assert pos["stop"] == pytest.approx(pos["entry"] * 0.99, abs=1e-5) and pos["target"] == pytest.approx(pos["entry"] * 1.03, abs=1e-5)
+    assert (pos["entry"] - pos["stop"]) * pos["volume"] * 10000 <= 100.0 + 1e-6
+    # log persisted and reloaded on a fresh engine
+    eng2 = BotEngine("t", ad, {}, data_dir=tmp_path, log=lambda *a: None, live_open=lambda a: {}, live_close=lambda t: {}, live_modify=lambda t, s, p: {}, magic=99, deals=lambda: [])
+    assert any("PAPER BUY" in d["message"] for d in eng2.decisions)

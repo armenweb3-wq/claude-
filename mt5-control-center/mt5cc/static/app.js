@@ -791,7 +791,7 @@
   }
 
   /* ---------------- BOT ---------------- */
-  const BF = { account: null, bt: { symbol: "", timeframe: "", bars: 3000, risk: 1 }, lastBt: null, cfgDirty: false };
+  const BF = { account: null, bt: { symbol: "", timeframe: "", bars: 3000, risk: 1 }, lastBt: null, cfgDirty: false, perfTab: "paper" };
 
   function paramInputs(strat, current) {
     return Object.entries(strat.params).map(([k, v]) => `<label>${esc(k.replace(/_/g, " "))}<input class="bp" data-k="${esc(k)}" type="number" step="any" value="${esc(current && current[k] !== undefined ? current[k] : v)}"></label>`).join("");
@@ -806,8 +806,17 @@
       <div class="form-row">
         <label>Symbols (comma separated)<input class="bc" data-k="symbols" value="${esc((cfg.symbols || []).join(", "))}" spellcheck="false"></label>
         <label>Timeframe<select class="bc" data-k="timeframe">${info.timeframes.map(t => `<option ${t === cfg.timeframe ? "selected" : ""}>${t}</option>`).join("")}</select></label>
-        <label>Risk per trade (% of equity)<input class="bc" data-k="risk_percent" type="number" step="0.1" min="0.1" max="10" value="${esc(cfg.risk_percent)}"></label>
+        <label>Risk per trade (%)<input class="bc" data-k="risk_percent" type="number" step="0.1" min="0.1" max="10" value="${esc(cfg.risk_percent)}"></label>
+        <label>% of<select class="bc" data-k="risk_basis"><option value="free_margin" ${cfg.risk_basis === "free_margin" ? "selected" : ""}>Free margin</option><option value="equity" ${cfg.risk_basis === "equity" ? "selected" : ""}>Equity</option><option value="balance" ${cfg.risk_basis === "balance" ? "selected" : ""}>Balance</option></select></label>
         <label>Max open bot positions<input class="bc" data-k="max_positions" type="number" step="1" min="1" value="${esc(cfg.max_positions)}"></label>
+      </div>
+      <div class="section-title my14"><h3 class="small dim">Exits</h3><div class="line"></div></div>
+      <div class="form-row">
+        <label class="wide">Exit model<span class="seg exits-seg"><button type="button" data-v="fixed" class="${cfg.exits === "fixed" ? "active" : ""}">Fixed % · SL / TP / break-even</button><button type="button" data-v="strategy" class="${cfg.exits !== "fixed" ? "active" : ""}">Strategy's own (ATR stop, trailing)</button></span><input type="hidden" class="bc" data-k="exits" value="${esc(cfg.exits || "strategy")}"></label>
+        <label class="fx ${cfg.exits === "fixed" ? "" : "hidden"}">Stop loss (% from entry)<input class="bc" data-k="sl_percent" type="number" step="0.1" min="0.1" value="${esc(cfg.sl_percent)}"></label>
+        <label class="fx ${cfg.exits === "fixed" ? "" : "hidden"}">Take profit (% from entry, 0 = none)<input class="bc" data-k="tp_percent" type="number" step="0.1" min="0" value="${esc(cfg.tp_percent)}"></label>
+        <label class="fx ${cfg.exits === "fixed" ? "" : "hidden"}">Move stop to break-even at (% profit, 0 = never)<input class="bc" data-k="breakeven_percent" type="number" step="0.1" min="0" value="${esc(cfg.breakeven_percent)}"></label>
+        <div class="wide xs muted fx ${cfg.exits === "fixed" ? "" : "hidden"}">Example with 1 / 3 / 1: a trade risks ${esc(cfg.risk_percent)}% of ${esc((cfg.risk_basis || "equity").replace("_", " "))} if price moves 1% against it, closes the whole position at +3%, and once it is 1% in profit the stop moves to the entry price so the trade can no longer lose.</div>
       </div>
       <div class="form-row">
         <label>Daily loss limit (% of day-start equity)<input class="bc" data-k="max_daily_loss_percent" type="number" step="0.1" min="0" value="${esc(cfg.max_daily_loss_percent)}"></label>
@@ -879,6 +888,7 @@
         </div>
         <div id="bt-out" class="mt14">${BF.lastBt ? "" : '<div class="small muted">Results appear here. A backtest tells you how the rules behaved on past prices; it is a sanity check, not a promise.</div>'}</div>
       </div></section>
+      <section class="card"><div class="card-head"><h3>Bot performance</h3><span class="sub">what the bot has actually done</span><div class="spacer"></div><span class="seg" id="perf-seg"><button data-v="live" class="${BF.perfTab === "live" ? "active" : ""}">Live (real trades)</button><button data-v="paper" class="${BF.perfTab !== "live" ? "active" : ""}">Paper</button></span></div><div class="card-body" id="bot-perf"><div class="loading-row"><div class="spinner"></div>Loading…</div></div></section>
       <section class="card"><div class="card-head"><h3>Bot log</h3><span class="sub">every decision, newest first</span></div><div class="log" id="bot-log">${st && st.decisions && st.decisions.length ? st.decisions.slice().reverse().map(d => `<div class="${esc(d.level)}"><span class="ts">${esc(dtShort(new Date(d.ts * 1000).toISOString()))}</span>${esc(d.message)}</div>`).join("") : '<span class="muted">No decisions yet</span>'}</div></section>
       ${paper && paper.trades && paper.trades.length ? `<section class="card"><div class="card-head"><h3>Paper trades</h3><span class="sub">last ${paper.trades.length}</span></div><div class="table-wrap"><table class="data compact"><thead><tr><th>Symbol</th><th>Side</th><th>Entry</th><th>Exit</th><th class="num">Entry</th><th class="num">Exit</th><th class="num">Lots</th><th class="num">Net</th><th>Why in</th><th>Why out</th></tr></thead><tbody>${paper.trades.slice().reverse().map(t => `<tr><td class="sym">${esc(t.symbol)}</td><td><span class="tag ${t.direction.toLowerCase()}">${t.direction}</span></td><td class="dim">${dt2(new Date(t.entry_time * 1000).toISOString())}</td><td class="dim">${dt2(new Date(t.exit_time * 1000).toISOString())}</td><td class="num">${price(t.entry)}</td><td class="num">${price(t.exit)}</td><td class="num">${fmt(t.volume, 2)}</td><td class="num">${signedMoney(t.net, cur)}</td><td class="muted small">${esc(t.reason_in)}</td><td class="muted small">${esc(t.reason_out)}</td></tr>`).join("")}</tbody></table></div></section>` : ""}`;
     content.querySelectorAll("#bot-acct button").forEach(b => b.addEventListener("click", () => { BF.account = b.dataset.id; BF.bt.symbol = ""; BF.lastBt = null; if (S.scope !== "all") { S.scope = "all"; renderShell(); } renderView(); }));
@@ -887,6 +897,11 @@
       const strat = info.strategies.find(s => s.key === e.target.value); $("#bot-strat-desc").textContent = strat.description; $("#bot-params").innerHTML = paramInputs(strat, {});
     });
     cfgRoot.addEventListener("input", () => { BF.cfgDirty = true; });
+    cfgRoot.querySelectorAll(".exits-seg button").forEach(b => b.addEventListener("click", () => {
+      cfgRoot.querySelector('[data-k="exits"]').value = b.dataset.v; BF.cfgDirty = true;
+      cfgRoot.querySelectorAll(".exits-seg button").forEach(x => x.classList.toggle("active", x === b));
+      cfgRoot.querySelectorAll(".fx").forEach(x => x.classList.toggle("hidden", b.dataset.v !== "fixed"));
+    }));
     $("#bot-save").addEventListener("click", async () => {
       const msg = $("#bot-cfg-msg"); msg.textContent = "Saving…";
       try { const r = await put(`/api/accounts/${a.id}/bot/config`, readBotCfg(cfgRoot, info)); BF.cfgDirty = false; toast(r.note || "Bot settings saved"); renderView(); }
@@ -906,11 +921,48 @@
       BF.bt = { symbol: $("#bt-symbol").value.trim().toUpperCase(), timeframe: $("#bt-tf").value, bars: +$("#bt-bars").value, risk: +$("#bt-risk").value };
       const c = readBotCfg(cfgRoot, info);
       const out = $("#bt-out"); out.innerHTML = `<div class="loading-row"><div class="spinner"></div>Fetching ${BF.bt.bars} bars of ${esc(BF.bt.symbol)} ${esc(BF.bt.timeframe)} from the terminal and simulating…</div>`;
-      try { BF.lastBt = await post(`/api/accounts/${a.id}/bot/backtest`, { symbol: BF.bt.symbol, timeframe: BF.bt.timeframe, bars: BF.bt.bars, strategy: c.strategy, params: c.params, risk_percent: BF.bt.risk, max_lots: c.max_lots, max_bars_held: c.max_bars_held }); renderBacktest(out, BF.lastBt, cur); }
+      try { BF.lastBt = await post(`/api/accounts/${a.id}/bot/backtest`, { symbol: BF.bt.symbol, timeframe: BF.bt.timeframe, bars: BF.bt.bars, strategy: c.strategy, params: c.params, risk_percent: BF.bt.risk, max_lots: c.max_lots, max_bars_held: c.max_bars_held, exits: c.exits, sl_percent: c.sl_percent, tp_percent: c.tp_percent, breakeven_percent: c.breakeven_percent }); renderBacktest(out, BF.lastBt, cur); }
       catch (err) { out.innerHTML = `<div class="banner bad"><span>${esc(err.message)}</span></div>`; }
     });
     if (BF.lastBt) renderBacktest($("#bt-out"), BF.lastBt, cur);
+    content.querySelectorAll("#perf-seg button").forEach(b => b.addEventListener("click", () => { BF.perfTab = b.dataset.v; renderView(); }));
+    await renderBotPerformance($("#bot-perf"), a, st, cur, token);
     scheduleViewRefresh(running ? 5000 : 30000);
+  }
+  async function renderBotPerformance(el, a, st, cur, token) {
+    if (BF.perfTab === "paper") {
+      const paper = st ? st.paper : null;
+      const trades = paper ? paper.trades : [];
+      if (!paper || !paper.equity) { el.innerHTML = `<div class="small muted">Paper mode has not run yet.</div>`; return; }
+      const wins = trades.filter(t => t.net > 0), losses = trades.filter(t => t.net < 0);
+      const gp = wins.reduce((s, t) => s + t.net, 0), gl = -losses.reduce((s, t) => s + t.net, 0);
+      let cum = 0, peak = 0, dd = 0; const pts = trades.map(t => { cum += t.net; peak = Math.max(peak, cum); dd = Math.max(dd, peak - cum); return { x: t.exit_time, y: Math.round(cum * 100) / 100 }; });
+      el.innerHTML = `<div class="tiles">
+        <div class="tile"><div class="k">Paper net</div><div class="v">${signedMoney(paper.equity - paper.start_equity, cur)}</div><div class="s">equity ${fmt(paper.equity)} from ${fmt(paper.start_equity)}</div></div>
+        <div class="tile"><div class="k">Closed paper trades</div><div class="v">${paper.trade_count}</div><div class="s"><span class="pos">${wins.length} won</span> · <span class="neg">${losses.length} lost</span> (last ${trades.length} shown)</div></div>
+        <div class="tile"><div class="k">Win rate</div><div class="v">${trades.length ? pct(wins.length / trades.length) : "–"}</div></div>
+        <div class="tile"><div class="k">Profit factor</div><div class="v">${gl > 0 ? fmt(gp / gl, 2) : (gp > 0 ? "∞" : "–")}</div><div class="s">max drawdown ${fmt(dd)}</div></div>
+        <div class="tile"><div class="k">Open paper positions</div><div class="v">${paper.positions.length}</div><div class="s">floating ${signedMoney(paper.positions.reduce((s, p) => s + (p.floating || 0), 0), cur)}</div></div>
+      </div><div class="mt14"><div class="small dim mb6">Cumulative paper result</div><div id="perf-curve"></div></div>`;
+      const c = $("#perf-curve"); Charts.responsive(c, () => Charts.lineChart(c, { height: 160, baseline: 0, series: [{ name: "Paper P/L", color: "#1fb282", points: pts, step: true }], tipFormat: v => fmt(v, 2) + " " + cur, emptyText: "No closed paper trades yet" }));
+      return;
+    }
+    const perf = await api(`/api/accounts/${a.id}/bot/performance`).catch(() => null);
+    if (token !== S.viewToken) return;
+    if (!perf || !perf.available) { el.innerHTML = `<div class="small muted">No deal history loaded yet.</div>`; return; }
+    const s = perf.stats;
+    el.innerHTML = `<div class="xs muted mb6">Real trades on this account carrying the bot's magic number ${esc(perf.magic)}, taken from the MT5 deal ledger (same reconciliation as the Performance page).</div>
+      <div class="tiles">
+        <div class="tile"><div class="k">Realized net</div><div class="v">${signedMoney(s.net, cur)}</div><div class="s">${s.trades} closed trades</div></div>
+        <div class="tile"><div class="k">Win rate</div><div class="v">${pct(s.win_rate)}</div><div class="s"><span class="pos">${s.wins} won</span> · <span class="neg">${s.losses} lost</span></div></div>
+        <div class="tile"><div class="k">Profit factor</div><div class="v">${pf(s.profit_factor)}</div><div class="s">expectancy ${signedMoney(s.expectancy)}</div></div>
+        <div class="tile"><div class="k">Avg win / loss</div><div class="v">${s.avg_win === null ? "–" : fmt(s.avg_win, 0)} / ${s.avg_loss === null ? "–" : fmt(s.avg_loss, 0)}</div><div class="s">largest ${s.largest_win === null ? "–" : fmt(s.largest_win, 0)} / ${s.largest_loss === null ? "–" : fmt(s.largest_loss, 0)}</div></div>
+        <div class="tile"><div class="k">Max drawdown</div><div class="v neg">${perf.curve.max_drawdown ? "−" + fmt(perf.curve.max_drawdown) : "0.00"}<span class="cur">${esc(cur)}</span></div><div class="s">closed trades</div></div>
+        <div class="tile"><div class="k">Open live bot positions</div><div class="v">${perf.open_positions.length}</div><div class="s">floating ${signedMoney(perf.floating, cur)}</div></div>
+      </div>
+      <div class="grid cols-2 mt14"><div><div class="small dim mb6">Cumulative realized (bot trades only)</div><div id="perf-curve"></div></div><div><div class="small dim mb6">By symbol</div>${perf.by_symbol.length ? `<table class="data compact"><thead><tr><th>Symbol</th><th class="num">Trades</th><th class="num">Win rate</th><th class="num">PF</th><th class="num">Net</th></tr></thead><tbody>${perf.by_symbol.map(r => `<tr><td class="sym">${esc(r.symbol)}</td><td class="num">${r.trades}</td><td class="num">${pct(r.win_rate)}</td><td class="num">${pf(r.profit_factor)}</td><td class="num">${signedMoney(r.net, cur)}</td></tr>`).join("")}</tbody></table>` : '<div class="small muted">No closed live bot trades yet.</div>'}</div></div>
+      ${perf.trades.length ? `<details class="mt14"><summary class="small dim">Show ${perf.trades.length} live bot trades</summary><div class="table-wrap"><table class="data compact"><thead><tr><th>Symbol</th><th>Side</th><th>Entry</th><th>Exit</th><th class="num">Entry</th><th class="num">Exit</th><th class="num">Lots</th><th class="num">Net</th></tr></thead><tbody>${perf.trades.map(t => `<tr><td class="sym">${esc(t.symbol)}</td><td><span class="tag ${t.direction.toLowerCase()}">${t.direction}</span></td><td class="dim">${dt2(t.entry_time_iso)}</td><td class="dim">${dt2(t.exit_time_iso)}</td><td class="num">${price(t.entry_price)}</td><td class="num">${price(t.exit_price)}</td><td class="num">${fmt(t.volume, 2)}</td><td class="num">${signedMoney(t.net, cur)}</td></tr>`).join("")}</tbody></table></div></details>` : ""}`;
+    const c = $("#perf-curve"); Charts.responsive(c, () => Charts.lineChart(c, { height: 160, baseline: 0, series: [{ name: "Bot realized", color: "#3987e5", points: perf.curve.points.map(p => ({ x: p.t, y: p.cum })), step: true }], tipFormat: v => fmt(v, 2) + " " + cur, emptyText: "No closed live bot trades yet" }));
   }
   function botPositions(st, mode, cur) {
     const rows = st ? (mode === "paper" ? st.paper.positions : st.live_positions) : [];

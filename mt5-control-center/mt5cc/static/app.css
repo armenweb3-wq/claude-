@@ -328,3 +328,5 @@ label.check input[type="checkbox"] { width: 16px; height: 16px; min-height: 0; m
 hr.sep { border: 0; border-top: 1px solid var(--border); margin: 14px 0; }
 details summary { cursor: pointer; }
 .log { max-height: 320px; }
+.exits-seg { display: inline-flex; }
+.exits-seg button { padding: 6px 12px; }

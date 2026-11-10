@@ -310,6 +310,18 @@ are robust and explainable rather than clever:
   uptrend (sells in a downtrend) after RSI resets, stop beyond the pullback
   with ATR padding, fixed reward:risk target, break-even after 1R then trail.
 
+**Exit model switch.** Either the strategy's own exits (ATR stop and
+trailing), or **Fixed %**: stop loss at X% from entry on the whole position,
+take profit at Y%, and the stop moved to break-even once the trade is Z% in
+profit (for example 1 / 3 / 1). Combined with "risk 1% of free margin", a
+stop hit costs 1% of free margin and a target pays about 3%.
+
+**Memory.** The bot's decision log and paper ledger are written to the `data`
+folder and reloaded on start, so the page keeps its history across restarts.
+The **Bot performance** section shows paper results and, separately, the
+real trades the bot made on the account (by its magic number, from the MT5
+deal ledger).
+
 Every parameter is editable on the page. Position size is always risk based:
 the stop distance and the symbol's tick value decide the lots so that a stop
 hit loses the configured percentage of equity, rounded down to the lot step.

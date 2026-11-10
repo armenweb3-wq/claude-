@@ -18,7 +18,7 @@ from typing import Any, Callable
 
 from .. import mt5_constants as C
 from .backtest import SymbolSpec, size_for_risk
-from .strategies import Bar, Strategy, make_strategy
+from .strategies import Bar, FixedExits, Strategy, build_strategy
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "mode": "paper",                 # paper | live
@@ -27,6 +27,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "symbols": ["EURUSD"],
     "timeframe": "H1",
     "risk_percent": 0.5,
+    "risk_basis": "equity",          # equity | free_margin | balance (live sizing; paper always uses paper equity)
+    "exits": "strategy",             # strategy = the strategy's own ATR/trailing exits; fixed = percentages below
+    "sl_percent": 1.0,
+    "tp_percent": 3.0,
+    "breakeven_percent": 1.0,
     "max_positions": 2,
     "max_daily_loss_percent": 2.0,
     "max_lots": 1.0,
@@ -72,17 +77,40 @@ class BotEngine:
         self.symbols: dict[str, dict[str, Any]] = {}      # per-symbol runtime state
         self.paper = {"equity": 0.0, "start_equity": 0.0, "trades": [], "positions": {}}
         self.decisions: deque = deque(maxlen=200)
-        self.strategy: Strategy = make_strategy(self.cfg["strategy"], self.cfg.get("params"))
+        self.strategy: Strategy = build_strategy(self.cfg)
         self._specs: dict[str, SymbolSpec] = {}
         self._dirty = True
         self._last_error: str | None = None
         self.load_paper()
+        self.load_log()
 
     # ------------------------------------------------------------------ #
     def note(self, level: str, msg: str, **extra: Any) -> None:
-        self.decisions.append({"ts": time.time(), "level": level, "message": msg, **extra})
+        entry = {"ts": time.time(), "level": level, "message": msg, **extra}
+        self.decisions.append(entry)
         self._log(level, f"BOT {msg}")
         self._dirty = True
+        try:
+            self.data_dir.mkdir(parents=True, exist_ok=True)
+            with self.log_path().open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps(entry, default=str) + "\n")
+        except OSError:
+            pass
+
+    def log_path(self) -> Path:
+        return self.data_dir / f"bot-log-{self.acc_id}.jsonl"
+
+    def load_log(self) -> None:
+        """Bring back the last decisions so the page keeps its memory across restarts."""
+        try:
+            lines = self.log_path().read_text(encoding="utf-8").splitlines()[-200:]
+        except OSError:
+            return
+        for ln in lines:
+            try:
+                self.decisions.append(json.loads(ln))
+            except ValueError:
+                continue
 
     def paper_path(self) -> Path:
         return self.data_dir / f"bot-paper-{self.acc_id}.json"
@@ -104,7 +132,7 @@ class BotEngine:
     def update_config(self, cfg: dict[str, Any]) -> None:
         was_running = self.running
         self.cfg = {**DEFAULT_CONFIG, **(cfg or {})}
-        self.strategy = make_strategy(self.cfg["strategy"], self.cfg.get("params"))
+        self.strategy = build_strategy(self.cfg)
         self.mode = self.cfg.get("mode", "paper")
         for sym in list(self.symbols):
             if sym not in self.cfg["symbols"]:
@@ -307,6 +335,9 @@ class BotEngine:
         if max_spread and spread_pts > max_spread:
             self.note("INFO", f"{symbol}: signal ignored - spread {spread_pts:.0f} > {max_spread:.0f} points"); return
         price = tick["ask"] if e.direction > 0 else tick["bid"]
+        if isinstance(self.strategy, FixedExits):
+            e.stop, e.target = self.strategy.levels(price, e.direction)
+            e.stop = round(e.stop, getattr(sp, "digits", 5)); e.target = round(e.target, getattr(sp, "digits", 5)) if e.target else None
         if (e.direction > 0 and e.stop >= price) or (e.direction < 0 and e.stop <= price):
             self.note("INFO", f"{symbol}: signal ignored - stop {e.stop:.5g} on the wrong side of price {price:.5g}"); return
         if self.mode == "paper":
@@ -321,7 +352,7 @@ class BotEngine:
             self.note("INFO", f"{symbol}: PAPER {'BUY' if e.direction > 0 else 'SELL'} {vol:g} @ {price:.5g} stop {e.stop:.5g}" + (f" target {e.target:.5g}" if e.target else "") + f" - {e.reason}")
             return
         args = {"symbol": symbol, "side": "BUY" if e.direction > 0 else "SELL", "order_kind": "market", "sizing": "risk",
-                "risk_percent": float(self.cfg["risk_percent"]), "risk_basis": "equity", "sl_mode": "price", "sl": e.stop,
+                "risk_percent": float(self.cfg["risk_percent"]), "risk_basis": str(self.cfg.get("risk_basis") or "equity"), "sl_mode": "price", "sl": e.stop,
                 "tp_mode": "price" if e.target else "none", "tp": e.target, "comment": f"bot:{self.strategy.key}"[:31], "magic": self.magic,
                 "max_lots": float(self.cfg.get("max_lots") or 0) or None}
         res = self.live_open(args)

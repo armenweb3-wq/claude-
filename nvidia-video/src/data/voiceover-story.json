@@ -2,7 +2,7 @@
   "fps": 30,
   "totalDuration": null,
   "voiceoverFile": "audio/story-voice.mp3",
-  "musicFile": "audio/story-music.mp3",
+  "musicFile": null,
   "voice": {
     "engine": "kokoro-v1.0",
     "voice": "af_heart",
@@ -95,9 +95,9 @@
     {
       "id": "close",
       "title": "Next chapter",
-      "minDuration": 13,
+      "minDuration": 16,
       "start": 254.7,
-      "end": 272.46666666666664
+      "end": 270.7
     }
   ],
   "cues": [
@@ -282,13 +282,6 @@
       "say": "Ten weeks. From one hundred dollars to a funded account, a clean record, and a problem solved the right way. That is chapter one.",
       "start": 255.6,
       "end": 263.33
-    },
-    {
-      "scene": "close",
-      "text": "Past performance is not a guarantee of future performance. Trading CFDs involves significant risk to your capital.",
-      "say": "Past performance is not a guarantee of future performance. Trading CFDs involves significant risk to your capital.",
-      "start": 263.98,
-      "end": 271.17
     }
   ]
 }

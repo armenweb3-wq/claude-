@@ -167,6 +167,28 @@ export const Ring: React.FC<{ x: number; y: number; w: number; h: number; at: nu
   );
 };
 
+/** Hand-drawn loop around its own content: wraps the child so the ring always encloses exactly that box. */
+export const Circled: React.FC<{ at: number; color?: string; width?: number; padX?: number; padY?: number; children: React.ReactNode }> = ({ at, color = colors.red, width = 3.5, padX = 22, padY = 14, children }) => {
+  const f = useCurrentFrame();
+  const p = prog(f, at, 34, Easing.bezier(0.4, 0, 0.3, 1));
+  const pts: string[] = [];
+  for (let i = 0; i <= 64; i++) {
+    const t = (i / 64) * Math.PI * 2.3 - 0.6;
+    const wob = 1 + 0.025 * Math.sin(t * 5.3 + 1.2);
+    pts.push(`${50 + Math.cos(t) * 48 * wob},${50 + Math.sin(t) * 46 * wob * (1 + 0.03 * Math.cos(t * 3))}`);
+  }
+  return (
+    <span style={{ position: "relative", display: "inline-block" }}>
+      {children}
+      {p > 0 && (
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", left: -padX, top: -padY, width: `calc(100% + ${padX * 2}px)`, height: `calc(100% + ${padY * 2}px)`, overflow: "visible", pointerEvents: "none" }}>
+          <polyline points={pts.join(" ")} fill="none" stroke={color} strokeWidth={width} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" pathLength={1} strokeDasharray={1} strokeDashoffset={1 - p} />
+        </svg>
+      )}
+    </span>
+  );
+};
+
 /** Handwritten annotation (Caveat). */
 export const Hand: React.FC<{ children: React.ReactNode; x: number; y: number; at: number; size?: number; color?: string; rotate?: number; width?: number; align?: "left" | "center" | "right" }> = ({ children, x, y, at, size = 38, color = colors.blue, rotate = -3, width, align = "left" }) => {
   const f = useCurrentFrame();
@@ -234,9 +256,15 @@ export const Fig: React.FC<{ label: string; value: React.ReactNode; color?: stri
   </div>
 );
 
-/** Fade-in block. */
-export const In: React.FC<{ at: number; children: React.ReactNode; style?: React.CSSProperties; dy?: number }> = ({ at, children, style, dy = 14 }) => {
+/** Fade-in block that also grows into its height, so cards expand with their content instead of waiting half-empty. */
+export const In: React.FC<{ at: number; children: React.ReactNode; style?: React.CSSProperties; dy?: number; grow?: boolean }> = ({ at, children, style, dy = 14, grow = true }) => {
   const f = useCurrentFrame();
   const p = prog(f, at, 20);
-  return <div style={{ opacity: p, transform: `translateY(${(1 - p) * dy}px)`, ...style }}>{children}</div>;
+  if (!grow || (style && style.position === "absolute")) return <div style={{ opacity: p, transform: `translateY(${(1 - p) * dy}px)`, ...style }}>{children}</div>;
+  const h = prog(f, at - 8, 18);
+  return (
+    <div style={{ display: "grid", gridTemplateRows: `${Math.max(h, 0.0001)}fr`, opacity: p, transform: `translateY(${(1 - p) * dy}px)` }}>
+      <div style={{ overflow: "hidden", minHeight: 0, ...style }}>{children}</div>
+    </div>
+  );
 };

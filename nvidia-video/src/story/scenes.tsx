@@ -2,7 +2,7 @@ import React from "react";
 import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
 import { makeTimeline } from "../edu/timeline";
 import vo from "../data/voiceover-story.json";
-import { Arrow, Card, Counter, Fig, Hand, In, Note, Paper, prog, Ring, signed, Stamp, Stroke, Title, usd } from "./primitives";
+import { Arrow, Card, Circled, Counter, Fig, Hand, In, Note, Paper, prog, Ring, signed, Stamp, Stroke, Title, usd } from "./primitives";
 import { colors, fonts, H, M, W } from "./theme";
 
 /*
@@ -151,10 +151,9 @@ const SStart: React.FC = () => {
         <div style={{ display: "flex", gap: 30, marginTop: 18 }}>
           <Fig label="Open" value={t.open.toFixed(3)} size={34} />
           <Fig label="Close" value={t.close.toFixed(3)} size={34} />
-          <Fig label="Profit" value={signed(t.pl, 2)} size={44} color={colors.green} />
+          <Fig label="Profit" value={<Circled at={c} color={colors.green} padX={16} padY={6}>{signed(t.pl, 2)}</Circled>} size={44} color={colors.green} />
         </div>
       </Card>
-      <Ring x={1310} y={455} w={160} h={70} at={c} color={colors.green} />
       <Note x={1180} y={620} w={330} at={c + 10} rotate={3} size={30}>
         Small on purpose. <br /> First, prove the process works.
       </Note>
@@ -330,9 +329,8 @@ const SRun: React.FC = () => {
         Largest in October: {D.largestOct.sym} sell {D.largestOct.lots} lots, {D.largestOct.d}. Closed {D.largestOct.mins} minutes later: <b>{signed(D.largestOct.pl)}</b>
       </Note>
       <Card x={W - 500} y={330} w={390} at={tot} rotate={1.5}>
-        <Fig label="Closed profit · 03.11" value={<Counter to={D.profitTo3Nov} start={tot + 6} dur={40} format={(n) => usd(n, 2)} />} size={54} color={colors.green} sub="after swaps · 14 positions" />
+        <Fig label="Closed profit · 03.11" value={<Circled at={tot + 40} color={colors.green} padX={18} padY={8}><Counter to={D.profitTo3Nov} start={tot + 6} dur={40} format={(n) => usd(n, 2)} /></Circled>} size={54} color={colors.green} sub="after swaps · 14 positions" />
       </Card>
-      <Ring x={W - 500} y={330} w={390} h={150} at={tot + 40} color={colors.green} />
     </AbsoluteFill>
   );
 };
@@ -575,13 +573,12 @@ const SOnePct: React.FC = () => {
               <Counter to={lastDayTotal} start={c} dur={40} format={(n) => signed(n, 2)} />
             </span>
           </span>
-          <span style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 34, color: colors.ink, textAlign: "right" }}>+{pct(lastDayTotal)}</span>
+          <span style={{ textAlign: "right" }}><Circled at={c + 40} padX={16} padY={10}><span style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 34, color: colors.ink }}>+{pct(lastDayTotal)}</span></Circled></span>
         </In>
       </Card>
       <Note x={1290} y={128} w={500} at={a + 20} rotate={-1.5} tint={colors.sky} size={24}>
         The rule: size every trade so that about <b>1% of the account</b> is at risk. Balance at the start of the day: {usd(D.balanceBeforeLastDay, 2)}.
       </Note>
-      <Ring x={W - M - 190} y={698} w={165} h={60} at={c + 40} />
       <Hand x={1000} y={800} at={c + 50} size={36} color={colors.red} rotate={-2} width={700} align="right">
         eleven percent in a day, one percent at risk per trade
       </Hand>
@@ -618,13 +615,15 @@ const SRecord: React.FC = () => {
         </div>
         <In at={b + 30} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginTop: 22, paddingTop: 14, borderTop: `2px solid ${colors.ink}` }}>
           <span style={{ fontFamily: fonts.serif, fontWeight: 700, fontSize: 28, color: colors.ink }}>Net closed profit</span>
-          <span style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 48, color: colors.green, fontVariantNumeric: "tabular-nums" }}>
-            <Counter to={R.net} start={b + 30} dur={40} format={(n) => usd(n, 2)} />
-          </span>
+          <Circled at={b + 70} color={colors.green}>
+            <span style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 48, color: colors.green, fontVariantNumeric: "tabular-nums" }}>
+              <Counter to={R.net} start={b + 30} dur={40} format={(n) => usd(n, 2)} />
+            </span>
+          </Circled>
         </In>
-        <div style={{ fontFamily: fonts.body, fontSize: 18, color: colors.pencil, marginTop: 6 }}>
+        <In at={b + 44} style={{ fontFamily: fonts.body, fontSize: 18, color: colors.pencil, marginTop: 6 }}>
           gross profit {usd(R.gross, 2)} · gross loss {usd(R.grossLoss, 2)} · largest win {usd(R.largest)}
-        </div>
+        </In>
       </Card>
       <Stamp text="19 / 20" x={880} y={290} at={a + 50} rotate={12} size={40} />
       <Card x={1190} y={300} w={600} at={b + 20} rotate={1.2}>
@@ -641,7 +640,6 @@ const SRecord: React.FC = () => {
           </In>
         ))}
       </Card>
-      <Ring x={M + 690} y={536} w={330} h={76} at={b + 70} color={colors.green} />
     </AbsoluteFill>
   );
 };
@@ -683,12 +681,13 @@ const SStanding: React.FC = () => {
         </In>
         <In at={b + 60} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", padding: "14px 0 0" }}>
           <span style={{ fontFamily: fonts.serif, fontWeight: 700, fontSize: 32, color: colors.ink }}>Equity today</span>
-          <span style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 52, color: colors.ink }}>
-            <Counter to={D.equity} start={b + 60} dur={40} format={(n) => usd(n, 2)} />
-          </span>
+          <Circled at={b + 100}>
+            <span style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 52, color: colors.ink }}>
+              <Counter to={D.equity} start={b + 60} dur={40} format={(n) => usd(n, 2)} />
+            </span>
+          </Circled>
         </In>
       </Card>
-      <Ring x={M + 640} y={760} w={350} h={90} at={b + 100} />
       <Note x={1200} y={330} w={320} at={a + 60} rotate={2.5} size={27}>
         Deposits add up to {usd(D.deposits, 2)}. Bonuses and cashback brought the balance to {usd(D.balance)}.
       </Note>
@@ -704,7 +703,7 @@ const SStanding: React.FC = () => {
 // 12 ─ Close
 const SClose: React.FC = () => {
   const a = at("close", 0, 0.3);
-  const b = at("close", 1, 0.2);
+  const b = tl.atEnd("close", 0, 0.6); // the disclaimer appears once the last line is spoken; it is not read aloud
   return (
     <AbsoluteFill>
       <Paper />

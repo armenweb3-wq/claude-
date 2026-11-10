@@ -1,5 +1,5 @@
 import React from "react";
-import { Audio, interpolate, Sequence, staticFile, useCurrentFrame } from "remotion";
+import { Audio, interpolate, staticFile, useCurrentFrame } from "remotion";
 import type { Timeline } from "../edu/timeline";
 import { clamp } from "./primitives";
 import { colors, fonts, M } from "./theme";
@@ -36,36 +36,5 @@ export const Subtitles: React.FC<P> = ({ tl }) => {
   );
 };
 
-/** Music bed ducked under the voice, the voice, and a soft page-turn on each new page. */
-export const Soundtrack: React.FC<P> = ({ tl, impacts = [] }) => {
-  const { cues, scenes } = tl;
-  const totalFrames = tl.totalFrames;
-  const speaking = (frame: number) => cues.some((c) => frame >= c.from - 6 && frame <= c.to + 6);
-  return (
-    <>
-      {tl.audio.music && (
-        <Audio
-          src={staticFile(tl.audio.music)}
-          volume={(fr) => {
-            const fadeIn = interpolate(fr, [0, 45], [0, 1], clamp);
-            const fadeOut = interpolate(fr, [totalFrames - 75, totalFrames], [1, 0], clamp);
-            let v = 0;
-            for (let k = -8; k <= 8; k++) v += speaking(fr + k) ? 0.1 : 0.26;
-            return (v / 17) * fadeIn * fadeOut;
-          }}
-        />
-      )}
-      {tl.audio.voice && <Audio src={staticFile(tl.audio.voice)} />}
-      {scenes.slice(1).map((s) => (
-        <Sequence key={s.id} from={s.from - 14} durationInFrames={36} layout="none">
-          <Audio src={staticFile("audio/whoosh.wav")} volume={0.18} />
-        </Sequence>
-      ))}
-      {impacts.map((t) => (
-        <Sequence key={t} from={t - 2} durationInFrames={50} layout="none">
-          <Audio src={staticFile("audio/impact.wav")} volume={0.2} />
-        </Sequence>
-      ))}
-    </>
-  );
-};
+/** Voice only: no music bed and no effects (the client asked for the narration alone). `impacts` is kept for API compatibility. */
+export const Soundtrack: React.FC<P> = ({ tl }) => <>{tl.audio.voice && <Audio src={staticFile(tl.audio.voice)} />}</>;

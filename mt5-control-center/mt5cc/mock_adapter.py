@@ -389,6 +389,19 @@ def _mock_trading(cls):
             i += 1
         return bars
 
+    def symbols_all(self):
+        paths = {"EURUSD": "Forex\\Majors", "GBPUSD": "Forex\\Majors", "USDJPY": "Forex\\Majors", "XAUUSD": "Metals\\Spot", "US500": "Indices\\Cash"}
+        out = []
+        for sym, spec in _SYMBOL_SPECS.items():
+            out.append({"name": sym, "path": f"{paths[sym]}\\{sym}", "visible": sym != "GBPUSD", "trade_mode": C.SYMBOL_TRADE_MODE_FULL,
+                        "trade_calc_mode": 0, "currency_base": spec["currency_base"], "currency_profit": spec["currency_profit"],
+                        "description": f"{sym} (mock)", "spread": spec["spread"], "digits": spec["digits"]})
+        out.append({"name": "BTCUSD", "path": "Crypto\\BTCUSD", "visible": True, "trade_mode": C.SYMBOL_TRADE_MODE_FULL, "trade_calc_mode": 2,
+                    "currency_base": "BTC", "currency_profit": "USD", "description": "Bitcoin (mock)", "spread": 2500, "digits": 2})
+        out.append({"name": "AAPL", "path": "Stocks\\US\\AAPL", "visible": False, "trade_mode": C.SYMBOL_TRADE_MODE_DISABLED, "trade_calc_mode": 32,
+                    "currency_base": "", "currency_profit": "USD", "description": "Apple (mock, disabled)", "spread": 3, "digits": 2})
+        return out
+
     for name, fn in list(locals().items()):
         if callable(fn) and name not in ("cls",):
             setattr(cls, name, fn)

@@ -759,8 +759,22 @@ def install_bot_routes(app: FastAPI, supervisor: Supervisor, settings_ref: dict[
         if isinstance(syms, str):
             syms = [s.strip() for s in syms.split(",")]
         out["symbols"] = [s.strip().upper() for s in syms if s and s.strip()]
-        if not out["symbols"]:
-            raise HTTPException(422, "Add at least one symbol")
+        out["symbols_mode"] = "list" if str(out.get("symbols_mode")) == "list" else "auto"
+        if out["symbols_mode"] == "list" and not out["symbols"]:
+            raise HTTPException(422, "Add at least one symbol, or switch to automatic symbol selection")
+        cats = out.get("universe_categories")
+        if isinstance(cats, str):
+            cats = [c.strip() for c in cats.split(",")]
+        out["universe_categories"] = [c for c in (cats or []) if c in ("forex", "metals", "indices", "energies", "stocks", "other")]
+        out["exclude_crypto"] = bool(out.get("exclude_crypto", True))
+        pats = out.get("exclude_patterns")
+        if isinstance(pats, str):
+            pats = [p.strip() for p in pats.split(",")]
+        out["exclude_patterns"] = [p for p in (pats or []) if p]
+        try:
+            out["max_symbols"] = max(1, min(int(out.get("max_symbols") or 40), 300))
+        except (TypeError, ValueError):
+            raise HTTPException(422, "max_symbols must be a number")
         if str(out["timeframe"]).upper() not in C.TIMEFRAMES:
             raise HTTPException(422, f"timeframe must be one of {', '.join(C.TIMEFRAMES)}")
         out["timeframe"] = str(out["timeframe"]).upper()
@@ -827,6 +841,12 @@ def install_bot_routes(app: FastAPI, supervisor: Supervisor, settings_ref: dict[
         audit.write({"account": acc_id, "action": "bot_stop", "stage": "sent"})
         return {"ok": True, "state": worker_call(acc_id, "bot", {"op": "stop"}, timeout=20)}
 
+    @app.post("/api/accounts/{acc_id}/bot/universe")
+    async def bot_universe(acc_id: str, body: dict[str, Any] = Body(default={})):
+        st = get_state(acc_id)
+        cfg = validate({**DEFAULT_CONFIG, **(st.cfg.bot or {}), **(body.get("config") or {})}) if body.get("config") else None
+        return worker_call(acc_id, "bot", {"op": "universe", "config": cfg}, timeout=60)
+
     @app.post("/api/accounts/{acc_id}/bot/paper-reset")
     async def bot_paper_reset(acc_id: str):
         get_state(acc_id)
@@ -858,4 +878,5 @@ def install_bot_routes(app: FastAPI, supervisor: Supervisor, settings_ref: dict[
                                                                "exits", "sl_percent", "tp_percent", "breakeven_percent")}}
         if not args.get("symbol"):
             raise HTTPException(422, "symbol is required")
-        return worker_call(acc_id, "bot", args, timeout=240)
+        args["max_symbols"] = body.get("max_symbols")
+        return worker_call(acc_id, "bot", args, timeout=300)

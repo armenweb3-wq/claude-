@@ -110,6 +110,7 @@ class ScriptedAdapter:
     def set_price(self, mid):
         self.bid, self.ask = mid - 0.00005, mid + 0.00005
 
+    def symbols_all(self): return [{"name": "EURUSD", "path": "Forex\\Majors\\EURUSD", "visible": True, "trade_mode": 4, "trade_calc_mode": 0, "currency_base": "EUR", "currency_profit": "USD"}]
     def account_info(self): return {"equity": 10000.0, "balance": 10000.0, "margin_free": 10000.0, "currency": "USD", "login": 1}
     def positions(self): return self.positions_list
     def symbol_info(self, s): return {"point": 0.0001, "trade_tick_size": 0.0001, "trade_tick_value": 1.0, "volume_min": 0.01, "volume_max": 100, "volume_step": 0.01, "spread": 10, "trade_contract_size": 100000, "trade_stops_level": 0, "digits": 5}
@@ -203,3 +204,23 @@ def test_paper_engine_with_fixed_exits_uses_fill_price(tmp_path: Path):
     # log persisted and reloaded on a fresh engine
     eng2 = BotEngine("t", ad, {}, data_dir=tmp_path, log=lambda *a: None, live_open=lambda a: {}, live_close=lambda t: {}, live_modify=lambda t, s, p: {}, magic=99, deals=lambda: [])
     assert any("PAPER BUY" in d["message"] for d in eng2.decisions)
+
+
+def test_universe_classification_and_filters():
+    from mt5cc.bot.universe import build_universe, classify
+    cases = {("BTCUSD", "Crypto\\BTCUSD", "BTC"): "crypto", ("ETHUSD.r", "", "ETH"): "crypto", ("USDTRY", "Forex\\Exotics", "USD"): "forex",
+             ("EURUSD", "Forex\\Majors", "EUR"): "forex", ("XAUUSD", "Metals", "XAU"): "metals", ("US30", "Indices", ""): "indices",
+             ("USOIL", "Energies", ""): "energies", ("AAPL", "Stocks\\US", ""): "stocks", ("NAS100", "CFD\\Indices", ""): "indices"}
+    for (n, p, b), want in cases.items():
+        assert classify({"name": n, "path": p, "currency_base": b, "currency_profit": "USD"}) == want, n
+    syms = [{"name": n, "path": p, "currency_base": b, "currency_profit": "USD", "trade_mode": 4, "visible": n in ("EURUSD", "BTCUSD")} for (n, p, b) in cases]
+    syms.append({"name": "DEAD", "path": "Forex", "trade_mode": 0, "visible": True})
+    u = build_universe(syms, include=("forex", "metals", "indices", "energies"), exclude_crypto=True, max_symbols=40)
+    assert "BTCUSD" not in u["symbols"] and "ETHUSD.r" not in u["symbols"] and "AAPL" not in u["symbols"] and "DEAD" not in u["symbols"]
+    assert u["symbols"][0] == "EURUSD"            # Market Watch symbols first
+    assert set(u["symbols"]) == {"EURUSD", "USDTRY", "XAUUSD", "US30", "USOIL", "NAS100"}
+    assert u["skipped"]["crypto"] == 2 and u["skipped"]["not_tradeable"] == 1 and u["skipped"]["category"] == 1
+    capped = build_universe(syms, max_symbols=2, exclude_patterns=["TRY$"])
+    assert len(capped["symbols"]) == 2 and capped["skipped"]["pattern"] == 1 and capped["skipped"]["cap"] >= 1
+    with_crypto = build_universe(syms, exclude_crypto=False, include=("forex",))
+    assert "BTCUSD" in with_crypto["symbols"]

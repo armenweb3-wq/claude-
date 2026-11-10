@@ -169,13 +169,37 @@ class _Worker:
         elif op == "paper_reset":
             bot.reset_paper()
         elif op == "backtest":
+            if str(args.get("symbol") or "") == "*":
+                return self._bot_backtest_all(args)
             return self._bot_backtest(args)
+        elif op == "universe":
+            bot.update_config({**bot.cfg, **{k: v for k, v in (args.get("config") or {}).items() if k in ("universe_categories", "exclude_crypto", "max_symbols", "exclude_patterns", "symbols_mode", "symbols")}}) if args.get("config") else None
+            return bot.refresh_universe()
         elif op != "state":
             raise T.TradeRejected(f"Unknown bot operation '{op}'")
         self._bot_state_sent = _now()
         st = bot.state()
         self.send({"type": "bot_state", "state": st})
         return st
+
+    def _bot_backtest_all(self, args: dict[str, Any]) -> dict[str, Any]:
+        bot = self._ensure_bot()
+        syms = bot.active_symbols()
+        rows, errors = [], []
+        started = _now()
+        for sym in syms[:int(args.get("max_symbols") or 60)]:
+            try:
+                r = self._bot_backtest({**args, "symbol": sym, "bars": min(int(args.get("bars") or 3000), 5000)})
+                rows.append({"symbol": sym, **r["stats"], "from": r["from"], "to": r["to"]})
+            except Exception as exc:
+                errors.append({"symbol": sym, "error": str(exc)})
+            if _now() - started > 200:
+                errors.append({"symbol": "…", "error": "stopped after 200 s; run again with fewer bars or symbols"})
+                break
+        rows.sort(key=lambda r: (r.get("net") or 0), reverse=True)
+        tot_net = round(sum(r.get("net") or 0 for r in rows), 2)
+        return {"all": True, "rows": rows, "errors": errors, "symbols": syms, "total_net": tot_net, "mock": bool(self.cfg.get("mock")),
+                "profitable": sum(1 for r in rows if (r.get("net") or 0) > 0), "strategy": args.get("strategy"), "timeframe": args.get("timeframe")}
 
     def _bot_backtest(self, args: dict[str, Any]) -> dict[str, Any]:
         from .bot.backtest import SymbolSpec, run_backtest

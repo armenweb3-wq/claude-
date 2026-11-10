@@ -18,6 +18,7 @@ from typing import Any, Callable
 
 from .. import mt5_constants as C
 from .backtest import SymbolSpec, size_for_risk
+from .universe import build_universe
 from .strategies import Bar, FixedExits, Strategy, build_strategy
 
 DEFAULT_CONFIG: dict[str, Any] = {
@@ -25,6 +26,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "strategy": "trend_breakout",
     "params": {},
     "symbols": ["EURUSD"],
+    "symbols_mode": "auto",          # auto = everything tradeable at the broker (filtered below); list = the symbols above
+    "universe_categories": ["forex", "metals", "indices", "energies"],
+    "exclude_crypto": True,
+    "max_symbols": 40,
+    "exclude_patterns": [],
     "timeframe": "H1",
     "risk_percent": 0.5,
     "risk_basis": "equity",          # equity | free_margin | balance (live sizing; paper always uses paper equity)
@@ -81,6 +87,8 @@ class BotEngine:
         self._specs: dict[str, SymbolSpec] = {}
         self._dirty = True
         self._last_error: str | None = None
+        self.universe: dict[str, Any] = {}
+        self._universe_at = 0.0
         self.load_paper()
         self.load_log()
 
@@ -129,13 +137,38 @@ class BotEngine:
             pass
 
     # ------------------------------------------------------------------ #
+    def active_symbols(self) -> list[str]:
+        if str(self.cfg.get("symbols_mode") or "auto") != "auto":
+            return list(self.cfg.get("symbols") or [])
+        if not self.universe or time.time() - self._universe_at > 3600:
+            self.refresh_universe()
+        return list(self.universe.get("symbols") or [])
+
+    def refresh_universe(self) -> dict[str, Any]:
+        """Scan the broker's symbol list and keep what the filters allow."""
+        try:
+            infos = self.adapter.symbols_all()
+        except Exception as exc:
+            self.note("ERROR", f"could not read the broker symbol list: {exc}")
+            return self.universe
+        self.universe = build_universe(infos, include=self.cfg.get("universe_categories") or [], exclude_crypto=bool(self.cfg.get("exclude_crypto", True)),
+                                       max_symbols=int(self.cfg.get("max_symbols") or 0), exclude_patterns=self.cfg.get("exclude_patterns") or [])
+        self._universe_at = time.time()
+        u = self.universe
+        self.note("INFO", f"symbol universe: {len(u['symbols'])} of {u['total_scanned']} symbols selected "
+                          f"(skipped {u['skipped']['crypto']} crypto, {u['skipped']['category']} other categories, {u['skipped']['not_tradeable']} not tradeable"
+                          + (f", {u['skipped']['cap']} over the cap" if u['skipped']['cap'] else "") + ")")
+        return self.universe
+
     def update_config(self, cfg: dict[str, Any]) -> None:
         was_running = self.running
         self.cfg = {**DEFAULT_CONFIG, **(cfg or {})}
         self.strategy = build_strategy(self.cfg)
         self.mode = self.cfg.get("mode", "paper")
+        self.universe = {}
+        active = set(self.active_symbols())
         for sym in list(self.symbols):
-            if sym not in self.cfg["symbols"]:
+            if sym not in active:
                 self.symbols.pop(sym)
         self._specs.clear()
         self._dirty = True
@@ -158,7 +191,8 @@ class BotEngine:
         self.started_at = time.time()
         self.halt_reason = None
         self._roll_day(force=True)
-        self.note("INFO", f"started in {self.mode.upper()} mode: {self.strategy.name} on {', '.join(self.cfg['symbols'])} {self.cfg['timeframe']}, "
+        syms = self.active_symbols()
+        self.note("INFO", f"started in {self.mode.upper()} mode: {self.strategy.name} on {len(syms)} symbols ({', '.join(syms[:12])}{'…' if len(syms) > 12 else ''}) {self.cfg['timeframe']}, "
                           f"risk {self.cfg['risk_percent']}%/trade, max {self.cfg['max_positions']} positions, daily loss limit {self.cfg['max_daily_loss_percent']}%")
 
     def stop(self, reason: str = "stopped by user") -> None:
@@ -243,7 +277,7 @@ class BotEngine:
             self._roll_day()
             now = time.time()
             tf_sec = C.TIMEFRAME_SECONDS[self.cfg["timeframe"].upper()]
-            for symbol in self.cfg["symbols"]:
+            for symbol in self.active_symbols():
                 st = self.symbols.setdefault(symbol, {"last_bar": 0, "last_check": 0.0, "last_signal": None, "stop": None, "target": None, "direction": 0, "entry": None, "bars_held": 0})
                 # paper: intrabar stop/target checks on every tick
                 if self.mode == "paper":
@@ -254,8 +288,17 @@ class BotEngine:
                     continue
                 st["last_check"] = now
                 need = self.strategy.warmup + 60
-                raw = self.adapter.rates(symbol, self.cfg["timeframe"], need + 1)
+                try:
+                    raw = self.adapter.rates(symbol, self.cfg["timeframe"], need + 1)
+                except Exception as exc:
+                    if st.get("rate_error") != str(exc):
+                        st["rate_error"] = str(exc)
+                        self.note("WARNING", f"{symbol}: no bars ({exc}); symbol skipped until it has history")
+                    continue
                 if len(raw) < self.strategy.warmup + 2:
+                    if not st.get("short_warned"):
+                        st["short_warned"] = True
+                        self.note("WARNING", f"{symbol}: only {len(raw)} bars available, need {self.strategy.warmup + 2}; open its chart in MT5 once to download history")
                     continue
                 closed = raw[:-1] if raw[-1]["time"] + tf_sec > now else raw
                 last = closed[-1]
@@ -426,6 +469,8 @@ class BotEngine:
             "strategy": self.strategy.describe(), "config": self.cfg, "magic": self.magic, "day": self.day,
             "day_start_equity": self.day_start_equity, "daily_pl": daily,
             "symbols": {s: {"last_bar": v.get("last_bar"), "last_signal": v.get("last_signal")} for s, v in self.symbols.items()},
+            "active_symbols": self.active_symbols() if self.running else (self.universe.get("symbols") if self.universe else None),
+            "universe": {k: v for k, v in self.universe.items() if k != "details"} | {"details": self.universe.get("details", [])[:80]} if self.universe else None,
             "paper": {"equity": self.paper.get("equity"), "start_equity": self.paper.get("start_equity"),
                       "positions": [{"symbol": s, **{k: v for k, v in p.items() if k != "reason"}, "direction": "BUY" if p["direction"] > 0 else "SELL"} for s, p in self.paper.get("positions", {}).items()],
                       "trades": list(self.paper.get("trades", []))[-50:], "trade_count": len(self.paper.get("trades", []))},

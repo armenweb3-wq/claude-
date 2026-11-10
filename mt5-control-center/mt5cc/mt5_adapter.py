@@ -267,6 +267,14 @@ def _trading_methods(cls):
                         "close": float(r["close"]), "volume": float(r["tick_volume"]), "spread": int(r["spread"])})
         return out
 
+    def symbols_all(self) -> list[dict[str, Any]]:
+        res = self.mt5.symbols_get()
+        if res is None:
+            raise MT5Error(f"symbols_get() failed: {self.last_error()}")
+        fields = ("name", "path", "visible", "trade_mode", "trade_calc_mode", "currency_base", "currency_profit", "description", "spread", "digits")
+        return [_pick(x, fields) for x in res]
+
+    cls.symbols_all = symbols_all
     cls.rates = rates
     cls.symbol_info = symbol_info
     cls.symbol_tick = symbol_tick

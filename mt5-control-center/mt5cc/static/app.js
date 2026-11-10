@@ -803,8 +803,19 @@
         <label class="wide">Strategy<select class="bc" data-k="strategy">${info.strategies.map(s => `<option value="${s.key}" ${s.key === cfg.strategy ? "selected" : ""}>${esc(s.name)}</option>`).join("")}</select></label>
         <div class="wide small dim" id="bot-strat-desc">${esc(strat.description)}</div>
       </div>
+      <div class="section-title my14"><h3 class="small dim">Which symbols</h3><div class="line"></div></div>
       <div class="form-row">
-        <label>Symbols (comma separated)<input class="bc" data-k="symbols" value="${esc((cfg.symbols || []).join(", "))}" spellcheck="false"></label>
+        <label class="wide">Symbol selection<span class="seg symmode-seg"><button type="button" data-v="auto" class="${cfg.symbols_mode !== "list" ? "active" : ""}">Automatic · everything tradeable at the broker</button><button type="button" data-v="list" class="${cfg.symbols_mode === "list" ? "active" : ""}">My own list</button></span><input type="hidden" class="bc" data-k="symbols_mode" value="${esc(cfg.symbols_mode || "auto")}"></label>
+        <div class="wide sm-auto ${cfg.symbols_mode === "list" ? "hidden" : ""}"><div class="form-row">
+          <label class="wide">Asset classes to include<span class="checks">${["forex", "metals", "indices", "energies", "stocks", "other"].map(c => `<label class="check inline"><input type="checkbox" class="bcat" value="${c}" ${(cfg.universe_categories || []).includes(c) ? "checked" : ""}><span>${c}</span></label>`).join("")}</span></label>
+          <label class="check"><input type="checkbox" class="bc" data-k="exclude_crypto" ${cfg.exclude_crypto !== false ? "checked" : ""}><span>Exclude crypto (always, regardless of the classes above)</span></label>
+          <label>Max symbols to watch<input class="bc" data-k="max_symbols" type="number" step="1" min="1" max="300" value="${esc(cfg.max_symbols || 40)}"></label>
+          <label>Exclude names matching (comma separated, e.g. <span class="mono">.m$, TRY</span>)<input class="bc" data-k="exclude_patterns" value="${esc((cfg.exclude_patterns || []).join(", "))}" spellcheck="false"></label>
+          <div class="wide xs muted">Symbols already in your Market Watch are taken first, then the rest by class and name, up to the cap. The list is refreshed every hour while the bot runs.</div>
+        </div></div>
+        <label class="wide sm-list ${cfg.symbols_mode === "list" ? "" : "hidden"}">Symbols (comma separated)<input class="bc" data-k="symbols" value="${esc((cfg.symbols || []).join(", "))}" spellcheck="false"></label>
+      </div>
+      <div class="form-row">
         <label>Timeframe<select class="bc" data-k="timeframe">${info.timeframes.map(t => `<option ${t === cfg.timeframe ? "selected" : ""}>${t}</option>`).join("")}</select></label>
         <label>Risk per trade (%)<input class="bc" data-k="risk_percent" type="number" step="0.1" min="0.1" max="10" value="${esc(cfg.risk_percent)}"></label>
         <label>% of<select class="bc" data-k="risk_basis"><option value="free_margin" ${cfg.risk_basis === "free_margin" ? "selected" : ""}>Free margin</option><option value="equity" ${cfg.risk_basis === "equity" ? "selected" : ""}>Equity</option><option value="balance" ${cfg.risk_basis === "balance" ? "selected" : ""}>Balance</option></select></label>
@@ -835,6 +846,7 @@
     const cfg = {};
     root.querySelectorAll(".bc").forEach(el => { cfg[el.dataset.k] = el.type === "checkbox" ? el.checked : el.value; });
     cfg.params = {}; root.querySelectorAll(".bp").forEach(el => { if (el.value !== "") cfg.params[el.dataset.k] = el.value; });
+    cfg.universe_categories = Array.from(root.querySelectorAll(".bcat:checked")).map(el => el.value);
     return cfg;
   }
 
@@ -856,7 +868,7 @@
     content.innerHTML = mockBanner() + `
       <div class="filters"><span class="small dim">Bot for</span><span class="seg" id="bot-acct">${list.map(x => `<button data-id="${esc(x.id)}" class="${x.id === a.id ? "active" : ""}"><span class="dot c-${esc(x.color)} mr6"></span>${esc(x.label)}</button>`).join("")}</span><span class="flex1"></span>
         <span class="small dim">Account equity ${money(info.equity, cur)}</span></div>
-      <div class="banner ${running ? (mode === "live" ? "bad" : "info") : "info"}"><strong>${running ? (mode === "live" ? "LIVE bot running" : "Paper bot running") : "Bot stopped"}</strong><span>${running ? `${esc(st.strategy.name)} on ${esc((st.config.symbols || []).join(", "))} ${esc(st.config.timeframe)} since ${esc(dt(new Date(st.started_at * 1000).toISOString()))}${st.halt_reason ? ` · <b class="warn-text">${esc(st.halt_reason)}</b>` : ""}` : "Configure the strategy, run a backtest, then start in paper mode. Paper mode trades against the live price with pretend money so you can watch it for a while before letting it use the real account."}</span></div>
+      <div class="banner ${running ? (mode === "live" ? "bad" : "info") : "info"}"><strong>${running ? (mode === "live" ? "LIVE bot running" : "Paper bot running") : "Bot stopped"}</strong><span>${running ? `${esc(st.strategy.name)} on ${(st.active_symbols || []).length} symbols · ${esc(st.config.timeframe)} since ${esc(dt(new Date(st.started_at * 1000).toISOString()))}${st.halt_reason ? ` · <b class="warn-text">${esc(st.halt_reason)}</b>` : ""}` : "Configure the strategy, run a backtest, then start in paper mode. Paper mode trades against the live price with pretend money so you can watch it for a while before letting it use the real account."}</span></div>
       <div class="tiles">
         <div class="tile"><div class="k">Mode</div><div class="v">${running ? (mode === "live" ? '<span class="tag bad">LIVE</span>' : '<span class="tag ok">PAPER</span>') : '<span class="tag neutral">stopped</span>'}</div><div class="s">magic ${esc(st ? st.magic : "–")}</div></div>
         <div class="tile"><div class="k">Today's bot P/L</div><div class="v">${st && st.daily_pl !== null && st.daily_pl !== undefined ? signedMoney(st.daily_pl, cur) : "–"}</div><div class="s">limit −${esc(cfg.max_daily_loss_percent)}% of ${st && st.day_start_equity ? fmt(st.day_start_equity, 0) : "day-start equity"}</div></div>
@@ -872,6 +884,8 @@
             ${running ? `<button class="btn danger" id="bot-stop">Stop bot</button>` : `<button class="btn primary" id="bot-paper">Start PAPER</button><button class="btn danger" id="bot-live" ${info.trading.enabled ? "" : "disabled"} title="${esc(info.trading.enabled ? "" : info.trading.reasons.join("; "))}">Start LIVE…</button>`}
             <span class="flex1"></span><button class="btn sm" id="bot-reset-paper">Reset paper ledger</button></div>
           ${!info.trading.enabled ? `<div class="xs muted mt6">Live needs trading enabled for this account: ${esc(info.trading.reasons.join("; "))}</div>` : ""}
+          <div class="section-title my14"><h3 class="small dim">Symbols the bot watches</h3><div class="line"></div><button class="btn sm" id="bot-universe">Scan broker symbols now</button></div>
+          <div id="bot-universe-out">${universeHtml(st)}</div>
           <div class="section-title my14"><h3 class="small dim">Open bot positions</h3><div class="line"></div></div>
           ${botPositions(st, mode, cur)}
           <div class="section-title my14"><h3 class="small dim">Last signals per symbol</h3><div class="line"></div></div>
@@ -885,6 +899,7 @@
           <label>Bars<select id="bt-bars">${[1000, 2000, 3000, 5000, 10000, 20000].map(n => `<option ${n === BF.bt.bars ? "selected" : ""}>${n}</option>`).join("")}</select></label>
           <label>Risk %<input id="bt-risk" type="number" step="0.1" value="${esc(BF.bt.risk)}"></label>
           <label>&nbsp;<button class="btn primary" id="bt-run">Run backtest with the settings above</button></label>
+          <label>&nbsp;<button class="btn" id="bt-all" title="Runs the same backtest on every symbol the bot would watch (up to 60) and shows a summary table">Backtest all watched symbols</button></label>
         </div>
         <div id="bt-out" class="mt14">${BF.lastBt ? "" : '<div class="small muted">Results appear here. A backtest tells you how the rules behaved on past prices; it is a sanity check, not a promise.</div>'}</div>
       </div></section>
@@ -897,6 +912,12 @@
       const strat = info.strategies.find(s => s.key === e.target.value); $("#bot-strat-desc").textContent = strat.description; $("#bot-params").innerHTML = paramInputs(strat, {});
     });
     cfgRoot.addEventListener("input", () => { BF.cfgDirty = true; });
+    cfgRoot.querySelectorAll(".symmode-seg button").forEach(b => b.addEventListener("click", () => {
+      cfgRoot.querySelector('[data-k="symbols_mode"]').value = b.dataset.v; BF.cfgDirty = true;
+      cfgRoot.querySelectorAll(".symmode-seg button").forEach(x => x.classList.toggle("active", x === b));
+      cfgRoot.querySelectorAll(".sm-auto").forEach(x => x.classList.toggle("hidden", b.dataset.v !== "auto"));
+      cfgRoot.querySelectorAll(".sm-list").forEach(x => x.classList.toggle("hidden", b.dataset.v !== "list"));
+    }));
     cfgRoot.querySelectorAll(".exits-seg button").forEach(b => b.addEventListener("click", () => {
       cfgRoot.querySelector('[data-k="exits"]').value = b.dataset.v; BF.cfgDirty = true;
       cfgRoot.querySelectorAll(".exits-seg button").forEach(x => x.classList.toggle("active", x === b));
@@ -916,12 +937,24 @@
         onConfirm: async () => { await post(`/api/accounts/${a.id}/bot/start`, { mode: "live", confirm: "LIVE" }); toast("LIVE bot started"); renderView(); } });
     });
     if ($("#bot-stop")) $("#bot-stop").addEventListener("click", async () => { try { await post(`/api/accounts/${a.id}/bot/stop`, {}); toast("Bot stopped"); renderView(); } catch (err) { toast(err.message, "bad"); } });
+    $("#bot-universe").addEventListener("click", async () => {
+      const out = $("#bot-universe-out"); out.innerHTML = `<div class="loading-row"><div class="spinner"></div>Scanning…</div>`;
+      try { const c = readBotCfg(cfgRoot, info); const u = await post(`/api/accounts/${a.id}/bot/universe`, { config: c }); out.innerHTML = universeHtml({ universe: u, active_symbols: u.symbols }); }
+      catch (err) { out.innerHTML = `<span class="neg small">${esc(err.message)}</span>`; }
+    });
     $("#bot-reset-paper").addEventListener("click", () => openModal({ title: "Reset paper ledger", confirmLabel: "Reset", body: `<p>Clears the paper trades and starts the paper equity again from the configured starting equity (or the live equity).</p>`, onConfirm: async () => { await post(`/api/accounts/${a.id}/bot/paper-reset`, {}); toast("Paper ledger reset"); renderView(); } }));
     $("#bt-run").addEventListener("click", async () => {
       BF.bt = { symbol: $("#bt-symbol").value.trim().toUpperCase(), timeframe: $("#bt-tf").value, bars: +$("#bt-bars").value, risk: +$("#bt-risk").value };
       const c = readBotCfg(cfgRoot, info);
       const out = $("#bt-out"); out.innerHTML = `<div class="loading-row"><div class="spinner"></div>Fetching ${BF.bt.bars} bars of ${esc(BF.bt.symbol)} ${esc(BF.bt.timeframe)} from the terminal and simulating…</div>`;
       try { BF.lastBt = await post(`/api/accounts/${a.id}/bot/backtest`, { symbol: BF.bt.symbol, timeframe: BF.bt.timeframe, bars: BF.bt.bars, strategy: c.strategy, params: c.params, risk_percent: BF.bt.risk, max_lots: c.max_lots, max_bars_held: c.max_bars_held, exits: c.exits, sl_percent: c.sl_percent, tp_percent: c.tp_percent, breakeven_percent: c.breakeven_percent }); renderBacktest(out, BF.lastBt, cur); }
+      catch (err) { out.innerHTML = `<div class="banner bad"><span>${esc(err.message)}</span></div>`; }
+    });
+    $("#bt-all").addEventListener("click", async () => {
+      BF.bt = { symbol: "*", timeframe: $("#bt-tf").value, bars: Math.min(+$("#bt-bars").value, 5000), risk: +$("#bt-risk").value };
+      const c = readBotCfg(cfgRoot, info);
+      const out = $("#bt-out"); out.innerHTML = `<div class="loading-row"><div class="spinner"></div>Backtesting every watched symbol on ${esc(BF.bt.timeframe)} (${BF.bt.bars} bars each)… this can take a few minutes.</div>`;
+      try { BF.lastBt = await post(`/api/accounts/${a.id}/bot/backtest`, { symbol: "*", timeframe: BF.bt.timeframe, bars: BF.bt.bars, strategy: c.strategy, params: c.params, risk_percent: BF.bt.risk, max_lots: c.max_lots, max_bars_held: c.max_bars_held, exits: c.exits, sl_percent: c.sl_percent, tp_percent: c.tp_percent, breakeven_percent: c.breakeven_percent, max_symbols: 60 }); renderBacktest(out, BF.lastBt, cur); }
       catch (err) { out.innerHTML = `<div class="banner bad"><span>${esc(err.message)}</span></div>`; }
     });
     if (BF.lastBt) renderBacktest($("#bt-out"), BF.lastBt, cur);
@@ -964,12 +997,31 @@
       ${perf.trades.length ? `<details class="mt14"><summary class="small dim">Show ${perf.trades.length} live bot trades</summary><div class="table-wrap"><table class="data compact"><thead><tr><th>Symbol</th><th>Side</th><th>Entry</th><th>Exit</th><th class="num">Entry</th><th class="num">Exit</th><th class="num">Lots</th><th class="num">Net</th></tr></thead><tbody>${perf.trades.map(t => `<tr><td class="sym">${esc(t.symbol)}</td><td><span class="tag ${t.direction.toLowerCase()}">${t.direction}</span></td><td class="dim">${dt2(t.entry_time_iso)}</td><td class="dim">${dt2(t.exit_time_iso)}</td><td class="num">${price(t.entry_price)}</td><td class="num">${price(t.exit_price)}</td><td class="num">${fmt(t.volume, 2)}</td><td class="num">${signedMoney(t.net, cur)}</td></tr>`).join("")}</tbody></table></div></details>` : ""}`;
     const c = $("#perf-curve"); Charts.responsive(c, () => Charts.lineChart(c, { height: 160, baseline: 0, series: [{ name: "Bot realized", color: "#3987e5", points: perf.curve.points.map(p => ({ x: p.t, y: p.cum })), step: true }], tipFormat: v => fmt(v, 2) + " " + cur, emptyText: "No closed live bot trades yet" }));
   }
+  function universeHtml(st) {
+    const u = st && st.universe;
+    const active = st && st.active_symbols;
+    if (!u && !active) return `<div class="small muted">Not scanned yet. Save the settings, then press "Scan broker symbols now" (or start the bot).</div>`;
+    const list = active || (u ? u.symbols : []);
+    const cats = u ? u.details.reduce((m, d) => { m[d.category] = (m[d.category] || 0) + 1; return m; }, {}) : {};
+    return `<div class="small dim mb6"><b>${list.length}</b> symbols${u ? ` of ${u.total_scanned} at the broker · skipped ${u.skipped.crypto} crypto, ${u.skipped.category} other classes, ${u.skipped.not_tradeable} not tradeable${u.skipped.cap ? `, ${u.skipped.cap} over the cap` : ""}` : ""}${Object.keys(cats).length ? " · " + Object.entries(cats).map(([c, n]) => `${c} ${n}`).join(", ") : ""}</div><div class="chips">${list.map(x => `<span class="chip">${esc(x)}</span>`).join("")}</div>`;
+  }
   function botPositions(st, mode, cur) {
     const rows = st ? (mode === "paper" ? st.paper.positions : st.live_positions) : [];
     if (!rows.length) return `<div class="small muted">None</div>`;
     return `<div class="table-wrap"><table class="data compact"><thead><tr><th>Symbol</th><th>Side</th><th class="num">Lots</th><th class="num">Entry</th><th class="num">Stop</th><th class="num">Target</th><th class="num">Floating</th></tr></thead><tbody>${rows.map(p => `<tr><td class="sym">${esc(p.symbol)}</td><td><span class="tag ${String(p.direction).toLowerCase()}">${esc(p.direction)}</span></td><td class="num">${fmt(p.volume, 2)}</td><td class="num">${price(p.entry)}</td><td class="num">${price(p.stop)}</td><td class="num">${p.target ? price(p.target) : "–"}</td><td class="num">${signedMoney(p.floating, cur)}</td></tr>`).join("")}</tbody></table></div>`;
   }
   function renderBacktest(out, r, cur) {
+    if (r.all) {
+      const rows = r.rows;
+      out.innerHTML = `${r.mock ? '<div class="banner warn"><strong>Synthetic prices</strong><span>Demo data; these results say nothing about real markets.</span></div>' : ""}
+        <div class="tiles"><div class="tile"><div class="k">Symbols tested</div><div class="v">${rows.length}</div><div class="s">${r.profitable} profitable · ${rows.length - r.profitable} losing${r.errors.length ? ` · ${r.errors.length} skipped` : ""}</div></div>
+          <div class="tile"><div class="k">Sum of net results</div><div class="v">${signedMoney(r.total_net, cur)}</div><div class="s">each symbol simulated alone from the same starting equity</div></div></div>
+        <div class="table-wrap mt14"><table class="data compact"><thead><tr><th>Symbol</th><th class="num">Trades</th><th class="num">Win rate</th><th class="num">PF</th><th class="num">Avg R</th><th class="num">Net</th><th class="num">Return</th><th class="num">Max DD</th><th class="num">Days</th></tr></thead><tbody>
+          ${rows.map(x => `<tr><td class="sym">${esc(x.symbol)}</td><td class="num">${x.trades}</td><td class="num">${pct(x.win_rate)}</td><td class="num">${pf(x.profit_factor)}</td><td class="num">${x.avg_r ?? "–"}</td><td class="num">${signedMoney(x.net, cur)}</td><td class="num">${x.return_pct === null ? "–" : (x.return_pct >= 0 ? "+" : "") + fmt(x.return_pct, 1) + "%"}</td><td class="num neg">${x.max_drawdown_pct ?? "–"}%</td><td class="num">${x.days}</td></tr>`).join("")}
+        </tbody></table></div>${r.errors.length ? `<div class="xs muted mt6">Skipped: ${r.errors.map(e => esc(e.symbol + " (" + e.error + ")")).join("; ")}</div>` : ""}
+        <ul class="notes mt14"><li>Use this table to decide which symbols to exclude (the "Exclude names" box) and which timeframe suits a fixed % stop.</li><li>Past results do not predict future results.</li></ul>`;
+      return;
+    }
     const s = r.stats;
     out.innerHTML = `${r.mock ? '<div class="banner warn"><strong>Synthetic prices</strong><span>This account uses demo data, so these results say nothing about real markets.</span></div>' : ""}
       <div class="small dim mb6">${esc(r.symbol)} ${esc(r.timeframe)} · ${esc(r.strategy.name)} · ${s.bars} bars from ${esc(dt(new Date(r.from * 1000).toISOString()))} to ${esc(dt(new Date(r.to * 1000).toISOString()))} (${s.days} days) · spread ${r.spec.spread_points} pts · commission ${r.spec.commission_per_lot}/lot/side</div>

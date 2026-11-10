@@ -310,6 +310,14 @@ are robust and explainable rather than clever:
   uptrend (sells in a downtrend) after RSI resets, stop beyond the pullback
   with ATR padding, fixed reward:risk target, break-even after 1R then trail.
 
+**Automatic symbols.** By default the bot scans every symbol the broker lets
+you trade, classifies it (forex, metals, indices, energies, stocks, other,
+crypto) and watches everything in the classes you tick, **always excluding
+crypto** unless you untick that box. Symbols already in your Market Watch
+come first, then the rest, up to a cap you set (default 40). "Backtest all
+watched symbols" runs the same rules on each of them and lists the results so
+you can exclude the losers by name pattern. Or switch to "My own list".
+
 **Exit model switch.** Either the strategy's own exits (ATR stop and
 trailing), or **Fixed %**: stop loss at X% from entry on the whole position,
 take profit at Y%, and the stop moved to break-even once the trade is Z% in

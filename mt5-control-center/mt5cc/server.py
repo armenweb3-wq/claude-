@@ -154,12 +154,22 @@ def create_app(supervisor: Supervisor, settings: Settings, token: str, store: Eq
         if not t.enabled:
             reasons.append("Trading is off for this account (Accounts page > Edit)")
         if a and a.get("trade_allowed") is False:
-            reasons.append("Broker reports trading not allowed (investor password or disabled account)")
+            reasons.append("Broker reports trading not allowed on this account (investor password, or trading disabled by the broker)")
+        if a and a.get("trade_expert") is False:
+            reasons.append("Broker has disabled automated (Expert Advisor / API) trading on this account - ask the broker to enable it")
         if st.terminal and st.terminal.get("trade_allowed") is False:
-            reasons.append("Algorithmic trading disabled in the terminal (Tools > Options > Expert Advisors)")
+            reasons.append(f"Algo Trading button is OFF in the terminal window at {st.terminal.get('path') or 'this account'} - click it there until it turns green")
+        if st.terminal and st.terminal.get("tradeapi_disabled") is True:
+            reasons.append("The terminal reports the trade API is disabled (tradeapi_disabled) - check Tools > Options > Expert Advisors in that window")
         if st.effective_state(time.time(), settings.refresh_seconds) != "connected":
             reasons.append("Account not connected")
-        return {"enabled": not reasons, "reasons": reasons, "limits": {
+        return {"enabled": not reasons, "reasons": reasons, "flags": {
+            "global_switch": settings_ref["settings"].trading_enabled, "account_switch": t.enabled,
+            "broker_trade_allowed": a.get("trade_allowed") if a else None, "broker_expert_allowed": a.get("trade_expert") if a else None,
+            "terminal_algo_button": st.terminal.get("trade_allowed") if st.terminal else None,
+            "terminal_tradeapi_disabled": st.terminal.get("tradeapi_disabled") if st.terminal else None,
+            "terminal_path": st.terminal.get("path") if st.terminal else None,
+            "connected": st.effective_state(time.time(), settings.refresh_seconds) == "connected"}, "limits": {
             "max_risk_percent": t.max_risk_percent, "max_lots": t.max_lots,
             "max_open_positions": t.max_open_positions, "allowed_symbols": t.allowed_symbols,
             "magic": t.magic, "deviation_points": t.deviation_points}}
@@ -211,6 +221,7 @@ def create_app(supervisor: Supervisor, settings: Settings, token: str, store: Eq
             } if a else None,
             "terminal": {
                 "connected": st.terminal.get("connected"), "build": st.terminal.get("build"),
+                "trade_allowed": st.terminal.get("trade_allowed"), "tradeapi_disabled": st.terminal.get("tradeapi_disabled"),
                 "ping_ms": (st.terminal.get("ping_last") or 0) / 1000 if st.terminal.get("ping_last") else None,
                 "company": st.terminal.get("company"), "path": st.terminal.get("path"),
             } if st.terminal else None,

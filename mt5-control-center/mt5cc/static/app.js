@@ -493,9 +493,10 @@
             <dt>Last history update</dt><dd>${esc(dt(a.last_history_update))}</dd>
             <dt>Reconciliation</dt><dd>${a.reconciliation ? (a.reconciliation.verified ? '<span class="tag ok">verified</span>' : `<span class="tag warn">diff ${fmt(a.reconciliation.difference)}</span>`) : "–"}</dd>
             <dt>Incomplete positions</dt><dd>${a.incomplete_positions.length}</dd>
-            <dt>Trading</dt><dd>${a.trading.enabled ? '<span class="tag warn">enabled</span>' : `<span class="tag ok" title="${esc(a.trading.reasons.join("; "))}">off</span>`}</dd>
+            <dt>Trading</dt><dd>${a.trading.enabled ? '<span class="tag warn">enabled</span>' : `<span class="tag bad" title="${esc(a.trading.reasons.join("; "))}">blocked</span>`}</dd>
           </dl>
         </div>
+        ${!a.trading.enabled ? `<div class="banner warn mt14"><strong>Why trading is blocked</strong><span><ul class="notes">${a.trading.reasons.map(r => `<li>${esc(r)}</li>`).join("")}</ul>${flagsHtml(a.trading.flags)}</span></div>` : ""}
         <div class="section-title my14"><h3 class="small dim">Worker log</h3><div class="line"></div></div>
         <div class="log">${a.logs.length ? a.logs.slice().reverse().map(l => `<div class="${esc(l.level)}"><span class="ts">${esc(dtShort(l.time))}</span>${esc(l.message)}</div>`).join("") : '<span class="muted">No log entries yet</span>'}</div>
       </div></section>`).join("")}`;
@@ -564,6 +565,12 @@
     }));
   }
 
+  function flagsHtml(f) {
+    if (!f) return "";
+    const yn = v => v === true ? '<span class="tag ok">yes</span>' : v === false ? '<span class="tag bad">no</span>' : '<span class="tag neutral">unknown</span>';
+    return `<div class="flags xs mt6">Checks: global switch ${yn(f.global_switch)} · account switch ${yn(f.account_switch)} · connected ${yn(f.connected)} · broker allows trading ${yn(f.broker_trade_allowed)} · broker allows automated trading ${yn(f.broker_expert_allowed)} · Algo Trading button in terminal ${yn(f.terminal_algo_button)} · trade API disabled ${f.terminal_tradeapi_disabled === true ? '<span class="tag bad">yes</span>' : yn(false)}${f.terminal_path ? ` · terminal <span class="mono">${esc(f.terminal_path)}</span>` : ""}</div>`;
+  }
+
   /* ---------------- TRADE TICKET ---------------- */
   const TF = { account: null, symbol: "", side: "BUY", order_kind: "market", price: "", sizing: "risk", risk_percent: "1", risk_basis: "free_margin", lots: "0.10", sl_mode: "points", sl: "", tp_mode: "rr", tp: "2", comment: "" };
   let lastPreview = null;
@@ -581,7 +588,7 @@
     content.innerHTML = mockBanner() + `
       <div class="filters"><span class="small dim">Trade on</span><span class="seg" id="trade-acct">${list.map(x => `<button data-id="${esc(x.id)}" class="${x.id === a.id ? "active" : ""}"><span class="dot c-${esc(x.color)} mr6"></span>${esc(x.label)}</button>`).join("")}</span>
         <span class="flex1"></span><span class="small dim">Equity ${money(info.equity, cur)} · free margin ${money(info.margin_free, cur)}</span></div>
-      ${disabled ? `<div class="banner warn"><strong>Trading is off for ${esc(a.label)}</strong><span><ul class="notes">${st.reasons.map(r => `<li>${esc(r)}</li>`).join("")}</ul></span></div>` : `<div class="banner bad"><strong>Live trading</strong><span>Orders placed here go straight to the broker through the <b>${esc(a.label)}</b> terminal${a.mock ? " (mock: simulated fills)" : ""}. Limits: max risk ${st.limits.max_risk_percent}% · max ${st.limits.max_lots} lots · max ${st.limits.max_open_positions} open positions${st.limits.allowed_symbols.length ? " · symbols " + st.limits.allowed_symbols.map(esc).join(", ") : ""}.</span></div>`}
+      ${disabled ? `<div class="banner warn"><strong>Trading is off for ${esc(a.label)}</strong><span><ul class="notes">${st.reasons.map(r => `<li>${esc(r)}</li>`).join("")}</ul>${flagsHtml(st.flags)}</span></div>` : `<div class="banner bad"><strong>Live trading</strong><span>Orders placed here go straight to the broker through the <b>${esc(a.label)}</b> terminal${a.mock ? " (mock: simulated fills)" : ""}. Limits: max risk ${st.limits.max_risk_percent}% · max ${st.limits.max_lots} lots · max ${st.limits.max_open_positions} open positions${st.limits.allowed_symbols.length ? " · symbols " + st.limits.allowed_symbols.map(esc).join(", ") : ""}.</span></div>`}
       <div class="grid cols-2 ticket-grid">
         <section class="card"><div class="card-head"><h3>Order ticket</h3><span class="sub">${esc(a.label)}</span></div><div class="card-body">
           <div class="form">
@@ -883,7 +890,7 @@
           <div class="form-actions mt14">
             ${running ? `<button class="btn danger" id="bot-stop">Stop bot</button>` : `<button class="btn primary" id="bot-paper">Start PAPER</button><button class="btn danger" id="bot-live" ${info.trading.enabled ? "" : "disabled"} title="${esc(info.trading.enabled ? "" : info.trading.reasons.join("; "))}">Start LIVE…</button>`}
             <span class="flex1"></span><button class="btn sm" id="bot-reset-paper">Reset paper ledger</button></div>
-          ${!info.trading.enabled ? `<div class="xs muted mt6">Live needs trading enabled for this account: ${esc(info.trading.reasons.join("; "))}</div>` : ""}
+          ${!info.trading.enabled ? `<div class="banner warn mt6"><strong>Live is blocked</strong><span><ul class="notes">${info.trading.reasons.map(r => `<li>${esc(r)}</li>`).join("")}</ul>${flagsHtml(info.trading.flags)}</span></div>` : ""}
           <div class="section-title my14"><h3 class="small dim">Symbols the bot watches</h3><div class="line"></div><button class="btn sm" id="bot-universe">Scan broker symbols now</button></div>
           <div id="bot-universe-out">${universeHtml(st)}</div>
           <div class="section-title my14"><h3 class="small dim">Open bot positions</h3><div class="line"></div></div>

@@ -336,3 +336,4 @@ details summary { cursor: pointer; }
 label.check.inline { display: inline-flex; align-items: center; margin: 0; }
 .symmode-seg { display: inline-flex; }
 .section-title .btn { margin-left: 8px; }
+.flags { line-height: 2; }

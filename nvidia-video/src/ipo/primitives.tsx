@@ -32,27 +32,33 @@ export const SceneShell: React.FC<{ duration: number; overlap: number; children:
 };
 
 /** Deep black stage with drifting green light and a faint engineering grid. */
-export const Backdrop: React.FC<{ glow?: number; grid?: boolean; hue?: string }> = ({ glow = 1, grid = true, hue = colors.green }) => {
+export const Backdrop: React.FC<{ glow?: number; grid?: boolean; hue?: string }> = ({ glow = 1, grid = true, hue = colors.orange }) => {
   const f = useCurrentFrame();
-  const gx = 50 + Math.sin(f / 90) * 18;
-  const gy = 32 + Math.cos(f / 110) * 10;
+  const gx = 62 + Math.sin(f / 140) * 14;
+  const gy = 28 + Math.cos(f / 170) * 8;
+  const sweep = ((f * 0.35) % 260) - 80; // slow diagonal light sweep, in %
   return (
     <AbsoluteFill style={{ background: colors.ink }}>
       <AbsoluteFill
         style={{
-          background: `radial-gradient(900px 900px at ${gx}% ${gy}%, ${hue}2E, transparent 60%), radial-gradient(1200px 900px at 50% 110%, ${colors.orange}22, transparent 70%), radial-gradient(900px 700px at 0% 0%, #3a1f1444, transparent 70%)`,
+          background: `radial-gradient(1100px 900px at ${gx}% ${gy}%, ${hue}30, transparent 62%), radial-gradient(900px 700px at ${100 - gx}% 92%, ${hue}1C, transparent 65%), radial-gradient(700px 500px at 8% 60%, #f5efe60A, transparent 70%)`,
+          opacity: glow,
+        }}
+      />
+      <AbsoluteFill
+        style={{
+          background: `linear-gradient(115deg, transparent ${sweep}%, rgba(245,239,230,0.045) ${sweep + 12}%, transparent ${sweep + 24}%)`,
           opacity: glow,
         }}
       />
       {grid && (
         <AbsoluteFill
           style={{
-            backgroundImage: `linear-gradient(${colors.line} 1px, transparent 1px), linear-gradient(90deg, ${colors.line} 1px, transparent 1px)`,
-            backgroundSize: "90px 90px",
-            backgroundPosition: `0 ${(f * 0.4) % 90}px`,
-            opacity: 0.18,
-            maskImage: "radial-gradient(ellipse 70% 60% at 50% 45%, black, transparent)",
-            WebkitMaskImage: "radial-gradient(ellipse 70% 60% at 50% 45%, black, transparent)",
+            backgroundImage: `radial-gradient(${colors.line} 1.2px, transparent 1.4px)`,
+            backgroundSize: "44px 44px",
+            opacity: 0.35,
+            maskImage: "radial-gradient(ellipse 75% 65% at 50% 45%, black, transparent)",
+            WebkitMaskImage: "radial-gradient(ellipse 75% 65% at 50% 45%, black, transparent)",
           }}
         />
       )}
@@ -90,7 +96,7 @@ export const Kicker: React.FC<{ children: React.ReactNode; delay?: number; color
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 18, opacity: p, transform: `translateY(${(1 - p) * 16}px)` }}>
       <div style={{ width: 56 * p, height: 3, background: color, borderRadius: 2 }} />
-      <div style={{ fontFamily: fonts.mono, fontSize: 26, letterSpacing: 6, color, textTransform: "uppercase", fontWeight: 500 }}>
+      <div style={{ fontFamily: fonts.mono, fontSize: 22, letterSpacing: 7, color, textTransform: "uppercase", fontWeight: 500 }}>
         {children}
       </div>
     </div>
@@ -114,11 +120,11 @@ export const Headline: React.FC<{
   return (
     <div
       style={{
-        fontFamily: fonts.display,
+        fontFamily: fonts.serif,
         fontWeight: weight,
         fontSize: size,
-        lineHeight,
-        letterSpacing: -size * 0.025,
+        lineHeight: Math.max(lineHeight, 1.08),
+        letterSpacing: -size * 0.012,
         color: colors.text,
         textAlign: align,
         display: "flex",

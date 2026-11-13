@@ -52,10 +52,11 @@ const Card: React.FC<{ children: React.ReactNode; delay: number; style?: React.C
     <div
       style={{
         padding: "24px 28px",
-        borderRadius: 26,
-        background: `linear-gradient(160deg, ${colors.charcoal2}, ${colors.charcoal})`,
-        border: `1px solid ${glow ? colors.orange + "AA" : colors.line}`,
-        boxShadow: glow ? `0 0 70px ${colors.orange}33` : "none",
+        borderRadius: 24,
+        background: glow ? `linear-gradient(160deg, ${colors.orange}22, rgba(255,255,255,0.03))` : "linear-gradient(160deg, rgba(255,255,255,0.065), rgba(255,255,255,0.025))",
+        border: `1px solid ${glow ? colors.orange + "77" : colors.line}`,
+        boxShadow: glow ? `0 24px 70px rgba(0,0,0,0.45), 0 0 60px ${colors.orange}22, inset 0 1px 0 ${colors.orange}55` : "0 24px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.14)",
+        backdropFilter: "blur(14px)",
         opacity: p,
         transform: `translateY(${(1 - p) * 24}px)`,
         ...style,
@@ -66,20 +67,23 @@ const Card: React.FC<{ children: React.ReactNode; delay: number; style?: React.C
   );
 };
 const Label: React.FC<{ children: React.ReactNode; color?: string }> = ({ children, color = colors.muted }) => (
-  <div style={{ fontFamily: fonts.mono, fontSize: 22, letterSpacing: 3, color, textTransform: "uppercase" }}>{children}</div>
+  <div style={{ fontFamily: fonts.mono, fontSize: 19, letterSpacing: 4, color, textTransform: "uppercase" }}>{children}</div>
 );
 const Big: React.FC<{ children: React.ReactNode; color?: string; size?: number }> = ({ children, color = colors.text, size = 72 }) => (
-  <div style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: size, color, letterSpacing: -1.5, lineHeight: 1.1, marginTop: 6, fontVariantNumeric: "tabular-nums" }}>{children}</div>
+  <div style={{ fontFamily: fonts.display, fontWeight: 700, fontSize: size, color, letterSpacing: -size * 0.03, lineHeight: 1.1, marginTop: 6, fontVariantNumeric: "tabular-nums" }}>{children}</div>
 );
 
 /** Claude-style asterisk mark, drawn in orange. */
 const Mark: React.FC<{ size: number; f: number }> = ({ size, f }) => (
-  <svg width={size} height={size} viewBox="0 0 100 100" style={{ transform: `rotate(${f * 0.4}deg)` }}>
-    {Array.from({ length: 8 }).map((_, i) => (
-      <rect key={i} x={46} y={8} width={8} height={38} rx={4} fill={colors.orange} transform={`rotate(${i * 45} 50 50)`} />
-    ))}
-    <circle cx={50} cy={50} r={9} fill={colors.ink} stroke={colors.orange} strokeWidth={4} />
-  </svg>
+  <div style={{ position: "relative", width: size, height: size }}>
+    <div style={{ position: "absolute", inset: -size * 0.5, borderRadius: "50%", background: `radial-gradient(circle, ${colors.orange}44, transparent 60%)` }} />
+    <svg width={size} height={size} viewBox="0 0 100 100" style={{ position: "relative", transform: `rotate(${f * 0.25}deg)`, filter: `drop-shadow(0 0 ${size * 0.08}px ${colors.orange}99)` }}>
+      {Array.from({ length: 8 }).map((_, i) => (
+        <rect key={i} x={46.5} y={8} width={7} height={38} rx={3.5} fill={colors.orange} transform={`rotate(${i * 45} 50 50)`} />
+      ))}
+      <circle cx={50} cy={50} r={9} fill={colors.ink} stroke={colors.orange} strokeWidth={4} />
+    </svg>
+  </div>
 );
 
 // 1 ─ Title

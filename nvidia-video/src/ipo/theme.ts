@@ -5,6 +5,7 @@ export const fonts = {
   body: "Inter, sans-serif",
   display: "'Inter Tight', Inter, sans-serif",
   mono: "'JetBrains Mono', monospace",
+  serif: "'Playfair Display', Georgia, serif",
 };
 
 export const colors = {
@@ -13,13 +14,13 @@ export const colors = {
   greenBright: "#F2A27E",
   greenDeep: "#7A3D26",
   black: "#000000",
-  ink: "#0A0807",
-  charcoal: "#181311",
-  charcoal2: "#231B18",
-  line: "rgba(255,210,180,0.14)",
+  ink: "#070605",
+  charcoal: "#141110",
+  charcoal2: "#1C1715",
+  line: "rgba(245,239,230,0.12)",
   white: "#FFFFFF",
-  text: "#F7F2EE",
-  muted: "#B5A79F",
+  text: "#F5EFE6",
+  muted: "#B9AB9E",
   dim: "#7A6D66",
   red: "#FF6B6B",
   gold: "#F6C451",

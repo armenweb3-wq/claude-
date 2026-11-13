@@ -34,14 +34,14 @@ export const Subtitles: React.FC<P> = ({ tl }) => {
       <div
         style={{
           fontFamily: fonts.body,
-          fontWeight: 600,
-          fontSize: 44,
+          fontWeight: 500,
+          fontSize: 42,
           lineHeight: 1.32,
           textAlign: "center",
           padding: "18px 30px",
           borderRadius: 18,
-          background: "rgba(5,14,28,0.78)",
-          border: `2px solid ${colors.green}55`,
+          background: "rgba(7,6,5,0.74)",
+          border: `1px solid ${colors.orange}55`,
           backdropFilter: "blur(10px)",
           maxWidth: 900,
           textShadow: "0 2px 12px rgba(0,0,0,0.6)",
@@ -77,7 +77,7 @@ export const ChapterRail: React.FC<P> = ({ tl }) => {
         {scenes.map((s, i) => {
           const fill = i < idx ? 1 : i > idx ? 0 : interpolate(f, [s.from, s.from + s.duration], [0, 1], clamp);
           return (
-            <div key={s.id} style={{ flex: 1, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.14)", overflow: "hidden" }}>
+            <div key={s.id} style={{ flex: 1, height: 3, borderRadius: 2, background: "rgba(245,239,230,0.12)", overflow: "hidden" }}>
               <div style={{ width: `${fill * 100}%`, height: "100%", background: colors.green }} />
             </div>
           );

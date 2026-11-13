@@ -92,3 +92,8 @@ also shows what an 8% fall would lose (−$9,975.68).
 - Gold averaging: 1.15 @ 4,293.99 + 5.75 @ 4,087.24 → average 4,121.70 (6.90 lots). Legs closed: 5.75 @ 4,133.00 = +26,312.00; 1.00 @ 4,108.10 → 4,127.01 = +1,891.00; 1.15 @ 4,117.47 = −20,299.80 − 4,455.19 swap = −24,754.99. Net +3,448.01.
 - "The 1% rule" on the 9–10 Nov trades is the account manager's description of position sizing; the report shows no stop-loss levels, so it is presented as the rule applied, not as a measured figure. Percentages are each trade's profit over the balance at the start of 9 Nov (433,587.05).
 - Narration says "ten weeks"; the period is 67 days.
+
+## Anthropic IPO film — 13 Nov 2026 update
+
+- Terms supplied by the client on 13 Nov 2026 (to be confirmed with further details next week): pricing 18 Nov, first trading day Thu 19 Nov, ticker ANT on Nasdaq Global Select Market, expected price $70–$78, expected valuation $1.3–$1.45T. Shown as "expected"; the earlier "16–20 Nov window" and "up to $2T" wording is replaced.
+- Implied share count ≈ $1.45T ÷ $78 ≈ 18.6B (also $1.3T ÷ $70). "What if $2T" = $2T ÷ 18.6B ≈ $108/share (+38% vs $78). "SpaceX-style open" = $78 × 1.19 ≈ $93. Both are labelled scenarios, not forecasts.

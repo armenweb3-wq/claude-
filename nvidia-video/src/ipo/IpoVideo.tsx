@@ -2,13 +2,13 @@ import React from "react";
 import { AbsoluteFill, Sequence } from "remotion";
 import { ChapterRail, Soundtrack, Subtitles } from "./overlays";
 import { FilmFinish, SceneShell } from "./primitives";
-import { SDeal, SIpo, SNumbers, SNvidia, SPrice, STitle, SWatch, tl } from "./scenes";
+import { SDeal, SIpo, SNumbers, SNvidia, SPrice, STitle, SWatch, SWhatIf, tl } from "./scenes";
 import { colors } from "./theme";
 
-const components: Record<string, React.FC> = { title: STitle, ipo: SIpo, numbers: SNumbers, deal: SDeal, nvidia: SNvidia, price: SPrice, watch: SWatch };
+const components: Record<string, React.FC> = { title: STitle, ipo: SIpo, numbers: SNumbers, deal: SDeal, nvidia: SNvidia, price: SPrice, whatif: SWhatIf, watch: SWatch };
 const OVERLAP = 14;
 const abs = (scene: string, n: number, off = 0) => tl.at(scene, n, off) + tl.scenes.find((s) => s.id === scene)!.from;
-const impacts = [abs("numbers", 0, 1.0), abs("deal", 0, 1.0), abs("nvidia", 0, 1.6), abs("price", 0, 0.6)];
+const impacts = [abs("numbers", 0, 1.0), abs("deal", 0, 1.0), abs("nvidia", 0, 1.6), abs("price", 0, 0.5), abs("whatif", 1, 0.4)];
 
 /** Anthropic IPO explainer (~75 s) in black and Claude orange. */
 export const IpoVideo: React.FC = () => (

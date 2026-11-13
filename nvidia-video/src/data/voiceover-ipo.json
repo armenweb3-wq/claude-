@@ -1,189 +1,217 @@
 {
   "fps": 30,
-  "totalDuration": 86,
+  "totalDuration": null,
   "voiceoverFile": "audio/ipo-voice.mp3",
   "musicFile": "audio/ipo-music.mp3",
   "voice": {
     "engine": "kokoro-v1.0",
     "voice": "af_heart",
     "baseSpeed": 1.0,
-    "speed": 1.093
+    "speed": 1.0
   },
   "pacing": {
-    "lead": 0.5,
-    "gap": 0.4,
-    "tail": 0.6
+    "lead": 0.6,
+    "gap": 0.45,
+    "tail": 0.8
   },
   "scenes": [
     {
       "id": "title",
       "title": "Anthropic goes public",
-      "minDuration": 6,
+      "minDuration": 8,
       "start": 0.0,
-      "end": 6.667
+      "end": 11.533
     },
     {
       "id": "ipo",
       "title": "What an IPO is",
       "minDuration": 7,
-      "start": 6.667,
-      "end": 14.9
+      "start": 11.533,
+      "end": 20.433
     },
     {
       "id": "numbers",
       "title": "The business",
       "minDuration": 8,
-      "start": 14.9,
-      "end": 24.633
+      "start": 20.433,
+      "end": 30.867
     },
     {
       "id": "deal",
       "title": "The deal",
       "minDuration": 15,
-      "start": 24.633,
-      "end": 47.1
+      "start": 30.867,
+      "end": 56.267
     },
     {
       "id": "nvidia",
       "title": "What it means for NVIDIA",
       "minDuration": 13,
-      "start": 47.1,
-      "end": 69.6
+      "start": 56.267,
+      "end": 80.267
     },
     {
       "id": "price",
       "title": "The share price",
-      "minDuration": 8,
-      "start": 69.6,
-      "end": 77.6
+      "minDuration": 10,
+      "start": 80.267,
+      "end": 94.967
+    },
+    {
+      "id": "whatif",
+      "title": "What if $2 trillion",
+      "minDuration": 14,
+      "start": 94.967,
+      "end": 116.033
     },
     {
       "id": "watch",
       "title": "What to watch",
       "minDuration": 8,
-      "start": 77.6,
-      "end": 86
+      "start": 116.033,
+      "end": 126.66666666666667
     }
   ],
   "cues": [
     {
       "scene": "title",
-      "start": 0.5,
-      "end": 3.96,
-      "text": "Anthropic, the company behind Claude, has filed to go public.",
-      "say": "Anthropic, the company behind Claude, has filed to go public."
+      "text": "Anthropic, the company behind Claude, goes public on Thursday, 19 November 2026.",
+      "say": "Anthropic, the company behind Claude, goes public on Thursday, the nineteenth of November, twenty twenty six.",
+      "start": 0.6,
+      "end": 6.91
     },
     {
       "scene": "title",
-      "start": 4.36,
-      "end": 6.04,
-      "text": "Ticker: ANT, on the Nasdaq.",
-      "say": "Ticker: A N T, on the Nasdaq."
+      "text": "Ticker: ANT, on the Nasdaq Global Select Market.",
+      "say": "Ticker: A N T, on the Nasdaq Global Select Market.",
+      "start": 7.36,
+      "end": 10.75
     },
     {
       "scene": "ipo",
-      "start": 7.17,
-      "end": 11.33,
       "text": "An IPO is the first time a private company sells shares to the public.",
-      "say": "An IPO is the first time a private company sells shares to the public."
+      "say": "An I P O is the first time a private company sells shares to the public.",
+      "start": 12.13,
+      "end": 16.48
     },
     {
       "scene": "ipo",
-      "start": 11.73,
-      "end": 14.3,
       "text": "After that, anyone can trade them on the exchange.",
-      "say": "After that, anyone can trade them on the exchange."
+      "say": "After that, anyone can trade them on the exchange.",
+      "start": 16.93,
+      "end": 19.61
     },
     {
       "scene": "numbers",
-      "start": 15.4,
-      "end": 20.08,
       "text": "Revenue: $16.3 billion in the first half of 2026,",
-      "say": "Revenue: sixteen point three billion dollars in the first half of twenty twenty-six,"
+      "say": "Revenue: sixteen point three billion dollars in the first half of twenty twenty six,",
+      "start": 21.03,
+      "end": 25.96
     },
     {
       "scene": "numbers",
-      "start": 20.48,
-      "end": 24.04,
       "text": "and a reported $16.8 billion in the third quarter alone.",
-      "say": "and a reported sixteen point eight billion in the third quarter alone."
+      "say": "and a reported sixteen point eight billion in the third quarter alone.",
+      "start": 26.41,
+      "end": 30.08
     },
     {
       "scene": "deal",
-      "start": 25.13,
-      "end": 30.76,
-      "text": "The expectation: raise about $100 billion at a valuation of up to $2 trillion.",
-      "say": "The expectation: raise about one hundred billion dollars, at a valuation of up to two trillion."
+      "text": "The expectation: raise about $100 billion at a valuation of $1.3 to $1.45 trillion.",
+      "say": "The expectation: raise about one hundred billion dollars, at a valuation of one point three to one point four five trillion.",
+      "start": 31.47,
+      "end": 39.55
     },
     {
       "scene": "deal",
-      "start": 31.16,
-      "end": 33.27,
       "text": "That would be the largest IPO in history.",
-      "say": "That would be the largest IPO in history."
+      "say": "That would be the largest I P O in history.",
+      "start": 40.0,
+      "end": 42.22
     },
     {
       "scene": "deal",
-      "start": 33.67,
-      "end": 39.53,
       "text": "SpaceX set the record in June: $75 billion raised, shares up 19% on day one.",
-      "say": "SpaceX set the record in June. Seventy-five billion raised, shares up nineteen percent on day one."
+      "say": "SpaceX set the record in June. Seventy five billion raised, shares up nineteen percent on day one.",
+      "start": 42.67,
+      "end": 48.86
     },
     {
       "scene": "deal",
-      "start": 39.93,
-      "end": 46.46,
-      "text": "Anthropic amended its filing on November 2. Trading is expected between November 16 and 20.",
-      "say": "Anthropic amended its filing on November second. Trading is expected between November sixteenth and twentieth."
+      "text": "The IPO is priced on November 18. Shares start trading on Thursday, November 19.",
+      "say": "The I P O is priced on November eighteenth. Shares start trading on Thursday, November nineteenth.",
+      "start": 49.31,
+      "end": 55.46
     },
     {
       "scene": "nvidia",
-      "start": 47.6,
-      "end": 56.62,
       "text": "And NVIDIA? The amended filing shows nearly $900 billion of computing commitments, with NVIDIA as Anthropic's largest chip supplier.",
-      "say": "And NVIDIA? The amended filing shows nearly nine hundred billion dollars of computing commitments, with NVIDIA as Anthropic's largest chip supplier."
+      "say": "And NVIDIA? The amended filing shows nearly nine hundred billion dollars of computing commitments, with NVIDIA as Anthropic's largest chip supplier.",
+      "start": 56.87,
+      "end": 66.45
     },
     {
       "scene": "nvidia",
-      "start": 57.02,
-      "end": 62.86,
       "text": "Chip stocks rose on the filing, and NVIDIA may take a stake of about $10 billion in the IPO.",
-      "say": "Chip stocks rose on the filing, and NVIDIA may take a stake of about ten billion dollars in the IPO."
+      "say": "Chip stocks rose on the filing, and NVIDIA may take a stake of about ten billion dollars in the I P O.",
+      "start": 66.9,
+      "end": 73.06
     },
     {
       "scene": "nvidia",
-      "start": 63.26,
-      "end": 68.97,
       "text": "But Anthropic also buys from Google, Amazon and AMD. A demand signal, not a guarantee.",
-      "say": "But Anthropic also buys from Google, Amazon and AMD. A demand signal, not a guarantee."
+      "say": "But Anthropic also buys from Google, Amazon and A M D. A demand signal, not a guarantee.",
+      "start": 73.51,
+      "end": 79.46
     },
     {
       "scene": "price",
-      "start": 70.1,
-      "end": 71.67,
-      "text": "The share price is not set yet.",
-      "say": "The share price is not set yet."
+      "text": "The expected IPO price: $70 to $78 per share.",
+      "say": "The expected I P O price: seventy to seventy eight dollars per share.",
+      "start": 80.87,
+      "end": 84.94
     },
     {
       "scene": "price",
-      "start": 72.07,
-      "end": 75.12,
-      "text": "It comes in a further amended filing just before trading.",
-      "say": "It comes in a further amended filing just before trading."
+      "text": "At the top of the range that values Anthropic at about $1.45 trillion, on roughly 18.6 billion shares.",
+      "say": "At the top of the range, that values Anthropic at about one point four five trillion dollars, on roughly eighteen point six billion shares.",
+      "start": 85.39,
+      "end": 94.15
+    },
+    {
+      "scene": "whatif",
+      "text": "What if the market takes it to $2 trillion?",
+      "say": "What if the market takes it to two trillion dollars?",
+      "start": 95.57,
+      "end": 98.07
+    },
+    {
+      "scene": "whatif",
+      "text": "On the same share count, that is about $108 a share: 38% above the top of the range.",
+      "say": "On the same share count, that is about one hundred and eight dollars a share. Thirty eight percent above the top of the range.",
+      "start": 98.52,
+      "end": 105.39
+    },
+    {
+      "scene": "whatif",
+      "text": "And a higher open is common. SpaceX opened 19% above its IPO price; the same move would put ANT near $93.",
+      "say": "And a higher open is common. SpaceX opened nineteen percent above its I P O price. The same move would put A N T near ninety three dollars.",
+      "start": 105.84,
+      "end": 115.24
     },
     {
       "scene": "watch",
-      "start": 78.1,
-      "end": 81.17,
-      "text": "Watch the official price range, and the first day of trading.",
-      "say": "Watch the official price range, and the first day of trading."
+      "text": "Watch the final price on November 18, and the opening trade on the 19th.",
+      "say": "Watch the final price on November eighteenth, and the opening trade on the nineteenth.",
+      "start": 116.63,
+      "end": 121.44
     },
     {
       "scene": "watch",
-      "start": 81.57,
-      "end": 85.37,
       "text": "Shares are highly speculative. This is information, not advice.",
-      "say": "Shares are highly speculative. This is information, not advice."
+      "say": "Shares are highly speculative. This is information, not advice.",
+      "start": 121.89,
+      "end": 125.87
     }
   ]
 }

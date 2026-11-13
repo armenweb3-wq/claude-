@@ -15,22 +15,28 @@ const at = (scene: string, n: number, off = 0) => tl.at(scene, n, off);
 
 const FACTS = {
   ticker: "ANT",
-  exchange: "Nasdaq",
+  exchange: "Nasdaq Global Select Market",
   filed: "26 Oct 2026",
   revH1: 16.3, // $B, first half 2026 (S-1)
   revQ3: 16.8, // $B, reported to investors (FT / Bloomberg)
   runRate: 65, // $B, end of July 2026 (Reuters)
   customers: 11_900, // $100K+ customers, 30 Sep 2026 (S-1)
   raise: 100, // $B, reported target
-  valuation: 2, // $T, reported "up to"
+  valuation: 2, // $T, the "what if" scenario
+  valLow: 1.3, // $T, expected valuation range (supplied 13 Nov 2026)
+  valHigh: 1.45,
+  priceLow: 70, // $ per share, expected IPO price range
+  priceHigh: 78,
+  pricingDate: "Wed 18 Nov 2026",
+  firstDay: "Thu 19 Nov 2026",
   spacex: 75, // $B raised, June 2026 record IPO (most reports; ~$86B incl. over-allotment)
   spacexPrice: 135,
   spacexClose: 160.95,
   spacexDay1: 19,
   aramco: 29.4, // $B, 2019, the previous record
   amended: "2 Nov 2026",
-  trading: "16–20 Nov",
-  tradingNote: "expected window · reported, not official",
+  trading: "Thu 19 Nov",
+  tradingNote: "first trading day",
   compute: 895, // $B of computing/data-center commitments per the amended filing (as reported)
   nvidiaStake: 10, // $B, reported possible anchor investment
   nvidiaShare: 42, // % of Anthropic's ~11 GW compute footprint (analyst estimate)
@@ -98,8 +104,8 @@ export const STitle: React.FC = () => {
         </div>
         <div style={{ flex: 1.2, padding: "22px 28px", borderRadius: 24, background: colors.charcoal2, border: `1px solid ${colors.line}` }}>
           <div style={{ fontFamily: fonts.mono, fontSize: 22, letterSpacing: 3, color: colors.muted }}>EXCHANGE</div>
-          <div style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 56, color: colors.text, lineHeight: 1.15 }}>{FACTS.exchange}</div>
-          <div style={{ fontFamily: fonts.body, fontSize: 24, color: colors.muted }}>S-1 filed {FACTS.filed}</div>
+          <div style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 56, color: colors.text, lineHeight: 1.15 }}>Nasdaq</div>
+          <div style={{ fontFamily: fonts.body, fontSize: 24, color: colors.muted }}>Global Select Market · first trading day {FACTS.firstDay}</div>
         </div>
       </div>
     </AbsoluteFill>
@@ -229,9 +235,9 @@ export const SDeal: React.FC = () => {
           </Big>
         </Card>
         <Card delay={val} style={{ flex: 1 }}>
-          <Label>Valuation · up to</Label>
-          <Big color={colors.text} size={84}>
-            $<Counter to={FACTS.valuation} start={val} dur={30} format={(n) => n.toFixed(1)} />T
+          <Label>Valuation · expected</Label>
+          <Big color={colors.text} size={66}>
+            $<Counter to={FACTS.valLow} start={val} dur={30} format={(n) => n.toFixed(1)} />–{FACTS.valHigh}T
           </Big>
         </Card>
       </div>
@@ -258,13 +264,13 @@ export const SDeal: React.FC = () => {
       </Card>
       <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 1230, display: "flex", gap: 18 }}>
         <Card delay={time} style={{ flex: 1, padding: "16px 24px" }}>
-          <Label>Amended S-1 filed</Label>
-          <Big size={40}>{FACTS.amended}</Big>
+          <Label>IPO pricing date</Label>
+          <Big size={40}>{FACTS.pricingDate}</Big>
         </Card>
         <Card delay={time + 10} style={{ flex: 1.1, padding: "16px 24px" }} glow>
-          <Label color={colors.orangeBright}>Expected trading window</Label>
-          <Big size={40} color={colors.orangeBright}>{FACTS.trading}</Big>
-          <div style={{ fontFamily: fonts.mono, fontSize: 18, letterSpacing: 2, color: colors.muted, marginTop: 4 }}>{FACTS.tradingNote.toUpperCase()}</div>
+          <Label color={colors.orangeBright}>First trading day</Label>
+          <Big size={40} color={colors.orangeBright}>{FACTS.firstDay}</Big>
+          <div style={{ fontFamily: fonts.mono, fontSize: 18, letterSpacing: 2, color: colors.muted, marginTop: 4 }}>{FACTS.exchange.toUpperCase()}</div>
         </Card>
       </div>
     </AbsoluteFill>
@@ -341,40 +347,104 @@ export const SNvidia: React.FC = () => {
 };
 
 // 5 ─ The share price: not set yet
+export const SHARES = (FACTS.valHigh * 1e12) / FACTS.priceHigh / 1e9; // ≈ 18.6 billion shares implied by the range
+const priceFor = (valT: number) => (valT * 1e12) / (SHARES * 1e9);
+
 export const SPrice: React.FC = () => {
   const f = useCurrentFrame();
-  const notYet = at("price", 0, 0.6);
-  const how = at("price", 1, 0.5);
-  const blink = Math.floor(f / 18) % 2 === 0;
+  const a = at("price", 0, 0.5);
+  const b = at("price", 1, 0.3);
+  const c = at("price", 1, 3.2);
   return (
     <AbsoluteFill>
       <Backdrop />
       <Column top={210} gap={24}>
-        <Kicker delay={4}>The share price</Kicker>
-        <Headline text="Not set yet." accent={["yet."]} delay={8} size={110} />
+        <Kicker delay={4}>The share price · expected range</Kicker>
+        <Headline text={`$${FACTS.priceLow} to $${FACTS.priceHigh} a share.`} accent={[`$${FACTS.priceLow}`, `$${FACTS.priceHigh}`]} delay={8} size={100} />
       </Column>
-      <Card delay={notYet} glow style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 520, textAlign: "center", padding: "40px 28px" }}>
-        <Label color={colors.orangeBright}>ANT · IPO price</Label>
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "baseline", gap: 18 }}>
-          <span style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 120, color: colors.dim, letterSpacing: -3, lineHeight: 1 }}>$</span>
-          <span style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 150, color: colors.orange, letterSpacing: -4, lineHeight: 1, opacity: blink ? 1 : 0.55 }}>TBD</span>
+      <Card delay={a} glow style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 500, textAlign: "center", padding: "34px 28px" }}>
+        <Label color={colors.orangeBright}>ANT · expected IPO price</Label>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "baseline", gap: 22, marginTop: 6 }}>
+          <span style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 140, color: colors.orange, letterSpacing: -4, lineHeight: 1 }}>
+            $<Counter to={FACTS.priceLow} start={a} dur={26} format={(n) => Math.round(n).toString()} />
+          </span>
+          <span style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 70, color: colors.dim, lineHeight: 1 }}>–</span>
+          <span style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 140, color: colors.orangeBright, letterSpacing: -4, lineHeight: 1 }}>
+            $<Counter to={FACTS.priceHigh} start={a + 8} dur={26} format={(n) => Math.round(n).toString()} />
+          </span>
         </div>
-        <div style={{ fontFamily: fonts.body, fontSize: 26, color: colors.muted, marginTop: 8 }}>price and share count left blank in the filing</div>
+        <div style={{ fontFamily: fonts.body, fontSize: 26, color: colors.muted, marginTop: 10 }}>priced {FACTS.pricingDate} · trades from {FACTS.firstDay}</div>
       </Card>
-      <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 900, display: "flex", flexDirection: "column", gap: 16 }}>
-        {[
-          { n: "1", t: "Bankers test demand on the roadshow", c: colors.text },
-          { n: "2", t: "A price range is published in a further amended filing", c: colors.text },
-          { n: "3", t: "The final price is set the night before trading", c: colors.orangeBright },
-        ].map((s, i) => (
-          <Card key={s.n} delay={how + i * 12} style={{ display: "flex", alignItems: "center", gap: 20, padding: "18px 26px" }}>
-            <div style={{ width: 52, height: 52, borderRadius: 26, background: colors.orange, color: colors.ink, fontFamily: fonts.display, fontWeight: 800, fontSize: 28, display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 auto" }}>{s.n}</div>
-            <div style={{ fontFamily: fonts.body, fontSize: 30, color: s.c }}>{s.t}</div>
-          </Card>
-        ))}
+      <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 900, display: "flex", gap: 18 }}>
+        <Card delay={b} style={{ flex: 1 }}>
+          <Label>Valuation at ${FACTS.priceHigh}</Label>
+          <Big color={colors.text} size={70}>
+            $<Counter to={FACTS.valHigh} start={b} dur={30} format={(n) => n.toFixed(2)} />T
+          </Big>
+          <div style={{ fontFamily: fonts.body, fontSize: 22, color: colors.muted, marginTop: 4 }}>${FACTS.valLow}T at ${FACTS.priceLow}</div>
+        </Card>
+        <Card delay={c} style={{ flex: 1 }}>
+          <Label>Implied share count</Label>
+          <Big color={colors.text} size={70}>
+            ~<Counter to={SHARES} start={c} dur={30} format={(n) => n.toFixed(1)} />B
+          </Big>
+          <div style={{ fontFamily: fonts.body, fontSize: 22, color: colors.muted, marginTop: 4 }}>valuation ÷ price</div>
+        </Card>
       </div>
-      <div style={{ position: "absolute", left: 0, right: 0, top: 1290, textAlign: "center", opacity: prog(f, how + 44, 16) }}>
-        <Body size={27}>Early estimates vary widely. Only the official range counts.</Body>
+      <div style={{ position: "absolute", left: 0, right: 0, top: 1250, textAlign: "center", opacity: prog(f, c + 20, 16) }}>
+        <Body size={27}>Expected range as supplied; the final price is set the night before trading.</Body>
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+// 5b ─ What if: $2 trillion, and a higher open
+export const SWhatIf: React.FC = () => {
+  const f = useCurrentFrame();
+  const q = at("whatif", 0, 0.4);
+  const two = at("whatif", 1, 0.4);
+  const open = at("whatif", 2, 0.6);
+  const p2t = priceFor(FACTS.valuation); // ≈ 107.5
+  const pOpen = FACTS.priceHigh * (1 + FACTS.spacexDay1 / 100); // ≈ 92.8
+  const rows = [
+    { t: `IPO price · top of range`, price: FACTS.priceHigh, val: FACTS.valHigh, c: colors.dim, at: q + 10, note: "the base case" },
+    { t: `SpaceX-style open · +${FACTS.spacexDay1}%`, price: pOpen, val: (pOpen * SHARES) / 1000, c: colors.orange, at: open, note: "a higher open on day one" },
+    { t: `$${FACTS.valuation} trillion valuation`, price: p2t, val: FACTS.valuation, c: colors.orangeBright, at: two, note: `+${Math.round((p2t / FACTS.priceHigh - 1) * 100)}% above $${FACTS.priceHigh}` },
+  ];
+  const maxP = p2t * 1.05;
+  return (
+    <AbsoluteFill>
+      <Backdrop glow={1} />
+      <Column top={210} gap={24}>
+        <Kicker delay={4}>What if · scenarios, not forecasts</Kicker>
+        <Headline text="What if it reaches $2 trillion?" accent={["$2", "trillion?"]} delay={8} size={92} />
+      </Column>
+      <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 520, display: "flex", flexDirection: "column", gap: 18 }}>
+        {rows.map((r) => {
+          const p = prog(f, r.at, 36);
+          return (
+            <Card key={r.t} delay={r.at} glow={r.c === colors.orangeBright} style={{ padding: "18px 26px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <div>
+                  <Label color={r.c === colors.dim ? colors.muted : r.c}>{r.t}</Label>
+                  <div style={{ fontFamily: fonts.body, fontSize: 22, color: colors.muted, marginTop: 2 }}>{r.note}</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 66, color: r.c === colors.dim ? colors.text : r.c, letterSpacing: -2, lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>
+                    $<Counter to={r.price} start={r.at} dur={34} format={(n) => Math.round(n).toString()} />
+                  </div>
+                  <div style={{ fontFamily: fonts.body, fontSize: 24, color: colors.muted }}>≈ ${r.val.toFixed(2)}T valuation</div>
+                </div>
+              </div>
+              <div style={{ height: 22, borderRadius: 7, background: "rgba(255,255,255,0.08)", marginTop: 14, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${(r.price / maxP) * 100 * p}%`, background: r.c === colors.dim ? "#5a3b2e" : r.c, borderRadius: 7 }} />
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+      <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 1210, textAlign: "center", opacity: prog(f, open + 40, 16) }}>
+        <Body size={26}>Same share count (~{SHARES.toFixed(1)}B) in every case. A higher open is also where day-one buyers can overpay: the opening price is not the IPO price.</Body>
       </div>
     </AbsoluteFill>
   );
@@ -394,8 +464,8 @@ export const SWatch: React.FC = () => {
       </Column>
       <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 520, display: "flex", flexDirection: "column", gap: 16 }}>
         {[
-          { t: "The official price range", s: "amended filing, before the roadshow ends" },
-          { t: "The first day of trading", s: "the opening price can differ a lot from the IPO price" },
+          { t: "The final price · 18 November", s: "set the night before trading, inside or above the range" },
+          { t: "The opening trade · Thursday 19 November", s: "the opening price can differ a lot from the IPO price" },
           { t: "Demand from big investors", s: "oversubscribed books often lift the range" },
         ].map((it, i) => (
           <Card key={it.t} delay={w + i * 12} glow={i === 0}>
@@ -407,7 +477,7 @@ export const SWatch: React.FC = () => {
       <div style={{ position: "absolute", left: SAFE.x + 10, right: SAFE.x + 10, top: 1120, padding: "22px 26px", borderRadius: 22, background: "rgba(0,0,0,0.5)", border: `1px solid ${colors.line}`, opacity: prog(f, d, 20) }}>
         <div style={{ fontFamily: fonts.mono, fontSize: 20, letterSpacing: 3, color: colors.muted, marginBottom: 8 }}>RISK DISCLAIMER</div>
         <div style={{ fontFamily: fonts.body, fontSize: 21, lineHeight: 1.45, color: colors.muted }}>
-          Trading shares, CFDs and FX Contracts is highly speculative and involves significant risk of your capital. You should not risk more than you can afford. Past performance is not a guarantee of future performance. The information above is general and is not investment advice or an offer. Figures are as reported from Anthropic's S-1, its 2 November amendment and press reports as of early November 2026; IPO terms and dates may change.
+          Trading shares, CFDs and FX Contracts is highly speculative and involves significant risk of your capital. You should not risk more than you can afford. Past performance is not a guarantee of future performance. The information above is general and is not investment advice or an offer. Figures are as reported from Anthropic's S-1, its amendments, press reports and the expected terms supplied on 13 November 2026 (price $70–$78, valuation $1.3–$1.45T, pricing 18 Nov, first trading day 19 Nov); the $2T and higher-open figures are scenarios, not forecasts. Terms and dates may change.
         </div>
       </div>
     </AbsoluteFill>

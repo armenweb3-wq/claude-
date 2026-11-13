@@ -450,6 +450,73 @@ export const SWhatIf: React.FC = () => {
   );
 };
 
+// 5c ─ Trade ANT on 1:10 leverage: the four tiers, both ways
+const LEV = 10;
+const TIERS = [25_000, 50_000, 100_000, 250_000];
+const MOVES = [3, 15];
+const usd0 = (n: number) => (n < 0 ? "−$" : "$") + Math.abs(n).toLocaleString("en-US", { maximumFractionDigits: 0 });
+export const SLeverage: React.FC = () => {
+  const f = useCurrentFrame();
+  const a = at("leverage", 0, 0.5);
+  const b = at("leverage", 1, 0.3);
+  const c = at("leverage", 2, 0.3);
+  const d = at("leverage", 3, 0.3);
+  const e = at("leverage", 4, 0.3);
+  const rowAt = [c, d, d + 14, d + 28];
+  const col = (w: number | string) => ({ flex: `0 0 ${typeof w === "number" ? w + "px" : w}` } as React.CSSProperties);
+  return (
+    <AbsoluteFill>
+      <Backdrop />
+      <Column top={210} gap={24}>
+        <Kicker delay={4}>Trade ANT with us · CFD on leverage</Kicker>
+        <Headline text="Leverage 1 : 10." accent={["1", ":", "10."]} delay={8} size={104} />
+      </Column>
+      <div style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 470, display: "flex", gap: 16 }}>
+        <Card delay={a} glow style={{ flex: 1.1, padding: "16px 22px" }}>
+          <Label color={colors.orangeBright}>Exposure</Label>
+          <Big color={colors.orangeBright} size={46}><span style={{ whiteSpace: "nowrap" }}>{LEV}× margin</span></Big>
+        </Card>
+        {MOVES.map((m, i) => (
+          <Card key={m} delay={b + i * 14} style={{ flex: 1, padding: "16px 22px" }}>
+            <Label>ANT +{m}%</Label>
+            <Big color={colors.text} size={54}>+{m * LEV}%</Big>
+          </Card>
+        ))}
+      </div>
+      <Card delay={c - 8} style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 660, padding: "14px 22px 8px" }}>
+        <div style={{ display: "flex", gap: 10, fontFamily: fonts.mono, fontSize: 17, letterSpacing: 2, color: colors.muted, textTransform: "uppercase", paddingBottom: 10, borderBottom: `1px solid ${colors.line}` }}>
+          <span style={col(165)}>Margin</span>
+          <span style={col(165)}>Exposure</span>
+          <span style={{ ...col("1"), textAlign: "right", whiteSpace: "nowrap" }}>+3% · +30%</span>
+          <span style={{ ...col(205), textAlign: "right", color: colors.orangeBright, whiteSpace: "nowrap" }}>+15% · +150%</span>
+          <span style={{ ...col(165), textAlign: "right", color: colors.red, whiteSpace: "nowrap" }}>−3% · −30%</span>
+        </div>
+        {TIERS.map((t, i) => {
+          const p = prog(f, rowAt[i], 18);
+          return (
+            <div key={t} style={{ display: "flex", gap: 10, alignItems: "baseline", padding: "13px 0", borderBottom: i < TIERS.length - 1 ? `1px dashed ${colors.line}` : undefined, opacity: p, transform: `translateY(${(1 - p) * 10}px)` }}>
+              <span style={{ ...col(165), fontFamily: fonts.display, fontWeight: 800, fontSize: 30, color: colors.text, whiteSpace: "nowrap" }}>{usd0(t)}</span>
+              <span style={{ ...col(165), fontFamily: fonts.body, fontSize: 23, color: colors.muted, whiteSpace: "nowrap" }}>{usd0(t * LEV)}</span>
+              <span style={{ ...col("1"), textAlign: "right", fontFamily: fonts.display, fontWeight: 700, fontSize: 28, color: colors.text, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>+{usd0(t * LEV * 0.03)}</span>
+              <span style={{ ...col(205), textAlign: "right", fontFamily: fonts.display, fontWeight: 800, fontSize: 30, color: colors.orangeBright, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>+{usd0(t * LEV * 0.15)}</span>
+              <span style={{ ...col(165), textAlign: "right", fontFamily: fonts.display, fontWeight: 700, fontSize: 27, color: colors.red, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", opacity: prog(f, e, 16) }}>{usd0(-t * LEV * 0.03)}</span>
+            </div>
+          );
+        })}
+      </Card>
+      <Card delay={e} style={{ position: "absolute", left: SAFE.x, right: SAFE.x, top: 1120, padding: "18px 24px", display: "flex", alignItems: "center", gap: 20, border: `1px solid ${colors.red}66` }}>
+        <div style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 48, color: colors.red, whiteSpace: "nowrap" }}>−10%</div>
+        <div style={{ fontFamily: fonts.body, fontSize: 25, color: colors.text, lineHeight: 1.35 }}>
+          A 10% fall in ANT is −100% of the margin: the position can be closed out. Leverage multiplies losses exactly as it multiplies gains.
+        </div>
+      </Card>
+      <div style={{ position: "absolute", left: 0, right: 0, top: 1290, textAlign: "center", opacity: prog(f, e + 30, 16) }}>
+        <Body size={25}>Illustrative CFD maths before spreads, commissions and overnight financing. Not a guaranteed return.</Body>
+      </div>
+    </AbsoluteFill>
+  );
+};
+
 // 6 ─ What to watch + disclaimer
 export const SWatch: React.FC = () => {
   const f = useCurrentFrame();
@@ -477,7 +544,7 @@ export const SWatch: React.FC = () => {
       <div style={{ position: "absolute", left: SAFE.x + 10, right: SAFE.x + 10, top: 1120, padding: "22px 26px", borderRadius: 22, background: "rgba(0,0,0,0.5)", border: `1px solid ${colors.line}`, opacity: prog(f, d, 20) }}>
         <div style={{ fontFamily: fonts.mono, fontSize: 20, letterSpacing: 3, color: colors.muted, marginBottom: 8 }}>RISK DISCLAIMER</div>
         <div style={{ fontFamily: fonts.body, fontSize: 21, lineHeight: 1.45, color: colors.muted }}>
-          Trading shares, CFDs and FX Contracts is highly speculative and involves significant risk of your capital. You should not risk more than you can afford. Past performance is not a guarantee of future performance. The information above is general and is not investment advice or an offer. Figures are as reported from Anthropic's S-1, its amendments, press reports and the expected terms supplied on 13 November 2026 (price $70–$78, valuation $1.3–$1.45T, pricing 18 Nov, first trading day 19 Nov); the $2T and higher-open figures are scenarios, not forecasts. Terms and dates may change.
+          Trading shares, CFDs and FX Contracts is highly speculative and involves significant risk of your capital. You should not risk more than you can afford. Past performance is not a guarantee of future performance. The information above is general and is not investment advice or an offer. Figures are as reported from Anthropic's S-1, its amendments, press reports and the expected terms supplied on 13 November 2026 (price $70–$78, valuation $1.3–$1.45T, pricing 18 Nov, first trading day 19 Nov); the $2T and higher-open figures are scenarios, not forecasts; leveraged CFD returns are illustrative and losses can exceed the expected move. Terms and dates may change.
         </div>
       </div>
     </AbsoluteFill>

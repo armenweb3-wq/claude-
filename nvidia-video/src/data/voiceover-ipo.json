@@ -65,11 +65,18 @@
       "end": 116.033
     },
     {
+      "id": "leverage",
+      "title": "Trade ANT at 1:10",
+      "minDuration": 22,
+      "start": 116.033,
+      "end": 165.867
+    },
+    {
       "id": "watch",
       "title": "What to watch",
       "minDuration": 8,
-      "start": 116.033,
-      "end": 126.66666666666667
+      "start": 165.867,
+      "end": 176.5
     }
   ],
   "cues": [
@@ -200,18 +207,53 @@
       "end": 115.24
     },
     {
+      "scene": "leverage",
+      "text": "You can also trade ANT with us on leverage of 1:10: ten times the exposure of your margin.",
+      "say": "You can also trade A N T with us on leverage of one to ten. Ten times the exposure of your margin.",
+      "start": 116.63,
+      "end": 122.85
+    },
+    {
+      "scene": "leverage",
+      "text": "A 3% rise in the share becomes 30% on your money. A 15% rise becomes 150%.",
+      "say": "A three percent rise in the share becomes thirty percent on your money. A fifteen percent rise becomes one hundred and fifty percent.",
+      "start": 123.3,
+      "end": 131.3
+    },
+    {
+      "scene": "leverage",
+      "text": "With $25,000 you control $250,000 of ANT. Up 3%: +$7,500. Up 15%: +$37,500.",
+      "say": "With twenty five thousand dollars you control two hundred and fifty thousand dollars of A N T. Up three percent, plus seven thousand five hundred. Up fifteen percent, plus thirty seven thousand five hundred.",
+      "start": 131.75,
+      "end": 144.26
+    },
+    {
+      "scene": "leverage",
+      "text": "At $50,000, $100,000 and $250,000 the same moves scale: up to +$375,000 on a 15% rise.",
+      "say": "At fifty thousand, one hundred thousand and two hundred and fifty thousand, the same moves scale. Up to plus three hundred and seventy five thousand dollars on a fifteen percent rise.",
+      "start": 144.71,
+      "end": 155.62
+    },
+    {
+      "scene": "leverage",
+      "text": "Leverage works both ways: a 3% fall is −30%, and a 10% fall can use up the whole margin. Size accordingly.",
+      "say": "Leverage works both ways. A three percent fall is minus thirty percent, and a ten percent fall can use up the whole margin. Size accordingly.",
+      "start": 156.07,
+      "end": 165.07
+    },
+    {
       "scene": "watch",
       "text": "Watch the final price on November 18, and the opening trade on the 19th.",
       "say": "Watch the final price on November eighteenth, and the opening trade on the nineteenth.",
-      "start": 116.63,
-      "end": 121.44
+      "start": 166.47,
+      "end": 171.27
     },
     {
       "scene": "watch",
       "text": "Shares are highly speculative. This is information, not advice.",
       "say": "Shares are highly speculative. This is information, not advice.",
-      "start": 121.89,
-      "end": 125.87
+      "start": 171.72,
+      "end": 175.7
     }
   ]
 }

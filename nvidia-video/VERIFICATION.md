@@ -97,3 +97,4 @@ also shows what an 8% fall would lose (−$9,975.68).
 
 - Terms supplied by the client on 13 Nov 2026 (to be confirmed with further details next week): pricing 18 Nov, first trading day Thu 19 Nov, ticker ANT on Nasdaq Global Select Market, expected price $70–$78, expected valuation $1.3–$1.45T. Shown as "expected"; the earlier "16–20 Nov window" and "up to $2T" wording is replaced.
 - Implied share count ≈ $1.45T ÷ $78 ≈ 18.6B (also $1.3T ÷ $70). "What if $2T" = $2T ÷ 18.6B ≈ $108/share (+38% vs $78). "SpaceX-style open" = $78 × 1.19 ≈ $93. Both are labelled scenarios, not forecasts.
+- Leverage page (added 13 Nov): 1:10 CFD maths on $25k/$50k/$100k/$250k margin, shown both ways (+3% → +30%, +15% → +150%, −3% → −30%, −10% → margin used up). The client's statement that "30% is paid out even if the stock falls, assured by the liquidity provider" is NOT in the film: a guaranteed return on a leveraged trade cannot be verified and would mislead viewers.

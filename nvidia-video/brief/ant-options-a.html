@@ -76,6 +76,26 @@
   table.opt td.up { color: var(--or2); }
   table.opt td.big { font-weight: 800; font-size: 18pt; }
   table.opt tr:last-child td { border-bottom: none; }
+
+  /* ── light edition ── */
+  :root { --ink: #FFFFFF; --char: #FFFFFF; --char2: #FBF8F4; --line: rgba(20,16,12,0.10); --text: #16120F; --muted: #6E655E; --dim: #9A908A; --or: #DA7756; --or2: #C9633F; }
+  html, body { background: #FFFFFF; }
+  .page { background: radial-gradient(560px 520px at 88% 6%, rgba(218,119,86,0.16), transparent 65%), radial-gradient(600px 500px at 0% 100%, rgba(218,119,86,0.07), transparent 70%), #FFFFFF; }
+  .grid-bg { opacity: 0.5; }
+  p { color: #2A2420; }
+  .lead { color: var(--text); }
+  .card { background: #FFFFFF; border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(30,20,10,0.06); }
+  .card.glow { border-color: rgba(218,119,86,0.7); box-shadow: 0 12px 36px rgba(218,119,86,0.16); background: linear-gradient(160deg, #FFF4EE, #FFFFFF); }
+  .stat { color: var(--or2); } .stat.white { color: var(--text); }
+  .kicker { color: var(--or2); } .kicker::before { background: var(--or); }
+  .rail { color: var(--muted); } .rail b { color: var(--or2); }
+  .foot { color: var(--dim); }
+  .src { color: var(--dim); }
+  table.opt th { color: var(--muted); border-bottom-color: rgba(20,16,12,0.18); }
+  table.opt th.hi { color: var(--or2); }
+  table.opt td { color: var(--text); border-bottom-color: var(--line); }
+  table.opt td.up { color: var(--or2); }
+  table.opt .th-sub { color: var(--dim); }
 </style>
 </head>
 <body>
@@ -86,7 +106,7 @@
     <g fill="#DA7756">
       <rect x="46" y="8" width="8" height="38" rx="4"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(45 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(90 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(135 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(180 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(225 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(270 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(315 50 50)"/>
     </g>
-    <circle cx="50" cy="50" r="9" fill="#0A0807" stroke="#DA7756" stroke-width="4"/>
+    <circle cx="50" cy="50" r="9" fill="#FFFFFF" stroke="#DA7756" stroke-width="4"/>
   </svg>
   <div style="margin-top: 4mm;">
     <div class="kicker">Anthropic · Nasdaq Global Select Market</div>
@@ -145,7 +165,7 @@
   </div>
 
 
-  <div class="card" style="margin-top: 4mm; padding: 10px 16px; background: rgba(0,0,0,0.4);">
+  <div class="card" style="margin-top: 4mm; padding: 10px 16px; background: #FBF8F4;">
     <div class="label" style="margin-bottom: 4px;">Risk disclaimer</div>
     <p class="small" style="margin: 0; font-size: 8.4pt; line-height: 1.4;">Trading CFDs and FX Contracts is highly speculative and involves significant risk of your capital. You should not risk more than you can afford. Before taking any market action, you need to be properly aware of the risk. Past performance is not a guarantee of future performance. The information above is intended to be general and is not to be considered investment advice. This information should not be understood as an offer. Should you proceed using the information above for opening market positions, it is considered you did so at your own risk.</p>
   </div>

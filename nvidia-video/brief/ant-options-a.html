@@ -96,6 +96,15 @@
   table.opt td { color: var(--text); border-bottom-color: var(--line); }
   table.opt td.up { color: var(--or2); }
   table.opt .th-sub { color: var(--dim); }
+
+  .dates { display: flex; align-items: stretch; margin-top: 5mm; border-radius: 18px; padding: 14px 22px; background: linear-gradient(120deg, #DA7756, #E8906F); box-shadow: 0 14px 36px rgba(218,119,86,0.35); color: #FFFFFF; }
+  .dates .d { flex: 1; }
+  .dates .sep { width: 1px; background: rgba(255,255,255,0.45); margin: 2px 22px; }
+  .dates .dl { font: 700 8.5pt "JetBrains Mono"; letter-spacing: 3px; text-transform: uppercase; opacity: 0.9; }
+  .dates .dv { font: 800 34pt/1.05 "Inter Tight"; letter-spacing: -0.8px; margin-top: 3px; }
+  .dates .ds { font-size: 10pt; margin-top: 4px; opacity: 0.92; }
+  .stat { font-size: 18pt; }
+  .label { letter-spacing: 1.5px; font-size: 7pt; }
 </style>
 </head>
 <body>
@@ -114,15 +123,24 @@
     <p class="lead" style="max-width: 125mm; font-size: 12pt;">Anthropic, the company behind Claude, lists on <b>Thursday 19 November 2026</b>. Trade the shares with us on <b>1:10 leverage</b> from the first day.</p>
   </div>
 
-  <div class="row" style="margin-top: 4mm;">
-    <div class="card col"><div class="label">Ticker</div><div class="stat">ANT</div><div class="small">Nasdaq Global Select Market</div></div>
-    <div class="card col"><div class="label">IPO pricing</div><div class="stat white" style="font-size: 20pt;">Wed 18 Nov</div><div class="small">final price set the night before</div></div>
-    <div class="card col glow"><div class="label">First trading day</div><div class="stat" style="font-size: 20pt;">Thu 19 Nov</div><div class="small">2026</div></div>
+  <div class="dates">
+    <div class="d">
+      <div class="dl">IPO pricing</div>
+      <div class="dv">Wed 18 Nov</div>
+      <div class="ds">final price set the night before</div>
+    </div>
+    <div class="sep"></div>
+    <div class="d">
+      <div class="dl">First trading day</div>
+      <div class="dv">Thu 19 Nov</div>
+      <div class="ds">2026 · Nasdaq Global Select Market</div>
+    </div>
   </div>
-  <div class="row" style="margin-top: 3mm;">
-    <div class="card col"><div class="label">Expected IPO price</div><div class="stat white">$70 – $78</div><div class="small">per share</div></div>
-    <div class="card col"><div class="label">Expected valuation</div><div class="stat white">$1.3 – $1.45T</div><div class="small">about 18.6 billion shares</div></div>
-    <div class="card col"><div class="label">Leverage with us</div><div class="stat">1 : 10</div><div class="small">buying power = 10 × your investment</div></div>
+  <div class="row" style="margin-top: 4mm;">
+    <div class="card col"><div class="label">Ticker</div><div class="stat">ANT</div><div class="small">Nasdaq</div></div>
+    <div class="card col"><div class="label">IPO price · expected</div><div class="stat white">$70–$78</div><div class="small">per share</div></div>
+    <div class="card col"><div class="label">Valuation · expected</div><div class="stat white" style="white-space: nowrap;">$1.3–1.45T</div><div class="small">≈ 18.6B shares</div></div>
+    <div class="card col"><div class="label">Leverage</div><div class="stat">1 : 10</div><div class="small">buying power = 10 × investment</div></div>
   </div>
 
   <div class="card glow" style="margin-top: 4mm; padding: 12px 18px 10px;">
@@ -131,7 +149,7 @@
       <thead>
         <tr>
           <th>Investment</th>
-          <th>Buying power · 1:10</th>
+          <th>Buying power</th>
           <th>ANT shares<br/><span class="th-sub">at $78</span></th>
           <th>ANT +3%</th>
           <th class="hi">Potentially +15%</th>

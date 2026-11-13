@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Anthropic IPO: An investor briefing</title>
+<style>
+  @font-face { font-family: "Inter"; src: url("../public/fonts/inter-400.woff2"); font-weight: 400; }
+  @font-face { font-family: "Inter"; src: url("../public/fonts/inter-500.woff2"); font-weight: 500; }
+  @font-face { font-family: "Inter"; src: url("../public/fonts/inter-600.woff2"); font-weight: 600; }
+  @font-face { font-family: "Inter"; src: url("../public/fonts/inter-700.woff2"); font-weight: 700; }
+  @font-face { font-family: "Inter Tight"; src: url("../public/fonts/inter-tight-700.woff2"); font-weight: 700; }
+  @font-face { font-family: "Inter Tight"; src: url("../public/fonts/inter-tight-800.woff2"); font-weight: 800; }
+  @font-face { font-family: "JetBrains Mono"; src: url("../public/fonts/jetbrains-mono-500.woff2"); font-weight: 500; }
+  @font-face { font-family: "JetBrains Mono"; src: url("../public/fonts/jetbrains-mono-700.woff2"); font-weight: 700; }
+
+  :root {
+    --or: #DA7756; --or2: #F2A27E; --ink: #0A0807; --char: #181311; --char2: #231B18;
+    --line: rgba(255,210,180,0.14); --text: #F7F2EE; --muted: #B5A79F; --dim: #7A6D66; --red: #FF6B6B; --nv: #76B900;
+  }
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--ink); }
+  body { font-family: "Inter", sans-serif; color: var(--text); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page {
+    width: 210mm; height: 297mm; position: relative; overflow: hidden; page-break-after: always;
+    padding: 20mm 18mm 18mm;
+    background:
+      radial-gradient(520px 520px at 85% 8%, rgba(218,119,86,0.18), transparent 65%),
+      radial-gradient(600px 500px at 0% 100%, rgba(218,119,86,0.07), transparent 70%),
+      var(--ink);
+  }
+  .page:last-child { page-break-after: auto; }
+  .grid-bg { position: absolute; inset: 0; opacity: 0.18; pointer-events: none;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 46px 46px; -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent); }
+  .rail { position: absolute; top: 10mm; left: 18mm; right: 18mm; display: flex; justify-content: space-between; font: 500 8.5pt "JetBrains Mono"; letter-spacing: 2.5px; color: var(--muted); text-transform: uppercase; }
+  .rail b { color: var(--or); font-weight: 700; }
+  .foot { position: absolute; bottom: 9mm; left: 18mm; right: 18mm; display: flex; justify-content: space-between; font: 500 7.5pt "JetBrains Mono"; letter-spacing: 1.5px; color: var(--dim); }
+  .kicker { display: flex; align-items: center; gap: 10px; font: 700 9pt "JetBrains Mono"; letter-spacing: 4px; color: var(--or); text-transform: uppercase; margin-bottom: 8px; }
+  .kicker::before { content: ""; width: 28px; height: 2px; background: var(--or); }
+  .kicker.nv { color: var(--nv); } .kicker.nv::before { background: var(--nv); }
+  h1 { font: 800 34pt/1.02 "Inter Tight"; letter-spacing: -1px; margin: 0 0 10px; }
+  h2 { font: 800 27pt/1.05 "Inter Tight"; letter-spacing: -0.6px; margin: 0 0 8px; }
+  h3 { font: 700 14pt/1.2 "Inter Tight"; margin: 0 0 7px; }
+  .accent { color: var(--or2); }
+  p { font-size: 11.5pt; line-height: 1.55; color: #E3DAD4; margin: 0 0 10px; }
+  .lead { font-size: 13.5pt; line-height: 1.5; color: var(--text); }
+  .card { background: linear-gradient(160deg, var(--char2), var(--char)); border: 1px solid var(--line); border-radius: 16px; padding: 11px 14px; }
+  .card.glow { border-color: rgba(218,119,86,0.75); box-shadow: 0 0 40px rgba(218,119,86,0.16); }
+  .card.nv { border-color: rgba(118,185,0,0.6); box-shadow: 0 0 40px rgba(118,185,0,0.12); }
+  .row { display: flex; gap: 12px; }
+  .col { flex: 1; }
+  .stat { font: 800 22pt/1 "Inter Tight"; color: var(--or2); letter-spacing: -0.5px; }
+  .stat.white { color: var(--text); } .stat.nv { color: var(--nv); }
+  .label { font: 500 7.5pt "JetBrains Mono"; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+  .small { font-size: 9.8pt; color: var(--muted); line-height: 1.45; }
+  .src { font: 500 7pt "JetBrains Mono"; color: var(--dim); letter-spacing: 0.5px; margin-top: 6px; }
+  ul.clean { list-style: none; padding: 0; margin: 0; }
+  ul.clean li { position: relative; padding-left: 18px; margin: 0 0 9px; font-size: 11.5pt; line-height: 1.45; color: #E3DAD4; }
+  ul.clean li::before { content: ""; position: absolute; left: 2px; top: 6px; width: 7px; height: 7px; border-radius: 2px; background: var(--or); }
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 99px; background: var(--or); color: var(--ink); font: 800 10pt "Inter Tight"; }
+  .tag { display: inline-block; padding: 2px 9px; border-radius: 99px; border: 1px solid var(--line); font: 500 7.5pt "JetBrains Mono"; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
+  .num { font-variant-numeric: tabular-nums; }
+  .bar { height: 22px; border-radius: 6px; }
+  .step { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 12px; background: var(--char2); border: 1px solid var(--line); margin-bottom: 8px; }
+  .step .n { width: 28px; height: 28px; border-radius: 14px; background: var(--or); color: var(--ink); font: 800 12pt "Inter Tight"; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+
+  table.opt { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  table.opt th { font: 500 7.8pt "JetBrains Mono"; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; text-align: right; padding: 6px 8px 8px; border-bottom: 1px solid var(--line); line-height: 1.25; }
+  table.opt th:first-child { text-align: left; }
+  table.opt th.hi { color: var(--or2); }
+  table.opt .th-sub { font-size: 7pt; color: var(--dim); letter-spacing: 1px; }
+  table.opt td { padding: 8px 8px; text-align: right; font: 600 14pt "Inter Tight"; color: var(--text); border-bottom: 1px dashed var(--line); }
+  table.opt td:first-child { text-align: left; }
+  table.opt td.inv { font-weight: 800; font-size: 17pt; }
+  table.opt td.up { color: var(--or2); }
+  table.opt td.big { font-weight: 800; font-size: 18pt; }
+  table.opt tr:last-child td { border-bottom: none; }
+</style>
+</head>
+<body>
+<section class="page">
+  <div class="grid-bg"></div>
+  <div class="rail"><span><b>ANT</b> · IPO · investment options</span><span>November 2026 · Options B</span></div>
+  <svg width="110" height="110" viewBox="0 0 100 100" style="position:absolute; right: 18mm; top: 22mm;">
+    <g fill="#DA7756">
+      <rect x="46" y="8" width="8" height="38" rx="4"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(45 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(90 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(135 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(180 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(225 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(270 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(315 50 50)"/>
+    </g>
+    <circle cx="50" cy="50" r="9" fill="#0A0807" stroke="#DA7756" stroke-width="4"/>
+  </svg>
+  <div style="margin-top: 4mm;">
+    <div class="kicker">Anthropic · Nasdaq Global Select Market</div>
+    <h1 style="font-size: 30pt; max-width: 120mm;">Anthropic IPO.<br/><span class="accent">Your investment options.</span></h1>
+    <p class="lead" style="max-width: 125mm; font-size: 12pt;">Anthropic, the company behind Claude, lists on <b>Thursday 19 November 2026</b>. Trade the shares with us on <b>1:10 leverage</b> from the first day.</p>
+  </div>
+
+  <div class="row" style="margin-top: 4mm;">
+    <div class="card col"><div class="label">Ticker</div><div class="stat">ANT</div><div class="small">Nasdaq Global Select Market</div></div>
+    <div class="card col"><div class="label">IPO pricing</div><div class="stat white" style="font-size: 20pt;">Wed 18 Nov</div><div class="small">final price set the night before</div></div>
+    <div class="card col glow"><div class="label">First trading day</div><div class="stat" style="font-size: 20pt;">Thu 19 Nov</div><div class="small">2026</div></div>
+  </div>
+  <div class="row" style="margin-top: 3mm;">
+    <div class="card col"><div class="label">Expected IPO price</div><div class="stat white">$70 – $78</div><div class="small">per share</div></div>
+    <div class="card col"><div class="label">Expected valuation</div><div class="stat white">$1.3 – $1.45T</div><div class="small">about 18.6 billion shares</div></div>
+    <div class="card col"><div class="label">Leverage with us</div><div class="stat">1 : 10</div><div class="small">exposure = 10 × your investment</div></div>
+  </div>
+
+  <div class="card glow" style="margin-top: 4mm; padding: 12px 18px 10px;">
+    <div class="kicker" style="margin-bottom: 6px;">If ANT rises · what your investment makes</div>
+    <table class="opt">
+      <thead>
+        <tr>
+          <th>Investment</th>
+          <th>Exposure · 1:10</th>
+          <th>ANT shares<br/><span class="th-sub">at $78</span></th>
+          <th>ANT +3%</th>
+          <th class="hi">ANT +15%</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td class="num inv">$50,000</td>
+        <td class="num">$500,000</td>
+        <td class="num">6,410</td>
+        <td class="num up">+$15,000</td>
+        <td class="num up big">+$75,000</td>
+      </tr>
+      <tr>
+        <td class="num inv">$100,000</td>
+        <td class="num">$1,000,000</td>
+        <td class="num">12,821</td>
+        <td class="num up">+$30,000</td>
+        <td class="num up big">+$150,000</td>
+      </tr>
+      <tr>
+        <td class="num inv">$250,000</td>
+        <td class="num">$2,500,000</td>
+        <td class="num">32,051</td>
+        <td class="num up">+$75,000</td>
+        <td class="num up big">+$375,000</td>
+      </tr>
+      </tbody>
+    </table>
+    <div class="src" style="margin-top: 10px;">Shares = exposure ÷ $78 (top of the expected range). Profit = exposure × the move in ANT. Before spreads, commissions and overnight financing. Expected terms as supplied on 13 November 2026; final price and dates may change.</div>
+  </div>
+
+
+  <div class="card" style="margin-top: 4mm; padding: 10px 16px; background: rgba(0,0,0,0.4);">
+    <div class="label" style="margin-bottom: 4px;">Risk disclaimer</div>
+    <p class="small" style="margin: 0; font-size: 8.4pt; line-height: 1.4;">Trading CFDs and FX Contracts is highly speculative and involves significant risk of your capital. You should not risk more than you can afford. Before taking any market action, you need to be properly aware of the risk. Past performance is not a guarantee of future performance. The information above is intended to be general and is not to be considered investment advice. This information should not be understood as an offer. Should you proceed using the information above for opening market positions, it is considered you did so at your own risk.</p>
+  </div>
+  <div class="foot"><span>Anthropic IPO · investment options · Options B</span><span>ANT · Nasdaq · 19.11.2026</span></div>
+</section>
+</body>
+</html>

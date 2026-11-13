@@ -175,8 +175,13 @@ def build_plan(req: dict[str, Any], info: dict[str, Any], tick: dict[str, Any], 
             raise TradeRejected("Stop-loss price must be positive.")
         if (long and sl >= entry) or (not long and sl <= entry):
             raise TradeRejected("Stop-loss must be below the entry for a buy and above it for a sell.")
+    elif sl_mode == "percent":
+        pct = float(req.get("sl") or 0)
+        if pct <= 0:
+            raise TradeRejected("Stop-loss percent must be positive.")
+        sl = entry * (1 - sign * pct / 100.0)
     elif sl_mode != "none":
-        raise TradeRejected("sl_mode must be points, price or none.")
+        raise TradeRejected("sl_mode must be points, price, percent or none.")
     if sl is not None:
         sl = round_price(sl, info)
         stops_level = float(info.get("trade_stops_level") or 0) * point
@@ -257,6 +262,11 @@ def build_plan(req: dict[str, Any], info: dict[str, Any], tick: dict[str, Any], 
             raise TradeRejected("Take-profit price must be positive.")
         if (long and tp <= entry) or (not long and tp >= entry):
             raise TradeRejected("Take-profit must be above the entry for a buy and below it for a sell.")
+    elif tp_mode == "percent":
+        pct = float(req.get("tp") or 0)
+        if pct <= 0:
+            raise TradeRejected("Take-profit percent must be positive.")
+        tp = entry * (1 + sign * pct / 100.0)
     elif tp_mode == "rr":
         if sl is None:
             raise TradeRejected("A reward:risk take-profit needs a stop-loss.")
@@ -265,7 +275,7 @@ def build_plan(req: dict[str, Any], info: dict[str, Any], tick: dict[str, Any], 
             raise TradeRejected("Reward:risk must be positive.")
         tp = entry + sign * abs(entry - sl) * rr
     elif tp_mode != "none":
-        raise TradeRejected("tp_mode must be points, price, rr or none.")
+        raise TradeRejected("tp_mode must be points, price, percent, rr or none.")
     if tp is not None:
         tp = round_price(tp, info)
     reward = loss_per_lot(abs(tp - entry), info) * volume if tp is not None else None

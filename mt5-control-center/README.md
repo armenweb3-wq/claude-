@@ -15,6 +15,8 @@ MetaTrader 5 accounts at once** on your own Windows computer.
   See [Trading](#6-trading-optional).
 * **Local-only and key-protected** - see [Security](#7-security).
 
+![Home screenshot](docs/home.png)
+
 ![Overview screenshot](docs/overview.png)
 
 ![Trade ticket screenshot](docs/trade.png)
@@ -165,8 +167,12 @@ opens the dashboard. Untick the box to remove the startup entry.
 ## 5. What the dashboard shows
 
 **Home (simple view).** The page you see first. One card per account with
-balance, equity, floating and realized P/L, and a single **Auto-trading**
-control: *Start paper*, *Go live…* (type LIVE) or *Stop*. Starting from Home
+balance, equity, free margin, floating and today's realized P/L; a single
+**Auto-trading** control (*Start paper*, *Go live…* with typed LIVE, *Stop*);
+plain **results boxes** (trades placed, winners, losers, break-even, win
+rate, result) for paper and for the bot's real trades; a one-line **Place a
+trade** form (symbol, Buy/Sell, risk %, stop %, target %) with a preview and
+typed confirmation; and the open positions with Close buttons. Starting from Home
 applies the standard rules: trend breakout on all tradeable symbols except
 crypto, H1, risk 1% of free margin per trade, stop 1%, target 3%, break-even
 at +1%, max 3 positions, halt for the day after −3%, and the bot resumes

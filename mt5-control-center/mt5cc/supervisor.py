@@ -17,6 +17,7 @@ from .config import AccountConfig, Settings
 from .worker import worker_main
 
 log = logging.getLogger("mt5cc.supervisor")
+proc_started: dict[str, float] = {}
 
 
 @dataclass
@@ -62,6 +63,7 @@ class Supervisor:
         self._thread: threading.Thread | None = None
         self.listeners: list[Any] = []   # callables(account_id, state) called on snapshot
         self._pending: dict[str, dict[str, Any]] = {}   # req_id -> {"event": Event, "result": msg}
+        self._graveyard: list[tuple[float, Any, Any]] = []   # keeps queues of killed workers alive briefly (spawn race)
 
     # ------------------------------------------------------------------ #
     def start(self) -> None:
@@ -81,6 +83,7 @@ class Supervisor:
             daemon=True,
         )
         proc.start()
+        proc_started[acc_id] = time.time()
         with self._lock:
             self._procs[acc_id] = proc
             self._cmd_qs[acc_id] = cmd_q
@@ -119,7 +122,11 @@ class Supervisor:
     def _kill(self, acc_id: str) -> None:
         q = self._cmd_qs.pop(acc_id, None)
         proc = self._procs.pop(acc_id, None)
-        self._out_qs.pop(acc_id, None)
+        out_q = self._out_qs.pop(acc_id, None)
+        if proc is not None and time.time() - proc_started.get(acc_id, 0) < 3:
+            time.sleep(1.0)   # let a freshly spawned child finish unpickling its queues
+        self._graveyard.append((time.time(), q, out_q))
+        self._graveyard = [g for g in self._graveyard if time.time() - g[0] < 30]
         if q is not None:
             try:
                 q.put({"cmd": "shutdown"})

@@ -342,4 +342,22 @@ label.check.inline { display: inline-flex; align-items: center; margin: 0; }
 body.simple .nav button.adv { display: none; }
 .adv-toggle { margin-top: 6px; background: transparent !important; color: var(--text-3) !important; font-size: 11.5px !important; }
 .home-card .card-body .row-between b { font-size: 13.5px; }
-.home-card .metrics.five { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+.home-card .metrics.five { grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); }
+.home-card .metric .v { font-size: 15px; }
+
+.home-grid { grid-template-columns: repeat(auto-fit, minmax(560px, 1fr)); }
+.home-section { border-top: 1px solid var(--border); }
+.results { background: var(--surface-2); border-radius: var(--radius-sm); padding: 10px 12px; }
+.results .k { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); font-weight: 600; margin-bottom: 6px; }
+.res-row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 2px 0; color: var(--text-2); }
+.res-row b { color: var(--text); font-variant-numeric: tabular-nums; }
+.results-grid { gap: 10px; }
+.qt-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+.qt-row input { background: var(--surface-2); border: 1px solid var(--border-strong); color: var(--text); border-radius: 6px; padding: 6px 9px; font: inherit; font-size: 13px; min-height: 34px; }
+.qt-row .qt-symbol { width: 120px; text-transform: uppercase; }
+.qt-row .qt-f { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--text-3); }
+.qt-row .qt-f input { width: 78px; }
+.qt-row .seg { min-height: 34px; }
+.qt-row .seg button.active.buy { background: rgba(57,135,229,.25); color: #9cc4f5; }
+.qt-row .seg button.active.sell { background: rgba(224,105,47,.25); color: #f0a07a; }
+@media (max-width: 1250px) { .home-grid { grid-template-columns: 1fr; } }

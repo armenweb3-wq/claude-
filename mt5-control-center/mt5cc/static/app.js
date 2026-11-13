@@ -1059,49 +1059,112 @@
   const PRESET = { strategy: "trend_breakout", symbols_mode: "auto", universe_categories: ["forex", "metals", "indices", "energies"], exclude_crypto: true,
     max_symbols: 40, timeframe: "H1", risk_percent: 1, risk_basis: "free_margin", exits: "fixed", sl_percent: 1, tp_percent: 3, breakeven_percent: 1,
     max_positions: 3, max_daily_loss_percent: 3, max_lots: 5, autostart: true };
+  const QT = {};   // quick-trade form memory per account
+
+  function resultsBox(title, r, cur, sub) {
+    if (!r) return `<div class="results"><div class="k">${esc(title)}</div><div class="small muted">No trades yet</div></div>`;
+    const be = r.trades - r.wins - r.losses;
+    return `<div class="results"><div class="k">${esc(title)} <span class="muted">${esc(sub || "")}</span></div>
+      <div class="res-row"><span>Trades placed</span><b>${r.trades}</b></div>
+      <div class="res-row"><span>Winners</span><b class="pos">${r.wins}</b></div>
+      <div class="res-row"><span>Losers</span><b class="neg">${r.losses}</b></div>
+      <div class="res-row"><span>Break-even</span><b>${be}</b></div>
+      <div class="res-row"><span>Win rate</span><b>${r.trades ? pct(r.wins / r.trades) : "–"}</b></div>
+      <div class="res-row"><span>Result</span><b>${signedMoney(r.net, cur)}</b></div></div>`;
+  }
+  function statsFrom(trades) {
+    if (!trades || !trades.length) return null;
+    const wins = trades.filter(t => t.net > 0).length, losses = trades.filter(t => t.net < 0).length;
+    return { trades: trades.length, wins, losses, net: trades.reduce((a, t) => a + t.net, 0) };
+  }
 
   async function viewHome(content, token) {
     const list = accounts();
     if (!list.length) { return viewOverview(content, token); }
-    const bots = await Promise.all(list.map(a => api(`/api/accounts/${a.id}/bot`).catch(() => null)));
+    const [bots, perfs, poss] = await Promise.all([
+      Promise.all(list.map(a => api(`/api/accounts/${a.id}/bot`).catch(() => null))),
+      Promise.all(list.map(a => api(`/api/accounts/${a.id}/bot/performance`).catch(() => null))),
+      Promise.all(list.map(a => api(`/api/accounts/${a.id}/positions`).catch(() => null))),
+    ]);
     if (token !== S.viewToken) return;
-    content.innerHTML = mockBanner() + offlineBanners() + `<div class="grid auto">` + list.map((a, i) => {
+    content.innerHTML = mockBanner() + offlineBanners() + `<div class="grid auto home-grid">` + list.map((a, i) => {
       const acc = a.account, cur = acc ? acc.currency : "", dg = acc ? (acc.currency_digits ?? 2) : 2;
       const b = bots[i], st = b && b.state, cfg = b ? b.config : {}, running = !!(st && st.running), mode = st ? st.mode : "paper";
-      const canTrade = b && b.trading.enabled;
-      const reasons = b ? b.trading.reasons : [];
+      const canTrade = !!(b && b.trading.enabled), reasons = b ? b.trading.reasons : [];
       const paper = st && st.paper;
+      const perf = perfs[i], pos = poss[i], rows = pos ? pos.positions : [];
+      const paperStats = paper && paper.trade_count ? { ...(statsFrom(paper.trades) || {}), trades: paper.trade_count, net: (paper.equity || 0) - (paper.start_equity || 0) } : null;
+      const liveStats = perf && perf.available && perf.stats && perf.stats.trades ? perf.stats : null;
+      const q = QT[a.id] || (QT[a.id] = { symbol: "", side: "BUY", risk: 1, sl: 1, tp: 3 });
       return `<section class="card acct-card home-card" data-acc="${esc(a.id)}">
         <div class="card-head"><span class="dot c-${esc(a.color)}"></span><div class="title"><span class="name">${esc(a.label)} ${a.mock ? '<span class="tag demo">demo</span>' : ""}</span><span class="login">${acc ? `${esc(acc.login)} · ${esc(acc.server)}` : ""}</span></div><div class="spacer"></div><span class="pill ${esc(a.state)}">${esc(stateLabel(a.state))}</span></div>
         <div class="card-body tight"><div class="metrics five">
           <div class="metric"><div class="k">Balance</div><div class="v">${acc ? money(acc.balance, cur, dg) : "–"}</div></div>
           <div class="metric"><div class="k">Equity</div><div class="v">${acc ? money(acc.equity, cur, dg) : "–"}</div></div>
+          <div class="metric"><div class="k">Free margin</div><div class="v">${acc ? money(acc.margin_free, cur, dg) : "–"}</div></div>
           <div class="metric"><div class="k">Floating</div><div class="v">${acc ? signedMoney(acc.floating, cur, dg) : "–"}</div><div class="s">${a.positions_count} open</div></div>
           <div class="metric"><div class="k">Today</div><div class="v">${signedMoney(a.realized?.day, cur, dg)}</div><div class="s">realized</div></div>
-          <div class="metric"><div class="k">This month</div><div class="v">${signedMoney(a.realized?.month, cur, dg)}</div><div class="s">realized</div></div>
         </div></div>
-        <div class="card-body">
+        <div class="card-body home-section">
           <div class="row-between"><div><b>Auto-trading</b> <span class="small dim">· ${running ? (mode === "live" ? '<span class="tag bad">LIVE</span>' : '<span class="tag ok">PAPER</span>') : '<span class="tag neutral">OFF</span>'}${st && st.halt_reason ? ` <span class="warn-text small">${esc(st.halt_reason)}</span>` : ""}</div>
             <span class="actions">${running ? `<button class="btn sm danger" data-home="stop" data-id="${esc(a.id)}">Stop</button>` : `<button class="btn sm primary" data-home="paper" data-id="${esc(a.id)}">Start paper</button><button class="btn sm danger" data-home="live" data-id="${esc(a.id)}" ${canTrade ? "" : "disabled"}>Go live…</button>`}</span></div>
-          <div class="xs muted mt6">Rules: trend breakout on all tradeable symbols except crypto (${st && st.active_symbols ? st.active_symbols.length + " symbols" : "scanned at start"}), H1 · risk 1% of free margin per trade · stop 1% · target 3% · break-even at +1% · max 3 positions · stops for the day after −3%.${running && cfg && cfg.exits !== "fixed" ? ' <span class="warn-text">Custom settings are active (Advanced → Trading bot).</span>' : ""}</div>
+          <div class="xs muted mt6">1% of free margin per trade · stop 1% · target 3% · break-even at +1% · all symbols except crypto${st && st.active_symbols ? ` (${st.active_symbols.length})` : ""} · max 3 open · pauses after −3% in a day.${running && cfg && cfg.exits !== "fixed" ? ' <span class="warn-text">Custom settings are active (Advanced → Trading bot).</span>' : ""}</div>
           ${!canTrade && b ? `<div class="xs mt6 warn-text">Live blocked: ${esc(reasons.join("; "))}</div>` : ""}
-          ${st ? `<div class="small dim mt6">Bot today ${st.daily_pl === null || st.daily_pl === undefined ? "–" : signedMoney(st.daily_pl, cur)} · ${mode === "paper" ? `paper equity ${paper && paper.equity ? fmt(paper.equity) : "–"} (${paper ? paper.trade_count : 0} paper trades)` : `${st.live_positions.length} live bot position(s)`}${st.decisions && st.decisions.length ? ` · last: ${esc(st.decisions[st.decisions.length - 1].message.slice(0, 90))}` : ""}</div>` : ""}
+          <div class="grid cols-2 mt14 results-grid">${resultsBox("Paper results", paperStats, cur, paper && paper.start_equity ? "since " + fmt(paper.start_equity, 0) : "")}${resultsBox("Live results", liveStats, cur, "bot's real trades")}</div>
+        </div>
+        <div class="card-body home-section">
+          <div class="row-between"><b>Place a trade</b><span class="xs muted">${canTrade ? "same rules: 1% of free margin at the stop" : "trading is off for this account"}</span></div>
+          <div class="qt-row mt6">
+            <input class="qt-symbol" list="qt-symbols-${esc(a.id)}" placeholder="Symbol" value="${esc(q.symbol)}" spellcheck="false" ${canTrade ? "" : "disabled"}><datalist id="qt-symbols-${esc(a.id)}">${(st && st.active_symbols ? st.active_symbols : []).map(x => `<option value="${esc(x)}">`).join("")}</datalist>
+            <span class="seg qt-side"><button type="button" data-v="BUY" class="${q.side === "BUY" ? "active buy" : ""}">Buy</button><button type="button" data-v="SELL" class="${q.side === "SELL" ? "active sell" : ""}">Sell</button></span>
+            <label class="qt-f">Risk %<input class="qt-risk" type="number" step="0.1" min="0.1" value="${esc(q.risk)}"></label>
+            <label class="qt-f">Stop %<input class="qt-sl" type="number" step="0.1" min="0.1" value="${esc(q.sl)}"></label>
+            <label class="qt-f">Target %<input class="qt-tp" type="number" step="0.1" min="0" value="${esc(q.tp)}"></label>
+            <button class="btn primary qt-go" data-id="${esc(a.id)}" ${canTrade ? "" : "disabled"}>Preview</button>
+          </div>
+          ${rows.length ? `<div class="table-wrap mt14"><table class="data compact"><thead><tr><th>Open positions</th><th>Side</th><th class="num">Lots</th><th class="num">Entry</th><th class="num">S/L</th><th class="num">T/P</th><th class="num">P/L</th><th class="right"></th></tr></thead><tbody>${rows.map(p => `<tr><td class="sym">${esc(p.symbol)}</td><td><span class="tag ${p.direction.toLowerCase()}">${p.direction}</span></td><td class="num">${fmt(p.volume, 2)}</td><td class="num">${price(p.price_open)}</td><td class="num muted">${p.sl ? price(p.sl) : "–"}</td><td class="num muted">${p.tp ? price(p.tp) : "–"}</td><td class="num">${signedMoney(p.net, cur)}</td><td class="right">${canTrade ? `<button class="btn sm danger" data-act="close" data-ticket="${p.ticket}">Close</button>` : ""}</td></tr>`).join("")}</tbody></table></div>` : `<div class="xs muted mt6">No open positions.</div>`}
         </div></section>`;
     }).join("") + `</div>`;
     bindReconnect(content);
+    list.forEach((a, i) => { const sec = content.querySelector(`.home-card[data-acc="${CSS.escape(a.id)}"]`); if (sec && poss[i]) bindPositionActions(sec, a, poss[i].positions, poss[i].currency); });
     content.querySelectorAll("[data-home]").forEach(btn => btn.addEventListener("click", async () => {
       const id = btn.dataset.id, a = acct(id), act = btn.dataset.home;
       try {
         if (act === "stop") { await post(`/api/accounts/${id}/bot/stop`, {}); toast("Auto-trading stopped"); renderView(); return; }
         const b = bots[list.findIndex(x => x.id === id)];
-        if (!b.state || !b.state.strategy || !(b.config && b.config.exits === "fixed")) { await put(`/api/accounts/${id}/bot/config`, { ...b.config, ...PRESET, mode: act }); }
+        if (!(b.config && b.config.exits === "fixed")) { await put(`/api/accounts/${id}/bot/config`, { ...b.config, ...PRESET, mode: act }); }
         if (act === "paper") { await post(`/api/accounts/${id}/bot/start`, { mode: "paper" }); toast("Paper auto-trading started"); renderView(); return; }
         openModal({ title: `Go live on ${a.label}?`, danger: true, confirmLabel: "Go live", requireText: "LIVE",
-          body: `<p>The bot will place real orders on this account by itself: 1% of free margin per trade, stop 1%, target 3%, break-even at +1%, max 3 open, halt after −3% in a day. It keeps running after restarts until you press Stop.</p>`,
+          body: `<p>The bot will place real orders on this account by itself: 1% of free margin per trade, stop 1%, target 3%, break-even at +1%, max 3 open, pause after −3% in a day. It keeps running after restarts until you press Stop.</p>`,
           onConfirm: async () => { await post(`/api/accounts/${id}/bot/start`, { mode: "live", confirm: "LIVE" }); toast("LIVE auto-trading started"); renderView(); } });
       } catch (err) { toast(err.message, "bad"); }
     }));
-    scheduleViewRefresh($("#modal") ? 60000 : 6000);
+    content.querySelectorAll(".home-card").forEach(card => {
+      const id = card.dataset.acc, q = QT[id];
+      card.querySelectorAll(".qt-side button").forEach(b => b.addEventListener("click", () => { q.side = b.dataset.v; card.querySelectorAll(".qt-side button").forEach(x => x.className = x === b ? "active " + q.side.toLowerCase() : ""); }));
+      card.querySelectorAll(".qt-symbol,.qt-risk,.qt-sl,.qt-tp").forEach(el => el.addEventListener("input", () => { q.symbol = card.querySelector(".qt-symbol").value.trim().toUpperCase(); q.risk = card.querySelector(".qt-risk").value; q.sl = card.querySelector(".qt-sl").value; q.tp = card.querySelector(".qt-tp").value; }));
+      const go = card.querySelector(".qt-go"); if (!go || go.disabled) return;
+      go.addEventListener("click", async () => {
+        q.symbol = card.querySelector(".qt-symbol").value.trim().toUpperCase();
+        if (!q.symbol) { toast("Type a symbol first", "bad"); return; }
+        const a = acct(id), cur = a.account ? a.account.currency : "";
+        const body = { symbol: q.symbol, side: q.side, order_kind: "market", sizing: "risk", risk_percent: parseFloat(q.risk), risk_basis: "free_margin", sl_mode: "percent", sl: parseFloat(q.sl), tp_mode: parseFloat(q.tp) > 0 ? "percent" : "none", tp: parseFloat(q.tp), comment: "manual" };
+        go.disabled = true; go.textContent = "Checking…";
+        try {
+          const pv = await post(`/api/accounts/${id}/orders/preview`, body); const p = pv.plan;
+          openModal({ title: `${p.direction} ${fmt(p.volume, 2)} ${p.symbol} on ${a.label}?`, danger: true, confirmLabel: "Place order", requireText: p.direction,
+            body: `<dl class="kv"><dt>Entry (now)</dt><dd>${price(p.entry)}</dd><dt>Stop loss</dt><dd>${price(p.sl)} (−${esc(q.sl)}%)</dd><dt>Take profit</dt><dd>${p.tp ? price(p.tp) + " (+" + esc(q.tp) + "%)" : "none"}</dd><dt>Lots</dt><dd>${fmt(p.volume, 2)}</dd><dt>If the stop is hit</dt><dd class="neg">−${fmt(p.risk_amount)} ${esc(cur)} (${fmt(p.risk_percent, 2)}% of free margin)</dd><dt>If the target is hit</dt><dd class="pos">${p.reward_amount === null ? "–" : "+" + fmt(p.reward_amount) + " " + esc(cur)}</dd><dt>Broker check</dt><dd>${pv.check_ok ? '<span class="tag ok">passed</span>' : '<span class="tag bad">' + esc(pv.check_text) + "</span>"}</dd></dl>${p.warnings.length ? `<ul class="notes">${p.warnings.map(w => `<li>${esc(w)}</li>`).join("")}</ul>` : ""}`,
+            onConfirm: async () => {
+              if (!pv.check_ok) throw new Error("Broker pre-check failed: " + pv.check_text);
+              const r = await post(`/api/accounts/${id}/orders`, { ...pv.request_echo, intent: pv.intent, expected: { symbol: p.symbol, order_type: p.order_type, volume: p.volume } });
+              if (!r.ok) throw new Error(`${r.result_text}${r.result?.comment ? " · " + r.result.comment : ""}`);
+              toast(`Done: ${p.direction} ${fmt(r.result.volume || p.volume, 2)} ${p.symbol} @ ${price(r.result.price || p.entry)}`); renderView();
+            } });
+        } catch (err) { toast(err.message, "bad"); }
+        go.disabled = false; go.textContent = "Preview";
+      });
+    });
+    scheduleViewRefresh($("#modal") || document.activeElement.closest(".qt-row") ? 60000 : 6000);
   }
 
   /* ---------------- polling ---------------- */

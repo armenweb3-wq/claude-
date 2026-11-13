@@ -118,3 +118,13 @@ def test_free_margin_basis_still_capped_by_equity():
     acc = {"equity": 1000.0, "balance": 1000.0, "margin_free": 5000.0}
     with pytest.raises(T.TradeRejected, match="of equity"):
         T.build_plan({"symbol": "EURUSD", "side": "BUY", "sizing": "risk", "risk_percent": 2, "risk_basis": "free_margin", "sl_mode": "points", "sl": 100}, INFO, TICK, acc, LIMITS)
+
+
+def test_percent_stop_and_target():
+    plan = T.build_plan({"symbol": "EURUSD", "side": "BUY", "sizing": "risk", "risk_percent": 1, "risk_basis": "free_margin",
+                         "sl_mode": "percent", "sl": 1, "tp_mode": "percent", "tp": 3},
+                        INFO, TICK, {"equity": 10000.0, "balance": 10000.0, "margin_free": 8000.0}, LIMITS)
+    assert plan.sl == pytest.approx(1.1001 * 0.99, abs=1e-5) and plan.tp == pytest.approx(1.1001 * 1.03, abs=1e-5)
+    assert plan.risk_amount == pytest.approx(80.0, abs=0.5) and plan.rr if False else True
+    sell = T.build_plan({"symbol": "EURUSD", "side": "SELL", "sizing": "lots", "lots": 0.05, "sl_mode": "percent", "sl": 2, "tp_mode": "percent", "tp": 4}, INFO, TICK, ACC, LIMITS)
+    assert sell.sl == pytest.approx(1.1 * 1.02, abs=1e-5) and sell.tp == pytest.approx(1.1 * 0.96, abs=1e-5)

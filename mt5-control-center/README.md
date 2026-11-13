@@ -164,6 +164,14 @@ opens the dashboard. Untick the box to remove the startup entry.
 
 ## 5. What the dashboard shows
 
+**Home (simple view).** The page you see first. One card per account with
+balance, equity, floating and realized P/L, and a single **Auto-trading**
+control: *Start paper*, *Go live…* (type LIVE) or *Stop*. Starting from Home
+applies the standard rules: trend breakout on all tradeable symbols except
+crypto, H1, risk 1% of free margin per trade, stop 1%, target 3%, break-even
+at +1%, max 3 positions, halt for the day after −3%, and the bot resumes
+after a restart. Everything else is behind **Show advanced** in the sidebar.
+
 * **Overview** - per-account balance, equity, floating P/L, free/used margin,
   margin level, open positions, currency, connection state and last update;
   realized P/L today / this week / this month; a live equity chart sampled

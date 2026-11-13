@@ -27,15 +27,17 @@
       <div><h1>Control Center</h1><div class="sub">MetaTrader 5 · multi-account</div></div>
     </div>
     <nav class="nav" id="nav">
-      <button data-view="overview" class="active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview</button>
+      <button data-view="home" class="active"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+      <button data-view="overview" class="adv"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Overview</button>
       <button data-view="positions"><svg viewBox="0 0 24 24"><path d="M4 17l5-5 4 4 7-8"/><path d="M14 8h6v6"/></svg>Open positions</button>
-      <button data-view="trade"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg>Trade</button>
-      <button data-view="bot"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3"/><circle cx="9" cy="13" r="1.5"/><circle cx="15" cy="13" r="1.5"/><path d="M12 3v4M8 21v-2M16 21v-2"/></svg>Trading bot</button>
-      <button data-view="performance"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Performance</button>
-      <button data-view="trades"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Trade history</button>
-      <button data-view="balance"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>Balance operations</button>
+      <button data-view="trade" class="adv"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/><circle cx="12" cy="12" r="9"/></svg>Trade</button>
+      <button data-view="bot" class="adv"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="3"/><circle cx="9" cy="13" r="1.5"/><circle cx="15" cy="13" r="1.5"/><path d="M12 3v4M8 21v-2M16 21v-2"/></svg>Trading bot</button>
+      <button data-view="performance" class="adv"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Performance</button>
+      <button data-view="trades" class="adv"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Trade history</button>
+      <button data-view="balance" class="adv"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg>Balance operations</button>
       <button data-view="accounts"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Accounts</button>
-      <button data-view="diagnostics"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Diagnostics</button>
+      <button data-view="diagnostics" class="adv"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Diagnostics</button>
+      <button id="adv-toggle" class="adv-toggle">Show advanced</button>
     </nav>
     <div>
       <div class="sidebar-section-title">Accounts</div>
@@ -49,7 +51,7 @@
 
   <main class="main">
     <header class="topbar">
-      <h2 id="view-title">Overview</h2>
+      <h2 id="view-title">Home</h2>
       <div class="scope" id="scope"></div>
       <div class="spacer"></div>
       <div class="clock" id="clock"><span class="live-dot off" id="live-dot"></span><span id="clock-text">–</span></div>

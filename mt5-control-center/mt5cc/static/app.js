@@ -3,7 +3,8 @@
   "use strict";
 
   const S = {
-    view: "overview",
+    view: "home",
+    advanced: (() => { try { return localStorage.getItem("mt5cc_adv") === "1"; } catch (_) { return false; } })(),
     scope: "all",
     overview: null,
     perfPeriod: "month",
@@ -14,7 +15,7 @@
     viewToken: 0,
   };
 
-  const VIEW_TITLES = { overview: "Overview", positions: "Open positions", trade: "Trade", bot: "Trading bot", performance: "Performance", trades: "Trade history", balance: "Balance operations", accounts: "Accounts", diagnostics: "Diagnostics" };
+  const VIEW_TITLES = { home: "Home", overview: "Overview", positions: "Open positions", trade: "Trade", bot: "Trading bot", performance: "Performance", trades: "Trade history", balance: "Balance operations", accounts: "Accounts", diagnostics: "Diagnostics" };
   const $ = (sel, root) => (root || document).querySelector(sel);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const COLOR_HEX = { blue: "#3987e5", orange: "#e0692f", aqua: "#1fb282", yellow: "#d29a1a", magenta: "#d55181", violet: "#9085e9" };
@@ -93,6 +94,12 @@
     document.querySelectorAll("[data-scope]").forEach(b => b.addEventListener("click", () => { S.scope = b.dataset.scope; S.tf.page = 1; renderShell(); renderView(); }));
   }
 
+  function applySimpleMode() {
+    document.body.classList.toggle("simple", !S.advanced);
+    const t = $("#adv-toggle"); if (t) t.textContent = S.advanced ? "Hide advanced" : "Show advanced";
+  }
+  $("#adv-toggle").addEventListener("click", () => { S.advanced = !S.advanced; try { localStorage.setItem("mt5cc_adv", S.advanced ? "1" : "0"); } catch (_) { } applySimpleMode(); });
+  applySimpleMode();
   $("#nav").addEventListener("click", e => {
     const b = e.target.closest("button[data-view]");
     if (!b) return;
@@ -121,7 +128,7 @@
     clearTimeout(S.timers.view);
     const token = ++S.viewToken;
     const content = $("#content");
-    const fn = { overview: viewOverview, positions: viewPositions, trade: viewTrade, bot: viewBot, performance: viewPerformance, trades: viewTrades, balance: viewBalance, accounts: viewAccounts, diagnostics: viewDiagnostics }[S.view];
+    const fn = { home: viewHome, overview: viewOverview, positions: viewPositions, trade: viewTrade, bot: viewBot, performance: viewPerformance, trades: viewTrades, balance: viewBalance, accounts: viewAccounts, diagnostics: viewDiagnostics }[S.view];
     Promise.resolve(fn(content, token)).catch(err => {
       if (token !== S.viewToken) return;
       if (err.message !== "unauthorized") content.innerHTML = `<div class="banner bad">Could not load this view: ${esc(err.message)}</div>`;
@@ -1046,6 +1053,55 @@
     const c1 = $("#bt-curve"), c2 = $("#bt-dd"), col = "#3987e5";
     Charts.responsive(c1, () => Charts.lineChart(c1, { height: 200, baseline: null, series: [{ name: "Equity", color: col, points: r.curve.map(p => ({ x: p.t, y: p.equity })) }], tipFormat: v => fmt(v, 2) + " " + cur }));
     Charts.responsive(c2, () => Charts.lineChart(c2, { height: 160, baseline: 0, series: [{ name: "Drawdown", color: "#e04f4f", points: r.curve.map(p => ({ x: p.t, y: p.dd })) }], tipFormat: v => fmt(v, 2) + " " + cur }));
+  }
+
+  /* ---------------- HOME (simple view) ---------------- */
+  const PRESET = { strategy: "trend_breakout", symbols_mode: "auto", universe_categories: ["forex", "metals", "indices", "energies"], exclude_crypto: true,
+    max_symbols: 40, timeframe: "H1", risk_percent: 1, risk_basis: "free_margin", exits: "fixed", sl_percent: 1, tp_percent: 3, breakeven_percent: 1,
+    max_positions: 3, max_daily_loss_percent: 3, max_lots: 5, autostart: true };
+
+  async function viewHome(content, token) {
+    const list = accounts();
+    if (!list.length) { return viewOverview(content, token); }
+    const bots = await Promise.all(list.map(a => api(`/api/accounts/${a.id}/bot`).catch(() => null)));
+    if (token !== S.viewToken) return;
+    content.innerHTML = mockBanner() + offlineBanners() + `<div class="grid auto">` + list.map((a, i) => {
+      const acc = a.account, cur = acc ? acc.currency : "", dg = acc ? (acc.currency_digits ?? 2) : 2;
+      const b = bots[i], st = b && b.state, cfg = b ? b.config : {}, running = !!(st && st.running), mode = st ? st.mode : "paper";
+      const canTrade = b && b.trading.enabled;
+      const reasons = b ? b.trading.reasons : [];
+      const paper = st && st.paper;
+      return `<section class="card acct-card home-card" data-acc="${esc(a.id)}">
+        <div class="card-head"><span class="dot c-${esc(a.color)}"></span><div class="title"><span class="name">${esc(a.label)} ${a.mock ? '<span class="tag demo">demo</span>' : ""}</span><span class="login">${acc ? `${esc(acc.login)} · ${esc(acc.server)}` : ""}</span></div><div class="spacer"></div><span class="pill ${esc(a.state)}">${esc(stateLabel(a.state))}</span></div>
+        <div class="card-body tight"><div class="metrics five">
+          <div class="metric"><div class="k">Balance</div><div class="v">${acc ? money(acc.balance, cur, dg) : "–"}</div></div>
+          <div class="metric"><div class="k">Equity</div><div class="v">${acc ? money(acc.equity, cur, dg) : "–"}</div></div>
+          <div class="metric"><div class="k">Floating</div><div class="v">${acc ? signedMoney(acc.floating, cur, dg) : "–"}</div><div class="s">${a.positions_count} open</div></div>
+          <div class="metric"><div class="k">Today</div><div class="v">${signedMoney(a.realized?.day, cur, dg)}</div><div class="s">realized</div></div>
+          <div class="metric"><div class="k">This month</div><div class="v">${signedMoney(a.realized?.month, cur, dg)}</div><div class="s">realized</div></div>
+        </div></div>
+        <div class="card-body">
+          <div class="row-between"><div><b>Auto-trading</b> <span class="small dim">· ${running ? (mode === "live" ? '<span class="tag bad">LIVE</span>' : '<span class="tag ok">PAPER</span>') : '<span class="tag neutral">OFF</span>'}${st && st.halt_reason ? ` <span class="warn-text small">${esc(st.halt_reason)}</span>` : ""}</div>
+            <span class="actions">${running ? `<button class="btn sm danger" data-home="stop" data-id="${esc(a.id)}">Stop</button>` : `<button class="btn sm primary" data-home="paper" data-id="${esc(a.id)}">Start paper</button><button class="btn sm danger" data-home="live" data-id="${esc(a.id)}" ${canTrade ? "" : "disabled"}>Go live…</button>`}</span></div>
+          <div class="xs muted mt6">Rules: trend breakout on all tradeable symbols except crypto (${st && st.active_symbols ? st.active_symbols.length + " symbols" : "scanned at start"}), H1 · risk 1% of free margin per trade · stop 1% · target 3% · break-even at +1% · max 3 positions · stops for the day after −3%.${running && cfg && cfg.exits !== "fixed" ? ' <span class="warn-text">Custom settings are active (Advanced → Trading bot).</span>' : ""}</div>
+          ${!canTrade && b ? `<div class="xs mt6 warn-text">Live blocked: ${esc(reasons.join("; "))}</div>` : ""}
+          ${st ? `<div class="small dim mt6">Bot today ${st.daily_pl === null || st.daily_pl === undefined ? "–" : signedMoney(st.daily_pl, cur)} · ${mode === "paper" ? `paper equity ${paper && paper.equity ? fmt(paper.equity) : "–"} (${paper ? paper.trade_count : 0} paper trades)` : `${st.live_positions.length} live bot position(s)`}${st.decisions && st.decisions.length ? ` · last: ${esc(st.decisions[st.decisions.length - 1].message.slice(0, 90))}` : ""}</div>` : ""}
+        </div></section>`;
+    }).join("") + `</div>`;
+    bindReconnect(content);
+    content.querySelectorAll("[data-home]").forEach(btn => btn.addEventListener("click", async () => {
+      const id = btn.dataset.id, a = acct(id), act = btn.dataset.home;
+      try {
+        if (act === "stop") { await post(`/api/accounts/${id}/bot/stop`, {}); toast("Auto-trading stopped"); renderView(); return; }
+        const b = bots[list.findIndex(x => x.id === id)];
+        if (!b.state || !b.state.strategy || !(b.config && b.config.exits === "fixed")) { await put(`/api/accounts/${id}/bot/config`, { ...b.config, ...PRESET, mode: act }); }
+        if (act === "paper") { await post(`/api/accounts/${id}/bot/start`, { mode: "paper" }); toast("Paper auto-trading started"); renderView(); return; }
+        openModal({ title: `Go live on ${a.label}?`, danger: true, confirmLabel: "Go live", requireText: "LIVE",
+          body: `<p>The bot will place real orders on this account by itself: 1% of free margin per trade, stop 1%, target 3%, break-even at +1%, max 3 open, halt after −3% in a day. It keeps running after restarts until you press Stop.</p>`,
+          onConfirm: async () => { await post(`/api/accounts/${id}/bot/start`, { mode: "live", confirm: "LIVE" }); toast("LIVE auto-trading started"); renderView(); } });
+      } catch (err) { toast(err.message, "bad"); }
+    }));
+    scheduleViewRefresh($("#modal") ? 60000 : 6000);
   }
 
   /* ---------------- polling ---------------- */

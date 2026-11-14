@@ -65,24 +65,24 @@
     const c = ctx.content
     const P = ctx.pick({
       '16x9': {
-        hero: 148, heroFill: 1, headY: 0,
-        clockBase: 330, utcBase: 0, utcScale: 0.42,
-        band: [[480, 30], [364, 196], [316, 322]], mid: [125, 176], unit: [10, 26],
-        line2: ['WATCH WHAT FITS INSIDE IT.'], line2Tier: 'h2', line2Y: 539,
+        head: ['ONE SECOND.'], hero: 148, heroFill: 1,
+        line2Tier: 'h2', line2Y: 147,
+        clockBase: 420, utcBase: 0, utcScale: 0.42,
+        band: [[564, 30], [402, 196], [316, 322]], mid: [125, 176], unit: [10, 26],
         pitch: 124, focus: 0.5, dot: 7, price: 24, gauge: 0.8,
       },
       '9x16': {
-        hero: 150, heroFill: 0.9, headY: 0,
-        clockBase: 252, utcBase: 306, utcScale: 1.7,
-        band: [[430, 32], [398, 230], [346, 366]], mid: [140, 204], unit: [12, 33],
-        line2: ['WATCH WHAT FITS', 'INSIDE IT.'], line2Tier: 'display', line2Y: 512,
+        head: ['ONE SECOND.'], hero: 150, heroFill: 0.9,
+        line2Tier: 'display', line2Y: 162,
+        clockBase: 371, utcBase: 425, utcScale: 1.7,
+        band: [[578, 40], [398, 230], [346, 366]], mid: [140, 204], unit: [12, 33],
         pitch: 83, focus: ticks[6].tau, dot: 7, price: 24, gauge: 0.6,
       },
       '4x5': {
-        hero: 190, heroFill: 0.9, headY: 0,
-        clockBase: 345, utcBase: 418, utcScale: 2.1,
-        band: [[580, 36], [520, 300], [400, 560]], mid: [170, 300], unit: [18, 56],
-        line2: ['WATCH WHAT FITS', 'INSIDE IT.'], line2Tier: 'display', line2Y: 715,
+        head: ['ONE', 'SECOND.'], hero: 226, heroFill: 0.9,
+        line2Tier: 'display', line2Y: 437,
+        clockBase: 675, utcBase: 745, utcScale: 2.1,
+        band: [[889, 36], [470, 400], [400, 560]], mid: [226, 300], unit: [26, 56],
         pitch: 86, focus: ticks[6].tau, dot: 8, price: 26, gauge: 0.6,
       },
     })
@@ -222,27 +222,10 @@
     g.fill()
   }
 
-  /**
-   * kit.headline moves its lines on composited layers (will-change + translate3d).
-   * Chrome rasterises such a layer once and then slides the texture, so the
-   * pixels of a line depend on which frame happened to be painted first. Call
-   * this after headline.show() to move the lines with a plain 2-D transform
-   * instead (and give the scene `settleCSS(id)`): every frame is then painted from
-   * scratch and seeks are exactly repeatable.
-   */
-  function settle(headline) {
-    for (const item of headline.lines) {
-      const m = /translate3d\(0,([-\d.]+)%,0\)/.exec(item.inner.style.transform)
-      if (m) item.inner.style.transform = `translateY(${m[1]}%)`
-    }
-  }
-  const settleCSS = id => `.scene--${id} .k-headline .ln > span { will-change: auto; }`
-
-  AD.opening = { geo, ticks, colors, rgba, drawSecond, drawDot, settle, settleCSS, N, PITCH }
+  AD.opening = { geo, ticks, colors, rgba, drawSecond, drawDot, N, PITCH }
 
   // ── scene ───────────────────────────────────────────────────────────────
   AD.defineScene('hook', {
-    css: settleCSS('hook'),
     build(root, ctx) {
       const kit = AD.kit
       const G = geo(ctx)
@@ -252,12 +235,12 @@
 
       // "ONE SECOND." is the one headline in the film set above the display
       // tier where the format has the room: it has to stop a scroll.
-      const h1 = kit.headline(root, ['ONE SECOND.'], { tier: 'display', x: c.x, y: c.y + G.P.headY, w: c.w })
+      const h1 = kit.headline(root, G.P.head, { tier: 'display', x: c.x, y: c.y, w: c.w })
       const tier = parseFloat(getComputedStyle(h1.el).fontSize)
       const size = Math.min(G.P.hero, (tier * c.w * G.P.heroFill) / h1.width)
       h1.el.style.fontSize = size.toFixed(2) + 'px'
 
-      const h2 = kit.headline(root, G.P.line2, { tier: G.P.line2Tier, x: c.x, y: c.y + G.P.line2Y, w: c.w })
+      const h2 = kit.headline(root, ['WATCH WHAT FITS INSIDE IT.'], { tier: G.P.line2Tier, x: c.x, y: c.y + G.P.line2Y, w: c.w })
       const labelSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--t-label'))
       const cal = kit.caliper(root, { labelSize })
       return { G, cv, h1, h2, cal }
@@ -271,8 +254,6 @@
       // Headline is set from frame 0; the second line rises on the caliper's beat.
       s.h1.show(t, { at: -1 })
       s.h2.show(t, { at: 1, each: 2 / fps, dur: 8 / fps })
-      settle(s.h1)
-      settle(s.h2)
 
       // Playhead: linear, left stop to right stop in exactly 30 frames.
       const head = clamp(t)

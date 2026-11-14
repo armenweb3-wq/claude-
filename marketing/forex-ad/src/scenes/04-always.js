@@ -6,11 +6,16 @@
  *
  * There is no map data or image asset: the land mask is rasterised at build
  * time from the hand-simplified coastlines below, straight onto the dot grid.
+ *
+ * Everything that animates is painted on one canvas, cleared and redrawn each
+ * frame (DOM chips and SVG strokes that change colour or opacity are re-rastered
+ * a shade differently depending on the frame shown before them, which breaks
+ * frame-by-frame determinism). The only DOM here is the grid and the headline.
  */
 ;(function () {
   'use strict'
   const AD = window.AD
-  const { clamp, lerp, prog, ease, el } = AD
+  const { clamp, lerp, prog, ease } = AD
 
   // Simplified coastlines as "lon,lat" vertex lists (degrees, equirectangular).
   // Small islands are drawn a little fat so they survive the dot grid.
@@ -86,6 +91,7 @@
   const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 
   const COLLAPSE_AT = 4 - 9 / 30 // the last 8 frames
+  const WAVE_LEAD = 2 / 30 // the map's entrance wave starts two frames early, so the cut lands on something
   const LAND_R = 2.2 // dot radii: land reads a little larger and brighter than sea
   const SEA_R = 1.6
   const wrap180 = d => ((((d + 180) % 360) + 360) % 360) - 180
@@ -138,23 +144,18 @@
   }
 
   AD.defineScene('always', {
-    css: `
-      .scene--always .k-headline .ln > span { will-change: auto; }
-      .scene--always .aw-hour { position: absolute; font-size: var(--t-tag); line-height: 1; }
-      .scene--always .aw-week { position: absolute; display: flex; }
-      .scene--always .aw-day {
-        flex: 1 1 0; display: grid; place-items: center; box-sizing: border-box; border-radius: 4px;
-        font-family: var(--font-mono); font-weight: 500; letter-spacing: 0.1em; line-height: 1; text-indent: 0.1em;
-      }
-    `,
+    // No layer hint on headline lines: a hinted layer keeps the sub-pixel raster of whichever frame painted it first.
+    css: `.scene--always .k-headline .ln > span { will-change: auto; }`,
+
     build(root, ctx) {
-      const { W, H } = ctx
+      const { W } = ctx
       const c = ctx.content
       const kit = AD.kit
       const css = getComputedStyle(document.documentElement)
       const token = name => css.getPropertyValue('--' + name).trim()
       const COL = { void: token('void'), hairline: token('hairline'), grey: token('grey'), white: token('white'), accent: token('accent') }
       const tagSize = parseFloat(token('t-tag'))
+      const mono = (size, weight = 500) => `${weight} ${size}px ${token('font-mono')}`
 
       // The flat line S05 opens on (falls back to mid-stage if 05-fan.js is absent).
       const lineY = AD.fanGeo ? AD.fanGeo(ctx).level : Math.round(c.y + c.h / 2)
@@ -221,8 +222,8 @@
         columns.push({ x, lon, land, sea, landPath: path(land, LAND_R), seaPath: path(sea, SEA_R), edge, order: 1 - j / (M.cols - 1) })
       }
 
-      // ── session nodes and their labels ──
-      const chipFont = `500 ${tagSize}px ${token('font-mono')}`
+      // ── session nodes, snapped to the dot grid, and their label chips ──
+      const chipFont = mono(tagSize)
       const chipTrack = tagSize * 0.12
       g.font = chipFont
       g.letterSpacing = chipTrack.toFixed(2) + 'px'
@@ -231,71 +232,38 @@
         const r = Math.round((M.top - city.lat) / M.deg - 0.5)
         const x = M.x + (j + 0.5) * M.pitch
         const y = M.y + (r + 0.5) * M.pitch
-        // Label chip, painted on the canvas with the map (see render).
-        const box = { width: Math.ceil(g.measureText(city.name).width - chipTrack) + 20, height: tagSize + 12 }
+        const w = Math.ceil(g.measureText(city.name).width - chipTrack) + 20
+        const h = tagSize + 12
         const [side, nudge = 0] = L.labels[city.name]
-        let left = side === 'r' ? x + 18 : side === 'l' ? x - 18 - box.width : x - box.width / 2
-        const top = (side === 'a' ? y - 18 - box.height : side === 'b' ? y + 18 : y - box.height / 2) + nudge
-        left = clamp(left, c.x, c.x + c.w - box.width)
-        return { ...city, x, y, col: columns[j], chip: { x: Math.round(left), y: Math.round(top), w: box.width, h: box.height }, at: 0.5 * (i + 1) }
+        const left = side === 'r' ? x + 18 : side === 'l' ? x - 18 - w : x - w / 2
+        const top = (side === 'a' ? y - 18 - h : side === 'b' ? y + 18 : y - h / 2) + nudge
+        // Labels are for reading: they stay inside the content box even where the map bleeds past it.
+        const chip = { x: Math.round(clamp(left, c.x, c.x + c.w - w)), y: Math.round(top), w, h }
+        return { ...city, x, y, col: columns[j], chip, at: 0.5 * (i + 1) }
       })
-      g.letterSpacing = '0px'
 
-      // ── 24-hour bar: baseline, hour ticks, four session arcs ──
+      // ── 24-hour bar: "00" and "24" sit at the ends of the scale ──
       const B = L.bar
-      const hourPad = Math.round(tagSize * 1.9)
-      const bx0 = B.x + hourPad
-      const bx1 = B.x + B.w - hourPad
+      g.letterSpacing = '0px'
+      const hourW = Math.ceil(g.measureText('00').width)
+      const bx0 = B.x + hourW + 14
+      const bx1 = B.x + B.w - hourW - 14
       const hx = h => bx0 + (h / 24) * (bx1 - bx0)
-      const svg = AD.svg('svg', { class: 'k-svg', width: W, height: H, viewBox: `0 0 ${W} ${H}` }, root)
-      const clip = AD.svg('clipPath', { id: 'aw-clip' }, AD.svg('defs', null, svg))
-      AD.svg('rect', { x: bx0, y: B.y - B.rise - 6, width: bx1 - bx0, height: B.rise + 8 }, clip)
-      const base = AD.svg('path', { d: `M${bx0},${B.y + 0.5} L${bx1},${B.y + 0.5}`, stroke: COL.grey, 'stroke-width': 1, opacity: 0.7, fill: 'none', pathLength: 1, 'stroke-dasharray': '0 1' }, svg)
-      let ticksD = ''
-      for (let h = 0; h <= 24; h++) ticksD += `M${Math.round(hx(h)) + 0.5},${B.y + 1} l0,${h % 6 === 0 ? 10 : 5} `
-      const ticks = AD.svg('path', { d: ticksD, stroke: COL.grey, 'stroke-width': 1, fill: 'none' }, svg)
-      const arcs = CITIES.map(city => {
-        const group = AD.svg('g', { 'clip-path': 'url(#aw-clip)' }, svg)
-        const spans = city.close > 24 ? [[city.open, city.close], [city.open - 24, city.close - 24]] : [[city.open, city.close]]
-        const parts = spans.map(([a, b]) => ({
-          fill: AD.svg('path', { d: `M${hx(a)},${B.y} A${(hx(b) - hx(a)) / 2},${B.rise} 0 0 1 ${hx(b)},${B.y} Z`, fill: COL.accent, 'fill-opacity': 0, stroke: 'none' }, group),
-          arc: AD.svg('path', { d: `M${hx(a)},${B.y} A${(hx(b) - hx(a)) / 2},${B.rise} 0 0 1 ${hx(b)},${B.y}`, fill: 'none', stroke: COL.accent, 'stroke-width': 2, pathLength: 1, 'stroke-dasharray': '0 1' }, group),
-          floor: AD.svg('path', { d: `M${hx(a)},${B.y} L${hx(b)},${B.y}`, fill: 'none', stroke: COL.accent, 'stroke-width': 2, pathLength: 1, 'stroke-dasharray': '0 1' }, group),
-        }))
-        return { group, parts }
-      })
-      const hours = ['00', '24'].map((text, i) => {
-        const node = el('div', 'aw-hour t-mono', root, text)
-        const box = node.getBoundingClientRect()
-        node.style.left = Math.round(i === 0 ? B.x : B.x + B.w - box.width) + 'px'
-        node.style.top = Math.round(B.y - box.height / 2) + 'px'
-        return node
-      })
+      const sessions = CITIES.map(city => (city.close > 24 ? [[city.open, city.close], [city.open - 24, city.close - 24]] : [[city.open, city.close]]))
 
-      // ── week strip ──
-      const week = el('div', 'aw-week', root)
-      week.style.cssText += `left:${L.week.x}px;top:${L.week.y}px;width:${L.week.w}px;height:${L.week.h}px;gap:${L.week.gap}px`
-      const days = DAYS.map(name => {
-        const cell = el('div', 'aw-day', week, name)
-        cell.style.fontSize = L.week.font + 'px'
-        return cell
-      })
+      // ── week strip: seven equal cells ──
+      const K = L.week
+      const cellW = (K.w - 6 * K.gap) / 7
+      const days = DAYS.map((name, i) => ({ name, x: Math.round(K.x + i * (cellW + K.gap)), w: Math.round(K.x + i * (cellW + K.gap) + cellW) - Math.round(K.x + i * (cellW + K.gap)) }))
 
       const head = kit.headline(root, ['FOREX TRADES', '24 HOURS A DAY.', '5 DAYS A WEEK.'], { tier: 'display', ...L.head })
 
-      // Fades are written as colour alpha, never element opacity: an element that has
-      // been through an opacity fade is re-rastered with slightly different edges.
-      const rgba = {}
-      for (const name in COL) {
-        const rgb = COL[name].replace('#', '').match(/../g).map(v => parseInt(v, 16)).join(',')
-        rgba[name] = a => `rgba(${rgb},${clamp(a).toFixed(3)})`
-      }
-      return { g, COL, rgba, chipFont, chipTrack, M, mapW, mapH, xMid, ppd, columns, nodes, base, ticks, arcs, hours, days, head, lineY }
+      return { g, COL, M, B, K, mapW, mapH, xMid, ppd, columns, nodes, chipFont, chipTrack, hourFont: chipFont, dayFont: mono(K.font), bx0, bx1, hx, sessions, days, head, lineY }
     },
 
     render(t, ctx, s) {
       const { W, H } = ctx
-      const { g, COL, M, columns } = s
+      const { g, COL, M, B, K, columns } = s
       const fall = clamp((t - COLLAPSE_AT) / (8 / 30 - 1e-4))
       const drop = ease.quart.in(fall) // 0 = map, 1 = flat line
       const east = M.centre + 180 // the map's east edge, where the band enters
@@ -305,14 +273,16 @@
       const mapBottom = M.y + s.mapH + 6
 
       g.clearRect(0, 0, W, H)
+      g.textBaseline = 'middle'
 
+      // ── map ──
       // The band of light: sharp on its leading (west) side, long tail to the east.
       // Once it has left by the west edge it re-enters from the east (second term).
       const shape = d => Math.exp(-((d / (d < 0 ? 7 : 30)) ** 2))
       const glow = col => bandOn * Math.max(shape(col.lon - lon), lon + 360 <= east ? shape(col.lon - lon - 360) : 0)
 
       for (const col of columns) {
-        const seen = prog(t, col.order * 0.26, 0.14) // right-to-left wave on the cut
+        const seen = prog(t, col.order * 0.3 - WAVE_LEAD, 0.14) // right-to-left wave, already under way on the cut
         if (seen <= 0) continue
         const lit = glow(col)
         if (lit > 0.01 && drop === 0) {
@@ -361,56 +331,54 @@
         g.fillRect(Math.round(x), mapTop, 1, mapBottom - mapTop)
       }
 
-      // Session nodes: a ring that ignites when the band arrives, with a pulse on every arrival.
+      // ── session nodes: a ring that ignites when the band arrives, a pulse on every arrival ──
       const nodesOn = 1 - prog(t, COLLAPSE_AT, 0.2)
       s.nodes.forEach((node, i) => {
-        const seen = prog(t, node.col.order * 0.26 + 0.06, 0.14) * nodesOn
+        const seen = prog(t, node.col.order * 0.3 - WAVE_LEAD + 0.06, 0.14) * nodesOn
+        if (seen <= 0) return
         const lit = t >= node.at
-        if (seen > 0) {
-          g.globalAlpha = seen
-          g.fillStyle = COL.void
+        g.globalAlpha = seen
+        g.fillStyle = COL.void
+        g.beginPath()
+        g.arc(node.x, node.y, 13, 0, Math.PI * 2)
+        g.fill()
+        g.lineWidth = 2
+        g.strokeStyle = lit ? COL.accent : COL.grey
+        g.beginPath()
+        g.arc(node.x, node.y, 9, 0, Math.PI * 2)
+        g.stroke()
+        g.fillStyle = lit ? COL.white : COL.grey
+        g.beginPath()
+        g.arc(node.x, node.y, 3.5, 0, Math.PI * 2)
+        g.fill()
+        // Pulses: when the band arrives (every 2 s) and when this session's arc starts.
+        for (const at of [node.at, node.at + 2, 2 + i / 6]) {
+          const p = (t - at) / 0.4
+          if (p <= 0 || p >= 1) continue
+          g.globalAlpha = seen * (1 - p) * 0.9
+          g.strokeStyle = COL.accent
           g.beginPath()
-          g.arc(node.x, node.y, 13, 0, Math.PI * 2)
-          g.fill()
-          g.lineWidth = 2
-          g.strokeStyle = lit ? COL.accent : COL.grey
-          g.beginPath()
-          g.arc(node.x, node.y, 9, 0, Math.PI * 2)
+          g.arc(node.x, node.y, 9 + p * 30, 0, Math.PI * 2)
           g.stroke()
-          g.fillStyle = lit ? COL.white : COL.grey
-          g.beginPath()
-          g.arc(node.x, node.y, 3.5, 0, Math.PI * 2)
-          g.fill()
-          // Pulses: when the band arrives (every 2 s) and when this session's arc starts.
-          for (const at of [node.at, node.at + 2, 2 + i / 6]) {
-            const p = (t - at) / 0.4
-            if (p <= 0 || p >= 1) continue
-            g.globalAlpha = seen * (1 - p) * 0.9
-            g.strokeStyle = COL.accent
-            g.beginPath()
-            g.arc(node.x, node.y, 9 + p * 30, 0, Math.PI * 2)
-            g.stroke()
-          }
         }
-        if (seen > 0) {
-          const chip = node.chip
-          g.beginPath()
-          g.roundRect(chip.x + 0.5, chip.y + 0.5, chip.w - 1, chip.h - 1, 3)
-          g.globalAlpha = seen * 0.9
-          g.fillStyle = COL.void
-          g.fill()
-          g.globalAlpha = seen * (lit ? 0.55 : 1)
-          g.lineWidth = 1
-          g.strokeStyle = lit ? COL.accent : COL.hairline
-          g.stroke()
-          g.globalAlpha = seen
-          g.fillStyle = lit ? COL.white : COL.grey
-          g.font = s.chipFont
-          g.letterSpacing = s.chipTrack.toFixed(2) + 'px'
-          g.textBaseline = 'middle'
-          g.fillText(node.name, chip.x + 10, chip.y + chip.h / 2 + 1)
-          g.letterSpacing = '0px'
-        }
+        // Label chip.
+        const chip = node.chip
+        g.beginPath()
+        g.roundRect(chip.x + 0.5, chip.y + 0.5, chip.w - 1, chip.h - 1, 3)
+        g.globalAlpha = seen * 0.9
+        g.fillStyle = COL.void
+        g.fill()
+        g.globalAlpha = seen * (lit ? 0.55 : 1)
+        g.lineWidth = 1
+        g.strokeStyle = lit ? COL.accent : COL.hairline
+        g.stroke()
+        g.globalAlpha = seen
+        g.fillStyle = lit ? COL.white : COL.grey
+        g.font = s.chipFont
+        g.letterSpacing = s.chipTrack.toFixed(2) + 'px'
+        g.textAlign = 'left'
+        g.fillText(node.name, chip.x + 10, chip.y + chip.h / 2 + 1)
+        g.letterSpacing = '0px'
       })
 
       // The collapsed map: one flat line across the frame, exactly where S05 picks it up.
@@ -421,36 +389,94 @@
         g.fillStyle = COL.accent
         g.fillRect(x0, s.lineY, x1 - x0, 2)
       }
-      g.globalAlpha = 1
 
-      // 24-hour bar: the scale draws on with the map; the arcs fill it from the bar line at 8.0.
-      s.base.setAttribute('stroke-dasharray', `${prog(t, 0.1, 0.4).toFixed(4)} 1`)
-      s.ticks.setAttribute('opacity', (0.6 * prog(t, 0.2, 0.3)).toFixed(4))
-      s.hours[0].style.color = s.rgba.grey(prog(t, 0.1, 0.15))
-      s.hours[1].style.color = s.rgba.grey(prog(t, 0.4, 0.15))
-      s.arcs.forEach((arc, i) => {
-        const at = 2 + i / 6 // 5 frames apart
+      // ── 24-hour bar: the scale draws on with the map; the arcs fill it from the bar line at 8.0 ──
+      const { bx0, bx1, hx } = s
+      g.fillStyle = COL.grey
+      g.globalAlpha = 0.7
+      g.fillRect(bx0, B.y, (bx1 - bx0) * prog(t, 0, 0.4), 1)
+      g.globalAlpha = 0.6 * prog(t, 0.1, 0.3)
+      for (let h = 0; h <= 24; h++) g.fillRect(Math.round(hx(h)), B.y + 1, 1, h % 6 === 0 ? 10 : 5)
+      g.font = s.hourFont
+      g.textAlign = 'left'
+      g.globalAlpha = prog(t, 0, 0.15)
+      g.fillText('00', B.x, B.y + 1)
+      g.textAlign = 'right'
+      g.globalAlpha = prog(t, 0.3, 0.15)
+      g.fillText('24', B.x + B.w, B.y + 1)
+
+      // Session arcs, 5 frames apart, each drawn in its own time order. Sydney's runs
+      // through midnight, so it leaves by the right end and comes back in at the left.
+      g.save()
+      g.beginPath()
+      g.rect(bx0, B.y - B.rise - 6, bx1 - bx0, B.rise + 8)
+      g.clip()
+      g.lineWidth = 2
+      g.strokeStyle = COL.accent
+      g.fillStyle = COL.accent
+      s.sessions.forEach((spans, i) => {
+        const at = 2 + i / 6
         const p = prog(t, at, 1 / 3)
-        arc.group.style.display = p > 0 ? 'block' : 'none'
-        for (const part of arc.parts) {
-          part.arc.setAttribute('stroke-dasharray', `${p.toFixed(4)} 1`)
-          part.floor.setAttribute('stroke-dasharray', `${p.toFixed(4)} 1`)
-          part.fill.setAttribute('fill-opacity', (0.09 * prog(t, at + 0.2, 0.25)).toFixed(4))
+        if (p <= 0) return
+        const wash = 0.09 * prog(t, at + 0.2, 0.25)
+        for (const [a, b] of spans) {
+          const cx = (hx(a) + hx(b)) / 2
+          const rx = (hx(b) - hx(a)) / 2
+          if (wash > 0) {
+            g.globalAlpha = wash
+            g.beginPath()
+            g.ellipse(cx, B.y, rx, B.rise, 0, Math.PI, Math.PI * 2)
+            g.fill()
+          }
+          g.globalAlpha = 1
+          g.beginPath()
+          g.ellipse(cx, B.y, rx, B.rise, 0, Math.PI, Math.PI * (1 + p))
+          g.stroke()
+          g.fillRect(hx(a), B.y - 1, (hx(b) - hx(a)) * p, 2)
         }
       })
+      g.restore()
 
-      // Week strip: outlines arrive with the map; from 9.0 one cell lights every 3 frames.
+      // ── week strip: outlines arrive with the map; from 9.0 one cell lights every 3 frames ──
       // The scan passes Saturday and Sunday and leaves them dark.
-      s.days.forEach((cell, i) => {
-        const seen = prog(t, 0.2 + i / 15, 0.15)
+      g.font = s.dayFont
+      g.textAlign = 'center'
+      const dayTrack = K.font * 0.1
+      g.letterSpacing = dayTrack.toFixed(2) + 'px'
+      s.days.forEach((day, i) => {
+        const seen = prog(t, 0.1 + i / 15, 0.15)
+        if (seen <= 0) return
         const at = 3 + i * 0.1
         const open = i < 5
         const on = open && t >= at
         const tick = t >= at ? 1 - prog(t, at, 0.1) : 0 // one bright frame, then a settle
-        cell.style.color = (on ? s.rgba.white : s.rgba.grey)(seen)
-        cell.style.background = on ? s.rgba.accent(0.13 + 0.3 * tick) : 'transparent'
-        cell.style.boxShadow = on ? `inset 0 0 0 2px ${COL.accent}` : `inset 0 0 0 1px ${(!open && tick > 0 ? s.rgba.grey : s.rgba.hairline)(seen)}`
+        if (on) {
+          g.globalAlpha = 0.13 + 0.3 * tick
+          g.fillStyle = COL.accent
+          g.beginPath()
+          g.roundRect(day.x, K.y, day.w, K.h, 4)
+          g.fill()
+          g.globalAlpha = 1
+          g.lineWidth = 2
+          g.strokeStyle = COL.accent
+          g.beginPath()
+          g.roundRect(day.x + 1, K.y + 1, day.w - 2, K.h - 2, 3)
+          g.stroke()
+        } else {
+          g.globalAlpha = seen
+          g.lineWidth = 1
+          g.strokeStyle = !open && tick > 0 ? COL.grey : COL.hairline
+          g.beginPath()
+          g.roundRect(day.x + 0.5, K.y + 0.5, day.w - 1, K.h - 1, 4)
+          g.stroke()
+        }
+        g.globalAlpha = seen
+        g.fillStyle = on ? COL.white : COL.grey
+        g.fillText(day.name, day.x + day.w / 2 + dayTrack / 2, K.y + K.h / 2 + 1)
       })
+      g.letterSpacing = '0px'
+      g.textAlign = 'left'
+      g.globalAlpha = 1
 
       s.head.show(t, { at: [-1 / 30, 2, 3] })
     },

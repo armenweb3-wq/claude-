@@ -18,9 +18,7 @@ AD.defineScene('thesis', {
     .scene--thesis .k-headline { font-size: 460px; line-height: var(--th-lh, 0.98); }
     /* Extra room below the baseline so the comma is not clipped by the reveal mask. */
     .scene--thesis .k-headline .ln { padding-bottom: 0.16em; margin-bottom: -0.16em; }
-    /* No layer hint on the lines: a hinted layer keeps the sub-pixel raster of whichever frame painted it first. */
-    .scene--thesis .k-headline .ln > span { will-change: auto; }
-    .scene--thesis .th-rule { position: absolute; height: 1px; background: var(--grey); opacity: 0.55; transform-origin: 0 50%; }
+    .scene--thesis .th-rule { position: absolute; height: 1px; background: var(--grey); opacity: 0.55; }
   `,
 
   build(root, ctx) {
@@ -52,7 +50,6 @@ AD.defineScene('thesis', {
     const rule = el('div', 'th-rule', root)
     rule.style.left = c.x + 'px'
     rule.style.top = ruleY + 'px'
-    rule.style.width = c.w + 'px'
 
     // ── the thesis ───────────────────────────────────────────────────────
     const type = el('div', 'th-type', root)
@@ -95,6 +92,7 @@ AD.defineScene('thesis', {
 
     // Caliper on PRECISION and the tick ruler beneath it.
     const cal = kit.caliper(type, { orientation: 'h' })
+    const calPath = cal.el.querySelector('path')
     const rulerY = Math.round(base[0] + fs * 0.075)
     const rs = svg('svg', { class: 'k-svg', width: W, height: H, viewBox: `0 0 ${W} ${H}` }, type)
     const rulerEdge = svg('path', { fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2, 'stroke-linecap': 'square' }, rs)
@@ -154,14 +152,14 @@ AD.defineScene('thesis', {
     const colors = { white: style.getPropertyValue('--white').trim(), grey: style.getPropertyValue('--grey').trim(), accent: style.getPropertyValue('--accent').trim() }
 
     return {
-      lift, field, tabs, rule, type, h, cal, rulerEdge, rulerTicks, rulerFront, particles, fanSets, fan, colors,
-      stacked, word, rulerY, ticks, pitch, rulerX0, rulerX1, fs, cap, capTop, calGap, base, SPAN_X, SPAN_Y,
+      lift, field, tabs, rule, type, h, cal, calPath, rulerEdge, rulerTicks, rulerFront, particles, fanSets, fan, colors,
+      stacked, word, rulerY, ticks, pitch, rulerX0, rulerX1, fs, cap, capTop, calGap, base, blockTop, SPAN_X, SPAN_Y,
       blockMid: (capTop + base[base.length - 1]) / 2,
     }
   },
 
   render(t, ctx, s) {
-    const { prog, ease, clamp, lerp } = AD
+    const { prog, ease, lerp } = AD
     const f = 1 / AD.fps
     const c = ctx.content
     const W = ctx.W
@@ -242,56 +240,59 @@ AD.defineScene('thesis', {
     const at = s.stacked ? [-f, 0.5 - f, 0.5 - f] : [-f, 0.5 - f]
     s.h.show(t, { at, dur: 6 * f })
 
+    // Last 8 frames: the type scales to 90% about its left edge and wipes away to the left.
+    // The scale is applied as geometry (font size and whole-pixel coordinates), not as a CSS
+    // transform, so strokes stay 2 px and the frame does not depend on how it was reached.
+    const exit = prog(t, ctx.dur - 8 * f, 8 * f)
+    const out = ease.cubic.inOut(exit)
+    const k = lerp(1, 0.9, out)
+    const sx = x => Math.round(c.x + (x - c.x) * k)
+    const sy = y => Math.round(s.blockMid + (y - s.blockMid) * k)
+    s.h.el.style.fontSize = (s.fs * k).toFixed(2) + 'px'
+    s.h.el.style.top = sy(s.blockTop) + 'px'
+    s.type.style.clipPath = exit > 0 ? `inset(0px ${W - Math.round(lerp(W, c.x - 80, out))}px 0px 0px)` : 'none'
+
     // 17.0: the jaws close on PRECISION and the ruler ticks ripple left to right.
-    // (Whole-pixel coordinates throughout, so every 2 px stroke is crisp.)
     const close = prog(t, 1.0 - f, 6 * f, ease.snap)
     const pad = Math.round(s.fs * 0.036)
     const detent = t >= 1.0 + 4 * f - 1e-6 && t < 1.0 + 7 * f - 1e-6
     s.cal.set({
-      a: s.rulerX0 - pad,
-      b: s.rulerX1 + pad,
-      pos: s.capTop - s.calGap,
+      a: sx(s.rulerX0 - pad),
+      b: sx(s.rulerX1 + pad),
+      pos: sy(s.capTop - s.calGap),
       open: 1 - Math.round((1 - close) * 56) / 56,
-      jaw: Math.round(s.calGap + s.cap * 0.44),
+      jaw: Math.round((s.calGap + s.cap * 0.44) * k),
     })
-    s.cal.el.style.filter = detent ? 'drop-shadow(0 0 10px var(--accent))' : 'none'
+    // Detent: the caliper reads white for three frames as it seats (no glow filter).
+    s.calPath.setAttribute('stroke', detent ? 'var(--white)' : 'var(--accent)')
 
     const ripple = prog(t, 1.0, 12 * f)
     const x0 = s.rulerX0
+    const y0 = sy(s.rulerY)
     const edge1 = Math.round(x0 + (s.rulerX1 - x0) * ripple)
-    const tickLen = i => Math.round(s.fs * (i % 10 === 0 ? 0.074 : i % 5 === 0 ? 0.05 : 0.028))
+    const tickLen = i => s.fs * (i % 10 === 0 ? 0.074 : i % 5 === 0 ? 0.05 : 0.028) * k
     let settled = ''
     let leading = ''
     for (let i = 0; ripple > 0 && i <= s.ticks; i++) {
       const x = x0 + i * s.pitch
       if (x > edge1) break
       const fresh = ripple < 1 && edge1 - x < 3 * s.pitch
-      const seg = `M${x},${s.rulerY} l0,${Math.round(tickLen(i) * (fresh ? 1.5 : 1))} `
+      const seg = `M${sx(x)},${y0} l0,${Math.round(tickLen(i) * (fresh ? 1.5 : 1))} `
       if (fresh) leading += seg
       else settled += seg
     }
     // The ruler is cut to length: a full-height end tick lands on the word's right edge.
-    if (ripple >= 1) settled += `M${s.rulerX1},${s.rulerY} l0,${tickLen(0)} `
+    if (ripple >= 1) settled += `M${sx(s.rulerX1)},${y0} l0,${Math.round(tickLen(0))} `
     s.rulerTicks.setAttribute('d', settled)
     s.rulerFront.setAttribute('d', leading)
-    s.rulerEdge.setAttribute('d', ripple > 0 ? `M${x0},${s.rulerY} L${edge1},${s.rulerY}` : '')
+    s.rulerEdge.setAttribute('d', ripple > 0 ? `M${sx(x0)},${y0} L${sx(edge1)},${y0}` : '')
 
     // ── 17.5: the chapter index ticks in, three frames apart ─────────────
-    const exit = prog(t, ctx.dur - 8 * f, 8 * f)
-    s.rule.style.transform = `scaleX(${prog(t, 1.5, 10 * f, ease.snap).toFixed(4)})`
+    s.rule.style.width = Math.round(c.w * prog(t, 1.5, 10 * f, ease.snap)) + 'px'
     s.tabs.forEach((tb, i) => {
       tb.show(t, 1.5 + i * 3 * f)
       // As the type leaves, the first chapter stays lit and the other two stand back.
       tb.el.style.opacity = (i === 0 ? 1 : lerp(1, 0.4, exit)).toFixed(4)
     })
-
-    // ── last 8 frames: the type scales to 90% and wipes away to the left ─
-    const out = ease.cubic.inOut(exit)
-    const scale = lerp(1, 0.9, out)
-    const edge = lerp(W, c.x - 80, out)
-    s.type.style.transformOrigin = `${c.x}px ${s.blockMid.toFixed(1)}px`
-    s.type.style.transform = exit > 0 ? `scale(${scale.toFixed(4)})` : 'none'
-    s.type.style.clipPath = exit > 0 ? `inset(0px ${(W - edge / scale).toFixed(1)}px 0px 0px)` : 'none'
-    void clamp
   },
 })

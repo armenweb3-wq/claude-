@@ -119,7 +119,7 @@ AD.defineScene('brand', {
         desc.style.letterSpacing = '0.08em'
         dw = rect(desc).w - labelSize * 0.08
       }
-      const gap1 = M * 0.2
+      const gap1 = M * 0.2 // render() relies on this ratio for the trip back to the corner
       const gap2 = capH * 0.5
       const inkH = M * RING * 2 + gap1 + capH + gap2 + descCap
       const top = c.y + (c.h - inkH) / 2 // top of the ring
@@ -151,6 +151,7 @@ AD.defineScene('brand', {
     const V = G.view(2)
     const M = mr.w * big.mark.k
     const centre = { x: big.mark.x + M / 2, y: big.mark.y + M / 2 }
+    O.markCentre = centre // `inside` draws its last line in towards this point
     const dots = O.ticks.map((tk, k) => ({ from: G.dot(k, V), to: targets[k], r: V.r }))
     // Dots nearest the mark leave first, a third of a frame apart.
     dots
@@ -158,7 +159,8 @@ AD.defineScene('brand', {
       .sort((p, q) => p.dist - q.dist)
       .forEach((o, rank) => (dots[o.i].delay = rank / (AD.fps * 3)))
 
-    return { cv, frame, lock, mr, wr, cuts, descIn, rule, ruleAt, big, box, dots, centre, M }
+    const word = { ink: wordInk, capTop: wordBase - wordCap } // wordmark metrics at the bug's size
+    return { cv, frame, lock, mr, wr, word, stack: P.stack, RING, cuts, descIn, rule, ruleAt, big, box, dots, centre, M }
   },
   render(t, ctx, s) {
     const { clamp, lerp, prog, ease } = AD
@@ -193,8 +195,23 @@ AD.defineScene('brand', {
     else {
       const k = lerp(s.big.mark.k, 1, back)
       const half = (s.mr.w / 2) * k
-      const x = lerp(s.big.mark.x, s.mr.x, back) - s.mr.x + half
-      const y = lerp(s.big.mark.y, s.mr.y, back) - s.mr.y + half
+      let mx = lerp(s.big.mark.x, s.mr.x, back)
+      let my = lerp(s.big.mark.y, s.mr.y, back)
+      if (s.stack && back > 0) {
+        // Stacked lockup: the wordmark travels straight to the bug while the
+        // mark stays above it and slides to its left end, never crossing the
+        // letters and never leaving the frame; on the landing frame it drops
+        // into the bug's side-by-side layout.
+        const kw = lerp(s.big.word.k, 1, back)
+        const wx = lerp(s.big.word.x, s.wr.x, back)
+        const wy = lerp(s.big.word.y, s.wr.y, back)
+        const size = s.mr.w * k
+        const centred = wx + (s.word.ink * kw) / 2 - size / 2
+        mx = Math.max(s.mr.x, lerp(centred, wx - size, ease.cubic.out(back)))
+        my = wy + s.word.capTop * kw - size * (0.2 + 0.5 + s.RING)
+      }
+      const x = mx - s.mr.x + half
+      const y = my - s.mr.y + half
       mk.style.transform = `translate(${x.toFixed(3)}px,${y.toFixed(3)}px) rotate(${turnAt(t).toFixed(3)}deg) scale(${k.toFixed(5)}) translate(${-s.mr.w / 2}px,${-s.mr.w / 2}px)`
     }
     // One-frame brightness detent as the ring locks.

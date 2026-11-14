@@ -13,18 +13,37 @@
  * through its mask within three), the graphic settles from 104% to 100% over
  * the 15 frames, and all four share one dark background, so the passage cuts
  * fast without flashing.
+ *
+ * Drawing: each shot's line art is painted on a canvas that is cleared and
+ * redrawn on every frame, so a frame cannot inherit anything from the frame
+ * shown before it. (SVG with CSS filters, masks and gradients under the
+ * settling scale was not repeatable: the browser reuses cached layers.)
+ * Type, chips and the receipt are DOM; caliper and brackets come from the kit.
  */
 ;(function () {
   'use strict'
   const AD = window.AD
-  const { el, svg, clamp, lerp, prog, ease } = AD
+  const { el, clamp, lerp, prog, ease } = AD
   const fr = n => n / 30
 
   const CUT = 0.5
   const WORDS = ['SEE.', 'SET.', 'TRACE.', '24/5.']
   const MONO = 0.6 // advance width of the mono face, in em
+  const TAU = Math.PI * 2
 
-  const polyline = points => {
+  const rgba = (c, a = 1) => `rgba(${c[0]},${c[1]},${c[2]},${a})`
+  function tokens() {
+    const cs = getComputedStyle(document.documentElement)
+    const out = {}
+    for (const name of ['void', 'white', 'grey', 'accent', 'ice', 'amber']) {
+      const h = cs.getPropertyValue('--' + name).trim().replace('#', '')
+      out[name] = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16))
+    }
+    return out
+  }
+
+  /** A polyline with arc-length lookup and slicing. */
+  function polyline(points) {
     const segs = []
     let total = 0
     for (let i = 1; i < points.length; i++) {
@@ -32,22 +51,71 @@
       segs.push({ a: points[i - 1], b: points[i], start: total, len })
       total += len
     }
-    return {
-      total,
-      d: 'M' + points.map(p => `${p[0]},${p[1]}`).join(' L'),
-      at(s) {
-        s = clamp(s, 0, total)
-        for (const g of segs) if (s <= g.start + g.len) return [lerp(g.a[0], g.b[0], g.len ? (s - g.start) / g.len : 0), lerp(g.a[1], g.b[1], g.len ? (s - g.start) / g.len : 0)]
-        return points[points.length - 1]
-      },
+    const at = s => {
+      s = clamp(s, 0, total)
+      for (const g of segs) if (s <= g.start + g.len) return [lerp(g.a[0], g.b[0], g.len ? (s - g.start) / g.len : 0), lerp(g.a[1], g.b[1], g.len ? (s - g.start) / g.len : 0)]
+      return points[points.length - 1]
     }
+    /** Trace the part between two arc lengths into the current canvas path. */
+    const trace = (k, from, to) => {
+      from = clamp(from, 0, total)
+      to = clamp(to, 0, total)
+      if (to <= from) return false
+      k.moveTo(...at(from))
+      for (const g of segs) if (g.start + g.len > from && g.start + g.len < to) k.lineTo(g.b[0], g.b[1])
+      k.lineTo(...at(to))
+      return true
+    }
+    return { total, at, trace }
   }
-  const layer = (parent, W, H, cls) => svg('svg', { class: 'k-svg' + (cls ? ' ' + cls : ''), width: W, height: H, viewBox: `0 0 ${W} ${H}` }, parent)
+
+  /** Fade a canvas out before the top row and the risk band (graphics may still run off the sides). */
+  function crop(k, g) {
+    k.save()
+    k.globalCompositeOperation = 'destination-out'
+    const top = k.createLinearGradient(0, g.c.y + 4, 0, g.c.y + 38)
+    top.addColorStop(0, 'rgba(0,0,0,1)')
+    top.addColorStop(1, 'rgba(0,0,0,0)')
+    k.fillStyle = top
+    k.fillRect(0, 0, g.W, g.c.y + 38)
+    const bot = k.createLinearGradient(0, g.bottom - 26, 0, g.bottom + 6)
+    bot.addColorStop(0, 'rgba(0,0,0,0)')
+    bot.addColorStop(1, 'rgba(0,0,0,1)')
+    k.fillStyle = bot
+    k.fillRect(0, g.bottom - 26, g.W, g.H - g.bottom + 26)
+    k.restore()
+  }
+  const glowOn = (k, T, blur = 14) => {
+    k.shadowColor = rgba(T.accent, 0.85)
+    k.shadowBlur = blur
+  }
+  const glowOff = k => {
+    k.shadowColor = 'rgba(0,0,0,0)'
+    k.shadowBlur = 0
+  }
+  /** A ringed node: void centre, 2 px ring, centre dot. */
+  function ring(k, T, x, y, R, { lit = true, hot = false } = {}) {
+    k.fillStyle = rgba(T.void)
+    k.beginPath()
+    k.arc(x, y, R, 0, TAU)
+    k.fill()
+    if (lit) glowOn(k, T)
+    k.lineWidth = 2
+    k.strokeStyle = rgba(lit ? T.accent : T.grey)
+    k.beginPath()
+    k.arc(x, y, R, 0, TAU)
+    k.stroke()
+    k.fillStyle = rgba(hot ? T.white : lit ? T.accent : T.grey)
+    k.beginPath()
+    k.arc(x, y, R * 0.3, 0, TAU)
+    k.fill()
+    glowOff(k)
+  }
 
   // ── SEE. — price ladder with the spread caliper ───────────────────────────
   function ladder(bg, ctx, g) {
     const kit = AD.kit
-    const { W, H, c } = g
+    const { W, H, c, T } = g
     const fig = ctx.pick({ '16x9': 52, '9x16': 36, default: 46 })
     const pitch = ctx.pick({ '16x9': 112, '9x16': 74, default: 112 })
     const gap = ctx.pick({ '16x9': 90, '9x16': 60, default: 88 })
@@ -71,36 +139,20 @@
     const ASK = 108432
     const depth = { ask: [0.36, 0.7, 1], bid: [0.34, 0.62, 0.9] }
 
-    const band = el('div', 'rc-gap', bg)
-    band.style.cssText += `left:${cx - 620}px;width:1240px;top:${cy - gap / 2}px;height:${gap}px`
-    const art = layer(bg, W, H)
-    const defs = svg('defs', null, art)
-    const grad = (id, color, near, far, flip) => {
-      const lg = svg('linearGradient', { id, x1: flip ? 1 : 0, x2: flip ? 0 : 1, y1: 0, y2: 0 }, defs)
-      svg('stop', { offset: 0, 'stop-color': color, 'stop-opacity': near }, lg)
-      svg('stop', { offset: 1, 'stop-color': color, 'stop-opacity': far }, lg)
-    }
-    grad('rc-ask', 'var(--amber)', 0.62, 0.16, false)
-    grad('rc-bid', 'var(--ice)', 0.62, 0.16, true)
-
+    const cv = AD.canvas(bg, W, H)
     const rows = []
     for (const side of ['ask', 'bid']) {
       for (let k = 0; k < count[side]; k++) {
         const best = k === 0
         const y = side === 'ask' ? cy - gap / 2 - barH - k * pitch : cy + gap / 2 + k * pitch
-        const len = (side === 'ask' ? askMax : bidMax) * depth[side][k]
-        const color = side === 'ask' ? 'var(--amber)' : 'var(--ice)'
-        const rect = svg('rect', { y, height: barH, fill: best ? color : `url(#rc-${side})`, opacity: best ? 0.92 : 1 }, art)
-        // The 2 px edge that faces the price column.
-        const edge = svg('path', { d: `M${side === 'ask' ? askX : bidX},${y} v${barH}`, stroke: color, 'stroke-width': 2, fill: 'none' }, art)
-        rows.push({ side, rect, edge, len })
+        rows.push({ side, best, y, len: (side === 'ask' ? askMax : bidMax) * depth[side][k] })
         // A row the crop cuts through keeps its bar and loses its figure: no half-read prices.
         if (y < c.y + 6 || y + barH > g.bottom - 2) continue
         const price = el('div', 'rc-fig', bg, ((side === 'ask' ? ASK + k * 5 : BID - k * 5) / 1e5).toFixed(5))
         price.style.fontSize = fig + 'px'
         price.style.width = colW + 'px'
-        price.style.left = cx - colW / 2 + 'px'
-        price.style.top = y + (barH - fig) / 2 + 'px'
+        price.style.left = Math.round(cx - colW / 2) + 'px'
+        price.style.top = Math.round(y + (barH - fig) / 2) + 'px'
         price.style.color = best ? 'var(--white)' : 'var(--grey)'
         if (best) price.style.fontWeight = '600'
       }
@@ -110,12 +162,37 @@
     return {
       origin: [cx, cy],
       render(lt) {
+        const k = cv.ctx
+        k.clearRect(0, 0, W, H)
+        // The gap itself, tinted.
+        const half = 620
+        const band = k.createLinearGradient(cx - half, 0, cx + half, 0)
+        band.addColorStop(0, rgba(T.accent, 0))
+        band.addColorStop(0.3, rgba(T.accent, 0.13))
+        band.addColorStop(0.7, rgba(T.accent, 0.13))
+        band.addColorStop(1, rgba(T.accent, 0))
+        k.fillStyle = band
+        k.fillRect(cx - half, cy - gap / 2, half * 2, gap)
+        // Depth bars extend the last fifth of their length as the shot opens.
         const grow = lerp(0.8, 1, prog(lt, -fr(1), fr(8), ease.snap))
         for (const r of rows) {
+          const ask = r.side === 'ask'
+          const col = ask ? T.amber : T.ice
           const len = r.len * grow
-          r.rect.setAttribute('width', len.toFixed(2))
-          r.rect.setAttribute('x', (r.side === 'ask' ? askX : bidX - len).toFixed(2))
+          const near = ask ? askX : bidX
+          const far = ask ? askX + len : bidX - len
+          if (r.best) k.fillStyle = rgba(col, 0.92)
+          else {
+            const fade = k.createLinearGradient(near, 0, far, 0)
+            fade.addColorStop(0, rgba(col, 0.62))
+            fade.addColorStop(1, rgba(col, 0.16))
+            k.fillStyle = fade
+          }
+          k.fillRect(Math.min(near, far), r.y, len, barH)
+          k.fillStyle = rgba(col)
+          k.fillRect(near - 1, r.y, 2, barH)
         }
+        crop(k, g)
         cal.set({ a: cy - gap / 2, b: cy + gap / 2, pos: cx + colW / 2 + 34, jaw: colW + 68, open: prog(lt, -fr(2), fr(8), ease.snap) })
       },
     }
@@ -124,7 +201,7 @@
   // ── SET. — entry, stop and limit ──────────────────────────────────────────
   function levels(bg, ctx, g) {
     const kit = AD.kit
-    const { W, H, c } = g
+    const { W, H, c, T } = g
     const chipFs = ctx.pick({ '16x9': 28, '9x16': 24, default: 26 })
     const chipH = chipFs * 2
     let yE
@@ -132,22 +209,20 @@
     if (g.wide) {
       // The word stands on the entry line, with the limit just clear of its cap height.
       yE = Math.round(g.base + g.size * 0.045)
-      D = g.bottom - chipH / 2 - 2 - yE
+      D = Math.round(g.bottom - chipH / 2 - 2 - yE)
     } else {
       yE = Math.round((g.gTop + g.bottom) / 2)
       D = Math.round((g.bottom - g.gTop) / 2 - chipH / 2 - 4)
     }
     const LV = [
-      { label: 'LIMIT', px: '1.08682', y: yE - D, color: 'var(--accent)' },
-      { label: 'ENTRY', px: '1.08432', y: yE, color: 'var(--white)', dash: '12 8' },
-      { label: 'STOP', px: '1.08182', y: yE + D, color: 'var(--amber)' },
+      { label: 'LIMIT', px: '1.08682', y: yE - D, color: 'accent' },
+      { label: 'ENTRY', px: '1.08432', y: yE, color: 'white', dash: [12, 8] },
+      { label: 'STOP', px: '1.08182', y: yE + D, color: 'amber' },
     ]
     const cv = AD.canvas(bg, W, H)
-    const art = layer(bg, W, H)
     const chips = LV.map(lv => {
-      svg('path', { d: `M-10,${lv.y} H${W + 10}`, stroke: lv.color, 'stroke-width': 2, fill: 'none', ...(lv.dash ? { 'stroke-dasharray': lv.dash } : null) }, art)
       const chip = el('div', 'rc-chip', bg)
-      chip.style.color = lv.color
+      chip.style.color = `var(--${lv.color})`
       chip.style.fontSize = chipFs + 'px'
       chip.style.height = chipH + 'px'
       el('span', 'grip', chip)
@@ -156,7 +231,7 @@
       return { el: chip, y: lv.y }
     })
     const chipW = Math.ceil(Math.max(...chips.map(ch => ch.el.getBoundingClientRect().width)))
-    const chipX = g.right - chipW
+    const chipX = Math.round(g.right - chipW)
     for (const ch of chips) {
       ch.el.style.width = chipW + 'px'
       ch.el.style.top = ch.y - chipH / 2 + 'px'
@@ -165,8 +240,8 @@
     // Monochrome candles ranging on both sides of entry, clear of both exits.
     const n = ctx.pick({ '16x9': 10, '9x16': 7, default: 8 })
     const raw = AD.market.candles({ seed: 41, n, base: 0, vol: 6, revert: 0.3 })
-    const far = Math.max(...raw.map(k => Math.max(Math.abs(k.h), Math.abs(k.l))))
-    const candles = raw.map(k => ({ o: (k.o / far) * 15, h: (k.h / far) * 15, l: (k.l / far) * 15, c: (k.c / far) * 15 }))
+    const far = Math.max(...raw.map(q => Math.max(Math.abs(q.h), Math.abs(q.l))))
+    const candles = raw.map(q => ({ o: (q.o / far) * 15, h: (q.h / far) * 15, l: (q.l / far) * 15, c: (q.c / far) * 15 }))
     const x0 = g.wide ? Math.round(Math.max(g.wordRight[1] + 80, c.x + c.w * 0.36)) : c.x
     const rect = { x: x0, y: yE - D, w: chipX - 44 - x0, h: 2 * D }
 
@@ -177,13 +252,20 @@
         k.clearRect(0, 0, W, H)
         // The last two candles print during the shot (time-driven, linear).
         kit.drawCandles(k, candles, { rect, min: -25, max: 25, count: n - 2 + 2 * clamp(lt / CUT + 0.1), alpha: 0.8 })
+        k.lineWidth = 2
+        for (const lv of LV) {
+          k.strokeStyle = rgba(T[lv.color])
+          k.setLineDash(lv.dash || [])
+          k.beginPath()
+          k.moveTo(-10, lv.y)
+          k.lineTo(W + 10, lv.y)
+          k.stroke()
+        }
+        k.setLineDash([])
         const slide = (1 - prog(lt, -fr(1), fr(6), ease.snap)) * 70
-        chips.forEach((ch, i) => {
-          ch.el.style.transform = `translate(${Math.round(chipX + slide)}px,0px)`
-          // Two-frame detent as each handle seats, one frame apart.
-          const f = Math.floor(lt * 30 + 1e-4) - 2 - i
-          ch.el.style.filter = f === 0 ? 'brightness(1.6)' : f === 1 ? 'brightness(1.25)' : 'none'
-        })
+        // The handles seat from the right in whole pixels. (No brightness
+        // filter on them: it moves a chip onto its own layer for a frame.)
+        for (const ch of chips) ch.el.style.transform = `translate(${Math.round(chipX + slide)}px,0px)`
       },
     }
   }
@@ -191,7 +273,7 @@
   // ── TRACE. — the pulse arrives at CONFIRMATION and the receipt ────────────
   function route(bg, ctx, g) {
     const kit = AD.kit
-    const { W, H, c } = g
+    const { W, H, c, T } = g
     const R = ctx.pick({ '16x9': 46, '9x16': 32, default: 40 })
     const M = 14
     const font0 = ctx.pick({ '16x9': 40, '9x16': 30, default: 36 })
@@ -219,7 +301,7 @@
     const row = Math.round(font * 1.6)
     const padX = Math.round(font * 0.75)
     const padY = Math.round(font * 0.55)
-    const ruleGap = Math.round(font * 0.45)
+    const ruleGap = Math.round(font * 0.45) | 1 // odd, so the 1 px rule sits on whole pixels
     const rh = padY * 2 + row * 4 + ruleGap
     if (!g.wide) {
       node[1] = Math.round(Math.max(pts[0][1] + 60 + rh / 2, (pts[0][1] + g.bottom - M) / 2 + 14))
@@ -227,28 +309,7 @@
     }
     const ry = Math.round(node[1] - rh / 2)
     const path = polyline(pts)
-    const wire = `M${node[0]},${node[1]} H${rx}`
-
-    const art = layer(bg, W, H)
-    const stroke = (d, color, opacity) => svg('path', { d, fill: 'none', stroke: color, 'stroke-width': 2, opacity }, art)
-    stroke(path.d + ' ' + wire, 'var(--grey)', 0.7)
-    const lit = stroke(path.d, 'var(--accent)', 0.7)
-    const wireLit = stroke(wire, 'var(--accent)', 0.7)
-    const ring = svg('circle', { cx: node[0], cy: node[1], r: R, fill: 'var(--void)', stroke: 'var(--grey)', 'stroke-width': 2 }, art)
-    const dot = svg('circle', { cx: node[0], cy: node[1], r: R * 0.3, fill: 'var(--grey)' }, art)
-    svg('rect', { x: rx - 5, y: node[1] - 5, width: 10, height: 10, fill: 'var(--void)', stroke: 'var(--accent)', 'stroke-width': 2 }, art)
-
-    const glow = layer(bg, W, H, 'rc-glow')
-    const halo = svg('circle', { cx: node[0], cy: node[1], r: R, fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2 }, glow)
-    const litRing = svg('circle', { cx: node[0], cy: node[1], r: R, fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2 }, glow)
-    const litDot = svg('circle', { cx: node[0], cy: node[1], r: R * 0.3, fill: 'var(--accent)' }, glow)
-    const TAIL = [
-      { lag: 0.2, width: 2, opacity: 0.25 },
-      { lag: 0.13, width: 4, opacity: 0.4 },
-      { lag: 0.07, width: 6, opacity: 0.7 },
-      { lag: 0.03, width: 9, opacity: 1 },
-    ].map(spec => ({ ...spec, path: svg('path', { d: path.d, fill: 'none', stroke: 'var(--accent)', 'stroke-width': spec.width, opacity: spec.opacity }, glow) }))
-    const head = svg('circle', { r: 11, fill: 'var(--white)', stroke: 'var(--accent)', 'stroke-width': 2 }, glow)
+    const cv = AD.canvas(bg, W, H)
 
     // The receipt, with the same illustrative order and time-stamp as chapter 3.
     const stamp = kit.clock(window.AD_TIMELINE.scenes.find(sc => sc.id === 'trace').start + 3)
@@ -271,38 +332,69 @@
 
     const ARRIVE = fr(7)
     const from = path.total * (g.wide ? 0.42 : 0.2)
+    const TAIL = [
+      { lag: 0.2, width: 2, alpha: 0.3 },
+      { lag: 0.13, width: 4, alpha: 0.45 },
+      { lag: 0.07, width: 6, alpha: 0.75 },
+      { lag: 0.03, width: 9, alpha: 1 },
+    ]
     return {
       origin: [rx + rw / 2, node[1]],
       render(lt) {
+        const k = cv.ctx
+        k.clearRect(0, 0, W, H)
         const pos = t => lerp(from, path.total, clamp(t / ARRIVE))
         const at = pos(lt)
-        const dash = (p, a, b) => {
-          p.setAttribute('stroke-dasharray', `${Math.max(0, b - a).toFixed(2)} ${(path.total + 20).toFixed(2)}`)
-          p.setAttribute('stroke-dashoffset', (-a).toFixed(2))
-        }
-        dash(lit, 0, at)
         const arrived = lt >= ARRIVE - 1e-6
-        for (const tail of TAIL) {
-          const a = pos(lt - tail.lag * ARRIVE * 2)
-          dash(tail.path, a, at)
-          tail.path.style.opacity = at - a > 0.5 ? '' : '0'
+        const line = (a, b, style, width) => {
+          k.beginPath()
+          if (!path.trace(k, a, b)) return
+          k.strokeStyle = style
+          k.lineWidth = width
+          k.stroke()
         }
-        const [hx, hy] = path.at(at)
-        head.setAttribute('cx', hx.toFixed(2))
-        head.setAttribute('cy', hy.toFixed(2))
-        head.setAttribute('opacity', lt < ARRIVE + fr(1) ? '1' : '0')
-        // The node lights as the pulse lands; the wire and the time-stamp answer.
+        // Route: grey ahead of the pulse, accent behind it.
+        line(0, path.total, rgba(T.grey, 0.7), 2)
+        line(0, at, rgba(T.accent, 0.75), 2)
+        k.strokeStyle = arrived ? rgba(T.accent, 0.75) : rgba(T.grey, 0.7)
+        k.lineWidth = 2
+        k.beginPath()
+        k.moveTo(node[0], node[1])
+        k.lineTo(rx, node[1])
+        k.stroke()
+        // The node lights as the pulse lands.
         const ping = prog(lt, ARRIVE, fr(7), ease.cubic.out)
-        halo.setAttribute('r', (R + ping * R).toFixed(2))
-        halo.setAttribute('opacity', arrived ? (0.8 * (1 - ping)).toFixed(4) : '0')
-        litRing.setAttribute('opacity', arrived ? '1' : '0')
-        litDot.setAttribute('opacity', arrived ? '1' : '0')
-        litDot.setAttribute('fill', arrived && lt < ARRIVE + fr(2) - 1e-6 ? 'var(--white)' : 'var(--accent)')
-        wireLit.setAttribute('opacity', arrived ? '0.7' : '0')
+        if (arrived && ping < 1) {
+          k.strokeStyle = rgba(T.accent, 0.8 * (1 - ping))
+          k.beginPath()
+          k.arc(node[0], node[1], R + ping * R, 0, TAU)
+          k.stroke()
+        }
+        ring(k, T, node[0], node[1], R, { lit: arrived, hot: arrived && lt < ARRIVE + fr(2) - 1e-6 })
+        k.fillStyle = rgba(T.void)
+        k.fillRect(rx - 5, node[1] - 5, 10, 10)
+        k.strokeStyle = rgba(T.accent)
+        k.strokeRect(rx - 5, node[1] - 5, 10, 10)
+        // Comet: a short tail of four strokes and a white head.
+        if (lt < ARRIVE + fr(4)) {
+          glowOn(k, T, 18)
+          for (const tail of TAIL) line(pos(lt - tail.lag * ARRIVE * 2), at, rgba(T.accent, tail.alpha), tail.width)
+          if (lt < ARRIVE + fr(1) - 1e-6) {
+            const [hx, hy] = path.at(at)
+            k.fillStyle = rgba(T.white)
+            k.strokeStyle = rgba(T.accent)
+            k.lineWidth = 2
+            k.beginPath()
+            k.arc(hx, hy, 11, 0, TAU)
+            k.fill()
+            k.stroke()
+          }
+          glowOff(k)
+        }
+        // The receipt answers: figures flash accent, brackets close on it.
         const hot = arrived && lt < ARRIVE + fr(4) - 1e-6
         for (const num of nums) num.style.color = hot ? 'var(--accent)' : 'var(--white)'
-        const tight = 1 - prog(lt, ARRIVE, fr(6), ease.snap)
-        const m = M + tight * 16
+        const m = M + Math.round((1 - prog(lt, ARRIVE, fr(6), ease.snap)) * 16)
         frame.set({ x: rx - m, y: ry - m, w: rw + 2 * m, h: rh + 2 * m, opacity: arrived ? 1 : 0.45 })
       },
     }
@@ -310,7 +402,7 @@
 
   // ── 24/5. — dot-grid map, light band, four session nodes ──────────────────
   function map(bg, ctx, g) {
-    const { W, H, c } = g
+    const { W, H, c, T } = g
     const pitch = ctx.pick({ '16x9': 30, '9x16': 26, default: 28 })
     const r = ctx.pick({ '16x9': 4, '9x16': 3.5, default: 3.75 })
     const R = ctx.pick({ '16x9': 26, '9x16': 20, default: 24 })
@@ -320,64 +412,76 @@
     const ox = (W - (cols - 1) * pitch) / 2
     const snapX = x => ox + Math.round((x - ox) / pitch) * pitch
     const snapY = y => top + Math.round((y - top) / pitch) * pitch
-    const dots = (color, alpha) => {
-      const cv = AD.canvas(bg, W, H)
-      cv.ctx.fillStyle = color
-      cv.ctx.globalAlpha = alpha
-      for (let i = 0; i < cols; i++) {
-        for (let j = 0; j < rowsN; j++) {
-          cv.ctx.beginPath()
-          cv.ctx.arc(ox + i * pitch, top + j * pitch, r, 0, Math.PI * 2)
-          cv.ctx.fill()
-        }
+    const column = (k, i) => {
+      k.beginPath()
+      for (let j = 0; j < rowsN; j++) {
+        k.moveTo(ox + i * pitch + r, top + j * pitch)
+        k.arc(ox + i * pitch, top + j * pitch, r, 0, TAU)
       }
-      return cv.canvas
+      k.fill()
     }
-    const token = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-    dots(token('--grey'), 0.3)
-    const bright = dots(token('--accent'), 0.95)
+    // The resting grid never changes: drawn once.
+    const still = AD.canvas(bg, W, H)
+    still.ctx.fillStyle = rgba(T.grey, 0.3)
+    for (let i = 0; i < cols; i++) column(still.ctx, i)
+    crop(still.ctx, g)
+    const cv = AD.canvas(bg, W, H)
     const bandW = ctx.pick({ '16x9': 420, '9x16': 320, default: 360 })
-    const mask = 'linear-gradient(to right, transparent 0%, #000 50%, transparent 100%)'
-    bright.style.webkitMaskImage = bright.style.maskImage = mask
-    bright.style.webkitMaskRepeat = bright.style.maskRepeat = 'no-repeat'
-    bright.style.webkitMaskSize = bright.style.maskSize = `${bandW}px 100%`
 
     // Four session nodes, west to east: New York, London, Tokyo, Sydney.
     const box = g.wide
-      ? { x: Math.max(g.wordRight[3] + 110, c.x + c.w * 0.5), y: c.y + 60, w: 0, h: c.h - 120 }
+      ? { x: Math.max(g.wordRight[3] + 110, c.x + c.w * 0.5), y: c.y + 60, h: c.h - 120 }
       : { x: c.x + 36, y: g.gTop + 50, w: c.w - 72, h: g.bottom - g.gTop - 96 }
     if (g.wide) box.w = g.right - 40 - box.x
     const spots = [[0.03, 0.5], [0.36, 0.22], [0.88, 0.44], [0.97, 0.92]].map(([u, v]) => [snapX(box.x + box.w * u), snapY(box.y + box.h * v)])
-    const art = layer(bg, W, H, 'rc-glow')
     // Session arcs, drawn in the order the trading day moves: east to west.
     const arcs = [[3, 2], [2, 1], [1, 0]].map(([a, b]) => {
       const [x0, y0] = spots[a]
       const [x1, y1] = spots[b]
       const lift = Math.max(R * 2.2, Math.hypot(x1 - x0, y1 - y0) * 0.34)
-      const d = `M${x0},${y0} Q${(x0 + x1) / 2},${Math.min(y0, y1) - lift} ${x1},${y1}`
-      return svg('path', { d, fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2, pathLength: 1, 'stroke-dasharray': '1 2' }, art)
-    })
-    const rings = spots.map(([x, y], i) => {
-      const halo = svg('circle', { cx: x, cy: y, r: R, fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2 }, art)
-      svg('circle', { cx: x, cy: y, r: R, fill: 'var(--void)', stroke: 'var(--accent)', 'stroke-width': 2 }, art)
-      svg('circle', { cx: x, cy: y, r: R * 0.3, fill: i === 1 ? 'var(--white)' : 'var(--accent)' }, art)
-      return halo
+      return { p0: [x0, y0], p1: [(x0 + x1) / 2, Math.min(y0, y1) - lift], p2: [x1, y1] }
     })
     const london = spots[1]
+    const mix = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t)]
 
     return {
       origin: london,
       render(lt) {
-        // The band follows the trading day westward at constant speed.
-        const bx = london[0] + lerp(70, -70, clamp(lt / CUT)) - bandW / 2
-        bright.style.webkitMaskPosition = bright.style.maskPosition = `${bx.toFixed(2)}px 0px`
-        arcs.forEach((arc, i) => arc.setAttribute('stroke-dashoffset', (1 - prog(lt, fr(i * 2 - 4), fr(5))).toFixed(4)))
+        const k = cv.ctx
+        k.clearRect(0, 0, W, H)
+        // The band of light follows the trading day westward at constant speed.
+        const bx = london[0] + lerp(70, -70, clamp(lt / CUT))
+        k.fillStyle = rgba(T.accent)
+        for (let i = 0; i < cols; i++) {
+          const a = 1 - Math.abs(ox + i * pitch - bx) / (bandW / 2)
+          if (a <= 0) continue
+          k.globalAlpha = 0.95 * a
+          column(k, i)
+        }
+        k.globalAlpha = 1
+        crop(k, g)
+        // Arcs draw on two frames apart; the first is under way on the cut.
+        glowOn(k, T, 12)
+        k.strokeStyle = rgba(T.accent)
+        k.lineWidth = 2
+        arcs.forEach((arc, i) => {
+          const p = prog(lt, fr(i * 2 - 4), fr(5))
+          if (p <= 0) return
+          const q = mix(arc.p0, arc.p1, p)
+          const e = mix(q, mix(arc.p1, arc.p2, p), p)
+          k.beginPath()
+          k.moveTo(arc.p0[0], arc.p0[1])
+          k.quadraticCurveTo(q[0], q[1], e[0], e[1])
+          k.stroke()
+        })
+        glowOff(k)
         // London's ring pings as the band sits on it.
         const ping = prog(lt, 0, fr(10), ease.cubic.out)
-        rings.forEach((halo, i) => {
-          halo.setAttribute('r', (R + (i === 1 ? 8 + ping * R * 0.9 : 0)).toFixed(2))
-          halo.setAttribute('opacity', i === 1 ? (0.9 - 0.5 * ping).toFixed(4) : '0')
-        })
+        k.strokeStyle = rgba(T.accent, 0.9 - 0.5 * ping)
+        k.beginPath()
+        k.arc(london[0], london[1], R + 8 + ping * R * 0.9, 0, TAU)
+        k.stroke()
+        spots.forEach(([x, y], i) => ring(k, T, x, y, R, { lit: true, hot: i === 1 }))
       },
     }
   }
@@ -385,11 +489,9 @@
   AD.defineScene('recap', {
     css: `
       .scene--recap .rc-shot { position: absolute; inset: 0; overflow: hidden; }
-      .scene--recap .k-headline .ln > span { will-change: auto; }
       .scene--recap .rc-bg { position: absolute; inset: 0; }
-      .scene--recap .rc-glow { filter: drop-shadow(0 0 8px rgba(61, 225, 240, 0.7)); }
+      .scene--recap .k-headline .ln > span { will-change: auto; }
       .scene--recap .rc-fig { position: absolute; text-align: center; line-height: 1; font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums slashed-zero; white-space: nowrap; }
-      .scene--recap .rc-gap { position: absolute; background: linear-gradient(to right, transparent, rgba(61, 225, 240, 0.13) 30%, rgba(61, 225, 240, 0.13) 70%, transparent); }
       .scene--recap .rc-chip {
         position: absolute; left: 0; top: 0; box-sizing: border-box;
         display: flex; align-items: center; gap: 0.4em; padding: 0 0.5em 0 0.42em;
@@ -416,13 +518,9 @@
       const right = c.x + c.w
       kit.grid(root)
 
-      // Graphics may run off the sides of the frame but fade out before the
-      // top row and the risk band.
-      const crop = `linear-gradient(to bottom, transparent ${c.y - 8}px, #000 ${c.y + 30}px, #000 ${bottom - 22}px, transparent ${bottom + 10}px)`
       const shots = WORDS.map(() => {
         const shot = el('div', 'rc-shot', root)
         const bg = el('div', 'rc-bg', shot)
-        bg.style.webkitMaskImage = bg.style.maskImage = crop
         return { shot, bg }
       })
 
@@ -432,6 +530,9 @@
       const heads = shots.map((sh, i) => {
         const h = kit.headline(sh.shot, [WORDS[i]], { tier: 'display', x: c.x, y: 0, w: W })
         h.el.style.fontSize = size + 'px'
+        // Always its own compositor layer, so the word is rasterised the same
+        // way whatever is beneath it and whatever was drawn before it.
+        h.el.style.willChange = 'transform'
         return h
       })
       const widths = () => heads.map(h => h.lines[0].inner.getBoundingClientRect().width)
@@ -443,24 +544,28 @@
       // Baseline and cap height of the set word, measured rather than assumed.
       const probe = el('span', null, heads[0].lines[0].inner)
       probe.style.cssText = 'display:inline-block;width:0;height:0'
-      const baseOff = probe.getBoundingClientRect().bottom - heads[0].el.getBoundingClientRect().top
+      const baseOff = Math.round(probe.getBoundingClientRect().bottom - heads[0].el.getBoundingClientRect().top)
       probe.remove()
       const meter = document.createElement('canvas').getContext('2d')
       meter.font = `600 ${size}px "Barlow Condensed"`
-      const capH = meter.measureText('E').actualBoundingBoxAscent
+      const capH = Math.round(meter.measureText('E').actualBoundingBoxAscent)
       // The tag keeps one corner through all four cuts: top left, where the
-      // chapter tab sits in the chapters, clear of every graphic.
+      // chapter tab sits in the chapters, clear of every graphic. Whole-pixel
+      // box on its own layer, so its rounded corners render the same every time.
       const tag = kit.tag(root, null, { x: c.x, y: c.y })
       const tagBox = tag.getBoundingClientRect()
+      tag.style.boxSizing = 'border-box'
+      tag.style.width = Math.ceil(tagBox.width) + 'px'
+      tag.style.willChange = 'transform'
       // 16:9: word at the left, its baseline just below the middle of the stage.
       // Portrait: word across the top, graphic beneath it.
       const base = wide ? Math.round(c.y + c.h * 0.52) : Math.round(c.y + tagBox.height + 22 + capH)
       for (const h of heads) h.el.style.top = base - baseOff + 'px'
       const wordRight = widths().map(w => c.x + w)
 
-      const g = { W, H, c, wide, bottom, right, size, base, capH, capTop: base - capH, wordRight, gTop: base + Math.round(size * 0.14) }
+      const g = { W, H, c, wide, bottom, right, size, base, capH, capTop: base - capH, wordRight, gTop: base + Math.round(size * 0.14), T: tokens() }
       const draw = [ladder, levels, route, map].map((make, i) => make(shots[i].bg, ctx, g))
-      shots.forEach((sh, i) => (sh.bg.style.transformOrigin = `${draw[i].origin[0].toFixed(1)}px ${draw[i].origin[1].toFixed(1)}px`))
+      shots.forEach((sh, i) => (sh.bg.style.transformOrigin = `${Math.round(draw[i].origin[0])}px ${Math.round(draw[i].origin[1])}px`))
 
       const travel = heads[0].lines[0].inner.getBoundingClientRect().height * 1.08
       return { shots, heads, draw, travel }

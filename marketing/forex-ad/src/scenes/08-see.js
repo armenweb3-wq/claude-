@@ -14,7 +14,7 @@
  */
 AD.defineScene('see', {
   css: `
-    .scene--see .see-back { position: absolute; background: var(--void); opacity: 0.94; box-shadow: 0 0 44px 34px var(--void); }
+    .scene--see .see-back { position: absolute; background: color-mix(in srgb, var(--void) 94%, transparent); box-shadow: 0 0 44px 34px color-mix(in srgb, var(--void) 94%, transparent); }
     .scene--see .see-view { position: absolute; overflow: hidden; }
     .scene--see .see-world { position: absolute; width: var(--W); height: var(--H); }
     .scene--see .see-hair { position: absolute; height: 1px; background: var(--hairline); }
@@ -25,10 +25,9 @@ AD.defineScene('see', {
       font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums slashed-zero; white-space: nowrap; color: var(--grey);
     }
     .scene--see .see-bar { position: absolute; box-sizing: border-box; }
-    .scene--see .see-bar--ask { background: linear-gradient(to right, color-mix(in srgb, var(--amber) 78%, transparent), color-mix(in srgb, var(--amber) 34%, transparent)); border-right: 2px solid var(--amber); }
-    .scene--see .see-bar--bid { background: linear-gradient(to left, color-mix(in srgb, var(--ice) 78%, transparent), color-mix(in srgb, var(--ice) 34%, transparent)); border-left: 2px solid var(--ice); }
-    .scene--see .see-bar.is-best.see-bar--ask { background: var(--amber); }
-    .scene--see .see-bar.is-best.see-bar--bid { background: var(--ice); }
+    /* Flat fills only: depth reads from length and from a fill that thins level by level. */
+    .scene--see .see-bar--ask { border-right: 2px solid var(--amber); }
+    .scene--see .see-bar--bid { border-left: 2px solid var(--ice); }
     .scene--see .see-line { position: absolute; height: 2px; }
     .scene--see .see-quote { position: absolute; }
     .scene--see .see-quote .lbl, .scene--see .see-pair { font-family: var(--font-mono); font-weight: 600; line-height: 1; letter-spacing: 0.16em; white-space: nowrap; }
@@ -46,8 +45,6 @@ AD.defineScene('see', {
     .scene--see .see-cap { position: absolute; color: var(--white); }
     .scene--see .see-big { position: absolute; font-family: var(--font-mono); font-weight: 600; color: var(--accent); white-space: nowrap; line-height: normal; }
     .scene--see .see-words { position: absolute; left: 0; top: 0; }
-    /* No layer hint on headline lines: a hinted layer keeps the sub-pixel raster of whichever frame painted it first. */
-    .scene--see .k-headline .ln > span { will-change: auto; }
   `,
 
   build(root, ctx) {
@@ -156,16 +153,15 @@ AD.defineScene('see', {
       : { x: -60, y: headerY - 10, w: W + 120, h: c.y + c.h - headerY + 14 }
     back.style.cssText += `left:${backBox.x}px;top:${backBox.y}px;width:${backBox.w}px;height:${backBox.h}px`
 
-    // Viewport: the push-in crops the outer rows here, behind a soft edge.
-    const M = 12
+    // Viewport: a plain clip. Rows that the push-in carries across its edge fade out whole (see render).
     const viewL = wide ? Math.round(colX - (colW / 2 + barMax) * (1 + ZOOM) - 26) : 0
     const view = el('div', 'see-view', root)
-    view.style.cssText += `left:${viewL}px;top:${ladTop - M}px;width:${W - viewL}px;height:${ladH + 2 * M}px`
+    view.style.cssText += `left:${viewL}px;top:${ladTop}px;width:${W - viewL}px;height:${ladH + 1}px`
     // Everything inside is laid out per frame in whole pixels (see render): the push-in moves
     // real geometry instead of scaling a layer, so hairlines stay 1 px and edges stay crisp.
     const world = el('div', 'see-world', view)
     world.style.left = -viewL + 'px'
-    world.style.top = -(ladTop - M) + 'px'
+    world.style.top = -ladTop + 'px'
 
     const gapBand = el('div', 'see-gap', world)
 
@@ -205,6 +201,7 @@ AD.defineScene('see', {
 
     // ── caliper on the gap (drawn in frame space so strokes stay 2 px through the push-in) ──
     const cal = kit.caliper(root, { orientation: 'v' })
+    const calInk = [[cal.el.querySelector('path'), 'stroke'], [cal.el.querySelector('text'), 'fill']]
 
     // ── words: BID. ASK. SPREAD. ─────────────────────────────────────────
     const WORDS = [['BID', 'c-ice'], ['ASK', 'c-amber'], ['SPREAD', 'c-accent']]
@@ -251,7 +248,7 @@ AD.defineScene('see', {
     const blockH = h2.height + capGap + capH
     const h2Top = wide ? Math.round(c.y + (c.h - blockH) / 2 + 12) : Math.round(zoneTop + (zoneH - blockH) / 2)
     h2.el.style.top = h2Top + 'px'
-    cap.style.top = Math.round(h2Top + h2.height + capGap) + 'px'
+    const capTop = Math.round(h2Top + h2.height + capGap)
 
     // ── the "01" that slams in and docks into the tab ────────────────────
     const big = el('div', 'see-big', root, '01')
@@ -259,8 +256,8 @@ AD.defineScene('see', {
     const bigSize = P({ '16x9': 380, '9x16': 300, '4x5': 360 }) // same as the 02 of S09
 
     return {
-      tab, tabNum, tag, qBid, qAsk, pairEl, view, world, gapBand, hairs, spines, levels, spark, cal, wordsWrap, words, h2, cap, big,
-      dev, wideAt, fmt, BASE, GAP, STEP, TICK, N, rows, rowH, rowFont, barH, barMax, colX, colW, colL, colR, xL, xR, ladTop, ladH, gapTop, gapBot, gapMid, ZOOM, M, viewL, wide,
+      tab, tabNum, tag, qBid, qAsk, pairEl, view, world, gapBand, hairs, spines, levels, spark, cal, calInk, wordsWrap, words, h2, cap, big,
+      dev, wideAt, fmt, BASE, GAP, STEP, TICK, N, rows, rowH, rowFont, barH, barMax, colX, colW, colL, colR, xL, xR, ladTop, ladH, gapTop, gapBot, gapMid, ZOOM, viewL, headerY, capTop, wide,
       num: { x: numRect.left, y: numRect.top, w: numRect.width, h: numRect.height, f0 },
       bigSize,
       colors: { white: token('--white'), grey: token('--grey'), ice: token('--ice'), amber: token('--amber'), accent: token('--accent'), hairline: token('--hairline') },
@@ -314,8 +311,13 @@ AD.defineScene('see', {
     const colR = zx(s.colR)
     const xL = zx(s.xL)
     const xR = zx(s.xR)
-    const fade = s.M + (z - 1) / s.ZOOM * s.rowH * 0.9
-    s.view.style.maskImage = s.view.style.webkitMaskImage = `linear-gradient(to bottom, transparent 0px, #000 ${fade.toFixed(1)}px, #000 calc(100% - ${fade.toFixed(1)}px), transparent 100%)`
+    // A row leaves cleanly: it is gone by the time 30% of it has crossed the edge of the ladder.
+    const ladBottom = s.ladTop + s.ladH
+    const inView = i => {
+      const h = tops[i + 1] - tops[i]
+      const outside = Math.max(0, s.ladTop - tops[i], tops[i + 1] - ladBottom)
+      return clamp(1 - outside / (0.3 * h))
+    }
 
     // 22.5: depth at the touch drains and the jaws follow it out; 23.0: it returns.
     const drain = ease.glide(prog(t, 4.5, 10 * f)) - ease.glide(prog(t, 5.0, 10 * f))
@@ -339,7 +341,8 @@ AD.defineScene('see', {
       labelGap: 14,
     })
     const detent = t >= 2.0 + 5 * f - EPS && t < 2.0 + 8 * f - EPS
-    s.cal.el.style.filter = detent ? 'drop-shadow(0 0 9px var(--accent))' : 'none'
+    // Detent: the caliper reads white for three frames as it seats (no glow filter).
+    for (const [node, attr] of s.calInk) node.setAttribute(attr, detent ? 'var(--white)' : 'var(--accent)')
 
     // ── ladder ───────────────────────────────────────────────────────────
     const stag = Math.min(2, 12 / s.N) * f
@@ -380,7 +383,8 @@ AD.defineScene('see', {
       place(row.price, colL, top, colR - colL, rowH)
       row.price.style.fontSize = (s.rowFont * z).toFixed(2) + 'px'
       row.price.style.paddingRight = Math.round(s.rowFont * 0.85 * z) + 'px'
-      const shown = prog(t, LAD + L * stag + f, 4 * f)
+      const seen = inView(row.i)
+      const shown = prog(t, LAD + L * stag + f, 4 * f) * seen
       const best = L === wideNow
       const gone = L < wideNow // level emptied while the gap is open
       row.price.style.opacity = (shown * numOut * (gone ? 0.42 : 1)).toFixed(4)
@@ -399,12 +403,12 @@ AD.defineScene('see', {
       const flat = prog(exit, 0, 0.5, ease.snap)
       const hgt = Math.round(lerp(barH, 2, flat))
       place(row.bar, row.ask ? colR + 1 : colL - 1 - len, top + Math.round((rowH - hgt) / 2), len, hgt)
-      row.bar.style.opacity = len < 2 ? '0' : ((best ? 1 : 0.86 - Math.min(L, 6) * 0.035) * (1 - prog(exit, 0.5, 0.4))).toFixed(4)
-      const cls = `see-bar see-bar--${row.ask ? 'ask' : 'bid'}${best && !gone ? ' is-best' : ''}`
-      if (row.bar.className !== cls) row.bar.className = cls
+      row.bar.style.visibility = len < 2 || seen <= 0 ? 'hidden' : 'visible'
+      const ink = Math.round((best ? 100 : 54 - Math.min(L, 6) * 3) * seen)
+      row.bar.style.background = `color-mix(in srgb, var(--${row.ask ? 'amber' : 'ice'}) ${ink}%, transparent)`
       // … and the line stretches out of the price column across the stage.
       place(row.line, lineL, top + Math.round(rowH / 2) - 1, lineR - lineL, 2)
-      row.line.style.opacity = (prog(exit, 0.05, 0.3) * 0.85).toFixed(4)
+      row.line.style.opacity = (prog(exit, 0.05, 0.3) * 0.85 * seen).toFixed(4)
     }
 
     // ── big quotes ───────────────────────────────────────────────────────
@@ -417,7 +421,8 @@ AD.defineScene('see', {
         q.c.textContent = text.slice(6)
       }
       const on = prog(t, at, 5 * f)
-      AD.set(q.el, { y: (1 - prog(t, at, 8 * f, ease.snap)) * 12, opacity: on })
+      q.el.style.top = s.headerY + Math.round((1 - prog(t, at, 8 * f, ease.snap)) * 12) + 'px'
+      q.el.style.opacity = on.toFixed(4)
     }
     const bidAt = kk => s.BASE + s.dev(kk) - s.wideAt(kk) * s.STEP
     const askAt = kk => s.BASE + s.dev(kk) + s.GAP + s.wideAt(kk) * s.STEP
@@ -492,6 +497,7 @@ AD.defineScene('see', {
     if (s.wide) s.words[0].h.show(t, { at: wordAt, dur: 7 * f })
     else s.words.forEach((w, i) => w.h.show(t, { at: wordAt[i], dur: 7 * f }))
     s.h2.show(t, { at: 4.0 - f, each: 5 * f, dur: 8 * f })
-    AD.set(s.cap, { y: (1 - prog(t, 4.0 + 10 * f, 8 * f, ease.snap)) * 10, opacity: prog(t, 4.0 + 10 * f, 5 * f) })
+    s.cap.style.top = s.capTop + Math.round((1 - prog(t, 4.0 + 10 * f, 8 * f, ease.snap)) * 10) + 'px'
+    s.cap.style.opacity = prog(t, 4.0 + 10 * f, 5 * f).toFixed(4)
   },
 })

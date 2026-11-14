@@ -12,6 +12,7 @@ AD.defineScene('question', {
   `,
   build(root, ctx) {
     const c = ctx.content
+    if (!AD.fanStage) throw new Error('06-question.js needs the price stage from 05-fan.js (AD.fanStage)')
     // Everything lives in one wrapper so the cut to void at 15.5 is a single switch.
     const wrap = AD.el('div', 'fill', root)
     const stage = AD.fanStage(wrap, ctx)

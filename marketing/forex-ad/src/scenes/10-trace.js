@@ -414,6 +414,10 @@
       tag.style.boxSizing = 'border-box'
       tag.style.width = tagW + 'px'
       tag.style.left = right - tagW + 'px'
+      // Its own compositor layer, always: otherwise the browser folds it into
+      // whichever layer is beneath it at the time and the anti-aliased corner
+      // pixels come out one level different from one seek history to another.
+      tag.style.willChange = 'transform'
 
       // The fade at the end is a copy of the bare background drawn over the
       // scene, rather than group opacity on the scene itself: the pixels of

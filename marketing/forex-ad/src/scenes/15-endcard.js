@@ -102,7 +102,7 @@
       // ── sizes per format ──
       const spec = pick({
         '16x9': { mark: 164, promise: 70, btnH: 78, btnPad: 44, url: 30, legal: [28, 24], g1: 30, g2: 0, g3: 0, legalGap: 30, min: 24 },
-        '4x5': { mark: 150, promise: 62, btnH: 78, btnPad: 46, url: 28, legal: [26, 22], g1: 30, g2: 54, g3: 24, legalGap: 32, min: 28 },
+        '4x5': { mark: 160, promise: 66, btnH: 78, btnPad: 46, url: 28, legal: [26, 22], g1: 32, g2: 58, g3: 26, legalGap: 32, min: 28 },
         '9x16': { mark: 118, promise: 52, btnH: 70, btnPad: 40, url: 26, legal: [24, 22], g1: 22, g2: 38, g3: 20, legalGap: 26, min: 14 },
       })
       promise.style.fontSize = spec.promise + 'px'

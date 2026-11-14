@@ -10,16 +10,15 @@
  * 2.0 s it shrinks along a straight path, sits on the overlay position from
  * 2.5 s, and is switched off at 2.6 s when the overlay starts drawing its own.
  *
- * The 0.4 s tail closes the band and clears the headline under the first
+ * The 0.3 s tail closes the band and draws its last line away under the first
  * frames of `brand`, which takes the tick dots over at 4.0 s.
  *
  * Geometry, tick data and the ruler drawing come from AD.opening (01-hook.js).
  */
 AD.defineScene('inside', {
   lead: 2,
-  tail: 0.4,
+  tail: 0.3,
   css: `
-    ${AD.opening.settleCSS('inside')}
     .scene--inside .in-clock { position: absolute; display: flex; align-items: center; justify-content: flex-end; color: var(--white); letter-spacing: 0.02em; }
     .scene--inside .in-clock .utc { color: var(--grey); margin-left: 0.5em; }
     .scene--inside .in-px, .scene--inside .in-ax { position: absolute; left: 0; top: 0; line-height: 1; }
@@ -170,10 +169,20 @@ AD.defineScene('inside', {
       const z = zAt(time)
       const V = G.view(z)
       const open = clamp(z)
-      // Tail: the band shuts onto its mid-line and takes the flattened price line with it.
-      const shut = prog(time, 2, 6 / fps, ease.snap)
+      // Tail: the band shuts onto its mid-line, flattening the price line into
+      // it, and the line that is left draws in towards the forming logo mark.
+      const shut = prog(time, 2, 5 / fps, ease.snap)
       const inner = 1 - prog(time, 2, 2 / fps)
-      const gone = prog(time, 2 + 5 / fps, 4 / fps)
+      const retract = prog(time, 2 + 3 / fps, 4 / fps, ease.cubic.in)
+      if (retract >= 1) return
+      g.save()
+      if (retract > 0) {
+        const xc = O.markCentre ? O.markCentre.x : ctx.W / 2
+        const half = Math.max(xc, ctx.W - xc) * (1 - retract)
+        g.beginPath()
+        g.rect(xc - half, 0, half * 2, ctx.H)
+        g.clip()
+      }
       const B = shut > 0 ? { ...V, top: lerp(V.top, V.mid, shut), h: V.h * (1 - shut) } : V
       const unit = V.unit * (1 - shut)
       const yOf = level => V.mid - level * unit
@@ -188,10 +197,12 @@ AD.defineScene('inside', {
         minor: inner > 0 ? j => prog(z - 1, Math.abs(j / 100 - G.P.focus) * 0.9, 0.5, ease.cubic.out) * inner : null,
         minorLen: 10,
         ext: G.ext * (1 - shut),
-        alpha: 1 - gone,
         crisp: (z === 1 || z === 2) && shut === 0,
       })
-      if (z <= 0 || gone >= 1) return
+      if (z <= 0) {
+        g.restore()
+        return
+      }
 
       // mid-line
       g.save()
@@ -209,7 +220,6 @@ AD.defineScene('inside', {
       const headTau = O.ticks[0].tau + ((time - first) / every) * O.PITCH
       if (headTau > 0) {
         g.save()
-        g.globalAlpha = 1 - gone
         g.strokeStyle = O.rgba(C.white, 0.95)
         g.lineWidth = 2
         g.lineJoin = 'miter'
@@ -227,11 +237,9 @@ AD.defineScene('inside', {
         g.stroke()
         g.restore()
       }
-      if (time >= ctx.dur) return // the dots now belong to `brand`
-
       O.ticks.forEach((tk, k) => {
         const at = first + k * every
-        const pop = prog(time, at, 3 / fps, ease.cubic.out)
+        const pop = time < ctx.dur ? prog(time, at, 3 / fps, ease.cubic.out) : 0 // from 4.0 s the dots belong to `brand`
         if (pop <= 0) return
         const d = G.dot(k, V)
         const ring = prog(time, at, 8 / fps) // a ring leaves each dot as it lands
@@ -265,6 +273,7 @@ AD.defineScene('inside', {
         g.fillRect(hi + 48, y0, ctx.W - hi - 48, hh)
         g.restore()
       }
+      g.restore()
     }
     const moving = (t > 0 && t < 0.5) || (t > 1 && t < 1.5)
     if (moving) {
@@ -331,10 +340,10 @@ AD.defineScene('inside', {
     s.tag.style.opacity = live && t >= first - 2 / fps ? '1' : '0'
     s.tag.style.transform = `translate(0,${Math.round(V.top - 14 - s.tagH)}px)`
 
-    // Headline clears just ahead of the bar line, so the release at 4.0 s is clean.
     // Portrait: line 1 waits six frames for the clock to cross its row on the way to the corner.
+    // The block clears just ahead of the bar line (the kit staggers lines by
+    // 0.04 s), so the last line is gone exactly as the dots are released at 4.0 s.
     const at = ctx.landscape ? [0, 1] : [6 / fps, 1, 1 + 2 / fps]
-    s.head.show(t, { at, out: 1.9, outDur: 0.1 })
-    O.settle(s.head)
+    s.head.show(t, { at, out: 1.9 - 0.04 * (at.length - 1), outDur: 0.1 })
   },
 })

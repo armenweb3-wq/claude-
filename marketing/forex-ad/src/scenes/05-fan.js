@@ -37,8 +37,9 @@
 
   /**
    * One set of ghost futures: FAN_PAIRS driftless walks from 0, in units of
-   * the envelope's far-end height. Each is drawn twice, as v and as -v, so the
-   * cone is symmetric about the last price by construction.
+   * the envelope's far-end height, each kept inside the envelope. Every walk
+   * is shown twice, as drawn and mirrored about the last price, so the cone is
+   * symmetric by construction. All pairs get a similar faint weight (10-18%).
    */
   function fanSet(index) {
     const r = AD.rng(7001 + index * 977)
@@ -73,7 +74,7 @@
     const c = ctx.content
     const g = ctx.pick({
       '16x9': { nowX: gridLine(c.x + c.w * 0.55, ctx.W), level: gridLine(c.y + c.h / 2 + 48, ctx.H), half: 244, amp: 88, frames: [[680, 380], [440, 270], [200, 200]] },
-      '9x16': { nowX: gridLine(c.x + c.w / 2, ctx.W), level: gridLine(c.y + 420, ctx.H), half: 226, amp: 82, frames: [[600, 436], [400, 300], [190, 190]] },
+      '9x16': { nowX: gridLine(c.x + c.w / 2, ctx.W), level: gridLine(c.y + 420, ctx.H), half: 226, amp: 82, frames: [[600, 404], [400, 290], [190, 190]] },
       '4x5': { nowX: ctx.W / 2, level: gridLine(c.y + 610, ctx.H), half: 346, amp: 112, frames: [[760, 640], [500, 420], [220, 220]] },
     })
     g.focus = { x: ctx.landscape ? c.x + c.w / 2 : g.nowX, y: g.level }
@@ -98,6 +99,11 @@
     const grid = AD.kit.grid(root)
     grid.style.transformOrigin = '0 0'
     const g = AD.canvas(root).ctx
+    g.imageSmoothingEnabled = false
+    const scratch = document.createElement('canvas')
+    scratch.width = W
+    scratch.height = H
+    const ghost = scratch.getContext('2d')
 
     // The NOW chip is painted on the canvas with everything else that moves: a DOM
     // chip that slides during S06's pan is re-rastered a shade differently depending
@@ -157,40 +163,49 @@
         g.fillRect(Math.round(o.cx + n * step), geo.rulerY - (major ? 12 : 6), 1, major ? 12 : 6)
       }
 
-      // The future: a symmetric cone of ghost paths inside a dashed envelope.
+      // The future: a cone of ghost paths inside a dashed envelope. The 24 walks and the
+      // upper envelope are drawn once on a scratch canvas, which is then stamped twice:
+      // as it is and flipped about the last price. The cone is therefore symmetric pixel
+      // for pixel, and every path has an exact mirror twin of the same weight.
       if (o.fan && o.fan.alpha > 0 && o.fan.grow > 0) {
         const reach = clamp(o.fan.grow) * FAN_STEPS
         const last = Math.floor(reach)
         const frac = reach - last
         const fx = k => X(geo.nowX + (k / FAN_STEPS) * fanW)
-        g.lineWidth = 1.5
-        g.strokeStyle = COL.white
+        const axis = Math.round(yLevel) + 1
+        ghost.clearRect(0, 0, W, H)
+        ghost.lineJoin = 'round'
+        ghost.lineWidth = 1.5
+        ghost.strokeStyle = COL.white
         for (const path of fans[o.fan.set]) {
-          g.globalAlpha = clamp(path.alpha * o.fan.alpha)
-          for (const side of [1, -1]) {
-            g.beginPath()
-            g.moveTo(fx(0), yLevel + 1)
-            for (let k = 1; k <= last; k++) g.lineTo(fx(k), yLevel + 1 - side * path.v[k] * geo.half * o.zoom)
-            if (frac > 0 && last < FAN_STEPS) g.lineTo(fx(reach), yLevel + 1 - side * lerp(path.v[last], path.v[last + 1], frac) * geo.half * o.zoom)
-            g.stroke()
-          }
+          ghost.globalAlpha = clamp(path.alpha * o.fan.alpha)
+          ghost.beginPath()
+          ghost.moveTo(fx(0), axis)
+          for (let k = 1; k <= last; k++) ghost.lineTo(fx(k), axis - path.v[k] * geo.half * o.zoom)
+          if (frac > 0 && last < FAN_STEPS) ghost.lineTo(fx(reach), axis - lerp(path.v[last], path.v[last + 1], frac) * geo.half * o.zoom)
+          ghost.stroke()
         }
-        g.lineWidth = 1
-        g.strokeStyle = COL.grey
-        g.globalAlpha = clamp(0.8 * Math.min(1, o.fan.alpha))
-        g.setLineDash([7, 7])
-        for (const side of [1, -1]) {
-          g.beginPath()
-          for (let i = 0; i <= 96; i++) {
-            const u = (i / 96) * (reach / FAN_STEPS)
-            const px = X(geo.nowX + u * fanW)
-            const py = yLevel + 1 - side * Math.sqrt(u) * geo.half * o.zoom
-            if (i === 0) g.moveTo(px, py)
-            else g.lineTo(px, py)
-          }
-          g.stroke()
+        ghost.lineWidth = 1
+        ghost.strokeStyle = COL.grey
+        ghost.globalAlpha = clamp(0.8 * Math.min(1, o.fan.alpha))
+        ghost.setLineDash([7, 7])
+        ghost.beginPath()
+        for (let i = 0; i <= 96; i++) {
+          const u = (i / 96) * (reach / FAN_STEPS)
+          const px = X(geo.nowX + u * fanW)
+          const py = axis - Math.sqrt(u) * geo.half * o.zoom
+          if (i === 0) ghost.moveTo(px, py)
+          else ghost.lineTo(px, py)
         }
-        g.setLineDash([])
+        ghost.stroke()
+        ghost.setLineDash([])
+        g.globalAlpha = 1
+        g.drawImage(ghost.canvas, 0, 0)
+        g.save()
+        g.translate(0, axis * 2)
+        g.scale(1, -1)
+        g.drawImage(ghost.canvas, 0, 0)
+        g.restore()
       }
 
       // The flat line the scene opens on: not yet drawn left of NOW, fading right of it.

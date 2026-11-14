@@ -340,8 +340,9 @@
             const a = lerp(aIn, aOut, j / 14)
             return [cx + r * Math.sin(a), cy - r * Math.cos(a)]
           })
-          // Segments fill in the order the mark draws them (top, right, bottom, left), 2.5 frames apart; the last lands on frame 20.
-          strokes.push({ rail: rail(shape, lane(trunk, dir, off * turn, 4), target), delay: fr(seg * 2.5 + i / nArc), dur: fr(11.5) })
+          // Segments fill in the order the mark draws them (top, right, bottom, left), two frames apart,
+          // each a moment before the mark inks that segment in; the tick lands last, on frame 20.
+          strokes.push({ rail: rail(shape, lane(trunk, dir, off * turn, 4), target), delay: fr(seg * 2 + i / nArc), dur: fr(12) })
         })
       })
       tickStrokes.forEach(({ shape, down, knots }, k) => {
@@ -401,7 +402,7 @@
       }
 
       // The mark inks in over the nested strokes and locks at frame 20 with a detent.
-      s.mark.draw(prog(t, fr(9), fr(11)))
+      s.mark.draw(prog(t, fr(9.5), fr(10.5)))
       // A segment that has not started drawing still shows a hairline at its first point: hide it until it does.
       for (const seg of s.mark.segs) seg.style.visibility = Number(seg.getAttribute('stroke-dashoffset')) > 0.999 ? 'hidden' : 'visible'
       const detent = t >= LOCK ? 1 - prog(t, LOCK, fr(2)) : 0

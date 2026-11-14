@@ -15,11 +15,6 @@
 ;(function () {
   'use strict'
   const f = 1 / 30
-  // kit.headline moves its lines with translate3d on a will-change layer. A
-  // composited layer keeps the raster of whichever frame painted it first, so
-  // its pixels depend on what was rendered before. Here every transform is 2-D
-  // and painted in place, which keeps each frame a pure function of time.
-  const FLAT = /translate3d\(0(?:px)?, ?([^,]+), ?0(?:px)?\)/
 
   // Scene-local times (seconds after 40.0). Everything sits on the 0.5 s grid;
   // sub-beat accents on the 5-frame grid.
@@ -49,7 +44,7 @@
   const fmt = pips => ((ENTRY_POINTS + Math.round(pips * 10)) / 100000).toFixed(5)
   const fmtSell = pips => ((ENTRY_POINTS - SPREAD_POINTS + Math.round(pips * 10)) / 100000).toFixed(5)
 
-  // Closes of the live candles (one per beat from 41.5). 43.0–44.0 holds the
+  // Closes of the live candles (one per beat from 41.5). 43.5–44.0 holds the
   // quote on the entry so the request can be read; after the press the price
   // dips, crosses the entry upward, crosses back and ends on it.
   const SCRIPT = [-2.0, -6.0, 2.0, 0.0, 0.0, -4.0, -7.0, 2.0, 5.5, -1.0, -5.5, -2.5, 0.0]
@@ -106,17 +101,16 @@
 
   AD.defineScene('demo', {
     css: `
-      .scene--demo .k-headline .ln > span { will-change: auto; }
       .scene--demo .d-abs { position: absolute; box-sizing: border-box; }
       .scene--demo .d-layer { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
       .scene--demo .d-lab { font-family: var(--font-display); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--grey); white-space: nowrap; line-height: 1; font-size: var(--d-label); }
       .scene--demo .d-num { font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums slashed-zero; white-space: nowrap; line-height: 1; color: var(--white); }
 
       .scene--demo .d-panel { background: transparent; overflow: hidden; }
-      .scene--demo .d-panel .bg { position: absolute; inset: 0; background: var(--graphite); transform-origin: 50% 0; }
+      .scene--demo .d-panel .bg { position: absolute; left: 0; top: 0; right: 0; background: var(--graphite); }
 
       .scene--demo .d-sym { display: flex; align-items: center; font-size: var(--d-sym); font-weight: 600; letter-spacing: 0.02em; }
-      .scene--demo .d-badge { height: var(--d-badge-h); transform-origin: 100% 50%; }
+      .scene--demo .d-badge { height: var(--d-badge-h); }
       .scene--demo .d-badge .ly { display: flex; align-items: center; gap: 12px; height: 100%; box-sizing: border-box; padding: 0 14px; border: 2px solid var(--accent); border-radius: 4px; font-family: var(--font-mono); font-weight: 600; font-size: var(--d-badge); letter-spacing: 0.08em; line-height: 1; white-space: nowrap; }
       .scene--demo .d-badge .ly i { width: 1px; height: 52%; background: currentColor; opacity: 0.55; }
       .scene--demo .d-badge .ol { color: var(--white); background: rgba(7, 11, 16, 0.6); }
@@ -140,7 +134,7 @@
       .scene--demo .d-step .sq { width: var(--d-sq); height: var(--d-sq); box-sizing: border-box; border: 1px solid var(--hairline); border-radius: 3px; display: grid; place-items: center; font: 500 var(--d-label) / 1 var(--font-mono); color: var(--grey); }
 
       .scene--demo .d-btn { display: grid; place-items: center; border-radius: 4px; background: var(--accent); overflow: hidden; }
-      .scene--demo .d-btn .sw { position: absolute; inset: 0; background: color-mix(in srgb, var(--accent) 56%, var(--void)); transform-origin: 0 50%; }
+      .scene--demo .d-btn .sw { position: absolute; left: 0; top: 0; bottom: 0; background: color-mix(in srgb, var(--accent) 56%, var(--void)); }
       .scene--demo .d-btn .tx { position: relative; font-family: var(--font-display); font-weight: 600; font-size: var(--d-btn); letter-spacing: 0.1em; color: var(--void); line-height: 1; white-space: nowrap; }
 
       .scene--demo .d-time { display: flex; align-items: center; justify-content: space-between; padding: 0 var(--d-padx); border-top: 1px solid var(--hairline); }
@@ -160,7 +154,8 @@
       .scene--demo .d-strip .row { display: grid; grid-template-columns: 1.5fr 0.9fr 0.9fr 1.3fr 1.3fr 1.3fr 1.2fr; align-items: center; }
       .scene--demo .d-strip .hd { height: var(--d-strip-hd); border-bottom: 1px solid var(--hairline); }
       .scene--demo .d-strip .hd .d-lab { font-size: var(--d-col); }
-      .scene--demo .d-strip .bd { height: var(--d-strip-bd); overflow: hidden; }
+      .scene--demo .d-strip .bd { position: relative; height: var(--d-strip-bd); overflow: hidden; }
+      .scene--demo .d-strip .bd .empty { position: absolute; left: 0; top: 0; height: 100%; display: flex; align-items: center; color: var(--grey); letter-spacing: 0.08em; }
       .scene--demo .d-strip .bd .d-num { font-size: var(--d-cell); }
 
       .scene--demo .d-foot { display: flex; align-items: center; overflow: hidden; }
@@ -168,10 +163,8 @@
 
       .scene--demo .d-url .m { display: block; overflow: hidden; padding: 0.08em 0.04em 0.12em; margin: -0.08em -0.04em -0.12em; }
       .scene--demo .d-url .tx { display: inline-block; font-family: var(--font-display); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1; color: var(--white); white-space: nowrap; }
-      .scene--demo .d-url .ul { height: 3px; background: var(--accent); transform-origin: 0 50%; }
+      .scene--demo .d-url .ul { height: 3px; background: var(--accent); }
 
-      .scene--demo .d-cursor { left: 0; top: 0; border-radius: 50%; background: var(--white); border: 2px solid var(--void); box-shadow: 0 0 0 1px rgba(234, 242, 248, 0.4), 0 3px 8px rgba(0, 0, 0, 0.6); }
-      .scene--demo .d-ring { left: 0; top: 0; border-radius: 50%; border: 2px solid var(--accent); }
     `,
 
     build(root, ctx) {
@@ -290,7 +283,7 @@
         const y = c.y + zone + (V ? 16 : 22)
         win = { x: c.x, y, w: c.w, h: c.y + c.h - y }
       }
-      urlLine.style.width = R(urlText.getBoundingClientRect().width) + 'px'
+      const urlW = R(urlText.getBoundingClientRect().width)
 
       // ── window layout ──────────────────────────────────────────────────
       const hdr = { x: win.x, y: win.y, w: win.w, h: M.hdrH }
@@ -344,7 +337,7 @@
       // ── panels: hairline rectangles that fill ──────────────────────────
       const panels = [chart, ticket, strip].filter(Boolean).map(r => {
         const p = box('k-panel d-panel', r)
-        return { bg: el('div', 'bg', p) }
+        return { bg: el('div', 'bg', p), h: r.h - 2 }
       })
 
       // ── window header: symbol, tag, demo badge ─────────────────────────
@@ -445,12 +438,15 @@
 
       // ── positions strip ────────────────────────────────────────────────
       let row = null
+      let empty = null
       const gStrip = group()
       if (strip) {
         const node = box('d-strip', strip, gStrip)
         const hd = el('div', 'row hd', node)
         for (const name of ['INSTRUMENT', 'SIDE', 'SIZE', 'ENTRY', 'STOP', 'LIMIT', 'TIME']) el('span', 'd-lab', hd, name)
         const bd = el('div', 'bd', node)
+        // Empty state until the order is placed, so the strip reads as intentional.
+        empty = el('span', 'd-num empty', bd, 'NO OPEN POSITIONS')
         row = el('div', 'row', bd)
         row.style.height = '100%'
         const values = ['EUR/USD', 'BUY', SIZES[3], fmt(0), fmt(STOP), fmt(LIMIT), kit.clock(ctx.start + TM.press).slice(0, 8)]
@@ -467,19 +463,25 @@
       const disclosure = notes.split(/(?<=[.!?])\s+/).find(x => /demo/i.test(x)) || 'Demo prices and fills may differ from live trading.'
       const footer = el('span', null, box('d-foot', foot), disclosure)
 
-      // ── overlays: edge pulse, focus brackets, cursor ───────────────────
-      const pulseSvg = svg('svg', { class: 'k-svg', width: ctx.W, height: ctx.H, viewBox: `0 0 ${ctx.W} ${ctx.H}` }, root)
+      // ── overlays: focus brackets, edge pulse, cursor ───────────────────
+      const brackets = kit.brackets(root)
+
+      // Edge pulse: from under the button, once round the ticket and back.
       const q = 6
       const tr = { l: ticket.x + 0.5, t: ticket.y + 0.5, r: ticket.x + ticket.w - 0.5, b: ticket.y + ticket.h - 0.5 }
       const cx = tk.btn.x + tk.btn.w / 2
-      // From under the button, once round the ticket and back.
       const d = `M${cx},${tr.b} H${tr.l + q} A${q},${q} 0 0 1 ${tr.l},${tr.b - q} V${tr.t + q} A${q},${q} 0 0 1 ${tr.l + q},${tr.t} H${tr.r - q} A${q},${q} 0 0 1 ${tr.r},${tr.t + q} V${tr.b - q} A${q},${q} 0 0 1 ${tr.r - q},${tr.b} H${cx}`
-      const pulseGlow = svg('path', { d, fill: 'none', stroke: 'var(--accent)', 'stroke-width': 8, 'stroke-linecap': 'round', opacity: 0.22, pathLength: 1 }, pulseSvg)
-      const pulseCore = svg('path', { d, fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2.5, 'stroke-linecap': 'round', pathLength: 1 }, pulseSvg)
-      const pulseHead = svg('circle', { r: 4, fill: 'var(--white)' }, pulseSvg)
-      const pulseLen = pulseCore.getTotalLength()
-
-      const brackets = kit.brackets(root)
+      // Measured once here; the pulse itself is drawn on the canvas.
+      const meterSvg = svg('svg', { class: 'k-svg', width: 1, height: 1 }, root)
+      const meter = svg('path', { d, fill: 'none' }, meterSvg)
+      const pulseLen = meter.getTotalLength()
+      const pulsePts = []
+      for (let i = 0; i <= 240; i++) {
+        const pt = meter.getPointAtLength((i / 240) * pulseLen)
+        pulsePts.push({ x: pt.x, y: pt.y })
+      }
+      meterSvg.remove()
+      const pulse = { path: new Path2D(d), len: pulseLen, pts: pulsePts }
 
       // Beside the "+" rather than on it, so the control stays readable under the cursor.
       const rPlus = rectOf(plus)
@@ -489,7 +491,7 @@
       const pLimit = fieldPoint(tk.fields[2])
       const labelW = btnText.getBoundingClientRect().width
       const pBtn = { x: Math.min(tk.btn.x + tk.btn.w - 30, tk.btn.x + tk.btn.w / 2 + labelW / 2 + 56), y: tk.btn.y + tk.btn.h * 0.56 }
-      const pStart = { x: tk.time.x + tk.time.w * 0.5, y: tk.time.y + tk.time.h * 0.5 }
+      const pStart = { x: tk.time.x + tk.time.w * 0.3, y: tk.time.y + tk.time.h * 0.5 } // clear of the label and the clock
       // Ease in-out between targets, arriving a few frames early to settle before each click.
       const moves = [
         { t0: TM.live, t1: TM.clicks[0] - 3 * f, from: pStart, to: pPlus },
@@ -497,9 +499,6 @@
         { t0: TM.stop + 10 * f, t1: TM.limit - 1 * f, from: pStop, to: pLimit },
         { t0: TM.toButton, t1: TM.toButton + 12 * f, from: pLimit, to: pBtn },
       ]
-      const cursor = el('div', 'd-abs d-cursor', root)
-      cursor.style.width = cursor.style.height = M.cursor + 'px'
-      cursor.style.margin = `${-M.cursor / 2}px 0 0 ${-M.cursor / 2}px`
       const clicks = [
         { t: TM.clicks[0], p: pPlus, dur: 6 * f },
         { t: TM.clicks[1], p: pPlus, dur: 6 * f },
@@ -507,25 +506,25 @@
         { t: TM.stop, p: pStop, dur: 9 * f },
         { t: TM.limit, p: pLimit, dur: 9 * f },
         { t: TM.press, p: pBtn, dur: 12 * f, big: true },
-      ].map(k => {
-        const node = el('div', 'd-abs d-ring', root)
-        const size = M.cursor + 6
-        node.style.width = node.style.height = size + 'px'
-        node.style.margin = `${-size / 2}px 0 0 ${-size / 2}px`
-        return { ...k, node }
-      })
+      ]
 
-      // The chart canvas goes last. A <canvas> is its own compositor layer, and
-      // whatever is painted after it and overlaps it is split into further
-      // layers; with the canvas on top, all of the scene's DOM stays in one.
-      const cv = AD.canvas(box('', { x: chart.x + plot.x, y: chart.y, w: plot.w + axisGap, h: chart.h }, root), plot.w + axisGap, chart.h)
+      // One canvas, last in the scene, carries everything that is redrawn from
+      // scratch each frame: the chart, the edge pulse, the click rings and the
+      // cursor. A <canvas> is its own compositor layer, and anything painted
+      // after it that overlaps it is split into further layers; with the canvas
+      // on top, all of the scene's DOM stays in a single layer below it.
+      const pad = 48
+      const cvR = { x: Math.max(0, win.x - pad), y: Math.max(0, win.y - pad) }
+      cvR.w = Math.min(ctx.W, win.x + win.w + pad) - cvR.x
+      cvR.h = Math.min(ctx.H, win.y + win.h + pad) - cvR.y
+      const cv = AD.canvas(box('', cvR, root), cvR.w, cvR.h)
 
       return {
-        repaint, M, V, beats, url, urlText, urlLine, panels, sym, tag, badge, badgeFill,
-        gChart, gTicket, gStrip, cv, plot, ppp, yOf, chart, ticket, tk, col, axis, chips, axisX, axisGap, nVis, step: M.step,
+        repaint, M, V, beats, url, urlText, urlLine, urlW, panels, sym, tag, badge, badgeFill,
+        gChart, gTicket, gStrip, cv, cvR, plot, ppp, yOf, chart, ticket, tk, col, axis, chips, axisX, axisGap, nVis, step: M.step,
         closes: data.closes, candles: data.candles, n0,
         sell, buy, fSize, fStop, fLimit, sizeVal, plus, stopVal, limitVal, btn, btnSweep, rcpt, requested, filled,
-        time, timeLab, timeVal, row, footer, pulseGlow, pulseCore, pulseHead, pulseLen, brackets, cursor, moves, clicks,
+        time, timeLab, timeVal, row, empty, footer, pulse, brackets, moves, clicks,
       }
     },
 
@@ -545,20 +544,18 @@
         beat.blocks.forEach((block, j) => {
           const last = i === s.beats.length - 1
           block.show(t, { at: beat.at[j], out: last ? Infinity : (i + 1) * 2 - f - 0.2 - 0.04 * (block.lines.length - 1) })
-          for (const line of block.lines) line.inner.style.transform = line.inner.style.transform.replace(FLAT, 'translate(0px, $1)')
         })
       })
       const pu = prog(t, TM.cta + 3 * f, 8 * f, ease.snap)
       s.urlText.style.transform = `translate(0,${((1 - pu) * 112).toFixed(3)}%)`
       s.urlText.style.opacity = pu > 0 ? '1' : '0'
-      s.urlLine.style.transform = `scaleX(${prog(t, TM.cta + 0.5, 0.5).toFixed(4)})`
+      s.urlLine.style.width = Math.round(prog(t, TM.cta + 0.5, 0.5) * s.urlW) + 'px'
 
       // ── panels and header ──────────────────────────────────────────────
-      s.panels.forEach((p, i) => (p.bg.style.transform = `scaleY(${prog(t, i * 3 * f, 8 * f, ease.snap).toFixed(4)})`))
+      s.panels.forEach((p, i) => (p.bg.style.height = Math.round(prog(t, i * 3 * f, 8 * f, ease.snap) * p.h) + 'px'))
       s.sym.style.opacity = prog(t, 0.2, 4 * f).toFixed(4)
       s.tag.style.opacity = prog(t, 0.3, 4 * f).toFixed(4)
       s.badge.style.opacity = t >= TM.badge ? '1' : '0'
-      s.badge.style.transform = `scale(${lerp(1.12, 1, prog(t, TM.badge, 5 * f, ease.snap)).toFixed(4)})`
       s.badgeFill.style.opacity = t < TM.badge + 4 * f - 1e-6 ? '1' : '0'
       s.gChart.style.opacity = prog(t, 0.3, 4 * f).toFixed(4)
       s.gStrip.style.opacity = prog(t, 0.5, 4 * f).toFixed(4)
@@ -604,7 +601,7 @@
       const hover = t >= TM.toButton + 12 * f - 1e-6 && !pressed
       s.btn.style.background = hover ? 'color-mix(in srgb, var(--accent) 72%, var(--white))' : 'var(--accent)'
       s.btn.style.transform = `translate(0,${pressed ? 2 : 0}px)`
-      s.btnSweep.style.transform = `scaleX(${prog(t, TM.press, 3 * f).toFixed(4)})`
+      s.btnSweep.style.width = Math.round(prog(t, TM.press, 3 * f) * s.tk.btn.w) + 'px'
 
       // Clock: live until the press, frozen on it afterwards.
       const stampT = ctx.start + TM.press
@@ -616,7 +613,7 @@
       // Record: opens upward from the time-stamp, then prints its lines.
       const po = prog(t, TM.card, 8 * f, ease.snap)
       s.rcpt.style.display = po > 0 ? 'flex' : 'none'
-      s.rcpt.style.clipPath = `inset(${((1 - po) * 100).toFixed(3)}% 0 0 0)`
+      s.rcpt.style.clipPath = `inset(${Math.round((1 - po) * s.tk.rcpt.h)}px 0 0 0)`
       s.time.style.borderTopColor = po > 0 ? 'rgba(128,148,168,0.35)' : 'var(--hairline)'
       const atPress = fmt(quotePips(s, TM.press))
       ;[s.requested, s.filled].forEach((cell, i) => {
@@ -628,6 +625,7 @@
 
       // ── positions row and footer ───────────────────────────────────────
       if (s.row) {
+        s.empty.style.opacity = pressed ? '0' : '1'
         const pr = prog(t, TM.cta, 8 * f, ease.snap)
         s.row.style.transform = `translate(0,${((1 - pr) * 100).toFixed(3)}%)`
         s.row.style.opacity = pr > 0 ? '1' : '0'
@@ -636,17 +634,18 @@
       s.footer.style.transform = `translate(0,${((1 - pf) * 120).toFixed(3)}%)`
       s.footer.style.opacity = pf > 0 ? '1' : '0'
 
-      // ── chart ──────────────────────────────────────────────────────────
+      // ── canvas: chart, then the overlays ───────────────────────────────
       const g = s.cv.ctx
       const P = s.plot
       const step = s.step
       g.setTransform(1, 0, 0, 1, 0, 0)
       g.clearRect(0, 0, s.cv.w, s.cv.h)
-      g.setTransform(1, 0, 0, 1, -P.x, 0) // the canvas starts at the plot's left edge
+      g.setTransform(1, 0, 0, 1, s.chart.x - s.cvR.x, s.chart.y - s.cvR.y) // chart-panel coordinates
+      const appear = prog(t, 0.3, 4 * f)
       g.setLineDash([])
       g.lineWidth = 1
       g.strokeStyle = s.col.hairline
-      g.globalAlpha = prog(t, 0.3, 4 * f)
+      g.globalAlpha = appear
       g.beginPath()
       for (const gp of GRID) {
         const y = Math.round(s.yOf(gp)) + 0.5
@@ -659,9 +658,9 @@
       const x0 = P.x + P.w - s.nVis * step - scroll // left edge of slot 0
       g.save()
       g.beginPath()
-      g.rect(P.x, 0, P.w, s.cv.h)
+      g.rect(P.x, 0, P.w, s.chart.h)
       g.clip()
-      g.globalAlpha = 0.7 * prog(t, 0.3, 4 * f)
+      g.globalAlpha = 0.7 * appear
       g.beginPath()
       for (let k = 0; k <= s.candles.length; k += 4) {
         const x = x0 + step * k + 0.5
@@ -685,71 +684,55 @@
         g.setLineDash(dash || [])
         g.beginPath()
         g.moveTo(xr, y)
-        g.lineTo(lerp(xr, P.x, prog(t, at, 8 * f)), y)
+        g.lineTo(Math.round(lerp(xr, P.x, prog(t, at, 8 * f))), y)
         g.stroke()
         g.setLineDash([])
+      }
+      const disc = (x, y, r) => {
+        g.beginPath()
+        g.arc(x, y, r, 0, Math.PI * 2)
       }
       if (stopSet) level(stopNow, s.col.amber, TM.stop)
       if (limitSet) level(limitNow, s.col.accent, TM.limit)
       if (pressed) {
         level(0, s.col.white, TM.press, [9, 7])
-        // Fill marker where the order met the price.
+        // Fill marker where the order met the price; it travels with its candle.
         const fx = x0 + step * (s.n0 + 5)
-        const fy = s.yOf(0)
+        const fy = Math.round(s.yOf(0))
         const ring = prog(t, TM.press, 12 * f)
+        g.strokeStyle = s.col.accent
+        g.lineWidth = 2
         if (ring < 1) {
           g.globalAlpha = 1 - ring
-          g.strokeStyle = s.col.accent
-          g.lineWidth = 2
-          g.beginPath()
-          g.arc(fx, fy, 8 + ring * 16, 0, Math.PI * 2)
+          disc(fx, fy, 8 + ring * 16)
           g.stroke()
           g.globalAlpha = 1
         }
         g.fillStyle = s.col.void
-        g.beginPath()
-        g.arc(fx, fy, 8, 0, Math.PI * 2)
+        disc(fx, fy, 8)
         g.fill()
-        g.strokeStyle = s.col.accent
-        g.lineWidth = 2
-        g.beginPath()
-        g.arc(fx, fy, 7, 0, Math.PI * 2)
+        disc(fx, fy, 7)
         g.stroke()
         g.fillStyle = s.col.white
-        g.beginPath()
-        g.arc(fx, fy, 2.5, 0, Math.PI * 2)
+        disc(fx, fy, 2.5)
         g.fill()
       }
 
       const chipH = M.css['chip-h']
-      const place = (chip, on, pips, scale) => {
+      const place = (chip, on, pips) => {
         chip.node.style.opacity = on ? '1' : '0'
-        chip.node.style.transform = `translate(${s.axisX}px,${(s.chart.y + Math.round(s.yOf(pips)) - chipH / 2).toFixed(2)}px) scale(${scale.toFixed(4)})`
+        chip.node.style.transform = `translate(${s.axisX}px,${s.chart.y + Math.round(s.yOf(pips)) - chipH / 2}px)`
         chip.price.textContent = fmt(pips)
       }
-      place(s.chips.stop, stopSet, stopNow, 1)
-      place(s.chips.limit, limitSet, limitNow, 1)
-      place(s.chips.entry, pressed, 0, lerp(1.12, 1, prog(t, TM.press, 5 * f, ease.snap)))
+      place(s.chips.stop, stopSet, stopNow)
+      place(s.chips.limit, limitSet, limitNow)
+      place(s.chips.entry, pressed, 0)
+      // The entry chip stamps on: two frames in the accent, then white.
+      s.chips.entry.node.style.background = t < TM.press + 2 * f - 1e-6 ? 'var(--accent)' : 'var(--white)'
       const live = [stopSet && stopNow, limitSet && limitNow, pressed && 0].filter(v => v !== false)
       for (const a of s.axis) {
         const hidden = live.some(p => Math.abs(s.yOf(p) - a.y) < chipH / 2 + 14)
         a.node.style.opacity = hidden ? '0' : '1'
-      }
-
-      // ── edge pulse: one lap of the ticket from the button ──────────────
-      const lap = prog(t, TM.press, TM.card - TM.press)
-      const running = pressed && lap < 1
-      const tail = 0.16
-      for (const path of [s.pulseGlow, s.pulseCore]) {
-        path.style.display = running ? 'block' : 'none'
-        path.setAttribute('stroke-dasharray', `${tail} 2`)
-        path.setAttribute('stroke-dashoffset', (tail - lap).toFixed(5))
-      }
-      s.pulseHead.style.display = running ? 'block' : 'none'
-      if (running) {
-        const pt = s.pulseCore.getPointAtLength(lap * s.pulseLen)
-        s.pulseHead.setAttribute('cx', pt.x.toFixed(2))
-        s.pulseHead.setAttribute('cy', pt.y.toFixed(2))
       }
 
       // ── focus brackets: ticket at 42.0, the record at 44.5, off at 46.0 ─
@@ -757,17 +740,46 @@
       const pmove = prog(t, TM.card, 15 * f, ease.quint.inOut)
       const a = s.ticket
       const b = s.tk.rcpt
-      const grow = (1 - pin) * 16 + pmove * 5
+      const grow = Math.round((1 - pin) * 16 + pmove * 5)
       s.brackets.set({
-        x: lerp(a.x, b.x, pmove) - grow,
-        y: lerp(a.y, b.y, pmove) - grow,
-        w: lerp(a.w, b.w, pmove) + grow * 2,
-        h: lerp(a.h, b.h, pmove) + grow * 2,
-        len: lerp(26, 18, pmove),
+        x: Math.round(lerp(a.x, b.x, pmove)) - grow,
+        y: Math.round(lerp(a.y, b.y, pmove)) - grow,
+        w: Math.round(lerp(a.w, b.w, pmove)) + grow * 2,
+        h: Math.round(lerp(a.h, b.h, pmove)) + grow * 2,
+        len: Math.round(lerp(26, 18, pmove)),
         opacity: prog(t, TM.clicks[0], 3 * f) * (1 - prog(t, TM.cta, 6 * f)),
       })
 
-      // ── cursor ─────────────────────────────────────────────────────────
+      // ── overlays on the canvas, in stage coordinates ───────────────────
+      g.setTransform(1, 0, 0, 1, -s.cvR.x, -s.cvR.y)
+
+      // Edge pulse: one lap of the ticket from under the button.
+      const lap = prog(t, TM.press, TM.card - TM.press)
+      if (pressed && lap < 1) {
+        const tail = 0.16 * s.pulse.len
+        g.lineCap = 'round'
+        g.strokeStyle = s.col.accent
+        g.setLineDash([tail, s.pulse.len * 2])
+        g.lineDashOffset = tail - lap * s.pulse.len
+        g.globalAlpha = 0.22
+        g.lineWidth = 8
+        g.stroke(s.pulse.path)
+        g.globalAlpha = 1
+        g.lineWidth = 2.5
+        g.stroke(s.pulse.path)
+        g.setLineDash([])
+        g.lineDashOffset = 0
+        g.lineCap = 'butt'
+        const at = lap * (s.pulse.pts.length - 1)
+        const i = Math.min(Math.floor(at), s.pulse.pts.length - 2)
+        const p0 = s.pulse.pts[i]
+        const p1 = s.pulse.pts[i + 1]
+        g.fillStyle = s.col.white
+        disc(lerp(p0.x, p1.x, at - i), lerp(p0.y, p1.y, at - i), 4)
+        g.fill()
+      }
+
+      // Cursor: glides between targets, dips on each click and leaves a ring.
       let pos = s.moves[0].from
       for (const m of s.moves) {
         if (t >= m.t1) pos = m.to
@@ -778,17 +790,40 @@
         } else break
       }
       let down = 1
+      g.strokeStyle = s.col.accent
+      g.lineWidth = 2
       for (const k of s.clicks) {
         const dt = t - k.t
         if (dt >= -1e-6 && dt < 3 * f - 1e-6) down = 0.8
         const p = dt < -1e-6 ? -1 : dt / k.dur
-        const on = p >= 0 && p < 1
-        k.node.style.opacity = on ? (1 - p).toFixed(4) : '0'
-        k.node.style.transform = `translate(${k.p.x.toFixed(2)}px,${k.p.y.toFixed(2)}px) scale(${(1 + ease.cubic.out(clamp(p)) * (k.big ? 1.9 : 1.4)).toFixed(4)})`
+        if (p < 0 || p >= 1) continue
+        g.globalAlpha = 1 - p
+        disc(k.p.x, k.p.y, (M.cursor / 2 + 3) * (1 + ease.cubic.out(p) * (k.big ? 1.9 : 1.4)))
+        g.stroke()
       }
       const seen = prog(t, TM.live - 6 * f, 5 * f, ease.snap) * (1 - prog(t, TM.press + 9 * f, 5 * f))
-      s.cursor.style.opacity = seen.toFixed(4)
-      s.cursor.style.transform = `translate(${pos.x.toFixed(2)}px,${pos.y.toFixed(2)}px) scale(${(down * lerp(0.6, 1, seen)).toFixed(4)})`
+      if (seen > 0) {
+        const r = (M.cursor / 2) * down * lerp(0.6, 1, seen)
+        const shade = g.createRadialGradient(pos.x, pos.y + 3, r * 0.5, pos.x, pos.y + 3, r + 9)
+        shade.addColorStop(0, 'rgba(0, 0, 0, 0.6)')
+        shade.addColorStop(1, 'rgba(0, 0, 0, 0)')
+        g.globalAlpha = seen
+        g.fillStyle = shade
+        disc(pos.x, pos.y + 3, r + 9)
+        g.fill()
+        g.fillStyle = s.col.void
+        disc(pos.x, pos.y, r)
+        g.fill()
+        g.fillStyle = s.col.white
+        disc(pos.x, pos.y, r - 2)
+        g.fill()
+        g.globalAlpha = seen * 0.4
+        g.strokeStyle = s.col.white
+        g.lineWidth = 1
+        disc(pos.x, pos.y, r + 0.5)
+        g.stroke()
+      }
+      g.globalAlpha = 1
     },
   })
 })()

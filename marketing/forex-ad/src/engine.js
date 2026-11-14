@@ -266,7 +266,7 @@
   function set(node, { x = 0, y = 0, scale = 1, scaleX, scaleY, rotate = 0, opacity, origin } = {}) {
     const sx = scaleX === undefined ? scale : scaleX
     const sy = scaleY === undefined ? scale : scaleY
-    node.style.transform = `translate3d(${x.toFixed(3)}px,${y.toFixed(3)}px,0) rotate(${rotate.toFixed(3)}deg) scale(${sx.toFixed(4)},${sy.toFixed(4)})`
+    node.style.transform = `translate(${x.toFixed(3)}px,${y.toFixed(3)}px) rotate(${rotate.toFixed(3)}deg) scale(${sx.toFixed(4)},${sy.toFixed(4)})`
     if (opacity !== undefined) node.style.opacity = clamp(opacity).toFixed(4)
     if (origin) node.style.transformOrigin = origin
   }

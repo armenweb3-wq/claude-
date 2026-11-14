@@ -62,7 +62,7 @@
   }
   const LIVE_FROM = 1
   const LIVE_TO = 4
-  const liveClose = (o, t) => o + 4.4 * AD.fbm((t - LIVE_FROM) * 1.9 + 3.1, 71, 3) * AD.smoothstep(LIVE_FROM, LIVE_FROM + 0.4, t)
+  const liveClose = (o, t) => o + 5.5 * AD.fbm((t - LIVE_FROM) * 1.9 + 3.1, 71, 3) * AD.smoothstep(LIVE_FROM, LIVE_FROM + 0.4, t)
   function liveCandle(o, t) {
     const u = clamp(t, LIVE_FROM, LIVE_TO)
     let h = o
@@ -81,7 +81,13 @@
     [-7, 1.2, 1.8], [-13, 0.8, 2.2], [-18, 1.0, 2.0], [-11, 1.5, 1.6], [-3, 2.0, 1.0],
     [6, 2.2, 1.4], [12, 2.5, 1.2], [5, 1.4, 1.8], [0, 1.6, 1.4],
   ]
-  const PRINT_AT = 4 // 28.0 s
+  // Beats, in seconds since 24.0.
+  const T_ENTRY = 1 // 25.0: ENTRY arrives
+  const T_STOP = 1.5 // 25.5: the STOP drag ends (snaps) on the beat
+  const T_LIMIT = 2 // 26.0: the LIMIT drag ends on the bar line
+  const DRAG = f(10)
+  const T_CAL = 2.5 // 26.5: calipers
+  const PRINT_AT = 4 // 28.0: headline cuts in, new candles print
   const PRINT_EVERY = f(5)
 
   AD.defineScene('set', {
@@ -186,8 +192,8 @@
       const ppp = d / DIST // px per pip
       const yOf = pips => yE - pips * ppp
 
-      let lineX0 = chartX0
-      let lineX0Words = chartX0
+      const lineX0 = chartX0
+      let lineX0Words = chartX0 // 16:9: the lines reach back to the words while they are on screen
       if (wide) {
         for (const key of ['entry', 'stop', 'limit']) words[key].el.style.top = yOf(LEVELS[key].pips) - wordFs * 0.52 + 'px'
         lineX0Words = Math.round(c.x + Math.max(words.entry.width, words.stop.width, words.limit.width) + 32)
@@ -202,7 +208,7 @@
         head.el.style.top = blockY + 'px'
       }
 
-      // ── level lines: a faint guide, the line itself and (16:9 only) nothing else ──
+      // ── level lines: a faint dotted guide (the snap target) and the line itself ──
       const guides = {}
       const paths = {}
       // The cut from 01 SEE lands on three solid lines that settle into the dotted guides.
@@ -246,15 +252,17 @@
       }
 
       return {
-        P, cv, tab, tabNum, tabTitle, bigNum, num, chips, chipW, chipX, gripDX, calX, step, xNow, chartX0, fadeTo, lineX0, lineX0Words,
-        head, words, guides, landing, paths, calStop, calLimit, cursor, closed, liveOpen, scripted, first, yOf, yE, d, wide,
+        P, cv, tab, tabNum, tabTitle, bigNum, num, chips, chipX, gripDX, calX, step, xNow, chartX0, fadeTo, lineX0, lineX0Words,
+        head, words, guides, landing, paths, calStop, calLimit, cursor, closed, liveOpen, scripted, first, yOf, yE, wide,
       }
     },
 
     render(t, ctx, s) {
       const { W, H } = ctx
-      const { P, yOf, yE, d, chipX, wide } = s
-      const fi = Math.floor(t * 30 + 1e-4) // frame index within the scene
+      const { P, yOf, yE, chipX, wide } = s
+      // Frame times arrive as T − start, a few ulps either side of k/30; the
+      // nudge puts every boundary frame on the late side of its beat.
+      t += 1e-6
 
       // Exit: the last 8 frames, complete on the final frame.
       const ex = prog(t, ctx.dur - f(8), f(7), ease.quint.inOut)
@@ -306,10 +314,6 @@
       g.globalCompositeOperation = 'source-over'
 
       // ── levels ──
-      const T_ENTRY = 1 // 25.0
-      const T_STOP = 1.5 // 25.5: the drag ends (snaps) on the beat
-      const T_LIMIT = 2 // 26.0
-      const DRAG = f(10)
       const wordsOn = t < PRINT_AT
       const lineLeft = wide && wordsOn ? s.lineX0Words : s.lineX0
       const state = {
@@ -343,9 +347,9 @@
         ch.el.style.display = st.on ? 'flex' : 'none'
         path.style.display = st.on ? 'block' : 'none'
         if (!st.on) continue
-        const placed = t >= st.set - 1e-6
+        const placed = t >= st.set
         // Two-frame brightness detent when a level lands.
-        const since = Math.floor((t - st.set) * 30 + 1e-4)
+        const since = Math.floor((t - st.set) * 30)
         const detent = placed && since < 2 ? 2 - since : 0
         const text = priceText(pips)
         if (ch.px.textContent !== text) ch.px.textContent = text
@@ -376,7 +380,7 @@
       let cy = yE
       let down = false
       let cop = 0
-      if (fi >= 30 && t < T_STOP - DRAG) {
+      if (t >= T_ENTRY && t < T_STOP - DRAG) {
         cx = gx + slideIn
         down = true
         cop = 1
@@ -405,10 +409,9 @@
 
       // ── calipers: two equal distances ──
       const readout = at => {
-        const n = clamp(Math.floor((t - at) * 30 + 1e-4), 0, 6)
+        const n = clamp(Math.floor((t - at) * 30), 0, 6)
         return `${((DIST * n) / 6).toFixed(1).padStart(4, '0')} PIPS`
       }
-      const T_CAL = 2.5
       s.calStop.set({ a: yE, b: yOf(-DIST), pos: s.calX, jaw: P.jaw, labelGap: 14, open: prog(t, T_CAL, f(8), ease.snap), label: readout(T_CAL), opacity: exFade })
       s.calLimit.set({ a: yOf(DIST), b: yE, pos: s.calX, jaw: P.jaw, labelGap: 14, open: prog(t, T_CAL + f(5), f(8), ease.snap), label: readout(T_CAL + f(5)), opacity: exFade })
 

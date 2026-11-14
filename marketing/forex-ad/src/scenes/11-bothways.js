@@ -24,11 +24,13 @@
     stop: { label: 'STOP', pips: -DIST, color: 'var(--amber)' },
   }
   const priceText = pips => (ENTRY + pips * PIP).toFixed(5)
-  // Positioned with 2-D transforms and no filters: nothing here is promoted to
-  // its own compositor layer, so a frame never depends on what was shown before.
+  // Positioned with 2-D transforms, and faded through colour rather than element
+  // opacity or filters: nothing here is promoted to its own compositor layer,
+  // so a frame never depends on what was shown before.
   const place = (node, x, y) => {
     node.style.transform = `translate(${x.toFixed(3)}px,${y.toFixed(3)}px)`
   }
+  const ink = alpha => `color-mix(in srgb, var(--white) ${(clamp(alpha) * 100).toFixed(2)}%, transparent)`
 
   const SPEED = 240 // px per second, linear
   const DRIFT = SPEED * 2 // the walk from entry to stop takes the two seconds before the bar line
@@ -163,15 +165,20 @@
 
     render(t, ctx, s) {
       const { P, pts, xCross, yS, yFill } = s
+      // Frame times arrive as T − start, a few ulps either side of k/30; the
+      // nudge puts every boundary frame on the late side of its beat.
+      t += 1e-6
 
-      // ── headlines: soft in, cross-dissolve complete on the bar line ──
+      // ── headlines: 12 frames of opacity with a 4 px rise, then an 8-frame
+      // cross-dissolve that completes on the bar line, so the second statement
+      // is fully set for the whole of 38.0–40.0 ──
       const DISSOLVE = f(8)
       const inP = prog(t, 0, f(12))
       const swap = prog(t, T_STOP - DISSOLVE, DISSOLVE)
-      s.h1.el.style.opacity = (inP * (1 - swap)).toFixed(4)
+      s.h1.el.style.color = ink(inP * (1 - swap))
       s.h1.el.style.transform = `translate(0,${((1 - prog(t, 0, f(12), ease.cubic.out)) * 4).toFixed(3)}px)`
       s.h1.el.style.visibility = swap >= 1 ? 'hidden' : 'visible'
-      s.h2.el.style.opacity = swap.toFixed(4)
+      s.h2.el.style.color = ink(swap)
       s.h2.el.style.visibility = swap <= 0 ? 'hidden' : 'visible'
 
       // ── price line: the head moves at a constant speed and stops at the fill ──
@@ -197,8 +204,8 @@
       }
       s.price.setAttribute('d', d)
       s.dot.style.display = d ? 'block' : 'none'
-      const filled = t >= T_STOP - 1e-6
-      const since = Math.floor((t - T_STOP) * 30 + 1e-4)
+      const filled = t >= T_STOP
+      const since = Math.floor((t - T_STOP) * 30)
       s.dot.setAttribute('cx', hx.toFixed(2))
       s.dot.setAttribute('cy', hy.toFixed(2))
       s.dot.setAttribute('r', filled ? (since === 0 ? 8.5 : since === 1 ? 7.5 : 6.5) : 4.5)

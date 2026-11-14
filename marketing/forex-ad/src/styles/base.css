@@ -106,7 +106,7 @@ html, body { margin: 0; background: #000; overflow: hidden; }
 /* Headline block (kit.headline): each line is clipped so text rises from its baseline. */
 .k-headline { position: absolute; }
 .k-headline .ln { display: block; overflow: hidden; padding: 0.06em 0.04em 0.02em; margin: -0.06em -0.04em -0.02em; }
-.k-headline .ln > span { display: inline-block; will-change: transform; }
+.k-headline .ln > span { display: inline-block; }
 
 /* Logo lockup (kit.lockup). */
 .k-lockup { position: absolute; display: flex; align-items: center; white-space: nowrap; }

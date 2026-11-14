@@ -2,7 +2,9 @@
  * layout zones, the house headline reveal, the caliper, the reticle logo
  * mark, corner brackets, tags, chapter tabs, the engineering grid and the
  * monochrome candle style. Everything is driven by time passed in by the
- * caller, so it stays a pure function of the frame being rendered.
+ * caller, so it stays a pure function of the frame being rendered. Motion uses
+ * 2-D transforms only: 3-D transforms and will-change promote elements to
+ * compositor layers, whose rasterisation depends on what was shown before.
  */
 ;(function () {
   'use strict'
@@ -145,7 +147,7 @@
           const start = Array.isArray(at) ? at[i] : at + i * each
           const pin = prog(t, start, dur, ease.snap)
           const pout = out === Infinity ? 0 : prog(t, out + i * 0.04, outDur, ease.cubic.in)
-          item.inner.style.transform = `translate3d(0,${((1 - pin) * 108 - pout * 108).toFixed(3)}%,0)`
+          item.inner.style.transform = `translateY(${((1 - pin) * 108 - pout * 108).toFixed(3)}%)`
           item.inner.style.opacity = pin <= 0 || pout >= 1 ? '0' : '1'
           if (i === 0) first = Math.min(pin, 1 - pout)
         })
@@ -299,7 +301,7 @@
         rule.style.transform = `scaleX(${prog(t, at + 0.08, 0.3, ease.snap).toFixed(4)})`
         rule.style.opacity = o.toFixed(4)
         ttl.style.opacity = (prog(t, at + 0.16, 0.3) * o).toFixed(4)
-        ttl.style.transform = `translate3d(${((1 - prog(t, at + 0.16, 0.3, ease.snap)) * 14).toFixed(3)}px,0,0)`
+        ttl.style.transform = `translateX(${((1 - prog(t, at + 0.16, 0.3, ease.snap)) * 14).toFixed(3)}px)`
       },
     }
   }

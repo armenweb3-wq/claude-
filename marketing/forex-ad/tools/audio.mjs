@@ -12,6 +12,10 @@
 //         2. voices   3. score (the cue sheet, in seconds on the beat grid)
 //         4. mix and master   5. analysis
 // Everything is deterministic: all noise comes from seeded generators.
+//
+// Mixed to translate on phone speakers: kick, bass, drone and the frame-0 hit
+// each carry a mid-range layer above 300 Hz beside their sub, and --analyze
+// reports every section through a 300 Hz high-pass next to the full-range figure.
 import { mkdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -516,15 +520,17 @@ function limiter(L, R, ceiling, { look = 0.005, release = 0.12 } = {}) {
   let sum = held[0] * W
   let minGain = 1
   let active = 0
+  const curve = new Float32Array(n)
   for (let i = 0; i < n; i++) {
     sum += held[i] - (i - W >= 0 ? held[i - W] : held[0])
     const gain = Math.min(1, sum / W)
     L[i] *= gain
     R[i] *= gain
+    curve[i] = gain
     if (gain < minGain) minGain = gain
     if (gain < 0.944) active++ // more than 0.5 dB of reduction
   }
-  return { maxReductionDb: -toDb(minGain), activePercent: (100 * active) / n }
+  return { maxReductionDb: -toDb(minGain), activePercent: (100 * active) / n, limiterGain: curve }
 }
 
 // ═════════════════════════════ 2. VOICES ══════════════════════════════════
@@ -534,8 +540,8 @@ function limiter(L, R, ceiling, { look = 0.005, release = 0.12 } = {}) {
 // Tight kick: sine with a fast pitch drop to A1 and a little saturation (the
 // sub, for full-range systems), a pitched knock in the low mids and a beater
 // click (what a phone plays). `big` is the long-tailed impact on 16.0 and 50.0.
-const KICK_KNOCK = 0.55
-const KICK_BEATER = 0.5
+const KICK_KNOCK = 1.15
+const KICK_BEATER = 0.85
 function kick({ vel = 1, big = false, lp = 0, click = 1 } = {}) {
   const dur = big ? 0.47 : 0.27
   const n = Math.round(dur * SR)
@@ -551,13 +557,13 @@ function kick({ vel = 1, big = false, lp = 0, click = 1 } = {}) {
     out[i] = (Math.tanh(1.5 * Math.sin(TAU * ph) * e) / 0.905) * Math.min(1, i / 96) // 2 ms attack on a sine that starts at zero
     ph += f / SR
   }
-  // Knock: a short pitched thump falling through 900-300 Hz. The sub cannot be
+  // Knock: a short pitched thump falling from 930 to 330 Hz. The sub cannot be
   // heard on a phone; this is the part of the kick that can.
   let pk = 0
   for (let i = 0; i < Math.round(0.12 * SR); i++) {
     const t = i / SR
-    out[i] += Math.sin(TAU * pk) * Math.exp(-t / 0.024) * Math.min(1, i / 48) * KICK_KNOCK
-    pk += (290 + 620 * Math.exp(-t / 0.009)) / SR
+    out[i] += Math.sin(TAU * pk) * Math.exp(-t / 0.036) * Math.min(1, i / 48) * KICK_KNOCK
+    pk += (330 + 600 * Math.exp(-t / 0.009)) / SR
   }
   // Beater: a defined click between 1.5 and 4 kHz (two damped resonances and a
   // band of noise), with a little air above it.
@@ -568,6 +574,9 @@ function kick({ vel = 1, big = false, lp = 0, click = 1 } = {}) {
     const tone = Math.sin(TAU * 2150 * t) * Math.exp(-t / 0.0035) * 0.5 + Math.sin(TAU * 3400 * t) * Math.exp(-t / 0.0022) * 0.35
     out[i] += (tone + beat[i] * Math.exp(-t / 0.004) * 1.5 + (i < air.length ? air[i] * Math.exp(-t / 0.002) * 0.3 : 0)) * KICK_BEATER * click
   }
+  // Soft-clip the stack: body, knock and beater all peak in the first few
+  // milliseconds, and this keeps that transient from leaning on the limiter.
+  for (let i = 0; i < n; i++) out[i] = Math.tanh(0.6 * out[i]) / 0.6
   if (lp) filt(out, biquad('lp', lp, 0.7071))
   taper(out, 0, 0.02)
   for (let i = 0; i < n; i++) out[i] *= vel
@@ -576,12 +585,13 @@ function kick({ vel = 1, big = false, lp = 0, click = 1 } = {}) {
 
 // Bass in three layers: a clean sine sub at the fundamental (full-range
 // systems), a band-limited saw through a 12 dB filter with its own envelope
-// (the pluck), and the same saw band-passed around 520 Hz and driven (a quiet
-// mid-range layer, 200-900 Hz, that keeps the note audible on small speakers).
+// (the pluck), and the same saw band-passed around 520 Hz (a quiet mid-range
+// layer, 200-900 Hz, that keeps the note audible on small speakers). All three
+// share one saturator, which adds upper harmonics and bounds the peak.
 // `cut` overrides the filter envelope for held notes; the mid layer follows it.
-const BASS_SUB = 0.5
-const BASS_MID = 0.42
-function bass(f, { gate = 0.1, vel = 1, c0 = 1700, c1 = 320, tauF = 0.06, q = 1.2, sub = 1, cut = null } = {}) {
+const BASS_SUB = 0.36
+const BASS_MID = 0.9
+function bass(f, { gate = 0.1, vel = 1, c0 = 1700, c1 = 380, tauF = 0.06, q = 1.2, sub = 1, cut = null } = {}) {
   const env = adsr(gate, 0.004, 0.2, 0.85, 0.03)
   const n = env.length
   const mid = new Float32Array(n)
@@ -602,7 +612,7 @@ function bass(f, { gate = 0.1, vel = 1, c0 = 1700, c1 = 320, tauF = 0.06, q = 1.
   for (let i = 0; i < n; i++) {
     const s = Math.sin((TAU * f * i) / SR)
     const open = cut ? clamp((cut(i / SR) - 200) / 600, 0, 1) : 1
-    out[i] = (Math.tanh(1.3 * (mid[i] * 0.85 + s * BASS_SUB * sub) * env[i]) + Math.tanh(3.5 * grit[i]) * BASS_MID * open * env[i]) * vel
+    out[i] = Math.tanh((1.3 * (mid[i] * 0.85 + s * BASS_SUB * sub) + 4 * grit[i] * BASS_MID * open) * env[i]) * vel
   }
   return out
 }
@@ -925,7 +935,7 @@ function feltHit() {
   for (let i = 0; i < felt.length; i++) out[i] += felt[i] * Math.min(1, i / 40) * Math.exp(-i / (0.009 * SR)) * 1.6 * FELT_BODY
   return taper(out, 0.002, 0.2)
 }
-const FELT_BODY = 1.0
+const FELT_BODY = 1.6
 // One soft, low, neutral tone (38.0): root and fifth only, slow attack.
 function lowTone() {
   const n = Math.round(2.6 * SR)
@@ -942,6 +952,7 @@ function lowTone() {
 
 const stems = {
   low: monoBus(), // sub drone, felt hit, low tone
+  hum: stereoBus(), // the drone's harmonics (what a small speaker plays of it)
   kick: monoBus(),
   bass: monoBus(),
   snare: stereoBus(),
@@ -987,7 +998,6 @@ setBars(26, 26, 'Dsus2')
 const BURST = ['Dsus2', 'Csus2', 'Gsus2', 'Asus4'] // bar 25, one chord per recap cut
 
 // ── Intro, bars 1-3 (0-6 s) ──────────────────────────────────────────────
-const DRONE_HARMONICS = 0.9
 put(stems.low, 0, feltHit(), 1.5)
 accents.push(['felt hit', 0, 'low'])
 {
@@ -1000,9 +1010,10 @@ accents.push(['felt hit', 0, 'low'])
   const f = hz('D2')
   // Harmonics a small speaker can play: D4, A4, D5, A5, D6 (multiples 4, 6, 8,
   // 12 and 16 of D2: octaves and fifths only, no fifth harmonic, so no major
-  // third). Each has a weaker neighbour a fraction of a hertz away, so the
-  // layer shimmers slowly instead of standing still.
-  const HARMONICS = [[4, 0.42, 0.13], [6, 0.38, 0.19], [8, 0.26, 0.11], [12, 0.15, 0.23], [16, 0.08, 0.17]]
+  // third). They live on their own stereo stem. Each partial drifts slowly in
+  // level and has a weaker neighbour a fraction of a hertz away, panned to one
+  // side, so the layer shimmers and has width but folds to mono cleanly.
+  const HARMONICS = [[4, 0.42, 0.13, 0.07], [6, 0.38, 0.19, 0.11], [8, 0.26, 0.11, 0.09], [12, 0.15, 0.23, 0.16], [16, 0.08, 0.17, 0.13]]
   for (let i = 0; i < N; i++) {
     const t = i / SR
     const a = amp(t)
@@ -1012,17 +1023,26 @@ accents.push(['felt hit', 0, 'low'])
       0.3 * Math.sin(TAU * 0.5 * f * t) +
       0.15 * (Math.sin(TAU * (2 * f + 0.11) * t) + Math.sin(TAU * (2 * f - 0.11) * t)) +
       0.08 * Math.sin(TAU * 3 * f * t + 0.4 * Math.sin(TAU * 0.13 * t))
-    let h = 0
-    for (const [m, level, beat] of HARMONICS) h += level * (Math.sin(TAU * m * f * t) + 0.4 * Math.sin(TAU * (m * f + beat) * t + m))
     const breathe = 1 + 0.06 * Math.sin(TAU * 0.25 * t)
-    stems.low[i] += (Math.tanh(0.9 * v * a * breathe) + h * a * breathe * DRONE_HARMONICS) * 0.5
+    stems.low[i] += Math.tanh(0.9 * v * a * breathe) * 0.5
+    let hl = 0
+    let hr = 0
+    HARMONICS.forEach(([m, level, beat, drift], k) => {
+      const g = level * (1 + 0.25 * Math.sin(TAU * drift * t + k * 1.7))
+      const main = g * Math.sin(TAU * m * f * t)
+      const side = g * 0.45 * Math.sin(TAU * (m * f + beat) * t + m)
+      hl += main + side * (k % 2 ? 0.2 : 1)
+      hr += main + side * (k % 2 ? 1 : 0.2)
+    })
+    stems.hum.L[i] += hl * a * breathe * 0.5
+    stems.hum.R[i] += hr * a * breathe * 0.5
   }
 }
 // Quartz tick on every beat of the film (the 'one second' motif), louder
 // where it is exposed. Tick-tock: alternate beats are a shade darker.
 {
   const level = curve([
-    [0, 1.8], [4, 1.8], [6, 1.4], [6.01, 0.9], [15, 0.9], [16, 0.42], [35.9, 0.42], [36, 0.95], [39.9, 0.95],
+    [0, 1.4], [4, 1.4], [6, 1.2], [6.01, 0.9], [15, 0.9], [16, 0.42], [35.9, 0.42], [36, 0.95], [39.9, 0.95],
     [40, 0.6], [47.9, 0.6], [48, 0.42], [52, 0.5], [58, 0.28],
   ])
   for (let k = 0; k <= 116; k++) {
@@ -1031,13 +1051,13 @@ accents.push(['felt hit', 0, 'low'])
     put(stems.tick, t, quartz({ vel: level(t), bright: k % 2 ? 0.94 : 1 }), 1, k % 2 ? 0.06 : -0.06)
   }
 }
-put(stems.click, 1.0, relay({ heavy: true }), 1.35) // caliper closes
+put(stems.click, 1.0, relay({ heavy: true }), 1.6) // caliper closes
 accents.push(['detent click', 1.0, 'click'])
 // 1.5: the ten ruler divisions pop left to right, one frame apart
 for (let k = 0; k < 10; k++) put(stems.click, 1.5 + k / 30, dataTick({ vel: 0.5, pitch: 0.9 + k * 0.012 }), 0.6, -0.6 + (1.2 * k) / 9)
 // Bar 2: filtered pluck answers each zoom step; data ticks on the triplet grid
-put(stems.blip, 2.0, pluck(hz('D4'), { vel: 0.6, dur: 0.6, tauA: 0.18, i0: 2, tine: 0.4 }), 0.9, -0.2)
-put(stems.blip, 3.0, pluck(hz('A4'), { vel: 0.7, dur: 0.6, tauA: 0.18, i0: 2, tine: 0.4 }), 0.9, 0.2)
+put(stems.blip, 2.0, pluck(hz('D4'), { vel: 0.6, dur: 0.6, tauA: 0.18, i0: 2, tine: 0.4 }), 1.2, -0.2)
+put(stems.blip, 3.0, pluck(hz('A4'), { vel: 0.7, dur: 0.6, tauA: 0.18, i0: 2, tine: 0.4 }), 1.2, 0.2)
 {
   const r = rng(11)
   for (let k = 1; k < 12; k++) {
@@ -1154,12 +1174,12 @@ function bassBar(bar, pattern, root, level = 1, bright = 1) {
 // 12.0: one held D, filter opening into the silence
 put(stems.bass, 12, bass(hz('D2'), { gate: 3.5, vel: 0.5, cut: curve([[0, 110], [3.5, 950]], 'exp'), q: 0.9 }))
 for (let b = 9; b <= 12; b++) bassBar(b, BASS_PATTERN.A, CHORD[HARMONY[b]].bass)
-for (let b = 13; b <= 15; b++) bassBar(b, BASS_PATTERN.B, CHORD[HARMONY[b]].bass, 0.82)
+for (let b = 13; b <= 15; b++) bassBar(b, BASS_PATTERN.B, CHORD[HARMONY[b]].bass, 0.7)
 for (let b = 16; b <= 18; b++) bassBar(b, BASS_PATTERN.C, CHORD[HARMONY[b]].bass)
 bassBar(23, BASS_PATTERN.S, 'G2', 0.7, 0.55)
 bassBar(24, BASS_PATTERN.S, 'A2', 0.85, 0.75)
-bassBar(25, BASS_PATTERN.X, BURST.map(c => CHORD[c].bass), 0.86)
-put(stems.bass, 50, bass(hz('D2'), { gate: 1.9, vel: 0.75, cut: curve([[0, 1500], [0.9, 700], [1.9, 140]], 'exp'), q: 0.9 }))
+bassBar(25, BASS_PATTERN.X, BURST.map(c => CHORD[c].bass), 0.8)
+put(stems.bass, 50, bass(hz('D2'), { gate: 1.9, vel: 0.5, cut: curve([[0, 1500], [0.9, 700], [1.9, 140]], 'exp'), q: 0.9 }))
 
 // ── Arpeggio (FM pluck, 16ths) and the octave-up lead ────────────────────
 {
@@ -1229,7 +1249,7 @@ put(stems.bass, 50, bass(hz('D2'), { gate: 1.9, vel: 0.75, cut: curve([[0, 1500]
   put(stems.stab, 50, stab(['D3', 'A3', 'D4', 'A4', 'E5'], { vel: 1, dur: 2.0, tau: 0.75, c0: 6000, c1: 350, tauF: 0.5 }), 0.9)
   // impacts and chapter marks (noise only)
   const CRASH = [
-    [16, 1, 0.5], [16.5, 0.5, 0.22], [18, 0.72, 0.32], [24, 0.75, 0.32], [30, 0.75, 0.32],
+    [16, 1, 0.5], [16.5, 0.5, 0.22], [18, 0.95, 0.32], [24, 0.95, 0.32], [30, 0.95, 0.32],
     [48, 0.55, 0.22], [48.5, 0.3, 0.1], [49, 0.3, 0.1], [49.5, 0.3, 0.1], [50, 1, 0.6],
   ]
   for (const [t, vel, tau] of CRASH) put(stems.fx, t, crash({ vel, tau }), 0.55)
@@ -1240,7 +1260,7 @@ put(stems.bass, 50, bass(hz('D2'), { gate: 1.9, vel: 0.75, cut: curve([[0, 1500]
   put(stems.fx, 46, sweep(2, { f0: 500, f1: 10000 }), 0.42) // riser under the snare build
   // fan re-seeds: a short noise shuffle on each
   for (const t of [11, 11.5, 12, 12.5]) {
-    put(stems.fx, t, shuffle({ vel: 0.9 }), 1.4)
+    put(stems.fx, t, shuffle({ vel: 0.9 }), 1.8)
     accents.push(['fan shuffle', t, 'fx'])
   }
 }
@@ -1272,7 +1292,7 @@ accents.push(['kick returns', 40, 'kick'], ['big downbeat', 50, 'kick'], ['last 
   }
   // S09: muted relay as each level snaps
   ;[25, 25.5, 26].forEach((t, k) => {
-    put(stems.click, t, relay({ muted: true, vel: 1 }), [1.2, 1.5, 1.2][k], [-0.25, 0, 0.25][k])
+    put(stems.click, t, relay({ muted: true, vel: 1 }), [1.6, 1.9, 1.6][k], [-0.25, 0, 0.25][k])
     accents.push([`relay ${['ENTRY', 'STOP', 'LIMIT'][k]}`, t, 'click'])
   })
   // S10: rising four-note figure follows the pulse, then three printer ticks
@@ -1281,7 +1301,7 @@ accents.push(['kick returns', 40, 'kick'], ['big downbeat', 50, 'kick'], ['last 
     accents.push([`pulse figure ${nt}`, 30.5 + k * 0.5, 'blip'])
   })
   ;[32, 32.5, 33].forEach((t, k) => {
-    put(stems.click, t, printer({ vel: 1 }), 1, [0.2, 0.25, 0.3][k])
+    put(stems.click, t, printer({ vel: 1 }), 1.35, [0.2, 0.25, 0.3][k])
     accents.push([`printer ${['REQUESTED', 'FILLED', 'TIME-STAMPED'][k]}`, t, 'click'])
   })
   // S10: syncopated telemetry bleeps through bars 16-18
@@ -1299,14 +1319,14 @@ accents.push(['kick returns', 40, 'kick'], ['big downbeat', 50, 'kick'], ['last 
   }
   put(stems.click, 33.5, relay({ vel: 0.7 }), 0.8) // caliper closes on the two prices
   // S11: one soft low tone
-  put(stems.low, 38, lowTone(), 0.8)
+  put(stems.low, 38, lowTone(), 1.1)
   accents.push(['low tone', 38, 'low'])
   // S12: size stepper (triplet grid), button press, receipt lines, sonic mark under the CTA
   for (let k = 0; k < 3; k++) put(stems.click, 42 + k * TRIP, dataTick({ vel: 0.5, pitch: 0.95 + 0.05 * k }), 0.9, 0.2)
-  put(stems.click, 44, relay({ muted: true, vel: 1 }), 1.6)
+  put(stems.click, 44, relay({ muted: true, vel: 1 }), 2.1)
   accents.push(['relay (button press)', 44, 'click'])
   for (let k = 0; k < 3; k++) put(stems.click, 45 + k * TRIP, printer({ vel: 0.55 }), 0.8, 0.25)
-  sonicMark(46, 1.05)
+  sonicMark(46, 1.25)
   // S14: the mark locks 20 frames after the downbeat (on the triplet grid)
   put(stems.click, 50 + 4 * TRIP, relay({ vel: 0.7 }), 0.8)
   // S15: sonic mark on the end card, and a single D with the final kick
@@ -1362,6 +1382,8 @@ const hpBus = (bus, f, q = 0.7071) => eachChannel(bus, ch => filt(ch, biquad('hp
   filt(stems.bass, biquad('hp', 32))
   applyDuck(stems.bass, 0.5)
   applyDuck(stems.low, 0.35)
+  hpBus(stems.hum, 200)
+  applyDuck(stems.hum, 0.35)
 }
 
 // Fader, hall send, room send, delay send. Every fader is also trimmed by
@@ -1369,19 +1391,20 @@ const hpBus = (bus, f, q = 0.7071) => eachChannel(bus, ch => filt(ch, biquad('hp
 const HEADROOM = dB(-6)
 const MIX = {
   low: [0.2, 0.06, 0, 0],
-  kick: [0.76, 0, 0.02, 0],
-  bass: [0.46, 0, 0, 0],
-  snare: [0.58, 0.05, 0.22, 0],
-  hats: [0.25, 0, 0.06, 0],
+  hum: [0.32, 0.25, 0, 0],
+  kick: [0.54, 0, 0.02, 0],
+  bass: [0.4, 0, 0, 0],
+  snare: [0.66, 0.05, 0.22, 0],
+  hats: [0.27, 0, 0.06, 0],
   shaker: [0.4, 0, 0.05, 0],
   tick: [0.32, 0, 0, 0],
   click: [0.34, 0.06, 0.3, 0],
-  arp: [0.42, 0.16, 0, 0.26],
-  lead: [0.3, 0.2, 0, 0.3],
-  pad: [1.0, 0.3, 0, 0],
-  stab: [0.72, 0.25, 0, 0.12],
+  arp: [0.49, 0.16, 0, 0.26],
+  lead: [0.27, 0.2, 0, 0.3],
+  pad: [1.1, 0.3, 0, 0],
+  stab: [0.84, 0.25, 0, 0.12],
   bell: [0.25, 0.5, 0, 0.3],
-  blip: [0.28, 0.4, 0, 0.4],
+  blip: [0.33, 0.4, 0, 0.4],
   fx: [0.6, 0.25, 0, 0],
 }
 const hallIn = stereoBus()
@@ -1420,6 +1443,7 @@ hpBus(roomIn, 180)
 const hallOut = reverb(hallIn.L, hallIn.R, { rt: 2.0, damp: 6000, pre: 0.022, lines: 16, width: 0.8 })
 const roomOut = reverb(roomIn.L, roomIn.R, { rt: 0.42, damp: 5200, pre: 0.004, size: 0.37, width: 0.7 })
 applyDuck(hallOut, 0.3)
+for (const bus of [delayOut, hallOut, roomOut]) gapMute(bus) // the tails take the same 12 ms fade into the silence
 stems.delay = delayOut
 stems.hall = hallOut
 stems.room = roomOut
@@ -1557,6 +1581,21 @@ function analyze() {
   log(`integrated ${lu.integrated.toFixed(2)} LUFS   momentary max ${lu.momentaryMax.toFixed(2)} LUFS   make-up gain ${out.gainDb.toFixed(2)} dB`)
   log(`sample peak ${toDb(peak).toFixed(2)} dBFS   true peak (4x) ${toDb(truePeak(L, R)).toFixed(2)} dBTP   clipped samples ${clipped}`)
   log(`limiter: max reduction ${out.maxReductionDb.toFixed(2)} dB, more than 0.5 dB for ${out.activePercent.toFixed(2)}% of the time`)
+  log(
+    'limiter by section (max dB / % of time over 1 dB): ' +
+      SECTIONS.slice(1, -1)
+        .map(([name, t0, t1]) => {
+          let mn = 1
+          let over = 0
+          for (let i = at(t0); i < at(t1); i++) {
+            const g = out.limiterGain[i]
+            if (g < mn) mn = g
+            if (g < 0.891) over++
+          }
+          return `${name} ${(-toDb(mn)).toFixed(1)}/${((100 * over) / (at(t1) - at(t0))).toFixed(1)}%`
+        })
+        .join('  '),
+  )
   log(`DC offset L ${(sumL / N).toExponential(2)}  R ${(sumR / N).toExponential(2)}`)
   log(`largest sample-to-sample step ${maxStep.toFixed(3)} at ${(maxStepAt / SR).toFixed(4)} s`)
 

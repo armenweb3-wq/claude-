@@ -118,7 +118,10 @@
       const c = ctx.content
       const F = ctx.format
       const { W, H } = ctx
-      const bottom = c.y + c.h
+      // Lowest line anything here may reach: the content edge, and never less
+      // than 18 px above the risk band (the band can be taller than the gap
+      // the content area was cut for).
+      const bottom = Math.min(c.y + c.h, ctx.layout.band.y - 18)
       const right = c.x + c.w
       const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name)
       const rgb = { white: hexToRgb(cssVar('--white')), accent: hexToRgb(cssVar('--accent')), grey: hexToRgb(cssVar('--grey')) }
@@ -441,7 +444,7 @@
       const hair = el('div', 'tr-hair', root)
       hair.style.top = G.hairY + 'px'
 
-      return { G, m, rgb, all, route, sNode, wire, leads, ghost, base, wireBase, lit, wireLit, chevrons, pad, nodes, TAIL, head, win, stack, receipts, rel, waiting, frame, cal, question, words, record, tab, tabNum, tabTitle, big, num, tag, cover, hair, FADE, STACK_GAP, M }
+      return { G, m, rgb, all, route, sNode, wire, leads, ghost, base, wireBase, lit, wireLit, chevrons, pad, nodes, TAIL, head, win, stack, receipts, rel, waiting, frame, cal, question, words, record, tab, tabNum, tabTitle, big, num, tag, cover, hair, FADE, STACK_GAP, M, bottom }
     },
 
     render(t, ctx, s) {
@@ -610,7 +613,7 @@
       const x0 = Math.max(c.x, grow('x') - tight)
       const y0 = Math.max(c.y, grow('y') - tight)
       const x1 = Math.min(c.x + c.w, grow('x') + grow('w') + tight)
-      const y1 = Math.min(c.y + c.h, grow('y') + grow('h') + tight)
+      const y1 = Math.min(s.bottom, grow('y') + grow('h') + tight)
       s.frame.set({ x: x0, y: y0, w: x1 - x0, h: y1 - y0, opacity: on(2) ? 1 : 0 })
 
       // ── caliper on the two prices: both are shown, the gap is not dressed up ──

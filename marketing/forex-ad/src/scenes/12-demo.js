@@ -30,7 +30,7 @@
     press: 4.0, // bar line: the order and its time-stamp
     card: 4.5, // record opens
     lines: 5.0, // requested / filled print
-    row: 5.0, // the position row takes the place of the strip's empty state
+    row: 4.5, // the position row takes the place of the strip's empty state as the record opens
     footer: 4.5 - 8 * f, // disclosure: fully on screen from 44.5, with the record
     cta: 6.0, // headline and URL; focus brackets off
   }

@@ -160,6 +160,9 @@
       // The flat line S05 opens on (falls back to mid-stage if 05-fan.js is absent).
       const lineY = AD.fanGeo ? AD.fanGeo(ctx).level : Math.round(c.y + c.h / 2)
 
+      // The bar and week strip keep at least this much clear space above the risk band.
+      const floor = ctx.layout.band.y - 26
+
       // Per-format composition. map.deg = degrees per dot; map.centre = central meridian;
       // labels: which side of its node each chip sits on (r, l, a(bove), b(elow)) and a vertical nudge.
       const L = ctx.pick({
@@ -172,10 +175,10 @@
         },
         '9x16': {
           head: { x: c.x, y: c.y, w: c.w },
-          map: { pitch: 8, deg: 8 / 3, centre: 40, top: 70, rows: 45, cols: 135, x: 0, y: c.y + 292, fade: 110 },
-          labels: { SYDNEY: ['b'], TOKYO: ['a'], LONDON: ['l', -9], 'NEW YORK': ['r', 9] },
-          bar: { x: c.x, w: 366, y: c.y + c.h - 10, rise: 30 },
-          week: { x: c.x + 386, w: c.w - 386, y: c.y + c.h - 46, h: 46, gap: 4, font: 19 },
+          map: { pitch: 8, deg: 8 / 3, centre: 40, top: 70 - 8 / 3, rows: 43, cols: 135, x: 0, y: c.y + 292, fade: 110 },
+          labels: { SYDNEY: ['b', -4], TOKYO: ['a'], LONDON: ['l', -9], 'NEW YORK': ['r', 9] },
+          bar: { x: c.x, w: 366, y: floor - 10, rise: 30 },
+          week: { x: c.x + 386, w: c.w - 386, y: floor - 46, h: 46, gap: 4, font: 19 },
         },
         '4x5': {
           head: { x: c.x, y: c.y, w: c.w },
@@ -185,6 +188,11 @@
           week: { x: c.x, w: c.w, y: c.y + 890, h: 64, gap: 8, font: 22 },
         },
       })
+
+      // If the band ever grows further, the bottom block lifts with it.
+      const lift = Math.max(0, L.week.y + L.week.h - floor)
+      L.bar.y -= lift
+      L.week.y -= lift
 
       kit.grid(root)
       const g = AD.canvas(root).ctx

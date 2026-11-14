@@ -233,7 +233,6 @@
     build(root, ctx) {
       const kit = AD.kit
       const c = ctx.contentEnd
-      const { W, H } = ctx
       const grid = kit.grid(root)
       const vignette = grid.nextSibling
       const cv = AD.canvas(root)
@@ -247,7 +246,8 @@
       const thesis = kit.headline(root, ['PRECISION,', 'NOT PREDICTION.'], { tier: 'display', x: c.x + (c.w - thesisW) / 2, y: 0, w: thesisW, align: 'center' })
       const groupH = outer * 2 + gap + thesis.height
       const top = Math.round(c.y + (c.h - groupH) / 2)
-      const cx = W / 2
+      // Everything is centred on the content box, not the frame: in 9:16 the safe box sits left of the frame centre.
+      const cx = c.x + c.w / 2
       const cy = top + outer
       thesis.el.style.top = top + outer * 2 + gap + 'px'
 
@@ -259,28 +259,21 @@
       // The end card starts its lockup mark exactly here.
       AD.shared = Object.assign(AD.shared || {}, { converge: { cx, cy, size } })
 
-      // ── the four motifs round the group, on the 48 px grid: ladder, routes, arcs, levels ──
+      // ── the four motifs round the group: ladder, routes, arcs, levels (clockwise from top-left) ──
+      // Mirrored about the content-box centre and kept inside contentEnd vertically;
+      // in 9:16 they bleed the same small amount past the safe box on both sides.
       const g = k => 48 * k
-      const zones = ctx.pick({
-        '16x9': [
-          { x: W / 2 - g(18), y: H / 2 - g(8), w: g(11), h: g(5) },
-          { x: W / 2 + g(7), y: H / 2 - g(8), w: g(11), h: g(5) },
-          { x: W / 2 + g(7), y: H / 2 - g(1), w: g(11), h: g(5) },
-          { x: W / 2 - g(18), y: H / 2 - g(1), w: g(11), h: g(5) },
-        ],
-        '9x16': [
-          { x: W / 2 - g(10), y: H / 2 - g(12), w: g(7), h: g(3) },
-          { x: W / 2 + g(3), y: H / 2 - g(12), w: g(7), h: g(3) },
-          { x: W / 2 + g(3), y: H / 2 - g(8.25), w: g(7), h: g(3) },
-          { x: W / 2 - g(10), y: H / 2 - g(8.25), w: g(7), h: g(3) },
-        ],
-        '4x5': [
-          { x: W / 2 - g(10), y: H / 2 - g(11), w: g(7), h: g(5) },
-          { x: W / 2 + g(3), y: H / 2 - g(11), w: g(7), h: g(5) },
-          { x: W / 2 + g(2), y: H / 2 + g(5), w: g(8), h: g(3.5) },
-          { x: W / 2 - g(10), y: H / 2 + g(5), w: g(8), h: g(3.5) },
-        ],
+      const pair = (inner, w, y, h) => [
+        { x: cx - inner - w, y, w, h },
+        { x: cx + inner, y, w, h },
+      ]
+      const bottom = c.y + c.h
+      const rows = ctx.pick({
+        '16x9': [pair(g(7), g(11), c.y + 18, g(5)), pair(g(7), g(11), bottom - 8 - g(5), g(5))],
+        '9x16': [pair(132, 280, c.y + 12, 136), pair(132, 280, c.y + 180, 120)],
+        '4x5': [pair(g(3), g(7), c.y + 9, g(5)), pair(g(2), g(8), bottom - 8 - 152, 152)],
       })
+      const zones = [rows[0][0], rows[0][1], rows[1][1], rows[1][0]]
       const shapes = [ladder(zones[0]), routes(zones[1]), arcs(zones[2]), levels(zones[3])]
 
       // How each motif runs in: which ring segment it lands on (0 top, 1 right,

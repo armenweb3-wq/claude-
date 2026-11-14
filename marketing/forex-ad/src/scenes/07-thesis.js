@@ -46,7 +46,8 @@ AD.defineScene('thesis', {
     const column = ctx.vertical // 9:16 stacks the index at the left
     const rowGap = 14
     const indexH = column ? tabH * 3 + rowGap * 2 : tabH
-    const indexTop = c.y + c.h - indexH
+    // The index keeps at least 26 px of clear space above the risk band, whatever height the band has.
+    const indexTop = Math.min(c.y + c.h, Math.floor(ctx.layout.band.y) - 26) - indexH
     tabs.forEach((tb, i) => {
       tb.el.style.left = (column ? c.x : c.x + (i * c.w) / 3) + 'px'
       tb.el.style.top = (column ? indexTop + i * (tabH + rowGap) : indexTop) + 'px'

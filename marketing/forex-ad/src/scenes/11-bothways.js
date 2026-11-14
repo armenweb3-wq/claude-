@@ -5,6 +5,8 @@
  * lands a little beyond the stop level. A caliper marks that gap, labelled
  * SLIPPAGE with no figure, and the line ends at the fill. There is no
  * profit-and-loss figure, no limit line, no red and no alarm styling.
+ * The two statements are sequenced, never overlapped: the first leaves through
+ * its line mask at 37.67 and the second rises from 37.80, set on the bar line.
  * From 39.0 the frame holds still apart from the corner clock and two soft
  * rings that leave the fill dot on the beats at 39.0 and 39.5.
  *
@@ -23,17 +25,27 @@
     entry: { label: 'ENTRY', color: 'var(--white)', dash: '12 8' },
     stop: { label: 'STOP', color: 'var(--amber)' },
   }
-  // Positioned with 2-D transforms, and faded through colour rather than element
-  // opacity or filters: nothing here is promoted to its own compositor layer,
-  // so a frame never depends on what was shown before.
+  // Positioned with 2-D transforms, with no element opacity or filters: nothing
+  // here is promoted to its own compositor layer, so a frame never depends on
+  // what was shown before.
   const place = (node, x, y) => {
     node.style.transform = `translate(${x.toFixed(3)}px,${y.toFixed(3)}px)`
   }
-  const ink = alpha => `color-mix(in srgb, var(--white) ${(clamp(alpha) * 100).toFixed(2)}%, transparent)`
+  // The kit headline's reveal through its line mask (same distance and curves
+  // as kit.headline.show), written as a 2-D transform for the same reason.
+  // rise: 0 below the baseline → 1 set; out: 0 → 1 gone upward.
+  const mask = (line, rise, out) => {
+    line.inner.style.transform = `translate(0,${((1 - rise) * 108 - out * 108).toFixed(3)}%)`
+    line.inner.style.opacity = rise <= 0 || out >= 1 ? '0' : '1'
+  }
 
   const SPEED = 240 // px per second, linear
   const DRIFT = SPEED * 2 // the walk from entry to stop takes the two seconds before the bar line
   const T_STOP = 2 // 38.0: the stop is crossed
+  // The two statements never share a frame: the first leaves through its mask,
+  // one frame is clear, then the second rises and is set on the bar line.
+  const T_OUT = T_STOP - f(10) // 37.67: first statement out over 4 frames
+  const T_IN = T_STOP - f(6) // 37.80: second statement rises over 6 frames, fully set at 38.0
   const T_CAL = 2.5 // 38.5: the caliper closes on the gap
   const RINGS = [3, 3.5] // 39.0, 39.5: one soft ring leaves the fill dot on each beat
   const RING_DUR = f(14) // gone again by the next beat, and by the cut
@@ -88,7 +100,7 @@
       kit.grid(root)
       const lines = svg('svg', { class: 'k-svg', width: W, height: H, viewBox: `0 0 ${W} ${H}` }, root)
 
-      // ── type: the film's only soft transition, so the kit's baseline rise is parked ──
+      // ── type: the house rise, at a calmer pace than elsewhere (driven in render) ──
       const h1 = kit.headline(root, ['PRICES MOVE', 'AGAINST YOU TOO.'], { tier: 'display', x: c.x, y: c.y, w: c.w })
       const h2 = kit.headline(root, wide ? ['A STOP CAN LIMIT A LOSS.', 'IT IS NOT A GUARANTEE.'] : ['A STOP CAN', 'LIMIT A LOSS.', 'IT IS NOT', 'A GUARANTEE.'], {
         tier: 'display',
@@ -96,10 +108,6 @@
         y: c.y,
         w: c.w,
       })
-      for (const line of h1.lines.concat(h2.lines)) {
-        line.inner.style.transform = 'none'
-        line.inner.style.opacity = '1'
-      }
 
       // ILLUSTRATIVE sits top right of the content area, as in the chapters.
       const tagEl = kit.tag(root)
@@ -172,17 +180,15 @@
       // nudge puts every boundary frame on the late side of its beat.
       t += 1e-6
 
-      // ── headlines: 12 frames of opacity with a 4 px rise, then an 8-frame
-      // cross-dissolve that completes on the bar line, so the second statement
-      // is fully set for the whole of 38.0–40.0 ──
-      const DISSOLVE = f(8)
-      const inP = prog(t, 0, f(12))
-      const swap = prog(t, T_STOP - DISSOLVE, DISSOLVE)
-      s.h1.el.style.color = ink(inP * (1 - swap))
-      s.h1.el.style.transform = `translate(0,${((1 - prog(t, 0, f(12), ease.cubic.out)) * 4).toFixed(3)}px)`
-      s.h1.el.style.visibility = swap >= 1 ? 'hidden' : 'visible'
-      s.h2.el.style.color = ink(swap)
-      s.h2.el.style.visibility = swap <= 0 ? 'hidden' : 'visible'
+      // ── headlines: the first rises from its baseline over 12 frames (slower
+      // than the house 8, for calm), leaves through its mask before the bar line,
+      // and only then does the second rise; it is fully set for all of 38.0–40.0 ──
+      const out1 = prog(t, T_OUT, f(4), ease.cubic.in)
+      s.h1.lines.forEach((line, i) => mask(line, prog(t, i * f(3), f(12), ease.snap), out1))
+      s.h1.el.style.visibility = out1 >= 1 ? 'hidden' : 'visible'
+      const in2 = prog(t, T_IN, f(6), ease.snap)
+      for (const line of s.h2.lines) mask(line, in2, 0)
+      s.h2.el.style.visibility = t < T_IN ? 'hidden' : 'visible'
 
       // ── price line: the head moves at a constant speed and stops at the fill ──
       const head = xCross - SPEED * Math.max(0, T_STOP - t)

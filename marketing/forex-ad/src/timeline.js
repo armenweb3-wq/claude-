@@ -1,8 +1,8 @@
 // Master timeline: scene order and cut points, in seconds on a 120 BPM grid
 // (beat = 0.5 s, bar = 2 s, 30 bars). Scene files live in src/scenes/.
 // `chrome` controls the persistent overlay while a scene is on screen:
-// 'full' (default) shows brand bug + clock; 'none' hides them (end card).
-// The risk band is always visible.
+// 'full' (default) shows the brand bug; 'none' hides it (the end card carries
+// the full-size lockup instead). The clock and the risk band are always visible.
 window.AD_TIMELINE = {
   bpm: 120,
   fps: 30,

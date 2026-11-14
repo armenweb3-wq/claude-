@@ -144,6 +144,10 @@ AD.defineScene('chrome', {
 
     const chrome = AD.chromeAt(T)
     s.bug.el.style.opacity = chrome.bug.toFixed(4)
+    // While the brand scene draws the full-size lockup (4 s until it lands on
+    // this corner at frame 178) the bug steps aside, so there is one logo on screen.
+    const frame = Math.round(T * AD.fps)
+    s.bug.el.style.visibility = frame >= 4 * AD.fps && frame < 178 ? 'hidden' : 'visible'
 
     // The hook scene owns a giant clock that docks here at 2.6 s.
     s.clock.style.opacity = T >= 2.6 ? '1' : '0'

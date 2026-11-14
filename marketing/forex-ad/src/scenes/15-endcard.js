@@ -101,11 +101,10 @@
 
       // ── sizes per format ──
       const spec = pick({
-        '16x9': { mark: 164, promise: 70, btnH: 78, btnPad: 44, url: 30, legal: [28, 24], g1: 30, g2: 0, g3: 0, legalGap: 30, min: 24 },
-        '4x5': { mark: 160, promise: 66, btnH: 78, btnPad: 46, url: 28, legal: [26, 22], g1: 32, g2: 58, g3: 26, legalGap: 32, min: 28 },
-        '9x16': { mark: 118, promise: 52, btnH: 70, btnPad: 40, url: 26, legal: [24, 22], g1: 22, g2: 38, g3: 20, legalGap: 26, min: 14 },
+        '16x9': { mark: 164, markFloor: 116, promise: 70, btnH: 78, btnPad: 44, url: 30, legal: [28, 24], g1: 30, g2: 0, g3: 0, legalGap: 30, min: 24 },
+        '4x5': { mark: 160, markFloor: 116, promise: 66, btnH: 78, btnPad: 46, url: 28, legal: [26, 22], g1: 32, g2: 58, g3: 26, legalGap: 32, min: 28 },
+        '9x16': { mark: 118, markFloor: 80, promise: 52, btnH: 70, btnPad: 40, url: 26, legal: [24, 22], g1: 22, g2: 38, g3: 20, legalGap: 26, min: 14 },
       })
-      promise.style.fontSize = spec.promise + 'px'
       url.style.fontSize = spec.url + 'px'
       kit.fit(url, c.w)
       const lblW = widthOf(btnLblIn)
@@ -132,36 +131,57 @@
       const maxLockW = wide ? colA.w : c.w
       // A short name leaves room for a slightly larger lockup.
       const markMax = spec.mark * (Array.from(cfg.brand.name).length <= 6 ? 1.15 : 1)
-      const promiseH = heightOf(promise)
       const urlH = heightOf(url)
-      const heroHeight = k => {
-        const mark = Math.floor(Math.min(markMax * k, (maxLockW / per100) * 100))
-        return wide ? mark + spec.g1 * k + promiseH : mark + (spec.g1 + spec.g2 + spec.g3) * k + promiseH + spec.btnH + urlH
+      // The hero at mark scale m, gap scale g and margin scale q. The promise follows
+      // the lockup: it is never set larger than 68% of the wordmark's size, so the
+      // brand name always leads, however small the lockup has to become.
+      const G_MIN = 0.5
+      const Q_MIN = 0.6
+      const M_MIN = 0.5
+      const hero = (m, g, q) => {
+        const mark = Math.floor(Math.min(markMax * m, (maxLockW / per100) * 100))
+        const promiseSize = Math.min(spec.promise, Math.floor(Math.round(mark * 0.74) * 0.68))
+        promise.style.fontSize = promiseSize + 'px'
+        const promiseH = heightOf(promise)
+        const g1 = spec.g1 * g
+        const g2 = spec.g2 * g
+        const g3 = spec.g3 * g
+        const height = wide ? mark + g1 + promiseH : mark + g1 + g2 + g3 + promiseH + spec.btnH + urlH
+        // Clear room above and below the hero, and between the datum and the legal lines.
+        const legalGap = Math.round(spec.legalGap * lerp(0.7, 1, (q - Q_MIN) / (1 - Q_MIN)))
+        return { mark, promiseSize, promiseH, g1, g2, g3, height, legalGap, need: height + (2 * spec.min + spec.legalGap) * q + legalGap }
       }
-      // Largest legal size that leaves the hero its room; if the legal text is
-      // very long, the hero's mark and spacing give way before the type does.
+      // What gives way when the legal text is long, in this order:
+      //  1. the legal lines, from their largest size down to their floor;
+      //  2. lockup and spacing together, as far as the mark's floor;
+      //  3. spacing and margins alone;
+      //  4. only then the lockup below its floor.
       let legalSize = spec.legal[0]
-      let k = 1
-      const fits = () => heroHeight(k) + spec.min * 2 + spec.legalGap * 2 + legalHeight(legalSize) <= c.h
+      let m = 1
+      let gs = 1
+      let q = 1
+      const fits = () => hero(m, gs, q).need + legalHeight(legalSize) <= c.h
       while (!fits() && legalSize > spec.legal[1]) legalSize--
-      while (!fits() && k > 0.55) k -= 0.03
+      const mFloor = Math.min(1, spec.markFloor / markMax)
+      while (!fits() && m > mFloor) m = gs = Math.max(mFloor, m - 0.03)
+      while (!fits() && gs > G_MIN) {
+        gs = Math.max(G_MIN, gs - 0.03)
+        q = lerp(Q_MIN, 1, clamp((gs - G_MIN) / Math.max(0.01, mFloor - G_MIN)))
+      }
+      while (!fits() && m > M_MIN) m = Math.max(M_MIN, m - 0.03)
       const legalH = legalHeight(legalSize)
-      const markSize = Math.floor(Math.min(markMax * k, (maxLockW / per100) * 100))
-      const g1 = spec.g1 * k
-      const g2 = spec.g2 * k
-      const g3 = spec.g3 * k
+      const { mark: markSize, promiseSize, promiseH, g1, g2, g3, height: heroH, legalGap } = hero(m, gs, q) // leaves the promise at its final size
 
       // ── place the legal zone and the datum ──
       const legalTop = c.y + c.h - legalH
       place(entity, colA.x, legalTop)
       place(notes, colB.x, wide ? legalTop : legalTop + heightOf(entity) + paraGap(legalSize))
-      const datumY = Math.round(legalTop - spec.legalGap)
+      const datumY = Math.round(legalTop - legalGap)
       datum.style.left = c.x + 'px'
       datum.style.top = datumY + 'px'
       datum.style.width = c.w + 'px'
 
       // ── place the hero zone, centred between the top row and the datum ──
-      const heroH = heroHeight(k)
       const heroTop = c.y + (datumY - c.y - heroH) / 2
       const lock = kit.lockup(root, { size: markSize })
       const wordFont = parseFloat(lock.word.style.fontSize)
@@ -171,7 +191,7 @@
       if (wide) {
         lockX = colA.x - ringInset
         place(lock.el, lockX, heroTop)
-        place(promise, colA.x - spec.promise * 0.04, heroTop + markSize + g1)
+        place(promise, colA.x - promiseSize * 0.04, heroTop + markSize + g1)
         btn.style.width = colB.w + 'px'
         place(btn, colB.x, heroTop + markSize / 2 - spec.btnH / 2)
         // The URL shares the promise's baseline.

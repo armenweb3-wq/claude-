@@ -7,8 +7,12 @@
  *
  * This scene also owns the giant clock of the hook (lead: 2). It is the same
  * element, styled exactly like the overlay's corner clock and scaled up; from
- * 2.0 s it shrinks along a straight path, sits on the overlay position from
- * 2.5 s, and is switched off at 2.6 s when the overlay starts drawing its own.
+ * 2.0 s it shrinks towards the corner, sits on the overlay position from
+ * 2.33 s, and is switched off at 2.6 s when the overlay starts drawing its own.
+ *
+ * It also carries the hook's second line ("WATCH WHAT FITS INSIDE IT.") for
+ * nine frames past the 2.0 s cut, so the line gets its reading time; this
+ * scene's own headline rises on the frame after that line has left (2.4 s).
  *
  * The 0.3 s tail closes the band and draws its last line away under the first
  * frames of `brand`, which takes the tick dots over at 4.0 s.

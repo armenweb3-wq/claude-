@@ -80,14 +80,14 @@
         head: ['ONE SECOND.'], hero: 150, heroFill: 0.9,
         line2Tier: 'display', line2Y: 591,
         clockBase: 281, utcBase: 335, utcScale: 1.7,
-        band: [[501, 40], [340, 238], [346, 366]], mid: [140, 204], unit: [12, 33],
+        band: [[501, 40], [340, 228], [346, 358]], mid: [140, 204], unit: [12, 33],
         pitch: 83, focus: ticks[6].tau, dot: 7, price: 24, gauge: 0.6,
       },
       '4x5': {
         head: ['ONE', 'SECOND.'], hero: 226, heroFill: 0.9,
         line2Tier: 'display', line2Y: 854,
         clockBase: 565, utcBase: 635, utcScale: 2.1,
-        band: [[776, 36], [470, 368], [400, 560]], mid: [226, 300], unit: [26, 56],
+        band: [[776, 36], [470, 356], [400, 560]], mid: [226, 300], unit: [26, 56],
         pitch: 86, focus: ticks[6].tau, dot: 8, price: 26, gauge: 0.6,
       },
     })

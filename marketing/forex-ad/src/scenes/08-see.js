@@ -44,7 +44,6 @@ AD.defineScene('see', {
     .scene--see .see-spark { position: absolute; }
     .scene--see .see-cap { position: absolute; color: var(--white); }
     .scene--see .see-big { position: absolute; font-family: var(--font-mono); font-weight: 600; color: var(--accent); white-space: nowrap; line-height: normal; }
-    .scene--see .see-words { position: absolute; left: 0; top: 0; }
   `,
 
   build(root, ctx) {
@@ -208,15 +207,14 @@ AD.defineScene('see', {
     const dotted = (line, [text, cls]) => {
       line.inner.innerHTML = `${text}<span class="${cls}">.</span>`
     }
-    const wordsWrap = el('div', 'see-words', root)
     let words
     if (wide) {
-      const h = kit.headline(wordsWrap, WORDS.map(w => w[0] + '.'), { tier: 'display', x: c.x, y: 0, w: xL - 60 - c.x })
+      const h = kit.headline(root, WORDS.map(w => w[0] + '.'), { tier: 'display', x: c.x, y: 0, w: xL - 60 - c.x })
       h.lines.forEach((line, i) => dotted(line, WORDS[i]))
       h.el.style.top = Math.round(c.y + (c.h - h.height) / 2 + 12) + 'px'
       words = [{ h, line: 0 }, { h, line: 1 }, { h, line: 2 }]
     } else {
-      const hs = WORDS.map(w => kit.headline(wordsWrap, [w[0] + '.'], { tier: 'display', x: 0, y: 0, w: c.w }))
+      const hs = WORDS.map(w => kit.headline(root, [w[0] + '.'], { tier: 'display', x: 0, y: 0, w: c.w }))
       const size = parseFloat(getComputedStyle(hs[0].el).fontSize)
       const space = size * 0.3
       const total = hs.reduce((sum, h) => sum + h.width, 0) + 2 * space
@@ -256,7 +254,7 @@ AD.defineScene('see', {
     const bigSize = P({ '16x9': 380, '9x16': 300, '4x5': 360 }) // same as the 02 of S09
 
     return {
-      tab, tabNum, tag, qBid, qAsk, pairEl, view, world, gapBand, hairs, spines, levels, spark, cal, calInk, wordsWrap, words, h2, cap, big,
+      tab, tabNum, tag, qBid, qAsk, pairEl, view, world, gapBand, hairs, spines, levels, spark, cal, calInk, words, h2, cap, big,
       dev, wideAt, fmt, BASE, GAP, STEP, TICK, N, rows, rowH, rowFont, barH, barMax, colX, colW, colL, colR, xL, xR, ladTop, ladH, gapTop, gapBot, gapMid, ZOOM, viewL, headerY, capTop, wide,
       num: { x: numRect.left, y: numRect.top, w: numRect.width, h: numRect.height, f0 },
       bigSize,
@@ -492,10 +490,11 @@ AD.defineScene('see', {
     }
 
     // ── words: one per beat, then a hard swap on the bar line at 22.0 ────
-    s.wordsWrap.style.visibility = t < 4.0 - EPS ? 'visible' : 'hidden'
     const wordAt = [1.0 - f, 1.5 - f, 2.0 - f]
     if (s.wide) s.words[0].h.show(t, { at: wordAt, dur: 7 * f })
     else s.words.forEach((w, i) => w.h.show(t, { at: wordAt[i], dur: 7 * f }))
+    // Hard cut: each word is switched off on its own (no wrapper is toggled).
+    if (t >= 4.0 - EPS) for (const w of s.words) w.h.lines[w.line].inner.style.opacity = '0'
     s.h2.show(t, { at: 4.0 - f, each: 5 * f, dur: 8 * f })
     s.cap.style.top = s.capTop + Math.round((1 - prog(t, 4.0 + 10 * f, 8 * f, ease.snap)) * 10) + 'px'
     s.cap.style.opacity = prog(t, 4.0 + 10 * f, 5 * f).toFixed(4)

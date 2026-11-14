@@ -1,0 +1,4 @@
+html,body{margin:0;background:#000;overflow:hidden}
+#stage{position:relative;overflow:hidden;background:#05070d}
+.scene{position:absolute;inset:0;overflow:hidden}
+.fill{position:absolute;inset:0;width:100%;height:100%}

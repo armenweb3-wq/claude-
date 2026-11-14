@@ -5,6 +5,8 @@
 //   node tools/stills.mjs --format 16x9 --every 1
 //   node tools/stills.mjs --format 9x16 --times 0.5,2,4.25,19
 //   node tools/stills.mjs --format all --count 12
+//   node tools/stills.mjs --scene hook --count 8 --format all     one scene
+//   node tools/stills.mjs --from 11.5 --to 12.5 --every 0.1       a transition
 //
 // Writes out/stills/<format>/t_<sec>.png and out/stills/<format>/sheet_<n>.png
 import { mkdirSync, rmSync } from 'node:fs'
@@ -22,20 +24,31 @@ try {
     mkdirSync(dir, { recursive: true })
     const ad = await openAd(browser, server.url, format, args.page)
 
+    let lo = 0
+    let hi = ad.duration
+    if (args.scene) {
+      const scenes = await ad.page.evaluate(() => window.AD.scenes)
+      const s = scenes.find(x => x.id === args.scene)
+      if (!s) throw new Error(`No scene "${args.scene}". Scenes: ${scenes.map(x => x.id).join(', ')}`)
+      lo = s.start
+      hi = s.end
+    }
+    if (args.from) lo = Number(args.from)
+    if (args.to) hi = Number(args.to)
     let times
     if (args.times) times = String(args.times).split(',').map(Number)
     else if (args.every) {
       times = []
-      for (let t = Number(args.offset || 0); t < ad.duration; t += Number(args.every)) times.push(+t.toFixed(3))
+      for (let t = lo + Number(args.offset || 0); t < hi; t += Number(args.every)) times.push(+t.toFixed(3))
     } else {
       const n = Number(args.count || 12)
-      times = Array.from({ length: n }, (_, i) => +(((i + 0.5) / n) * ad.duration).toFixed(3))
+      times = Array.from({ length: n }, (_, i) => +(lo + ((i + 0.5) / n) * (hi - lo)).toFixed(3))
     }
 
     const shots = []
     for (const t of times) {
       await seek(ad.page, t)
-      const file = `t_${t.toFixed(2).padStart(5, '0')}.png`
+      const file = `t_${t.toFixed(2).padStart(6, '0')}.png`
       await ad.page.screenshot({ path: path.join(dir, file), type: 'png' })
       shots.push({ t, file })
     }

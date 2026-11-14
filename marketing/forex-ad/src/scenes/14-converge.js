@@ -69,9 +69,10 @@
 
   /** Right-angled route traces that start and end in ringed nodes. */
   function routes(b) {
-    const X = k => b.x + b.w * k
-    const Y = k => b.y + b.h * k
     const r = 9
+    // Node rings stay inside the box, so the motif ends flush with its zone on both sides.
+    const X = k => b.x + r + (b.w - 2 * r - 7) * k
+    const Y = k => b.y + b.h * k
     const traces = [
       [[0, 0.14], [0.3, 0.14], [0.3, 0.52], [0.66, 0.52], [0.66, 0.08], [1, 0.08]],
       [[0, 0.58], [0.16, 0.58], [0.16, 0.92], [0.5, 0.92], [0.5, 0.74], [1, 0.74]],

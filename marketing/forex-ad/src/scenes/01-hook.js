@@ -59,6 +59,11 @@
   // ── geometry ────────────────────────────────────────────────────────────
   // Zoom level 0 is the hook's ruler, 1 and 2 are the two steps of the dive.
   // `band` rows are [top - content.y, height] of the ruler band at each level.
+  // The second line ("WATCH WHAT FITS INSIDE IT.") stays up for nine frames
+  // after the 2.0 s cut (drawn by `inside` from then on), so it must be clear of
+  // the clock's path to the corner and of the band at level 1: in landscape it
+  // sits under the headline and the clock shrinks away from it, in portrait it
+  // sits under the ruler as a caption and the band's first step opens upwards.
   const cache = {}
   function geo(ctx) {
     if (cache[ctx.format]) return cache[ctx.format]
@@ -73,16 +78,16 @@
       },
       '9x16': {
         head: ['ONE SECOND.'], hero: 150, heroFill: 0.9,
-        line2Tier: 'display', line2Y: 162,
-        clockBase: 371, utcBase: 425, utcScale: 1.7,
-        band: [[578, 40], [398, 230], [346, 366]], mid: [140, 204], unit: [12, 33],
+        line2Tier: 'display', line2Y: 591,
+        clockBase: 281, utcBase: 335, utcScale: 1.7,
+        band: [[501, 40], [340, 238], [346, 366]], mid: [140, 204], unit: [12, 33],
         pitch: 83, focus: ticks[6].tau, dot: 7, price: 24, gauge: 0.6,
       },
       '4x5': {
         head: ['ONE', 'SECOND.'], hero: 226, heroFill: 0.9,
-        line2Tier: 'display', line2Y: 437,
-        clockBase: 675, utcBase: 745, utcScale: 2.1,
-        band: [[889, 36], [470, 400], [400, 560]], mid: [226, 300], unit: [26, 56],
+        line2Tier: 'display', line2Y: 854,
+        clockBase: 565, utcBase: 635, utcScale: 2.1,
+        band: [[776, 36], [470, 368], [400, 560]], mid: [226, 300], unit: [26, 56],
         pitch: 86, focus: ticks[6].tau, dot: 8, price: 26, gauge: 0.6,
       },
     })
@@ -222,7 +227,14 @@
     g.fill()
   }
 
-  AD.opening = { geo, ticks, colors, rgba, drawSecond, drawDot, N, PITCH }
+  /** The hook's second line. `inside` builds the same block to carry it across the 2.0 s cut. */
+  function line2(parent, ctx) {
+    const c = ctx.content
+    const P = geo(ctx).P
+    return AD.kit.headline(parent, ['WATCH WHAT FITS INSIDE IT.'], { tier: P.line2Tier, x: c.x, y: c.y + P.line2Y, w: c.w })
+  }
+
+  AD.opening = { geo, ticks, colors, rgba, drawSecond, drawDot, line2, N, PITCH }
 
   // ── scene ───────────────────────────────────────────────────────────────
   AD.defineScene('hook', {
@@ -240,7 +252,7 @@
       const size = Math.min(G.P.hero, (tier * c.w * G.P.heroFill) / h1.width)
       h1.el.style.fontSize = size.toFixed(2) + 'px'
 
-      const h2 = kit.headline(root, ['WATCH WHAT FITS INSIDE IT.'], { tier: G.P.line2Tier, x: c.x, y: c.y + G.P.line2Y, w: c.w })
+      const h2 = line2(root, ctx)
       const labelSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--t-label'))
       const cal = kit.caliper(root, { labelSize })
       return { G, cv, h1, h2, cal }

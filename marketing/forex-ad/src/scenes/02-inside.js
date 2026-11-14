@@ -68,6 +68,8 @@ AD.defineScene('inside', {
 
     const lines = ctx.landscape ? ['PRICES CAN CHANGE', 'MANY TIMES A SECOND.'] : ['PRICES CAN CHANGE', 'MANY TIMES', 'A SECOND.']
     const head = kit.headline(fg, lines, { tier: 'display', x: c.x, y: c.y, w: c.w })
+    // The hook's second line, carried across the cut so it gets its reading time.
+    const linger = O.line2(fg, ctx)
     const tag = kit.tag(fg)
     const tagBox = tag.getBoundingClientRect()
     tag.style.left = c.x + 'px'
@@ -120,7 +122,7 @@ AD.defineScene('inside', {
         utc: { s: sU, x: right + track * sU, y: c.y + G.P.clockBase },
       }
     }
-    return { G, bg, fg, cv, acc, tmp, cal, axis, prices, head, tag, tagH: tagBox.height, clock, time, utc, mt, mu, big }
+    return { G, bg, fg, cv, acc, tmp, cal, axis, prices, head, linger, tag, tagH: tagBox.height, clock, time, utc, mt, mu, big }
   },
   render(t, ctx, s, T) {
     const { clamp, lerp, prog, ease } = AD
@@ -144,14 +146,18 @@ AD.defineScene('inside', {
         // Each part shrinks at a constant rate while its right-hand baseline
         // point travels a straight line to the dock. In portrait UTC starts on
         // its own line: it keeps under the time until the gap beside it opens.
+        // In landscape the hook's second line is still up, above the clock's
+        // left half: the travel lags the shrink (q), so the clock has drawn
+        // clear to the right of that line before it rises through its row.
         const place = (node, m, b, x, y) => {
           node.style.transform = `translate(${(x - m.right).toFixed(3)}px,${(y - m.base).toFixed(3)}px) scale(${Math.pow(b.s, 1 - p).toFixed(5)})`
         }
         const B = s.big
-        const ty = lerp(B.time.y, s.mt.base, p)
+        const q = ctx.landscape ? Math.pow(p, 1.6) : p
+        const ty = lerp(B.time.y, s.mt.base, q)
         const drop = (B.utc.y - B.time.y) * (1 - ease.cubic.inOut(prog(p, 0.78, 0.22)))
-        place(s.time, s.mt, B.time, lerp(B.time.x, s.mt.right, p), ty)
-        place(s.utc, s.mu, B.utc, lerp(B.utc.x, s.mu.right, p), ty + drop)
+        place(s.time, s.mt, B.time, lerp(B.time.x, s.mt.right, q), ty)
+        place(s.utc, s.mu, B.utc, lerp(B.utc.x, s.mu.right, q), ty + drop)
       }
     } else s.clock.style.display = 'none'
     if (t < 0) return
@@ -345,10 +351,15 @@ AD.defineScene('inside', {
     s.tag.style.opacity = live && t >= first - 2 / fps ? '1' : '0'
     s.tag.style.transform = `translate(0,${Math.round(V.top - 14 - s.tagH)}px)`
 
-    // Portrait: line 1 waits six frames for the clock to cross its row on the way to the corner.
+    // The hook's "WATCH WHAT FITS INSIDE IT." holds for nine frames past the cut
+    // while the clock docks and the band starts to open, then leaves through its
+    // mask; "PRICES CAN CHANGE" rises on the frame after it has gone (2.4 s).
+    const HOLD = 9 / fps
+    const EXIT = 3 / fps
+    s.linger.show(t, { at: -1, out: HOLD, outDur: EXIT })
     // The block clears just ahead of the bar line (the kit staggers lines by
     // 0.04 s), so the last line is gone exactly as the dots are released at 4.0 s.
-    const at = ctx.landscape ? [0, 1] : [6 / fps, 1, 1 + 2 / fps]
+    const at = ctx.landscape ? [HOLD + EXIT, 1] : [HOLD + EXIT, 1, 1 + 2 / fps]
     s.head.show(t, { at, out: 1.9 - 0.04 * (at.length - 1), outDur: 0.1 })
   },
 })

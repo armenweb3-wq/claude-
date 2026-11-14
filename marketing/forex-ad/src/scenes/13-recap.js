@@ -72,20 +72,30 @@
     return { total, at, trace }
   }
 
-  /** Fade a canvas out before the top row and the risk band (graphics may still run off the sides). */
-  function crop(k, g) {
+  /**
+   * Fade a canvas out before the top row and above the risk band (graphics may
+   * still run off the sides). The canvas is scaled about `origin` while the
+   * shot settles; the fade is placed so that it stays put on screen, which
+   * keeps every frame of the settle clear of the band.
+   */
+  function crop(k, g, origin, zoom) {
+    const at = y => origin[1] + (y - origin[1]) / zoom // screen y → canvas y
+    const t0 = at(g.c.y + 4)
+    const t1 = at(g.c.y + 38)
+    const b0 = at(g.floor - g.soft)
+    const b1 = at(g.floor)
     k.save()
     k.globalCompositeOperation = 'destination-out'
-    const top = k.createLinearGradient(0, g.c.y + 4, 0, g.c.y + 38)
+    const top = k.createLinearGradient(0, t0, 0, t1)
     top.addColorStop(0, 'rgba(0,0,0,1)')
     top.addColorStop(1, 'rgba(0,0,0,0)')
     k.fillStyle = top
-    k.fillRect(0, 0, g.W, g.c.y + 38)
-    const bot = k.createLinearGradient(0, g.bottom - 26, 0, g.bottom + 6)
+    k.fillRect(0, 0, g.W, t1)
+    const bot = k.createLinearGradient(0, b0, 0, b1)
     bot.addColorStop(0, 'rgba(0,0,0,0)')
     bot.addColorStop(1, 'rgba(0,0,0,1)')
     k.fillStyle = bot
-    k.fillRect(0, g.bottom - 26, g.W, g.H - g.bottom + 26)
+    k.fillRect(0, b0, g.W, g.H - b0)
     k.restore()
   }
   const glowOn = (k, T, blur = 14) => {
@@ -120,23 +130,26 @@
     const kit = AD.kit
     const { W, H, c, T } = g
     const fig = ctx.pick({ '16x9': 52, '9x16': 36, default: 46 })
-    const pitch = ctx.pick({ '16x9': 112, '9x16': 74, default: 112 })
-    const gap = ctx.pick({ '16x9': 90, '9x16': 60, default: 88 })
+    const pitch = ctx.pick({ '16x9': 112, '9x16': 70, default: 110 })
+    const gap = ctx.pick({ '16x9': 90, '9x16': 58, default: 88 })
     const barH = Math.round(pitch * 0.8)
     const colW = Math.round(fig * MONO * 7 + fig * 1.3)
     const cx = g.wide ? Math.round(c.x + c.w * 0.675) : W / 2
     // 16:9: three rows a side, the outer ones cut by the crop. Portrait: two
-    // asks and three bids fit whole between the word and the risk band.
+    // asks and three bids fit whole between the word and the crop's fade.
     const count = { ask: g.wide ? 3 : 2, bid: 3 }
+    const whole = g.floor - g.soft // rows above this line are untouched by the fade
     let cy = Math.round(c.y + c.h / 2)
     if (!g.wide) {
       const total = (count.ask + count.bid) * pitch - (pitch - barH) + gap
-      cy = Math.round(g.gTop + Math.max(0, (g.bottom - g.gTop - total) / 2) + count.ask * pitch - (pitch - barH) + gap / 2)
+      cy = Math.round(g.gTop + Math.max(0, (whole - g.gTop - total) / 2) + count.ask * pitch - (pitch - barH) + gap / 2)
     }
-    const askX = cx + colW / 2 + 12
-    const bidX = cx - colW / 2 - 12
+    // Bars start at the edge of the price column, as on the ladder of 01 SEE.
+    const askX = cx + colW / 2 + 1
+    const bidX = cx - colW / 2 - 1
     const askMax = W + 60 - askX
-    const bidMax = g.wide ? bidX - (c.x + 150) : bidX + 60
+    // 16:9: bid bars stop short of the word; portrait: they run off the frame.
+    const bidMax = g.wide ? bidX - (g.wordRight[0] + 70) : bidX + 60
     // Illustrative quotes: the film's EUR/USD bid and ask, five pipettes a row.
     const BID = 108420
     const ASK = 108432
@@ -149,14 +162,14 @@
       for (let k = 0; k < count[side]; k++) {
         const best = k === 0
         const y = side === 'ask' ? cy - gap / 2 - barH - k * pitch : cy + gap / 2 + k * pitch
-        rows.push({ side, best, y, len: (side === 'ask' ? askMax : bidMax) * depth[side][k] })
+        rows.push({ side, best, level: k, y, len: (side === 'ask' ? askMax : bidMax) * depth[side][k] })
         // A row the crop cuts through keeps its bar and loses its figure: no half-read prices.
-        if (y < c.y + 6 || y + barH > g.bottom - 2) continue
+        if (y < c.y + 38 || y + barH > whole) continue
         const price = el('div', 'rc-fig', fx, ((side === 'ask' ? ASK + k * 5 : BID - k * 5) / 1e5).toFixed(5))
         price.style.fontSize = fig + 'px'
         price.style.width = colW + 'px'
         price.style.color = best ? 'var(--white)' : 'var(--grey)'
-        if (best) price.style.fontWeight = '600'
+        if (best) price.style.fontWeight = '700'
         figures.push({ el: price, y: y + barH / 2 })
       }
     }
@@ -170,35 +183,29 @@
         for (const f of figures) f.el.style.transform = `translate(${Math.round(cx - colW / 2)}px,${Math.round(sy(f.y) - fig / 2)}px)`
         const k = cv.ctx
         k.clearRect(0, 0, W, H)
-        // The gap itself, tinted.
-        const half = 620
-        const band = k.createLinearGradient(cx - half, 0, cx + half, 0)
-        band.addColorStop(0, rgba(T.accent, 0))
-        band.addColorStop(0.3, rgba(T.accent, 0.13))
-        band.addColorStop(0.7, rgba(T.accent, 0.13))
-        band.addColorStop(1, rgba(T.accent, 0))
-        k.fillStyle = band
-        k.fillRect(cx - half, cy - gap / 2, half * 2, gap)
+        // The gap itself, tinted flat across the ladder's width.
+        k.fillStyle = rgba(T.accent, 0.11)
+        k.fillRect(bidX - bidMax, cy - gap / 2, bidMax + colW + 2 + askMax, gap)
         // Depth bars extend the last fifth of their length as the shot opens.
+        // Same treatment as the ladder of 01 SEE: flat fills that thin level
+        // by level (best level solid), each with a hard 2 px cap at its end.
         const grow = lerp(0.8, 1, prog(lt, -fr(1), fr(8), ease.snap))
-        for (const r of rows) {
+        rows.forEach(r => {
           const ask = r.side === 'ask'
           const col = ask ? T.amber : T.ice
-          const len = r.len * grow
-          const near = ask ? askX : bidX
-          const far = ask ? askX + len : bidX - len
-          if (r.best) k.fillStyle = rgba(col, 0.92)
-          else {
-            const fade = k.createLinearGradient(near, 0, far, 0)
-            fade.addColorStop(0, rgba(col, 0.62))
-            fade.addColorStop(1, rgba(col, 0.16))
-            k.fillStyle = fade
-          }
-          k.fillRect(Math.min(near, far), r.y, len, barH)
+          const len = Math.round(r.len * grow)
+          const x = ask ? askX : bidX - len
+          k.fillStyle = rgba(col, r.best ? 1 : (54 - 3 * r.level) / 100)
+          k.fillRect(x, r.y, len, barH)
           k.fillStyle = rgba(col)
-          k.fillRect(near - 1, r.y, 2, barH)
-        }
-        crop(k, g)
+          k.fillRect(ask ? x + len - 2 : x, r.y, 2, barH)
+          // The best quote's cell is tinted with its side's colour.
+          if (r.best) {
+            k.fillStyle = rgba(col, 0.18)
+            k.fillRect(cx - colW / 2, r.y, colW, barH)
+          }
+        })
+        crop(k, g, origin, zoom)
         cal.set({ a: sy(cy - gap / 2), b: sy(cy + gap / 2), pos: cx + (colW / 2 + 34) * zoom, jaw: (colW + 68) * zoom, open: prog(lt, -fr(2), fr(8), ease.snap) })
       },
     }
@@ -215,10 +222,10 @@
     if (g.wide) {
       // The word stands on the entry line, with the limit just clear of its cap height.
       yE = Math.round(g.base + g.size * 0.045)
-      D = Math.round(g.bottom - chipH / 2 - 2 - yE)
+      D = Math.round(g.floor - chipH / 2 - 6 - yE)
     } else {
-      yE = Math.round((g.gTop + g.bottom) / 2)
-      D = Math.round((g.bottom - g.gTop) / 2 - chipH / 2 - 4)
+      yE = Math.round((g.gTop + g.floor) / 2)
+      D = Math.round((g.floor - g.gTop) / 2 - chipH / 2 - 8)
     }
     const LV = [
       { label: 'LIMIT', px: '1.08682', y: yE - D, color: 'accent' },
@@ -267,10 +274,14 @@
           k.stroke()
         }
         k.setLineDash([])
-        const slide = (1 - prog(lt, -fr(1), fr(6), ease.snap)) * 70
-        // The handles seat from the right, riding their lines as the crop settles.
-        const x = origin[0] + (chipX - origin[0]) * zoom + slide
-        for (const ch of chips) ch.el.style.transform = `translate(${Math.round(x)}px,${Math.round(origin[1] + (ch.y - origin[1]) * zoom - chipH / 2)}px)`
+        // The handles are anchored on the right edge of the content area: they
+        // ride their lines up and down as the crop settles, never sideways,
+        // and never leave the content area (the stop handle would otherwise
+        // dip below it on the first frames).
+        for (const ch of chips) {
+          const y = clamp(origin[1] + (ch.y - origin[1]) * zoom, c.y + chipH / 2, g.floor - chipH / 2)
+          ch.el.style.transform = `translate(${chipX}px,${Math.round(y - chipH / 2)}px)`
+        }
       },
     }
   }
@@ -405,7 +416,12 @@
         const hot = arrived && lt < ARRIVE + fr(4) - 1e-6
         for (const num of nums) num.style.color = hot ? 'var(--accent)' : 'var(--white)'
         const m = M + Math.round((1 - prog(lt, ARRIVE, fr(6), ease.snap)) * 16)
-        frame.set({ x: px - m, y: py - m, w: rw + 2 * m, h: rh + 2 * m, opacity: arrived ? 1 : 0.45 })
+        // Brackets close in from 16 px out, but never leave the content area.
+        const bx0 = Math.max(c.x, px - m)
+        const by0 = Math.max(c.y, py - m)
+        const bx1 = Math.min(g.right, px + rw + m)
+        const by1 = Math.min(g.floor, py + rh + m)
+        frame.set({ x: bx0, y: by0, w: bx1 - bx0, h: by1 - by0, opacity: arrived ? 1 : 0.45 })
       },
     }
   }
@@ -430,11 +446,6 @@
       }
       k.fill()
     }
-    // The resting grid never changes: drawn once.
-    const still = AD.canvas(bg, W, H)
-    still.ctx.fillStyle = rgba(T.grey, 0.3)
-    for (let i = 0; i < cols; i++) column(still.ctx, i)
-    crop(still.ctx, g)
     const cv = AD.canvas(bg, W, H)
     const bandW = ctx.pick({ '16x9': 420, '9x16': 320, default: 360 })
 
@@ -459,17 +470,21 @@
       render(lt, zoom) {
         const k = cv.ctx
         k.clearRect(0, 0, W, H)
-        // The band of light follows the trading day westward at constant speed.
+        // The resting grid, then the band of light that follows the trading
+        // day westward at constant speed.
         const bx = london[0] + lerp(70, -70, clamp(lt / CUT))
-        k.fillStyle = rgba(T.accent)
         for (let i = 0; i < cols; i++) {
+          k.globalAlpha = 0.3
+          k.fillStyle = rgba(T.grey)
+          column(k, i)
           const a = 1 - Math.abs(ox + i * pitch - bx) / (bandW / 2)
           if (a <= 0) continue
           k.globalAlpha = 0.95 * a
+          k.fillStyle = rgba(T.accent)
           column(k, i)
         }
         k.globalAlpha = 1
-        crop(k, g)
+        crop(k, g, london, zoom)
         // Arcs draw on two frames apart; the first is under way on the cut.
         glowOn(k, T, 12)
         k.strokeStyle = rgba(T.accent)
@@ -575,9 +590,13 @@
       for (const h of heads) h.el.style.top = base - baseOff + 'px'
       const wordRight = widths().map(w => c.x + w)
 
-      const g = { W, H, c, wide, bottom, right, size, base, capH, capTop: base - capH, wordRight, gTop: base + Math.round(size * 0.14), T: tokens() }
+      // floor: the lowest line any graphic may reach, on any frame of the
+      // settle: the content edge, and at least 12 px above the risk band.
+      // soft: how far above it the canvases start to fade.
+      const floor = Math.min(bottom, ctx.layout.band.y - 12)
+      const g = { W, H, c, wide, bottom, floor, soft: wide ? 30 : 14, right, size, base, capH, capTop: base - capH, wordRight, gTop: base + Math.round(size * 0.14), T: tokens() }
       const draw = [ladder, levels, route, map].map((make, i) => make(shots[i].bg, shots[i].fx, ctx, g))
-      shots.forEach((sh, i) => (sh.bg.style.transformOrigin = `${Math.round(draw[i].origin[0])}px ${Math.round(draw[i].origin[1])}px`))
+      shots.forEach((sh, i) => (sh.bg.style.transformOrigin = `${draw[i].origin[0]}px ${draw[i].origin[1]}px`))
 
       const travel = heads[0].lines[0].inner.getBoundingClientRect().height * 1.08
       return { shots, heads, draw, travel }

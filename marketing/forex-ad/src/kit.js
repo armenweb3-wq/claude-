@@ -46,7 +46,7 @@
   const ZONES = {
     '16x9': { x: 96, w: 1728, rowY: 54, bandBottom: 918, contentBottom: 782, rulerY: 990, bandFont: 34 },
     '9x16': { x: 120, w: 768, rowY: 288, bandBottom: 1248, contentBottom: 1089, rulerY: 1300, bandFont: 30 },
-    '4x5': { x: 54, w: 972, rowY: 54, bandBottom: 1296, contentBottom: 1131, rulerY: 1322, bandFont: 30 },
+    '4x5': { x: 54, w: 972, rowY: 54, bandBottom: 1296, contentBottom: 1131, rulerY: 1317, bandFont: 30 },
   }
   const BAND_MIN_FONT = 24
   const BAND_MIN_GAP = 12

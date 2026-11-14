@@ -89,8 +89,8 @@ html, body { margin: 0; background: #000; overflow: hidden; }
 /* Small mono tag, e.g. ILLUSTRATIVE (kit.tag). */
 .k-tag {
   position: absolute;
-  font-family: var(--font-mono); font-weight: 500; font-size: var(--t-tag);
-  letter-spacing: 0.14em; text-transform: uppercase; color: var(--grey);
+  font-family: var(--font-mono); font-weight: 500; font-size: calc(var(--t-tag) + 2px);
+  letter-spacing: 0.12em; text-transform: uppercase; color: #b4c2d0;
   padding: 5px 10px 4px; border: 1px solid var(--hairline); border-radius: 3px;
   background: rgba(7, 11, 16, 0.72); white-space: nowrap;
 }

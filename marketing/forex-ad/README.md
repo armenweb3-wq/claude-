@@ -31,27 +31,62 @@ npx playwright install chromium`).
 ## Before this runs anywhere
 
 This is a financial promotion for a leveraged product. The template is built to
-the strictest common rules (EU/ESMA, CySEC, UK FCA), but only the broker can
-make it compliant:
+the strictest common rules (EU/ESMA national measures, CySEC, UK FCA), but only
+the broker can make it compliant. Have compliance sign off the final render,
+the landing page and the post text.
 
-- **Loss percentage.** `legal.lossPercent` must be the broker's own current
-  figure. The warning wording in `config.js` is the EU/UK standard text; use the
-  wording your regulator prescribes if it differs.
-- **Legal entity line.** Replace `[LEGAL ENTITY]`, `[REGULATOR]`, `[NUMBER]` and
-  `[EXCLUDED COUNTRIES]` with the entity that actually onboards the viewers you
-  target.
-- **Claims.** The copy says prices, spread, stop and limit levels are visible
-  before trading and that every order has a requested price, fill price and
-  timestamp on record. Confirm each is true of the platform.
-- **Sign-off.** Have compliance approve the final render, landing page and post
-  text. Mock prices and screens are labelled "illustrative"; nothing shows a
-  profit.
-- **Platform policy.** Google/YouTube requires certification for CFD / rolling
-  spot forex advertisers and only allows certain countries. Meta lists CFD
-  trading among prohibited products, and TikTok allows it only in a few markets:
-  get each platform's position for your licence before spending on assets.
-- **Targeting.** Exclude the United States and any country where the broker is
-  not licensed or CFD advertising is banned (for example Spain, Belgium).
+**Fill in (config.js)**
+
+- `legal.lossPercent`: the broker's own current figure. Never publish an
+  invented one. Brokers without 12 months of data use their regulator's
+  standard no-data wording instead (edit `riskShort` / `riskFull`).
+- `legal.entity`: replace `[LEGAL ENTITY]`, `[REGULATOR]`, `[NUMBER]` and
+  `[EXCLUDED COUNTRIES]` with the entity that actually onboards the viewers
+  being targeted.
+- Brand name, URL and colours. Re-check the end card after changing them.
+
+**Check the warning wording.** The risk-warning text is the EU/UK standard
+wording as found through search extracts and secondary summaries; the
+regulators' own pages could not be opened while this was built. Proof-read it
+against the live rule for your regulator (for the UK, FCA COBS 22.5) before
+publishing. The abbreviated version runs for 50 s and the full version for the
+last 10 s; if your regulator expects the full version throughout, put the full
+text in `riskShort`. The full warning must also appear in the post text and on
+the landing page. `legal.bandTheme: 'light'` gives the band a light placard
+style if your compliance team wants it more prominent still.
+
+**Confirm every claim is true of the platform**
+
+- Prices, spread, stop and limit levels are visible before an order is placed,
+  and a depth ladder like the one shown exists (many CFD platforms have none).
+- Spreads are variable ("SPREADS VARY WITH MARKET CONDITIONS." is wrong for
+  fixed-spread accounts), and the illustrative EUR/USD spread shown (1.2 pips)
+  is not tighter than the typical one.
+- Every order has a requested price, fill price and UTC timestamp on record.
+- "A stop can limit a loss. It is not a guarantee." matches the execution
+  policy (adjust if guaranteed stops are offered).
+- "No one can predict the next price. Not you. Not us." does not sit beside
+  signals, forecasts or trade ideas marketed by the same brand.
+- The order route diagram does not imply external routing if the firm is the
+  counterparty.
+- A demo account with virtual funds is available at the URL, minimum size 0.01.
+- The market trades 24 hours a day, five days a week; so does the platform.
+
+**Where it can run**
+
+- Google/YouTube requires per-country certification for CFD / rolling spot
+  forex advertisers. Meta lists CFD trading among prohibited products and
+  TikTok allows it only in a few markets: get each platform's position for
+  your licence before spending on placements.
+- Exclude the United States and any country where the broker is not licensed
+  or CFD advertising to the public is restricted (for example Spain, France,
+  Belgium). Australia needs its own risk statement plus PDS and target-market
+  references. Do not target minors.
+- On a phone held upright, use the 9:16 or 4:5 file: the 16:9 file's warning
+  becomes very small there.
+
+Mock prices and screens are labelled "illustrative" and nothing in the film
+shows a profit, a balance or a winning trade.
 
 ## How it works
 
@@ -69,6 +104,7 @@ Useful while editing:
 node tools/stills.mjs --every 2 --format 16x9     # contact sheets in out/stills
 node tools/stills.mjs --scene demo --count 8      # one scene
 node tools/check.mjs                              # frames identical in any seek order
+node tools/qc.mjs out/forex-ad-16x9.mp4           # flicker, off-beat jumps, loudness
 ```
 
 Open `src/index.html?format=9x16` through any static server for a live preview

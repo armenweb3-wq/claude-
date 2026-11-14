@@ -30,6 +30,9 @@ window.AD_CONFIG = {
       '{brand} is a trading name of [LEGAL ENTITY], authorised and regulated by [REGULATOR], licence no. [NUMBER]. Not directed at residents of [EXCLUDED COUNTRIES] or of any jurisdiction where this would be contrary to local law.',
     notes: 'Prices and screens shown are illustrative. Demo prices and fills may differ from live trading.',
     illustrativeTag: 'ILLUSTRATIVE',
+    // Risk band style: 'dark' (white text in a white-bordered dark box) or
+    // 'light' (dark text on a light placard, the most prominent treatment).
+    bandTheme: 'dark',
   },
 
   // Colours. Change `accent` to re-skin the spot to a brand colour.

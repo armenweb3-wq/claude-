@@ -10,22 +10,25 @@ AD.defineScene('chrome', {
     .chrome-clock .utc { color: var(--grey); margin-left: 0.5em; }
     .chrome-band {
       position: absolute; box-sizing: border-box; overflow: hidden;
-      background: rgba(11, 17, 25, 0.95);
-      border: 2px solid rgba(234, 242, 248, 0.62);
+      background: #101a26;
+      border: 2px solid var(--white);
       border-radius: 4px;
+      color: var(--white);
     }
-    .chrome-band .txt { position: absolute; left: 0; top: 0; right: 0; box-sizing: border-box; color: var(--white); font-family: var(--font-text); font-weight: 400; }
+    /* legal.bandTheme: 'light' in config.js gives a light placard with dark text. */
+    .chrome-band.light { background: #dce4ea; border-color: #dce4ea; color: #070b10; }
+    .chrome-band .txt { position: absolute; left: 0; top: 0; right: 0; box-sizing: border-box; font-family: var(--font-text); font-weight: 400; }
     .chrome-band .txt b { font-weight: 600; }
     .chrome-ruler { position: absolute; }
     .chrome-ruler .lbl { position: absolute; top: 20px; font: 500 16px var(--font-mono); color: var(--grey); letter-spacing: 0.1em; }
-    .chrome-ambient { position: absolute; left: 0; opacity: 0.6; }
+    .chrome-ambient { position: absolute; left: 0; opacity: 0.75; }
   `,
   build(root, ctx) {
     const L = ctx.layout
     const kit = AD.kit
 
     // Vertical only: the lower third sits under the apps' own buttons, so it
-    // carries no message, just a quiet market trace that never stops moving.
+    // carries no message, just the film's time base ticking past a playhead.
     let ambient = null
     if (ctx.vertical) {
       const top = L.ruler.y + 78
@@ -69,7 +72,7 @@ AD.defineScene('chrome', {
     AD.el('span', 'utc', clock, 'UTC')
 
     // Risk band.
-    const band = AD.el('div', 'chrome-band k-riskband', root)
+    const band = AD.el('div', `chrome-band k-riskband${ctx.config.legal.bandTheme === 'light' ? ' light' : ''}`, root)
     band.style.left = L.band.x + 'px'
     band.style.width = L.band.w + 'px'
     const mk = kind => {
@@ -89,58 +92,54 @@ AD.defineScene('chrome', {
     s.head.setAttribute('transform', `translate(${x.toFixed(2)},0)`)
 
     if (s.ambient) {
+      // A time base, not a chart: ticks every tenth of a second scroll past a
+      // fixed playhead, taller on the beat and tallest on the bar.
       const { g, w, h } = s.ambient
       // The half-second of void before the drop at 16 s is void here too.
       g.canvas.style.visibility = T >= 15.5 && T < 16 ? 'hidden' : 'visible'
       const now = Math.round(w * 0.8)
-      const SPAN = 9 // seconds of history across the trace
-      const value = time => AD.fbm(time * 0.8, 77, 4) * 0.8 + AD.fbm(time * 4.5, 91, 2) * 0.14
-      const yOf = v => h * 0.5 - v * h * 0.36
+      const SPAN = 6 // seconds between the left edge and the playhead
+      const mid = Math.round(h * 0.42)
+      const xOf = time => now - ((T - time) / SPAN) * now
       g.clearRect(0, 0, w, h)
-      g.lineWidth = 1
-      g.strokeStyle = 'rgba(128,148,168,0.16)'
-      g.beginPath()
-      for (let i = 0; i <= 4; i++) {
-        const y = Math.round((h * i) / 4) + 0.5
-        g.moveTo(0, y)
-        g.lineTo(w, y)
-      }
-      // Vertical ticks scroll with time: one per beat, taller on the bar.
-      for (let k = Math.ceil((T - SPAN) / AD.beat); k * AD.beat <= T; k++) {
-        const x = Math.round(now - ((T - k * AD.beat) / SPAN) * now) + 0.5
-        g.moveTo(x, h)
-        g.lineTo(x, h - (k % 4 === 0 ? 22 : 10))
-      }
-      g.stroke()
       g.lineWidth = 2
-      g.lineJoin = 'round'
-      g.strokeStyle = 'rgba(61,225,240,0.62)'
-      g.beginPath()
-      for (let x = 0; x <= now; x += 3) {
-        const y = yOf(value(T - (1 - x / now) * SPAN))
-        if (x === 0) g.moveTo(x, y)
-        else g.lineTo(x, y)
+      for (let k = Math.ceil((T - SPAN) * 10 - 1e-6); xOf(k / 10) <= w; k++) {
+        if (k < 0) continue
+        const x = Math.round(xOf(k / 10))
+        const bar = k % 20 === 0
+        const beat = k % 5 === 0
+        const len = bar ? 96 : beat ? 44 : 14
+        const ahead = k / 10 > T + 1e-6
+        g.strokeStyle = ahead ? 'rgba(128,148,168,0.22)' : bar ? 'rgba(234,242,248,0.8)' : 'rgba(128,148,168,0.6)'
+        g.beginPath()
+        g.moveTo(x, mid - len / 2)
+        g.lineTo(x, mid + len / 2)
+        g.stroke()
+        if (bar) {
+          g.font = '500 20px "JetBrains Mono", monospace'
+          g.textAlign = 'center'
+          g.fillStyle = ahead ? 'rgba(128,148,168,0.3)' : 'rgba(128,148,168,0.85)'
+          g.fillText(String(k / 20 + 1).padStart(2, '0'), x, mid + 86)
+        }
       }
-      const yNow = yOf(value(T))
-      g.lineTo(now, yNow)
-      g.stroke()
-      g.setLineDash([6, 8])
-      g.lineWidth = 1
-      g.strokeStyle = 'rgba(234,242,248,0.4)'
+      g.strokeStyle = 'rgba(61,225,240,0.5)'
       g.beginPath()
-      g.moveTo(now, Math.round(yNow) + 0.5)
-      g.lineTo(w, Math.round(yNow) + 0.5)
+      g.moveTo(0, mid)
+      g.lineTo(now, mid)
       g.stroke()
-      g.setLineDash([])
-      g.fillStyle = '#EAF2F8'
+      g.strokeStyle = '#3DE1F0'
+      g.lineWidth = 3
       g.beginPath()
-      g.arc(now, yNow, 5, 0, Math.PI * 2)
+      g.moveTo(now, mid - 78)
+      g.lineTo(now, mid + 78)
+      g.stroke()
+      g.fillStyle = '#3DE1F0'
+      g.beginPath()
+      g.moveTo(now - 9, mid - 92)
+      g.lineTo(now + 9, mid - 92)
+      g.lineTo(now, mid - 78)
+      g.closePath()
       g.fill()
-      g.strokeStyle = 'rgba(61,225,240,0.7)'
-      g.lineWidth = 2
-      g.beginPath()
-      g.arc(now, yNow, 12, 0, Math.PI * 2)
-      g.stroke()
     }
 
     const chrome = AD.chromeAt(T)
@@ -150,12 +149,13 @@ AD.defineScene('chrome', {
     s.clock.style.opacity = T >= 2.6 ? '1' : '0'
     s.time.textContent = AD.kit.clock(T)
 
-    // From 50 s the band grows upward and switches to the full warning.
-    const grow = AD.prog(T, 50, 0.5, AD.ease.glide)
-    const top = AD.lerp(L.band.y, L.bandFull.y, grow)
-    s.band.style.top = top.toFixed(2) + 'px'
-    s.band.style.height = (L.band.y + L.band.h - top).toFixed(2) + 'px'
-    s.short.style.opacity = (1 - AD.prog(T, 50, 0.2)).toFixed(4)
-    s.full.style.opacity = AD.prog(T, 50.3, 0.25).toFixed(4)
+    // At 50 s the band switches to the full warning in a single frame: there
+    // is never a frame where the warning is missing, faded or half-grown.
+    const full = T >= 50
+    const rect = full ? L.bandFull : L.band
+    s.band.style.top = rect.y + 'px'
+    s.band.style.height = rect.h + 'px'
+    s.short.style.visibility = full ? 'hidden' : 'visible'
+    s.full.style.visibility = full ? 'visible' : 'hidden'
   },
 })

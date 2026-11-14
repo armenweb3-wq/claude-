@@ -113,6 +113,11 @@ function placeholders() {
   return found
 }
 
+const cfgText = readFileSync(path.join(ROOT, 'config.js'), 'utf8')
+if (/lossPercent:\s*(''|""|null|undefined)/.test(cfgText) || !/lossPercent:/.test(cfgText)) {
+  console.error("config.js: legal.lossPercent is empty. The risk warning must state the broker's own percentage; refusing to render.")
+  process.exit(1)
+}
 const formats = resolveFormats(args.format)
 const pending = placeholders()
 if (pending.length) console.warn(`\nDRAFT RENDER — config.js still has placeholders:\n  - ${pending.join('\n  - ')}\n`)

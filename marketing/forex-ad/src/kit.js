@@ -36,22 +36,30 @@
   // ── layout zones ────────────────────────────────────────────────────────
   // The top row (brand bug left, clock right) and the risk band are on screen
   // for the whole spot; scenes compose inside `content` (or `contentEnd` once
-  // the band has grown to carry the full warning, from T = 50 s).
+  // the band carries the full warning, from T = 50 s).
+  //
+  // `content` is fixed per format so the scenes never move when the legal
+  // text changes. The band sits in the zone reserved under it, set at
+  // `bandFont` (the size of the film's label text, so the warning is never
+  // smaller than what surrounds it) and stepping down only if longer wording
+  // would not fit that zone.
   const ZONES = {
-    '16x9': { x: 96, w: 1728, rowY: 54, bandBottom: 918, rulerY: 990, bandFont: 30, bandLine: 38 },
-    '9x16': { x: 120, w: 768, rowY: 288, bandBottom: 1248, rulerY: 1300, bandFont: 26, bandLine: 33 },
-    '4x5': { x: 54, w: 972, rowY: 54, bandBottom: 1296, rulerY: 1322, bandFont: 28, bandLine: 35 },
-    '1x1': { x: 64, w: 952, rowY: 54, bandBottom: 1026, rulerY: 1052, bandFont: 27, bandLine: 34 },
+    '16x9': { x: 96, w: 1728, rowY: 54, bandBottom: 918, contentBottom: 782, rulerY: 990, bandFont: 34 },
+    '9x16': { x: 120, w: 768, rowY: 288, bandBottom: 1248, contentBottom: 1089, rulerY: 1300, bandFont: 30 },
+    '4x5': { x: 54, w: 972, rowY: 54, bandBottom: 1296, contentBottom: 1131, rulerY: 1322, bandFont: 30 },
   }
+  const BAND_MIN_FONT = 24
+  const BAND_MIN_GAP = 12
   const Z = ZONES[F]
   const ROW_H = 56
   const GAP = 28
   const BAND_PAD_X = 24
   const BAND_PAD_Y = 14
 
-  function measureBand(stage, kind) {
+  const lineFor = font => Math.round(font * 1.27)
+  function measureBand(stage, kind, font) {
     const probe = el('div', 'k-riskband', stage)
-    probe.style.cssText = `position:absolute;visibility:hidden;left:${Z.x}px;top:0;width:${Z.w}px;box-sizing:border-box;padding:${BAND_PAD_Y}px ${BAND_PAD_X}px;font:400 ${Z.bandFont}px/${Z.bandLine}px var(--font-text);border:2px solid transparent`
+    probe.style.cssText = `position:absolute;visibility:hidden;left:${Z.x}px;top:0;width:${Z.w}px;box-sizing:border-box;padding:${BAND_PAD_Y}px ${BAND_PAD_X}px;font:400 ${font}px/${lineFor(font)}px var(--font-text);border:2px solid transparent`
     probe.innerHTML = riskHTML(kind)
     const h = Math.ceil(probe.getBoundingClientRect().height)
     probe.remove()
@@ -59,8 +67,12 @@
   }
 
   AD.beforeBuild(stage => {
-    const hShort = measureBand(stage, 'short')
-    const hFull = measureBand(stage, 'full')
+    const reserved = Z.bandBottom - Z.contentBottom - BAND_MIN_GAP
+    let font = Z.bandFont
+    while (font > BAND_MIN_FONT && measureBand(stage, 'short', font) > reserved) font--
+    const hShort = measureBand(stage, 'short', font)
+    const hFull = measureBand(stage, 'full', font)
+    if (hShort > reserved) console.error(`Risk warning does not fit its band at ${font}px: shorten legal.riskShort in config.js`)
     const band = { x: Z.x, y: Z.bandBottom - hShort, w: Z.w, h: hShort }
     const bandFull = { x: Z.x, y: Z.bandBottom - hFull, w: Z.w, h: hFull }
     const top = Z.rowY + ROW_H + GAP
@@ -70,8 +82,8 @@
       clock: { right: Z.x + Z.w, y: Z.rowY, h: ROW_H, fontSize: 26 },
       band,
       bandFull,
-      bandStyle: { font: Z.bandFont, line: Z.bandLine, padX: BAND_PAD_X, padY: BAND_PAD_Y },
-      content: { x: Z.x, y: top, w: Z.w, h: band.y - GAP - top },
+      bandStyle: { font, line: lineFor(font), padX: BAND_PAD_X, padY: BAND_PAD_Y },
+      content: { x: Z.x, y: top, w: Z.w, h: Z.contentBottom - top },
       contentEnd: { x: Z.x, y: top, w: Z.w, h: bandFull.y - GAP - top },
       ruler: { x: Z.x, y: Z.rulerY, w: Z.w },
     }

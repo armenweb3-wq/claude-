@@ -228,7 +228,7 @@
       let rp = -1
       for (const at of RINGS) if (t >= at && t < at + RING_DUR) rp = (t - at) / RING_DUR
       s.ring.setAttribute('r', (rp < 0 ? 0 : lerp(6.5, s.ringMax, rp)).toFixed(2))
-      s.ring.setAttribute('opacity', (rp < 0 ? 0 : 0.5 * (1 - rp)).toFixed(4))
+      s.ring.setAttribute('opacity', (rp < 0 ? 0 : 0.65 * (1 - rp)).toFixed(4))
 
       // ── 38.5: the caliper closes on the gap between the stop level and the fill ──
       s.cal.set({ a: yS, b: yFill, pos: xCross + 16 + P.jaw, jaw: P.jaw, open: prog(t, T_CAL, f(8), ease.snap), label: 'SLIPPAGE' })

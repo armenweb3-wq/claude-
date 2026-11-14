@@ -231,7 +231,8 @@
         const headW = 524
         const disp = tierPx('display')
         const h2 = tierPx('h2')
-        const mk = (lines, tier, size) => kit.headline(root, lines, { tier, x: c.x, y: R(c.y - size * CAP_TOP), w: headW })
+        // Cap tops sit just inside the content area (the +3 keeps round letters' overshoot inside it too).
+        const mk = (lines, tier, size) => kit.headline(root, lines, { tier, x: c.x, y: R(c.y - size * CAP_TOP) + 3, w: headW })
         const b4 = mk(['PRACTISE WITH', 'VIRTUAL FUNDS.'], 'h2', h2)
         beats.push(
           { blocks: [mk(['TRY THE', 'DEMO.'], 'display', disp)], at: [[-2 * f, 0]] },
@@ -241,7 +242,7 @@
         )
         const urlSize = 62
         urlText.style.fontSize = urlSize + 'px'
-        put(url, { x: c.x, y: R(c.y - h2 * CAP_TOP + b4.height + 26) })
+        put(url, { x: c.x, y: R(c.y - h2 * CAP_TOP + b4.height + 29) })
         urlLine.style.marginTop = '12px'
         const x = c.x + headW + 44
         win = { x, y: c.y, w: c.x + c.w - x, h: c.h }

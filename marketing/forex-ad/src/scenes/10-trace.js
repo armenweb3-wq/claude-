@@ -9,7 +9,9 @@
  * From 34.0 the receipt becomes the top of a scrolling order history.
  *
  * Beats (t = seconds since 30.0):
- *   0.0  tab on; route draws (15 frames, linear); nodes pop as it reaches them
+ *   0.0  "03" slams in on a clean stage (only the three level lines and ORDER
+ *        are there) and docks onto the tab; the route is held back until it
+ *        has, then draws in the last four frames, nodes popping as it passes
  *   0.5  question sets; ORDER lights, pulse leaves
  *   1.0 / 1.5 / 2.0  pulse lights CHECKS / EXECUTION / CONFIRMATION
  *   2.0  receipt opens; REQUESTED.   2.5  FILLED.   3.0  TIME-STAMPED.
@@ -24,6 +26,11 @@
   const fr = n => n / 30
 
   const LIT = [0.5, 1, 1.5, 2] // the pulse reaches node i at LIT[i]
+  // The route waits for the chapter numeral: nothing of it is drawn before
+  // SHOW (frame 12, numeral at tab size), and it is complete on the beat.
+  const DRAW = fr(11)
+  const SHOW = fr(12)
+  const LEG = (0.5 - DRAW) / 3
   const PRINT = [2, 2.5, 3] // receipt rows and their headline words
   const NAMES = ['ORDER', 'CHECKS', 'EXECUTION', 'CONFIRMATION']
 
@@ -146,15 +153,20 @@
         const ys = [yLo, yHi, yLo, yHi]
         const colW = 600
         const hero = { x: xs[3] - colW / 2, y: bottom - M - m.h, w: colW, h: m.h }
-        const winY = yHi + R + 20
+        const winY = yHi + R + 34
         G = {
           R,
           nodes: xs.map((x, i) => ({ x, y: ys[i], cap: ys[i] === yHi ? 'above' : 'below' })),
           legs: [0, 1, 2].map(i => {
-            const mid = (xs[i] + xs[i + 1]) / 2
+            // The last leg turns up early, so its jog stays left of the history
+            // window that later fills the column under CONFIRMATION.
+            const mid = i === 2 ? xs[i] + 90 : (xs[i] + xs[i + 1]) / 2
             return [[xs[i], ys[i]], [mid, ys[i]], [mid, ys[i + 1]], [xs[i + 1], ys[i + 1]]]
           }),
           wire: [[xs[3], yHi], [xs[3], hero.y]],
+          // The wire comes down into the window: it follows the receipt's top
+          // edge and never runs through the rows that fade out above it.
+          wireFollows: true,
           hero,
           win: { x: hero.x, y: winY, w: colW, h: bottom - M - winY },
           head: { x: c.x, w: hero.x - c.x - 72, bottom },
@@ -228,6 +240,7 @@
           words: 'h2',
           stack: 4,
           bus: null,
+          orderAt: fr(13), // ORDER lies on the numeral's way to the tab here: it pops once the numeral has passed
           hairY: 716,
         }
       }
@@ -253,7 +266,7 @@
       const merge = n0.x - R - 30
       const lane = k => {
         // k = -1 limit (outside of the turn), 0 entry, +1 stop
-        const end = k ? [[merge, n0.y + k * BUS], [merge, n0.y]] : [[n0.x, n0.y]]
+        const end = k ? [[merge, n0.y + k * BUS], [merge, n0.y]] : [[n0.x - R, n0.y]]
         if (!G.bus) return [[-6, n0.y + k * BUS], ...end]
         return [[-6, G.bus.y + k * BUS], [G.bus.x + k * BUS, G.bus.y + k * BUS], [G.bus.x + k * BUS, n0.y + k * BUS], ...end]
       }
@@ -265,7 +278,7 @@
         const line = polyline(lead.pts)
         return { line, grey: stroke(line.d, 'var(--grey)'), tint: stroke(line.d, lead.color, lead.dash ? { 'stroke-dasharray': lead.dash } : null), dot: null, color: lead.color }
       })
-      const ghost = stroke(route.d + ' ' + wire.d, 'var(--grey)', { opacity: 0.3 })
+      const ghost = stroke(route.d, 'var(--grey)', { opacity: 0.3 })
       const base = stroke(route.d, 'var(--grey)', { opacity: 0.7 })
       const wireBase = stroke(wire.d, 'var(--grey)', { opacity: 0.7 })
       const lit = stroke(route.d, 'var(--accent)', { opacity: 0.6 })
@@ -471,10 +484,27 @@
         s.big.style.transform = `translate(${(cx - (s.num.rw * size) / 2).toFixed(3)}px,${(cy - (s.num.rh * size) / 2).toFixed(3)}px)`
       }
 
-      // ── route draws on in 15 frames; the three levels feed ORDER ──
-      const drawn = along(t / (0.5 / 3))
+      // ── history window position (needed by the wire as well) ──
+      const stacked = prog(t, 4, fr(9), ease.snap)
+      const restY = s.FADE
+      const heroY = G.hero.y - G.win.y
+      // Constant 2 px a frame: every step lands on a whole pixel, so the type never shimmers.
+      const scroll = Math.max(0, Math.round((t - 4) * AD.fps)) * 2
+      const stackY = Math.round(lerp(heroY, restY, stacked)) - scroll
+
+      // ── route: held until the numeral has docked, then drawn in four frames; the three levels feed ORDER ──
+      const drawn = along((t - DRAW) / LEG)
       dash(s.base, 0, drawn, route.total)
-      const wireDrawn = prog(t, 0.5, fr(4)) * wire.total
+      s.ghost.setAttribute('opacity', on(SHOW) ? '0.3' : '0')
+      // The wire ends on the receipt's top edge; once the history scrolls on
+      // under it, it parks just above the window.
+      let wireLen = wire.total
+      if (G.wireFollows) {
+        const end = Math.max(G.win.y + stackY, G.win.y - 6)
+        wireLen = clamp(end - G.wire[0][1], 0, wire.total)
+        s.pad.setAttribute('y', String(end - 5))
+      }
+      const wireDrawn = Math.min(prog(t, 0.5, fr(4)) * wire.total, wireLen)
       dash(s.wireBase, 0, wireDrawn, wire.total)
       s.pad.style.opacity = on(0.5 + fr(4)) ? '1' : '0'
       const settle = prog(t, 0.5, fr(10))
@@ -490,7 +520,7 @@
       }
 
       s.chevrons.forEach((mark, i) => {
-        mark.setAttribute('opacity', on((i + 0.5) * (0.5 / 3)) ? '1' : '0')
+        mark.setAttribute('opacity', on(DRAW + (i + 0.5) * LEG) ? '1' : '0')
         mark.setAttribute('stroke', on(LIT[i] + 0.25) ? 'var(--accent)' : 'var(--grey)')
       })
 
@@ -509,13 +539,14 @@
       s.head.setAttribute('cy', hy.toFixed(2))
       s.head.setAttribute('opacity', on(LIT[0]) && t < LIT[3] + fr(1) ? '1' : '0')
       // CONFIRMATION hands the pulse on to the receipt.
-      dash(s.wireLit, 0, prog(t, LIT[3], fr(4)) * wire.total, wire.total)
+      dash(s.wireLit, 0, Math.min(prog(t, LIT[3], fr(4)) * wire.total, wireLen), wire.total)
       s.pad.setAttribute('stroke', on(LIT[3] + fr(4)) ? 'var(--accent)' : 'var(--grey)')
 
       // ── nodes ──
       s.nodes.forEach((n, i) => {
-        // ORDER is already there on the cut; the others pop as the trace reaches them.
-        const popAt = i ? i * (0.5 / 3) : -1
+        // ORDER is already there on the cut (unless the numeral docks across
+        // it); the others pop as the trace reaches them.
+        const popAt = i ? DRAW + i * LEG : G.orderAt || -1
         const pop = prog(t, popAt, fr(6), ease.snap)
         n.g.setAttribute('transform', `translate(${n.x},${n.y}) scale(${lerp(0.5, 1, pop).toFixed(4)})`)
         n.g.setAttribute('opacity', on(popAt) ? clamp((t - popAt) / fr(2) + 0.5).toFixed(4) : '0')
@@ -529,7 +560,7 @@
         n.litDot.setAttribute('opacity', isLit ? '1' : '0')
         n.litDot.setAttribute('fill', isLit && since < fr(2) - EPS ? 'var(--white)' : 'var(--accent)')
         n.litDot.setAttribute('r', (R * lerp(0.46, 0.3, prog(t, LIT[i], fr(6), ease.snap))).toFixed(2))
-        n.capEl.style.opacity = on(popAt) ? '1' : '0'
+        n.capEl.style.opacity = on(Math.max(popAt, SHOW)) ? '1' : '0'
         n.capEl.style.color = isLit ? 'var(--white)' : 'var(--grey)'
       })
 
@@ -553,12 +584,6 @@
       })
 
       // ── history: the hero becomes the top of a stack that scrolls upward ──
-      const stacked = prog(t, 4, fr(9), ease.snap)
-      const restY = s.FADE
-      const heroY = G.hero.y - G.win.y
-      // Constant 2 px a frame: every step lands on a whole pixel, so the type never shimmers.
-      const scroll = Math.max(0, Math.round((t - 4) * AD.fps)) * 2
-      const stackY = Math.round(lerp(heroY, restY, stacked)) - scroll
       s.stack.style.transform = `translate(0px,${stackY}px)`
       const soft = (s.FADE * prog(t, 4, fr(6))).toFixed(2)
       const mask = on(4) ? `linear-gradient(to bottom, transparent 0px, #000 ${soft}px, #000 calc(100% - ${soft}px), transparent 100%)` : 'none'
@@ -578,8 +603,15 @@
       const winRect = { x: G.win.x - M, y: G.win.y + s.FADE - M, w: G.win.w + 2 * M, h: G.win.h - s.FADE + M }
       s.waiting.set({ ...heroRect, opacity: on(2) ? 0 : 0.55 * prog(t, 0.5, fr(8)) })
       const grow = k => lerp(heroRect[k], winRect[k], stacked)
-      const tight = 1 - prog(t, 2, fr(8), ease.snap)
-      s.frame.set({ x: grow('x') - tight * 18, y: grow('y') - tight * 18, w: grow('w') + tight * 36, h: grow('h') + tight * 36, opacity: on(2) ? 1 : 0 })
+      // They close in from 18 px out, but never leave the content area: the
+      // side that already stands on its edge (and the risk band below) stays put.
+      const tight = (1 - prog(t, 2, fr(8), ease.snap)) * 18
+      const c = ctx.content
+      const x0 = Math.max(c.x, grow('x') - tight)
+      const y0 = Math.max(c.y, grow('y') - tight)
+      const x1 = Math.min(c.x + c.w, grow('x') + grow('w') + tight)
+      const y1 = Math.min(c.y + c.h, grow('y') + grow('h') + tight)
+      s.frame.set({ x: x0, y: y0, w: x1 - x0, h: y1 - y0, opacity: on(2) ? 1 : 0 })
 
       // ── caliper on the two prices: both are shown, the gap is not dressed up ──
       const calOpen = prog(t, 3.5, fr(9), ease.snap)

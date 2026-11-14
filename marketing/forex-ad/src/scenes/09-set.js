@@ -220,7 +220,7 @@
       // ── level lines: a faint dotted guide (the snap target) and the line itself ──
       const guides = {}
       const paths = {}
-      // The cut from 01 SEE lands on three solid lines that settle into the dotted guides.
+      // The cut from 01 SEE lands on three solid lines; the dotted guides follow with the candles.
       const landing = svg('path', { fill: 'none', stroke: 'var(--grey)', 'stroke-width': 2 }, lines)
       for (const key of ['limit', 'stop', 'entry']) {
         const L = LEVELS[key]
@@ -260,9 +260,18 @@
         from: { x: c.x + c.w / 2, y: c.y + c.h / 2, size: P.numSize },
         to: { x: numBox.left + numBox.width / 2, y: numBox.top + numBox.height / 2, size: tabFs },
       }
+      // The numeral holds on a clean stage: the landing lines break around its
+      // glyph box (taken at the largest size of the slam).
+      const big = P.numSize * 1.14
+      const numGap = {
+        x0: Math.round(num.from.x - (num.rw * big) / 2 - 28),
+        x1: Math.round(num.from.x + (num.rw * big) / 2 + 28),
+        y0: num.from.y - big * 0.4 - 16,
+        y1: num.from.y + big * 0.4 + 16,
+      }
 
       return {
-        P, cv, tab, tabNum, tabTitle, bigNum, num, chips, chipX, gripDX, calX, step, xNow, chartX0, fadeTo, lineX0, lineX0Words,
+        P, cv, tab, tabNum, tabTitle, bigNum, num, numGap, chips, chipX, gripDX, calX, step, xNow, chartX0, fadeTo, lineX0, lineX0Words,
         head, words, guides, landing, paths, calStop, calLimit, calParts, cursor, closed, liveOpen, scripted, first, yOf, yE, wide,
       }
     },
@@ -335,7 +344,16 @@
       // On the exit the handles leave the way ENTRY arrived, pushed off by the lines.
       const chipsOut = prog(t, ctx.dur - f(8), f(4), ease.cubic.in) * (W - chipX + 8)
       const land = 1 - prog(t, 0, f(8))
-      s.landing.setAttribute('d', ['limit', 'entry', 'stop'].map(key => `M${lineLeft},${yOf(LEVELS[key].pips)} H${W}`).join(' '))
+      s.landing.setAttribute(
+        'd',
+        ['limit', 'entry', 'stop']
+          .map(key => {
+            const y = yOf(LEVELS[key].pips)
+            const broken = y > s.numGap.y0 && y < s.numGap.y1 && s.numGap.x0 > lineLeft
+            return broken ? `M${lineLeft},${y} H${s.numGap.x0} M${s.numGap.x1},${y} H${W}` : `M${lineLeft},${y} H${W}`
+          })
+          .join(' '),
+      )
       s.landing.style.opacity = (0.7 * land).toFixed(4)
       // 03 TRACE re-enters these three lines from its left edge at the same height
       // (entry-line y) and spacing: keep the two scenes in step if this changes.
@@ -349,10 +367,10 @@
         const ch = s.chips[key]
         const path = s.paths[key]
         const guide = s.guides[key]
-        // Guide: a faint snap target until its level is placed.
+        // Guide: a faint snap target, on once the numeral has docked and until its level is placed.
         const gy = yOf(L.pips)
         guide.setAttribute('d', `M${lineLeft},${gy} H${chipX}`)
-        guide.style.opacity = (0.3 * (st.on && st.k >= 1 ? 0 : 1) * exFade).toFixed(4)
+        guide.style.opacity = (0.3 * prog(t, SWEEP_FROM, f(4)) * (st.on && st.k >= 1 ? 0 : 1) * exFade).toFixed(4)
 
         ch.el.style.display = st.on ? 'flex' : 'none'
         path.style.display = st.on ? 'block' : 'none'

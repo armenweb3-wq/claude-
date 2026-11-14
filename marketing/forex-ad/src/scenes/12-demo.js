@@ -30,8 +30,9 @@
     press: 4.0, // bar line: the order and its time-stamp
     card: 4.5, // record opens
     lines: 5.0, // requested / filled print
+    row: 5.0, // the position row takes the place of the strip's empty state
     footer: 4.5 - 8 * f, // disclosure: fully on screen from 44.5, with the record
-    cta: 6.0, // position row, URL
+    cta: 6.0, // headline and URL; focus brackets off
   }
   const SIZES = ['0.01', '0.02', '0.05', '0.10']
 
@@ -290,6 +291,15 @@
         win = { x: c.x, y, w: c.w, h: c.y + c.h - y }
       }
       const urlW = R(urlText.getBoundingClientRect().width)
+      // Lines leave upward inside their masks, and a mask has headroom above the
+      // caps. Cut each block at the top of the content area so exiting type can
+      // never show in the top row beside the brand bug.
+      for (const beat of beats) {
+        for (const h of beat.blocks) {
+          const cut = Math.ceil(c.y - parseFloat(h.el.style.top))
+          if (cut > 0) h.el.style.clipPath = `inset(${cut}px -400px -400px -400px)`
+        }
+      }
 
       // ── window layout ──────────────────────────────────────────────────
       const hdr = { x: win.x, y: win.y, w: win.w, h: M.hdrH }
@@ -451,7 +461,7 @@
         const hd = el('div', 'row hd', node)
         for (const name of ['INSTRUMENT', 'SIDE', 'SIZE', 'ENTRY', 'STOP', 'LIMIT', 'TIME']) el('span', 'd-lab', hd, name)
         const bd = el('div', 'bd', node)
-        // Empty state until the order is placed, so the strip reads as intentional.
+        // Empty state until the position row replaces it, so the strip never reads as unfinished.
         empty = el('span', 'd-num empty', bd, 'NO OPEN POSITIONS')
         row = el('div', 'row', bd)
         row.style.height = '100%'
@@ -631,10 +641,13 @@
 
       // ── positions row and footer ───────────────────────────────────────
       if (s.row) {
-        s.empty.style.opacity = pressed ? '0' : '1'
-        const pr = prog(t, TM.cta, 8 * f, ease.snap)
+        // One move inside the row's mask: the empty-state line leaves upward as
+        // the position rises, so the strip is never blank.
+        const pr = prog(t, TM.row, 8 * f, ease.snap)
         s.row.style.transform = `translate(0,${((1 - pr) * 100).toFixed(3)}%)`
         s.row.style.opacity = pr > 0 ? '1' : '0'
+        s.empty.style.transform = `translate(0,${(-pr * 100).toFixed(3)}%)`
+        s.empty.style.opacity = pr < 1 ? '1' : '0'
       }
       const pf = prog(t, TM.footer, 8 * f, ease.snap)
       s.footer.style.transform = `translate(0,${((1 - pf) * 120).toFixed(3)}%)`

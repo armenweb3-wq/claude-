@@ -1,8 +1,10 @@
 /* 02 SET (24–30 s): entry, stop and limit are placed before any commitment.
  * A monochrome candle chart ranges sideways; a square cursor brings in the
  * ENTRY handle, pulls STOP down and LIMIT up out of it, and each one snaps to
- * its level on the beat. Two calipers read the distances, deliberately equal
- * (25.0 pips each) so no favourable ratio is implied. From 28.0 new candles
+ * its level on the beat. Two calipers read the distances (26.5 and 27.0),
+ * deliberately equal at 25.0 pips each so no favourable ratio is implied, and
+ * give one detent together at 27.5; the last candle ticks live throughout.
+ * From 28.0 new candles
  * print: price moves most of the way to the stop, back through entry, part of
  * the way to the limit and back to entry. It never touches either level.
  * In the last 8 frames the three lines bend into right-angled traces that
@@ -60,20 +62,25 @@
     }
     return out
   }
+  const SWEEP_FROM = f(12) // candles wait until the big numeral has left the stage for its tab
   const LIVE_FROM = 1
   const LIVE_TO = 4
-  const liveClose = (o, t) => o + 5.5 * AD.fbm((t - LIVE_FROM) * 1.9 + 3.1, 71, 3) * AD.smoothstep(LIVE_FROM, LIVE_FROM + 0.4, t)
+  // The last candle is live: its close steps to a new price on the 5-frame grid
+  // (each step taken over two frames), on both sides of its open.
+  const TICK = f(5)
+  const tickValue = (o, k) => (k <= 0 ? o : o + 8 * AD.fbm(k * 0.5 + 3.1, 90, 3))
   function liveCandle(o, t) {
     const u = clamp(t, LIVE_FROM, LIVE_TO)
-    let h = o
-    let l = o
-    for (let k = 0; LIVE_FROM + k / 30 <= u + 1e-6; k++) {
-      const v = liveClose(o, LIVE_FROM + k / 30)
+    const k = Math.floor((u - LIVE_FROM) / TICK + 1e-6)
+    const c = lerp(tickValue(o, k - 1), tickValue(o, k), prog(u, LIVE_FROM + k * TICK, f(2)))
+    let h = Math.max(o, c)
+    let l = Math.min(o, c)
+    for (let j = 1; j < k; j++) {
+      const v = tickValue(o, j)
       if (v > h) h = v
       if (v < l) l = v
     }
-    const c = liveClose(o, u)
-    return { o, h: Math.max(h, c), l: Math.min(l, c), c }
+    return { o, h, l, c }
   }
   // close, wick above, wick below. Closest approach to the stop is 5 pips,
   // to the limit 10.5 pips: toward both, touching neither, ending on entry.
@@ -86,7 +93,9 @@
   const T_STOP = 1.5 // 25.5: the STOP drag ends (snaps) on the beat
   const T_LIMIT = 2 // 26.0: the LIMIT drag ends on the bar line
   const DRAG = f(10)
-  const T_CAL = 2.5 // 26.5: calipers
+  const T_CAL = 2.5 // 26.5: caliper closes on the stop distance
+  const T_CAL2 = 3 // 27.0: second caliper closes on the limit distance
+  const T_EQUAL = 3.5 // 27.5: both read-outs give one detent together: the distances are equal
   const PRINT_AT = 4 // 28.0: headline cuts in, new candles print
   const PRINT_EVERY = f(5)
 
@@ -222,6 +231,7 @@
 
       const calStop = kit.caliper(root, { orientation: 'v' })
       const calLimit = kit.caliper(root, { orientation: 'v' })
+      const calParts = [calStop, calLimit].map(cal => ({ path: cal.el.querySelector('path'), text: cal.el.querySelector('text') }))
       // Chips must sit above lines and calipers.
       for (const key of ['stop', 'limit', 'entry']) root.appendChild(chips[key].el)
 
@@ -253,7 +263,7 @@
 
       return {
         P, cv, tab, tabNum, tabTitle, bigNum, num, chips, chipX, gripDX, calX, step, xNow, chartX0, fadeTo, lineX0, lineX0Words,
-        head, words, guides, landing, paths, calStop, calLimit, cursor, closed, liveOpen, scripted, first, yOf, yE, wide,
+        head, words, guides, landing, paths, calStop, calLimit, calParts, cursor, closed, liveOpen, scripted, first, yOf, yE, wide,
       }
     },
 
@@ -287,7 +297,7 @@
       // ── candles ──
       const printed = clamp((t - PRINT_AT) / PRINT_EVERY, 0, AFTER.length)
       let count
-      if (t < LIVE_FROM) count = lerp(s.first, 40, clamp(t / LIVE_FROM))
+      if (t < LIVE_FROM) count = lerp(s.first, 40, clamp((t - SWEEP_FROM) / (LIVE_FROM - SWEEP_FROM)))
       else count = 40 + printed
       const data = s.closed.concat([liveCandle(s.liveOpen, t)], s.scripted)
       const squeeze = 1 - 0.46 * ex
@@ -413,7 +423,13 @@
         return `${((DIST * n) / 6).toFixed(1).padStart(4, '0')} PIPS`
       }
       s.calStop.set({ a: yE, b: yOf(-DIST), pos: s.calX, jaw: P.jaw, labelGap: 14, open: prog(t, T_CAL, f(8), ease.snap), label: readout(T_CAL), opacity: exFade })
-      s.calLimit.set({ a: yOf(DIST), b: yE, pos: s.calX, jaw: P.jaw, labelGap: 14, open: prog(t, T_CAL + f(5), f(8), ease.snap), label: readout(T_CAL + f(5)), opacity: exFade })
+      s.calLimit.set({ a: yOf(DIST), b: yE, pos: s.calX, jaw: P.jaw, labelGap: 14, open: prog(t, T_CAL2, f(8), ease.snap), label: readout(T_CAL2), opacity: exFade })
+      const eq = Math.floor((t - T_EQUAL) * 30)
+      const tick = t >= T_EQUAL && eq < 2 ? 2 - eq : 0
+      for (const part of s.calParts) {
+        part.path.setAttribute('stroke-width', 2 + tick)
+        part.text.style.fill = tick ? `color-mix(in srgb, var(--white) ${tick * 38}%, var(--accent))` : ''
+      }
 
       // ── type ──
       rise(s.words.entry, t, T_ENTRY)

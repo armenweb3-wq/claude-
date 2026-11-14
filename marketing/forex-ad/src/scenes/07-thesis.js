@@ -36,7 +36,12 @@ AD.defineScene('thesis', {
     const field = AD.canvas(root) // particle field + ghost fan, behind the type
 
     // ── chapter index at the foot of the stage ───────────────────────────
-    const tabs = [['01', 'SEE'], ['02', 'SET'], ['03', 'TRACE']].map(([n, ttl]) => kit.chapterTab(root, n, ttl))
+    // Built with the kit's chapter tab (same look as the tabs of S08–S10) but revealed here with
+    // shorter fades than tab.show(), so all three items are complete well before the type leaves.
+    const tabs = [['01', 'SEE'], ['02', 'SET'], ['03', 'TRACE']].map(([n, ttl]) => {
+      const tb = kit.chapterTab(root, n, ttl)
+      return { el: tb.el, num: tb.el.querySelector('.num'), rule: tb.el.querySelector('.rule'), ttl: tb.el.querySelector('.ttl') }
+    })
     const tabH = Math.ceil(Math.max(...tabs.map(tb => tb.el.getBoundingClientRect().height)))
     const column = ctx.vertical // 9:16 stacks the index at the left
     const rowGap = 14
@@ -98,11 +103,12 @@ AD.defineScene('thesis', {
     const rulerEdge = svg('path', { fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2, 'stroke-linecap': 'square' }, rs)
     const rulerTicks = svg('path', { fill: 'none', stroke: 'var(--accent)', 'stroke-width': 2, opacity: 0.8 }, rs)
     const rulerFront = svg('path', { fill: 'none', stroke: 'var(--white)', 'stroke-width': 2 }, rs)
-    // Whole-pixel pitch; the ruler is cut to the word, so its last tick is the word's right edge.
-    const pitch = Math.max(8, Math.round(fs * 0.052))
+    // The ruler divides the word evenly: the tick count is a multiple of ten, so the last tick
+    // is a major one exactly on the word's right edge. Positions snap to whole pixels in render.
     const rulerX0 = Math.round(word.l)
     const rulerX1 = Math.round(word.r)
-    const ticks = Math.floor((rulerX1 - rulerX0) / pitch)
+    const ticks = Math.max(20, Math.round((rulerX1 - rulerX0) / (fs * 0.052) / 10) * 10)
+    const pitch = (rulerX1 - rulerX0) / ticks
 
     // ── seeded particle field ────────────────────────────────────────────
     const r = AD.rng(1607)
@@ -266,7 +272,7 @@ AD.defineScene('thesis', {
     // Detent: the caliper reads white for three frames as it seats (no glow filter).
     s.calPath.setAttribute('stroke', detent ? 'var(--white)' : 'var(--accent)')
 
-    const ripple = prog(t, 1.0, 12 * f)
+    const ripple = prog(t + 1e-6, 1.0, 12 * f) // done on the frame at 17.4
     const x0 = s.rulerX0
     const y0 = sy(s.rulerY)
     const edge1 = Math.round(x0 + (s.rulerX1 - x0) * ripple)
@@ -274,25 +280,28 @@ AD.defineScene('thesis', {
     let settled = ''
     let leading = ''
     for (let i = 0; ripple > 0 && i <= s.ticks; i++) {
-      const x = x0 + i * s.pitch
+      const x = Math.round(x0 + i * s.pitch)
       if (x > edge1) break
       const fresh = ripple < 1 && edge1 - x < 3 * s.pitch
       const seg = `M${sx(x)},${y0} l0,${Math.round(tickLen(i) * (fresh ? 1.5 : 1))} `
       if (fresh) leading += seg
       else settled += seg
     }
-    // The ruler is cut to length: a full-height end tick lands on the word's right edge.
-    if (ripple >= 1) settled += `M${sx(s.rulerX1)},${y0} l0,${Math.round(tickLen(0))} `
     s.rulerTicks.setAttribute('d', settled)
     s.rulerFront.setAttribute('d', leading)
     s.rulerEdge.setAttribute('d', ripple > 0 ? `M${sx(x0)},${y0} L${sx(edge1)},${y0}` : '')
 
-    // ── 17.5: the chapter index ticks in, three frames apart ─────────────
-    s.rule.style.width = Math.round(c.w * prog(t, 1.5, 10 * f, ease.snap)) + 'px'
+    // ── 17.0: the chapter index ticks in with the caliper, three frames apart ──
+    // Every item is at full strength by 17.37, eleven frames before the type starts to leave.
+    s.rule.style.width = Math.round(c.w * prog(t, 1.0 - f, 8 * f, ease.snap)) + 'px'
     s.tabs.forEach((tb, i) => {
-      tb.show(t, 1.5 + i * 3 * f)
-      // As the type leaves, the first chapter stays lit and the other two stand back.
-      tb.el.style.opacity = (i === 0 ? 1 : lerp(1, 0.4, exit)).toFixed(4)
+      const a = 1.0 + i * 3 * f
+      tb.num.style.opacity = prog(t, a - f, 3 * f).toFixed(4)
+      tb.rule.style.transform = `scaleX(${prog(t, a, 4 * f, ease.snap).toFixed(4)})`
+      tb.ttl.style.opacity = prog(t, a + f, 4 * f).toFixed(4)
+      tb.ttl.style.transform = `translateX(${Math.round((1 - prog(t, a + f, 4 * f, ease.snap)) * 14)}px)`
+      // As the type leaves, the first chapter stays lit and the other two stand back a little.
+      tb.el.style.opacity = (i === 0 ? 1 : lerp(1, 0.55, exit)).toFixed(4)
     })
   },
 })

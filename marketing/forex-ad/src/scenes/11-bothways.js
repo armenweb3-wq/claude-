@@ -5,7 +5,8 @@
  * lands a little beyond the stop level. A caliper marks that gap, labelled
  * SLIPPAGE with no figure, and the line ends at the fill. There is no
  * profit-and-loss figure, no limit line, no red and no alarm styling.
- * From 39.0 nothing moves but the corner clock.
+ * From 39.0 the frame holds still apart from the corner clock and two soft
+ * rings that leave the fill dot on the beats at 39.0 and 39.5.
  *
  * The level-line and handle-chip look is shared with 09-set.js (the same CSS
  * and geometry rules are repeated here on purpose: scenes are standalone).
@@ -34,6 +35,8 @@
   const DRIFT = SPEED * 2 // the walk from entry to stop takes the two seconds before the bar line
   const T_STOP = 2 // 38.0: the stop is crossed
   const T_CAL = 2.5 // 38.5: the caliper closes on the gap
+  const RINGS = [3, 3.5] // 39.0, 39.5: one soft ring leaves the fill dot on each beat
+  const RING_DUR = f(14) // gone again by the next beat, and by the cut
 
   /** Price line as a fraction of the entry→stop distance at x px before the crossing (always above the stop). */
   function walk(back) {
@@ -149,6 +152,10 @@
       for (let x = xCross - 6; x > -8; x -= 4) pts.push([x, yE + (yS - yE) * walk(xCross - x)])
       pts.reverse()
       pts.push([xCross, yFill]) // the gap: the next price is beyond the stop
+      // Quiet sign of life in the hold: a thin white ring (no colour, no fill, no
+      // repeat beyond the two beats), kept clear of the risk band.
+      const ringMax = Math.min(26, ctx.layout.band.y - 10 - yFill)
+      const ring = svg('circle', { cx: xCross, cy: yFill, r: 0, fill: 'none', stroke: 'var(--white)', 'stroke-width': 1.5, opacity: 0 }, lines)
       const price = svg('path', { fill: 'none', stroke: 'var(--white)', 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, lines)
       const dot = svg('circle', { r: 5, fill: 'var(--white)', stroke: 'var(--void)', 'stroke-width': 3, 'paint-order': 'stroke' }, lines)
 
@@ -156,7 +163,7 @@
       for (const key of ['entry', 'stop']) root.appendChild(chips[key])
       root.appendChild(marker)
 
-      return { P, h1, h2, chips, pulse, marker, markerX, markerY, xCross, pts, price, dot, cal, yS, yFill }
+      return { P, h1, h2, chips, pulse, marker, markerX, markerY, xCross, pts, price, dot, ring, ringMax, cal, yS, yFill }
     },
 
     render(t, ctx, s) {
@@ -216,6 +223,12 @@
       s.marker.style.display = filled ? 'flex' : 'none'
       s.marker.style.clipPath = `inset(0 ${((1 - mp) * 100).toFixed(3)}% 0 0)`
       place(s.marker, s.markerX - (1 - mp) * 18, s.markerY)
+
+      // ── 39.0, 39.5: a soft ring leaves the fill dot, linear and slow ──
+      let rp = -1
+      for (const at of RINGS) if (t >= at && t < at + RING_DUR) rp = (t - at) / RING_DUR
+      s.ring.setAttribute('r', (rp < 0 ? 0 : lerp(6.5, s.ringMax, rp)).toFixed(2))
+      s.ring.setAttribute('opacity', (rp < 0 ? 0 : 0.5 * (1 - rp)).toFixed(4))
 
       // ── 38.5: the caliper closes on the gap between the stop level and the fill ──
       s.cal.set({ a: yS, b: yFill, pos: xCross + 16 + P.jaw, jaw: P.jaw, open: prog(t, T_CAL, f(8), ease.snap), label: 'SLIPPAGE' })

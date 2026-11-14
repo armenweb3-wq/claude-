@@ -18,6 +18,9 @@ export const FORMATS = {
   '1x1': { w: 1080, h: 1080, label: 'Square — feed, LinkedIn, X' },
 }
 
+// Rendered by default; together they cover every placement that accepts a 60 s ad.
+export const DEFAULT_FORMATS = ['16x9', '9x16', '4x5']
+
 export function parseArgs(argv, defaults = {}) {
   const out = { ...defaults }
   for (let i = 0; i < argv.length; i++) {
@@ -35,7 +38,7 @@ export function parseArgs(argv, defaults = {}) {
 }
 
 export function resolveFormats(spec) {
-  const names = !spec || spec === 'all' ? Object.keys(FORMATS) : String(spec).split(',')
+  const names = !spec || spec === 'all' ? DEFAULT_FORMATS : String(spec).split(',')
   for (const n of names) if (!FORMATS[n]) throw new Error(`Unknown format "${n}". Use one of: ${Object.keys(FORMATS).join(', ')}`)
   return names
 }

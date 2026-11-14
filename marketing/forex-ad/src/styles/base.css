@@ -1,4 +1,115 @@
-html,body{margin:0;background:#000;overflow:hidden}
-#stage{position:relative;overflow:hidden;background:#05070d}
-.scene{position:absolute;inset:0;overflow:hidden}
-.fill{position:absolute;inset:0;width:100%;height:100%}
+/* Design system for "Precision, not prediction": tokens, type tiers and the
+   few shared components. Scene-specific CSS lives in each scene file. */
+:root {
+  --void: #070b10;
+  --graphite: #0f1620;
+  --hairline: #1e2a38;
+  --white: #eaf2f8;
+  --grey: #8094a8;
+  --accent: #3de1f0;
+  --ice: #8fb8ff;
+  --amber: #ffb547;
+
+  --font-display: 'Barlow Condensed', 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-text: 'IBM Plex Sans Condensed', 'Inter', sans-serif;
+
+  /* Type tiers (16:9 defaults; overridden per format below). */
+  --t-display: 132px;
+  --t-h2: 88px;
+  --t-h3: 56px;
+  --t-label: 30px;
+  --t-tag: 20px;
+  --stroke: 2px;
+  --radius: 6px;
+  --grid: 48px;
+}
+html[data-format='4x5'] { --t-display: 112px; --t-h2: 76px; --t-h3: 50px; --t-label: 28px; --t-tag: 20px; }
+html[data-format='1x1'] { --t-display: 108px; --t-h2: 72px; --t-h3: 48px; --t-label: 28px; --t-tag: 20px; }
+html[data-format='9x16'] { --t-display: 96px; --t-h2: 68px; --t-h3: 46px; --t-label: 26px; --t-tag: 19px; }
+
+html, body { margin: 0; background: #000; overflow: hidden; }
+#stage {
+  position: relative;
+  overflow: hidden;
+  background: var(--void);
+  color: var(--white);
+  font-family: var(--font-text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+  font-feature-settings: 'tnum' 1, 'zero' 1;
+}
+.scene { position: absolute; inset: 0; overflow: hidden; }
+.fill { position: absolute; inset: 0; width: 100%; height: 100%; }
+.abs { position: absolute; }
+
+/* ── type ── */
+.t-display, .t-h2, .t-h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 0.94;
+  margin: 0;
+  white-space: nowrap;
+}
+.t-display { font-size: var(--t-display); }
+.t-h2 { font-size: var(--t-h2); }
+.t-h3 { font-size: var(--t-h3); }
+.t-label {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--t-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.t-mono { font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums slashed-zero; white-space: nowrap; }
+.t-text { font-family: var(--font-text); font-weight: 400; line-height: 1.28; }
+.c-white { color: var(--white); }
+.c-grey { color: var(--grey); }
+.c-accent { color: var(--accent); }
+.c-ice { color: var(--ice); }
+.c-amber { color: var(--amber); }
+
+/* ── components ── */
+/* Engineering grid backdrop (kit.grid). */
+.k-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(to right, var(--hairline) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--hairline) 1px, transparent 1px);
+  background-size: var(--grid) var(--grid);
+  background-position: center center;
+  opacity: 0.55;
+}
+.k-vignette { position: absolute; inset: 0; background: radial-gradient(120% 90% at 50% 45%, transparent 35%, rgba(4, 7, 11, 0.86) 100%); }
+
+/* Small mono tag, e.g. ILLUSTRATIVE (kit.tag). */
+.k-tag {
+  position: absolute;
+  font-family: var(--font-mono); font-weight: 500; font-size: var(--t-tag);
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--grey);
+  padding: 5px 10px 4px; border: 1px solid var(--hairline); border-radius: 3px;
+  background: rgba(7, 11, 16, 0.72); white-space: nowrap;
+}
+/* Chapter tab "01 SEE" (kit.chapterTab). */
+.k-chapter { position: absolute; display: flex; align-items: baseline; gap: 14px; white-space: nowrap; }
+.k-chapter .num { font-family: var(--font-mono); font-weight: 600; font-size: var(--t-label); color: var(--accent); }
+.k-chapter .ttl { font-family: var(--font-display); font-weight: 600; font-size: calc(var(--t-label) * 1.15); letter-spacing: 0.14em; text-transform: uppercase; color: var(--white); }
+.k-chapter .rule { align-self: center; width: 56px; height: 2px; background: var(--accent); transform-origin: 0 50%; }
+
+/* Graphite panel for mock UI and receipts. */
+.k-panel { position: absolute; background: var(--graphite); border: 1px solid var(--hairline); border-radius: var(--radius); box-sizing: border-box; }
+
+/* Headline block (kit.headline): each line is clipped so text rises from its baseline. */
+.k-headline { position: absolute; }
+.k-headline .ln { display: block; overflow: hidden; padding: 0.06em 0.04em 0.02em; margin: -0.06em -0.04em -0.02em; }
+.k-headline .ln > span { display: inline-block; will-change: transform; }
+
+/* Logo lockup (kit.lockup). */
+.k-lockup { position: absolute; display: flex; align-items: center; white-space: nowrap; }
+.k-lockup .wordmark { font-family: var(--font-display); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--white); line-height: 1; }
+
+svg.k-svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }

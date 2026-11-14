@@ -23,10 +23,12 @@
   // Insets (px) that readable content must stay inside. The vertical format
   // reserves room for the apps' own UI (profile row, captions, buttons).
   const SAFE = {
-    '16x9': { top: 64, right: 96, bottom: 64, left: 96 },
-    '9x16': { top: 270, right: 64, bottom: 400, left: 64 },
-    '4x5': { top: 72, right: 64, bottom: 72, left: 64 },
-    '1x1': { top: 64, right: 64, bottom: 64, left: 64 },
+    // YouTube in-stream draws its skip button, CTA and progress bar over the bottom 15%.
+    '16x9': { top: 54, right: 96, bottom: 162, left: 96 },
+    // Intersection of the Reels, TikTok and Shorts UI zones: a 768x960 box.
+    '9x16': { top: 288, right: 192, bottom: 672, left: 120 },
+    '4x5': { top: 54, right: 54, bottom: 54, left: 54 },
+    '1x1': { top: 54, right: 64, bottom: 54, left: 64 },
   }
 
   const format = FORMATS[params.get('format')] ? params.get('format') : '16x9'
@@ -288,6 +290,7 @@
   let resolveReady
   const ready = new Promise(r => (resolveReady = r))
 
+  const beforeBuild = []
   function defineScene(id, def) {
     if (defs.has(id)) console.error(`Scene "${id}" defined twice`)
     defs.set(id, def)
@@ -313,6 +316,10 @@
       beat: AD.beat,
       bar: AD.bar,
       config: window.AD_CONFIG || {},
+      // Free areas between the persistent top row and the risk band (see kit.js).
+      get layout() { return AD.layout },
+      get content() { return AD.layout.content },
+      get contentEnd() { return AD.layout.contentEnd },
       /** Pick a value per format: pick({ '16x9': a, '9x16': b, default: c }). */
       pick: map => (format in map ? map[format] : W > H && 'landscape' in map ? map.landscape : H > W && 'portrait' in map ? map.portrait : map.default),
     }
@@ -338,7 +345,8 @@
       const rootEl = el('section', `scene scene--${entry.id}${entry.overlay ? ' scene--overlay' : ''}`, stage)
       rootEl.dataset.scene = entry.id
       rootEl.style.zIndex = String((entry.overlay ? 1000 : 10) + index)
-      rootEl.style.display = 'none'
+      // Visible while building so scenes can measure text; hidden afterwards.
+      rootEl.style.display = 'block'
       const scene = {
         ...entry,
         index,
@@ -368,6 +376,7 @@
       }
       scenes.push(scene)
     })
+    for (const s of scenes) s.root.style.display = 'none'
     AD.scenes = scenes.map(s => ({ id: s.id, start: s.start, end: s.end, title: s.title, overlay: !!s.overlay }))
     built = true
   }
@@ -451,6 +460,10 @@
     const faces = [...document.fonts]
     await Promise.all(faces.map(f => f.load().catch(() => null)))
     await document.fonts.ready
+    stage = document.getElementById('stage')
+    stage.style.width = W + 'px'
+    stage.style.height = H + 'px'
+    for (const hook of beforeBuild) hook(stage)
     build()
     seek(0)
     if (!RENDER) startPreview()
@@ -547,6 +560,8 @@
     ready,
     seek,
     defineScene,
+    beforeBuild: fn => beforeBuild.push(fn),
+    layout: null,
     chromeAt,
     scenes: [],
     // toolkit

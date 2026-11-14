@@ -9,7 +9,7 @@
 // Options: --page src/index.html  --audio out/audio.wav  --out out
 //          --fps 30  --crf 16  --workers 3  --from 0 --to <sec>  --keep-frames
 import { spawn } from 'node:child_process'
-import { existsSync, mkdirSync, rmSync, statSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import path from 'node:path'
 import { FORMATS, ROOT, launchBrowser, openAd, parseArgs, resolveFormats, seek, startServer } from './lib.mjs'
 
@@ -95,7 +95,20 @@ async function renderFormat(browser, baseUrl, format) {
   return outFile
 }
 
+// Warn loudly while template placeholders remain: the result is a draft, not a publishable ad.
+function placeholders() {
+  const text = readFileSync(path.join(ROOT, 'config.js'), 'utf8')
+  const found = []
+  if (/name:\s*'YOURBROKER'/.test(text)) found.push('brand.name is still YOURBROKER')
+  if (/url:\s*'yourbroker\.com'/.test(text)) found.push('brand.url is still yourbroker.com')
+  if (/lossPercent:\s*'XX'/.test(text)) found.push("legal.lossPercent is still 'XX' (use the broker's own current figure)")
+  for (const m of new Set(text.match(/\[[A-Z][A-Z ]+\]/g) || [])) found.push(`legal text still contains ${m}`)
+  return found
+}
+
 const formats = resolveFormats(args.format)
+const pending = placeholders()
+if (pending.length) console.warn(`\nDRAFT RENDER — config.js still has placeholders:\n  - ${pending.join('\n  - ')}\n`)
 const server = await startServer()
 const browser = await launchBrowser()
 try {

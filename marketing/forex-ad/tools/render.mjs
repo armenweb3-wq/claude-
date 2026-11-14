@@ -7,9 +7,9 @@
 //   node tools/render.mjs --format 16x9,1x1 --workers 4
 //
 // Options: --page src/index.html  --audio out/audio.wav  --out out
-//          --fps 30  --crf 16  --workers 3  --from 0 --to <sec>  --keep-frames
+//          --fps 30  --crf 17  --grain 5 (0 = off)  --workers 4  --from 0 --to <sec>  --keep-frames
 import { spawn } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, rmSync, statSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { FORMATS, ROOT, launchBrowser, openAd, parseArgs, resolveFormats, seek, startServer } from './lib.mjs'
 
@@ -19,8 +19,9 @@ const args = parseArgs(process.argv.slice(2), {
   audio: 'out/audio.wav',
   out: 'out',
   name: 'forex-ad',
-  crf: '16',
-  workers: '3',
+  crf: '17',
+  grain: '5',
+  workers: '4',
 })
 
 function run(cmd, cmdArgs) {
@@ -52,12 +53,16 @@ async function renderFormat(browser, baseUrl, format) {
   let done = 0
   const started = Date.now()
   await Promise.all(
-    pages.map(async ({ page }) => {
+    pages.map(async ({ page, context }) => {
+      // Capturing through the DevTools protocol with speed-optimised PNG
+      // encoding is several times faster than page.screenshot() and still lossless.
+      const cdp = await context.newCDPSession(page)
       for (;;) {
         const i = next++
         if (i >= total) return
         await seek(page, (first + i) / fps)
-        await page.screenshot({ path: path.join(framesDir, `f_${String(i).padStart(6, '0')}.png`), type: 'png' })
+        const shot = await cdp.send('Page.captureScreenshot', { format: 'png', optimizeForSpeed: true })
+        writeFileSync(path.join(framesDir, `f_${String(i).padStart(6, '0')}.png`), Buffer.from(shot.data, 'base64'))
         done++
         if (done % 60 === 0 || done === total) {
           const rate = done / ((Date.now() - started) / 1000)
@@ -74,12 +79,14 @@ async function renderFormat(browser, baseUrl, format) {
   const audioPath = path.resolve(ROOT, args.audio)
   const hasAudio = existsSync(audioPath) && !args['no-audio']
   const outFile = path.join(outDir, `${args.name}-${format}.mp4`)
+  // A fine luma grain keeps the dark gradients from banding after compression.
+  const grain = Number(args.grain) > 0 ? `,noise=c0s=${Number(args.grain)}:c0f=t+u` : ''
   const ff = ['-y', '-framerate', String(fps), '-i', path.join(framesDir, 'f_%06d.png')]
   if (hasAudio) ff.push('-ss', String(from), '-i', audioPath)
   ff.push(
     // Screenshots are full-range sRGB; tag and convert to broadcast-range BT.709
     // so colours match on every player and platform transcoder.
-    '-vf', 'scale=in_range=pc:out_range=tv:out_color_matrix=bt709:flags=accurate_rnd+full_chroma_int,format=yuv420p',
+    '-vf', `scale=in_range=pc:out_range=tv:out_color_matrix=bt709:flags=accurate_rnd+full_chroma_int,format=yuv420p${grain}`,
     '-c:v', 'libx264', '-preset', 'slow', '-crf', String(args.crf), '-profile:v', 'high', '-level', '4.2',
     '-g', String(fps * 2), '-bf', '2',
     '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', '-color_range', 'tv',

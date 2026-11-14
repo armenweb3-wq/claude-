@@ -1,7 +1,7 @@
 /* Persistent overlay, on screen for all 60 seconds: brand bug, running clock,
  * the risk-warning band (abbreviated wording until 50 s, full wording after),
- * a 30-bar ruler in the non-critical strip, and a fine grain that keeps dark
- * gradients from banding after video compression.
+ * and a 30-bar ruler in the non-critical strip. (Film grain is added by the
+ * encoder in tools/render.mjs, which keeps frame capture fast.)
  */
 AD.defineScene('chrome', {
   css: `
@@ -18,29 +18,23 @@ AD.defineScene('chrome', {
     .chrome-band .txt b { font-weight: 600; }
     .chrome-ruler { position: absolute; }
     .chrome-ruler .lbl { position: absolute; top: 20px; font: 500 16px var(--font-mono); color: var(--grey); letter-spacing: 0.1em; }
-    .chrome-grain { position: absolute; inset: 0; opacity: 0.055; mix-blend-mode: overlay; background-size: 256px 256px; }
+    .chrome-ambient { position: absolute; left: 0; opacity: 0.6; }
   `,
   build(root, ctx) {
     const L = ctx.layout
     const kit = AD.kit
 
-    // Grain: three seeded noise tiles, cycled by frame.
-    const grains = [11, 23, 37].map(seed => {
-      const c = document.createElement('canvas')
-      c.width = c.height = 256
-      const g = c.getContext('2d')
-      const img = g.createImageData(256, 256)
-      const r = AD.rng(seed)
-      for (let i = 0; i < img.data.length; i += 4) {
-        const v = Math.floor(r() * 256)
-        img.data[i] = img.data[i + 1] = img.data[i + 2] = v
-        img.data[i + 3] = 255
-      }
-      g.putImageData(img, 0, 0)
-      const layer = AD.el('div', 'chrome-grain', root)
-      layer.style.backgroundImage = `url(${c.toDataURL()})`
-      return layer
-    })
+    // Vertical only: the lower third sits under the apps' own buttons, so it
+    // carries no message, just a quiet market trace that never stops moving.
+    let ambient = null
+    if (ctx.vertical) {
+      const top = L.ruler.y + 78
+      const c = AD.el('canvas', 'chrome-ambient', root)
+      c.width = ctx.W
+      c.height = ctx.H - top - 70
+      c.style.top = top + 'px'
+      ambient = { g: c.getContext('2d'), w: c.width, h: c.height }
+    }
 
     // Ruler: one major tick per bar, one minor tick per beat, playhead = now.
     const ruler = AD.el('div', 'chrome-ruler', root)
@@ -86,16 +80,66 @@ AD.defineScene('chrome', {
       t.innerHTML = kit.riskHTML(kind)
       return t
     }
-    return { grains, done, head, bug, clock, time, band, short: mk('short'), full: mk('full'), rulerW: L.ruler.w }
+    return { ambient, done, head, bug, clock, time, band, short: mk('short'), full: mk('full'), rulerW: L.ruler.w }
   },
   render(t, ctx, s, T) {
     const L = ctx.layout
-    const frame = Math.round(T * AD.fps)
-    s.grains.forEach((g, i) => (g.style.display = frame % 3 === i ? 'block' : 'none'))
-
     const x = (T / AD.duration) * s.rulerW
     s.done.setAttribute('stroke-dashoffset', (1 - T / AD.duration).toFixed(5))
     s.head.setAttribute('transform', `translate(${x.toFixed(2)},0)`)
+
+    if (s.ambient) {
+      const { g, w, h } = s.ambient
+      const now = Math.round(w * 0.8)
+      const SPAN = 9 // seconds of history across the trace
+      const value = time => AD.fbm(time * 0.8, 77, 4) * 0.8 + AD.fbm(time * 4.5, 91, 2) * 0.14
+      const yOf = v => h * 0.5 - v * h * 0.36
+      g.clearRect(0, 0, w, h)
+      g.lineWidth = 1
+      g.strokeStyle = 'rgba(128,148,168,0.16)'
+      g.beginPath()
+      for (let i = 0; i <= 4; i++) {
+        const y = Math.round((h * i) / 4) + 0.5
+        g.moveTo(0, y)
+        g.lineTo(w, y)
+      }
+      // Vertical ticks scroll with time: one per beat, taller on the bar.
+      for (let k = Math.ceil((T - SPAN) / AD.beat); k * AD.beat <= T; k++) {
+        const x = Math.round(now - ((T - k * AD.beat) / SPAN) * now) + 0.5
+        g.moveTo(x, h)
+        g.lineTo(x, h - (k % 4 === 0 ? 22 : 10))
+      }
+      g.stroke()
+      g.lineWidth = 2
+      g.lineJoin = 'round'
+      g.strokeStyle = 'rgba(61,225,240,0.62)'
+      g.beginPath()
+      for (let x = 0; x <= now; x += 3) {
+        const y = yOf(value(T - (1 - x / now) * SPAN))
+        if (x === 0) g.moveTo(x, y)
+        else g.lineTo(x, y)
+      }
+      const yNow = yOf(value(T))
+      g.lineTo(now, yNow)
+      g.stroke()
+      g.setLineDash([6, 8])
+      g.lineWidth = 1
+      g.strokeStyle = 'rgba(234,242,248,0.4)'
+      g.beginPath()
+      g.moveTo(now, Math.round(yNow) + 0.5)
+      g.lineTo(w, Math.round(yNow) + 0.5)
+      g.stroke()
+      g.setLineDash([])
+      g.fillStyle = '#EAF2F8'
+      g.beginPath()
+      g.arc(now, yNow, 5, 0, Math.PI * 2)
+      g.fill()
+      g.strokeStyle = 'rgba(61,225,240,0.7)'
+      g.lineWidth = 2
+      g.beginPath()
+      g.arc(now, yNow, 12, 0, Math.PI * 2)
+      g.stroke()
+    }
 
     const chrome = AD.chromeAt(T)
     s.bug.el.style.opacity = chrome.bug.toFixed(4)

@@ -90,6 +90,8 @@ AD.defineScene('chrome', {
 
     if (s.ambient) {
       const { g, w, h } = s.ambient
+      // The half-second of void before the drop at 16 s is void here too.
+      g.canvas.style.visibility = T >= 15.5 && T < 16 ? 'hidden' : 'visible'
       const now = Math.round(w * 0.8)
       const SPAN = 9 // seconds of history across the trace
       const value = time => AD.fbm(time * 0.8, 77, 4) * 0.8 + AD.fbm(time * 4.5, 91, 2) * 0.14

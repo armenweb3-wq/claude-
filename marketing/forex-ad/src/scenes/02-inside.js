@@ -72,6 +72,11 @@ AD.defineScene('inside', {
     const tagBox = tag.getBoundingClientRect()
     tag.style.left = c.x + 'px'
     tag.style.top = '0px'
+    // The tag rides on the band's top edge. Repainted in place, the anti-aliased
+    // corners of its border come out a shade different from seek to seek; on
+    // its own layer it is rasterised once and only ever moved by whole pixels,
+    // which makes every frame repeatable (tools/check.mjs fails without this).
+    tag.style.willChange = 'transform'
 
     // The clock, built exactly like the overlay's.
     const clock = AD.el('div', 'in-clock t-mono', root)

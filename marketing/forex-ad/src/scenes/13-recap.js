@@ -19,6 +19,9 @@
  * shown before it. (SVG with CSS filters, masks and gradients under the
  * settling scale was not repeatable: the browser reuses cached layers.)
  * Type, chips and the receipt are DOM; caliper and brackets come from the kit.
+ * Only the canvases are scaled by CSS for the settle: the DOM parts stay at
+ * 100% and are moved to the settling positions in whole pixels, so their
+ * edges never sit on fractions of a pixel.
  */
 ;(function () {
   'use strict'
@@ -113,7 +116,7 @@
   }
 
   // ── SEE. — price ladder with the spread caliper ───────────────────────────
-  function ladder(bg, ctx, g) {
+  function ladder(bg, fx, ctx, g) {
     const kit = AD.kit
     const { W, H, c, T } = g
     const fig = ctx.pick({ '16x9': 52, '9x16': 36, default: 46 })
@@ -141,6 +144,7 @@
 
     const cv = AD.canvas(bg, W, H)
     const rows = []
+    const figures = []
     for (const side of ['ask', 'bid']) {
       for (let k = 0; k < count[side]; k++) {
         const best = k === 0
@@ -148,20 +152,22 @@
         rows.push({ side, best, y, len: (side === 'ask' ? askMax : bidMax) * depth[side][k] })
         // A row the crop cuts through keeps its bar and loses its figure: no half-read prices.
         if (y < c.y + 6 || y + barH > g.bottom - 2) continue
-        const price = el('div', 'rc-fig', bg, ((side === 'ask' ? ASK + k * 5 : BID - k * 5) / 1e5).toFixed(5))
+        const price = el('div', 'rc-fig', fx, ((side === 'ask' ? ASK + k * 5 : BID - k * 5) / 1e5).toFixed(5))
         price.style.fontSize = fig + 'px'
         price.style.width = colW + 'px'
-        price.style.left = Math.round(cx - colW / 2) + 'px'
-        price.style.top = Math.round(y + (barH - fig) / 2) + 'px'
         price.style.color = best ? 'var(--white)' : 'var(--grey)'
         if (best) price.style.fontWeight = '600'
+        figures.push({ el: price, y: y + barH / 2 })
       }
     }
-    const cal = kit.caliper(bg, { orientation: 'v' })
+    const cal = kit.caliper(fx, { orientation: 'v' })
+    const origin = [cx, cy]
 
     return {
-      origin: [cx, cy],
-      render(lt) {
+      origin,
+      render(lt, zoom) {
+        const sy = y => origin[1] + (y - origin[1]) * zoom
+        for (const f of figures) f.el.style.transform = `translate(${Math.round(cx - colW / 2)}px,${Math.round(sy(f.y) - fig / 2)}px)`
         const k = cv.ctx
         k.clearRect(0, 0, W, H)
         // The gap itself, tinted.
@@ -193,13 +199,13 @@
           k.fillRect(near - 1, r.y, 2, barH)
         }
         crop(k, g)
-        cal.set({ a: cy - gap / 2, b: cy + gap / 2, pos: cx + colW / 2 + 34, jaw: colW + 68, open: prog(lt, -fr(2), fr(8), ease.snap) })
+        cal.set({ a: sy(cy - gap / 2), b: sy(cy + gap / 2), pos: cx + (colW / 2 + 34) * zoom, jaw: (colW + 68) * zoom, open: prog(lt, -fr(2), fr(8), ease.snap) })
       },
     }
   }
 
   // ── SET. — entry, stop and limit ──────────────────────────────────────────
-  function levels(bg, ctx, g) {
+  function levels(bg, fx, ctx, g) {
     const kit = AD.kit
     const { W, H, c, T } = g
     const chipFs = ctx.pick({ '16x9': 28, '9x16': 24, default: 26 })
@@ -221,7 +227,7 @@
     ]
     const cv = AD.canvas(bg, W, H)
     const chips = LV.map(lv => {
-      const chip = el('div', 'rc-chip', bg)
+      const chip = el('div', 'rc-chip', fx)
       chip.style.color = `var(--${lv.color})`
       chip.style.fontSize = chipFs + 'px'
       chip.style.height = chipH + 'px'
@@ -232,10 +238,7 @@
     })
     const chipW = Math.ceil(Math.max(...chips.map(ch => ch.el.getBoundingClientRect().width)))
     const chipX = Math.round(g.right - chipW)
-    for (const ch of chips) {
-      ch.el.style.width = chipW + 'px'
-      ch.el.style.top = ch.y - chipH / 2 + 'px'
-    }
+    for (const ch of chips) ch.el.style.width = chipW + 'px'
 
     // Monochrome candles ranging on both sides of entry, clear of both exits.
     const n = ctx.pick({ '16x9': 10, '9x16': 7, default: 8 })
@@ -245,9 +248,11 @@
     const x0 = g.wide ? Math.round(Math.max(g.wordRight[1] + 80, c.x + c.w * 0.36)) : c.x
     const rect = { x: x0, y: yE - D, w: chipX - 44 - x0, h: 2 * D }
 
+    const origin = [Math.round(g.wide ? (x0 + chipX) / 2 : W / 2), yE]
+
     return {
-      origin: [g.wide ? (x0 + chipX) / 2 : W / 2, yE],
-      render(lt) {
+      origin,
+      render(lt, zoom) {
         const k = cv.ctx
         k.clearRect(0, 0, W, H)
         // The last two candles print during the shot (time-driven, linear).
@@ -263,15 +268,15 @@
         }
         k.setLineDash([])
         const slide = (1 - prog(lt, -fr(1), fr(6), ease.snap)) * 70
-        // The handles seat from the right in whole pixels. (No brightness
-        // filter on them: it moves a chip onto its own layer for a frame.)
-        for (const ch of chips) ch.el.style.transform = `translate(${Math.round(chipX + slide)}px,0px)`
+        // The handles seat from the right, riding their lines as the crop settles.
+        const x = origin[0] + (chipX - origin[0]) * zoom + slide
+        for (const ch of chips) ch.el.style.transform = `translate(${Math.round(x)}px,${Math.round(origin[1] + (ch.y - origin[1]) * zoom - chipH / 2)}px)`
       },
     }
   }
 
   // ── TRACE. — the pulse arrives at CONFIRMATION and the receipt ────────────
-  function route(bg, ctx, g) {
+  function route(bg, fx, ctx, g) {
     const kit = AD.kit
     const { W, H, c, T } = g
     const R = ctx.pick({ '16x9': 46, '9x16': 32, default: 40 })
@@ -313,8 +318,8 @@
 
     // The receipt, with the same illustrative order and time-stamp as chapter 3.
     const stamp = kit.clock(window.AD_TIMELINE.scenes.find(sc => sc.id === 'trace').start + 3)
-    const panel = el('div', 'rc-receipt', bg)
-    panel.style.cssText += `left:${rx}px;top:${ry}px;width:${rw}px;height:${rh}px;padding:${padY - 1}px ${padX - 1}px;font-size:${font}px;line-height:${row}px`
+    const panel = el('div', 'rc-receipt', fx)
+    panel.style.cssText += `left:0;top:0;width:${rw}px;height:${rh}px;padding:${padY - 1}px ${padX - 1}px;font-size:${font}px;line-height:${row}px`
     const hd = el('div', null, panel)
     el('span', null, hd, 'EUR/USD')
     el('span', 'c-amber', hd, '  BUY  ')
@@ -328,7 +333,8 @@
       if (unit) el('span', 'u', val, unit)
       return num
     })
-    const frame = kit.brackets(bg)
+    const frame = kit.brackets(fx)
+    const origin = [Math.round(rx + rw / 2), node[1]]
 
     const ARRIVE = fr(7)
     const from = path.total * (g.wide ? 0.42 : 0.2)
@@ -339,10 +345,14 @@
       { lag: 0.03, width: 9, alpha: 1 },
     ]
     return {
-      origin: [rx + rw / 2, node[1]],
-      render(lt) {
+      origin,
+      render(lt, zoom) {
         const k = cv.ctx
         k.clearRect(0, 0, W, H)
+        // The receipt keeps its size and follows the wire's end in whole pixels.
+        const px = Math.round(origin[0] + (rx - origin[0]) * zoom)
+        const py = ry
+        panel.style.transform = `translate(${px}px,${py}px)`
         const pos = t => lerp(from, path.total, clamp(t / ARRIVE))
         const at = pos(lt)
         const arrived = lt >= ARRIVE - 1e-6
@@ -395,13 +405,13 @@
         const hot = arrived && lt < ARRIVE + fr(4) - 1e-6
         for (const num of nums) num.style.color = hot ? 'var(--accent)' : 'var(--white)'
         const m = M + Math.round((1 - prog(lt, ARRIVE, fr(6), ease.snap)) * 16)
-        frame.set({ x: rx - m, y: ry - m, w: rw + 2 * m, h: rh + 2 * m, opacity: arrived ? 1 : 0.45 })
+        frame.set({ x: px - m, y: py - m, w: rw + 2 * m, h: rh + 2 * m, opacity: arrived ? 1 : 0.45 })
       },
     }
   }
 
   // ── 24/5. — dot-grid map, light band, four session nodes ──────────────────
-  function map(bg, ctx, g) {
+  function map(bg, fx, ctx, g) {
     const { W, H, c, T } = g
     const pitch = ctx.pick({ '16x9': 30, '9x16': 26, default: 28 })
     const r = ctx.pick({ '16x9': 4, '9x16': 3.5, default: 3.75 })
@@ -446,7 +456,7 @@
 
     return {
       origin: london,
-      render(lt) {
+      render(lt, zoom) {
         const k = cv.ctx
         k.clearRect(0, 0, W, H)
         // The band of light follows the trading day westward at constant speed.
@@ -491,7 +501,7 @@
       .scene--recap .rc-shot { position: absolute; inset: 0; overflow: hidden; }
       .scene--recap .rc-bg { position: absolute; inset: 0; }
       .scene--recap .k-headline .ln > span { will-change: auto; }
-      .scene--recap .rc-fig { position: absolute; text-align: center; line-height: 1; font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums slashed-zero; white-space: nowrap; }
+      .scene--recap .rc-fig { position: absolute; left: 0; top: 0; text-align: center; line-height: 1; font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums slashed-zero; white-space: nowrap; }
       .scene--recap .rc-chip {
         position: absolute; left: 0; top: 0; box-sizing: border-box;
         display: flex; align-items: center; gap: 0.4em; padding: 0 0.5em 0 0.42em;
@@ -518,10 +528,12 @@
       const right = c.x + c.w
       kit.grid(root)
 
+      // bg: canvases, scaled for the settle. fx: DOM parts, never scaled.
       const shots = WORDS.map(() => {
         const shot = el('div', 'rc-shot', root)
         const bg = el('div', 'rc-bg', shot)
-        return { shot, bg }
+        const fx = el('div', 'rc-bg', shot)
+        return { shot, bg, fx }
       })
 
       // ── the giant word: one size and one position for all four ──
@@ -564,7 +576,7 @@
       const wordRight = widths().map(w => c.x + w)
 
       const g = { W, H, c, wide, bottom, right, size, base, capH, capTop: base - capH, wordRight, gTop: base + Math.round(size * 0.14), T: tokens() }
-      const draw = [ladder, levels, route, map].map((make, i) => make(shots[i].bg, ctx, g))
+      const draw = [ladder, levels, route, map].map((make, i) => make(shots[i].bg, shots[i].fx, ctx, g))
       shots.forEach((sh, i) => (sh.bg.style.transformOrigin = `${Math.round(draw[i].origin[0])}px ${Math.round(draw[i].origin[1])}px`))
 
       const travel = heads[0].lines[0].inner.getBoundingClientRect().height * 1.08
@@ -589,7 +601,7 @@
         const up = prog(lt, -fr(1), fr(3), ease.snap)
         s.heads[i].lines[0].inner.style.transform = `translate(0px,${Math.round((1 - up) * s.travel)}px)`
         s.heads[i].lines[0].inner.style.opacity = '1'
-        s.draw[i].render(lt)
+        s.draw[i].render(lt, settle)
       })
     },
   })

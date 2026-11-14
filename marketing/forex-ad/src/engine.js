@@ -385,6 +385,15 @@
     if (!built) throw new Error('AD.seek called before AD.ready resolved')
     T = clamp(T, 0, duration)
     AD.time = T
+    // Chromium repaints only what changed, and anti-aliased edges can come out
+    // a level or two different depending on what was painted before. Dropping
+    // and rebuilding the stage's render tree makes every frame a full repaint,
+    // so a frame looks the same whatever was shown before it.
+    if (RENDER) {
+      stage.style.display = 'none'
+      void stage.offsetHeight
+      stage.style.display = 'block'
+    }
     for (const s of scenes) {
       const last = s.end >= duration
       const active = T >= s.start - s.lead && (T < s.end + s.tail || (last && T <= s.end))

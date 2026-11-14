@@ -89,6 +89,10 @@ AD.defineScene('see', {
     const tabH = Math.ceil(tab.el.getBoundingClientRect().height)
     const tag = kit.tag(root)
     const tagRect = tag.getBoundingClientRect()
+    // Whole-pixel box, so the tag's rounded border rasters the same on every frame.
+    tag.style.boxSizing = 'border-box'
+    tag.style.width = Math.ceil(tagRect.width) + 'px'
+    tag.style.height = Math.round(tagRect.height) + 'px'
     tag.style.left = c.x + c.w - Math.ceil(tagRect.width) + 'px'
     tag.style.top = c.y + 'px'
 

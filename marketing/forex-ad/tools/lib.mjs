@@ -15,7 +15,6 @@ export const FORMATS = {
   '16x9': { w: 1920, h: 1080, label: 'Landscape — YouTube, web, in-stream' },
   '9x16': { w: 1080, h: 1920, label: 'Vertical — Reels, TikTok, Shorts, Stories' },
   '4x5': { w: 1080, h: 1350, label: 'Portrait feed — Instagram / Facebook feed' },
-  '1x1': { w: 1080, h: 1080, label: 'Square — feed, LinkedIn, X' },
 }
 
 // Rendered by default; together they cover every placement that accepts a 60 s ad.

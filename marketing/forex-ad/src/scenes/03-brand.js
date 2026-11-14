@@ -180,8 +180,8 @@ AD.defineScene('brand', {
     // It accelerates into the corner and stops dead: at no point does a
     // half-arrived copy sit across the overlay's bug.
     const back = ease.quad.in(prog(t, BACK, LAND - BACK))
-    const landed = back >= 1
     const landFrame = Math.round(LAND * fps)
+    const landed = f >= landFrame // by frame, so rounding in t can never leave it a hair short
     const turnAt = time => -90 * (1 - prog(time, DRAW, LOCK - DRAW, ease.snap))
 
     // ── mark ──

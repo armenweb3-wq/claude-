@@ -75,7 +75,7 @@
     const g = ctx.pick({
       '16x9': { nowX: gridLine(c.x + c.w * 0.55, ctx.W), level: gridLine(c.y + c.h / 2 + 48, ctx.H), half: 244, amp: 88, frames: [[680, 380], [440, 270], [200, 200]] },
       '9x16': { nowX: gridLine(c.x + c.w / 2, ctx.W), level: gridLine(c.y + 420, ctx.H), half: 226, amp: 82, frames: [[600, 404], [400, 290], [190, 190]] },
-      '4x5': { nowX: ctx.W / 2, level: gridLine(c.y + 610, ctx.H), half: 346, amp: 112, frames: [[760, 640], [500, 420], [220, 220]] },
+      '4x5': { nowX: ctx.W / 2, level: gridLine(c.y + 610, ctx.H), half: 346, amp: 112, frames: [[760, 600], [500, 400], [220, 220]] },
     })
     g.focus = { x: ctx.landscape ? c.x + c.w / 2 : g.nowX, y: g.level }
     g.rulerY = c.y + c.h
@@ -105,19 +105,32 @@
     scratch.height = H
     const ghost = scratch.getContext('2d')
 
-    // The NOW chip is painted on the canvas with everything else that moves: a DOM
+    // The ILLUSTRATIVE tag (kit) and the NOW chip share one row above the ruler, so
+    // the chip takes its height, type size, tracking, padding and baseline from the
+    // tag as the browser laid it out. The row ends RULER_CLEAR px above the ruler,
+    // which leaves 8 px over the NOW tick and 10 px over the major ticks.
+    // The chip itself is painted on the canvas with everything else that moves: a DOM
     // chip that slides during S06's pan is re-rastered a shade differently depending
     // on the frame shown before it, which would break frame-by-frame determinism.
-    const tagSize = parseFloat(token('t-tag'))
-    const chipFont = `600 ${tagSize}px ${token('font-mono')}`
-    const chipTrack = tagSize * 0.14
+    const RULER_CLEAR = 22
+    const tag = AD.kit.tag(root, undefined, { x: c.x, y: 0 })
+    const tagStyle = getComputedStyle(tag)
+    const tagBox = tag.getBoundingClientRect()
+    const probe = AD.el('span', null, tag) // zero-size inline box: its bottom edge is the text baseline
+    probe.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline'
+    const baseline = probe.getBoundingClientRect().bottom - tagBox.top
+    probe.remove()
+    const chipH = Math.round(tagBox.height)
+    const chipTop = geo.rulerY - RULER_CLEAR - chipH
+    const chipBase = chipTop + baseline
+    const chipPad = parseFloat(tagStyle.paddingLeft) + parseFloat(tagStyle.borderLeftWidth)
+    const chipFont = `600 ${tagStyle.fontSize} ${token('font-mono')}`
+    const chipTrack = parseFloat(tagStyle.letterSpacing) || 0
+    tag.style.top = chipTop + 'px'
     g.font = chipFont
     g.letterSpacing = chipTrack.toFixed(2) + 'px'
-    const chipW = Math.ceil(g.measureText('NOW').width - chipTrack) + 22
-    const chipH = tagSize + 12
+    const chipW = Math.ceil(g.measureText('NOW').width - chipTrack + chipPad * 2)
     g.letterSpacing = '0px'
-    const chipTop = geo.rulerY - 22 - chipH
-    AD.kit.tag(root, undefined, { x: c.x, y: chipTop })
 
     const hist = history()
     const fans = Array.from({ length: FAN_SETS }, (_, i) => fanSet(i))
@@ -250,7 +263,7 @@
       g.globalAlpha = 0.8
       g.fillStyle = COL.accent
       g.fillRect(Math.round(o.cx), o.hairTop, 1, chipTop - o.hairTop)
-      g.fillRect(Math.round(o.cx) - 1, geo.rulerY - 14, 3, 14)
+      g.fillRect(Math.round(o.cx) - 1, geo.rulerY - (RULER_CLEAR - 8), 3, RULER_CLEAR - 8)
       const chipX = Math.round(o.cx + 0.5 - chipW / 2)
       g.globalAlpha = 1
       g.fillStyle = COL.void
@@ -263,8 +276,8 @@
       g.fillStyle = COL.accent
       g.font = chipFont
       g.letterSpacing = chipTrack.toFixed(2) + 'px'
-      g.textBaseline = 'middle'
-      g.fillText('NOW', chipX + 11, chipTop + chipH / 2 + 1)
+      g.textBaseline = 'alphabetic'
+      g.fillText('NOW', chipX + chipPad, chipBase)
       g.letterSpacing = '0px'
 
       // The one known point, and the reticle that lands on it.

@@ -8,7 +8,8 @@
  *
  * Compliance: no profit-and-loss, balance or equity anywhere. The price path is
  * scripted with zero drift: after the order it ranges on both sides of the
- * entry (first against it), never approaches the limit and ends on the entry.
+ * entry (first against it), never approaches the limit, is at or below the
+ * entry from 45.5 to the end and finishes on the entry.
  * The record's time-stamp is the corner clock frozen at the instant of the
  * press, so the two agree to the millisecond on that frame.
  */
@@ -29,7 +30,7 @@
     press: 4.0, // bar line: the order and its time-stamp
     card: 4.5, // record opens
     lines: 5.0, // requested / filled print
-    footer: 5.5,
+    footer: 4.5 - 8 * f, // disclosure: fully on screen from 44.5, with the record
     cta: 6.0, // position row, URL
   }
   const SIZES = ['0.01', '0.02', '0.05', '0.10']
@@ -45,9 +46,13 @@
   const fmtSell = pips => ((ENTRY_POINTS - SPREAD_POINTS + Math.round(pips * 10)) / 100000).toFixed(5)
 
   // Closes of the live candles (one per beat from 41.5). 43.5–44.0 holds the
-  // quote on the entry so the request can be read; after the press the price
-  // dips, crosses the entry upward, crosses back and ends on it.
-  const SCRIPT = [-2.0, -6.0, 2.0, 0.0, 0.0, -4.0, -7.0, 2.0, 5.5, -1.0, -5.5, -2.5, 0.0]
+  // quote on the entry so the request can be read. After the press the price
+  // dips, crosses above the entry (about 44.7–45.4) and crosses back; from
+  // 45.5 it stays at or below the entry, so the position never looks like it
+  // is winning while the call to action is on screen, and it ends on the entry.
+  const SCRIPT = [-2.0, -6.0, 2.0, 0.0, 0.0, -3.0, 4.5, -1.5, -5.0, -6.5, -3.5, -2.0, 0.0]
+  const ORDER = 5 // first candle after the press
+  const BELOW = 8 // first candle that must stay at or below the entry (opens at 45.5)
   const HIST_END = 4.0
 
   function buildCandles(n0) {
@@ -67,12 +72,12 @@
       const o = closes[i]
       const c = closes[i + 1]
       const flat = Math.abs(o - c) < 0.05
-      candles.push({
-        o,
-        c,
-        h: Math.max(o, c) + (flat ? 1.2 : 0.6 + Math.abs(gauss()) * 5),
-        l: Math.min(o, c) - (flat ? 1.0 : 0.6 + Math.abs(gauss()) * 5),
-      })
+      const live = i - n0
+      let h = Math.max(o, c) + (flat ? 1.2 : 0.6 + Math.abs(gauss()) * 5)
+      const l = Math.min(o, c) - (flat ? 1.0 : 0.6 + Math.abs(gauss()) * 5)
+      if (live >= ORDER) h = Math.min(h, Math.max(o, c) + 1.5) // short upper wicks once the order is open
+      if (live >= BELOW) h = Math.min(h, 0)
+      candles.push({ o, c, h, l })
     }
     return { closes, candles }
   }
@@ -96,7 +101,8 @@
     const base = AD.lerp(S.closes[S.n0 + i], S.closes[S.n0 + i + 1], AD.clamp(u - i))
     const steady = tq > TM.limit + 0.4 && tq < TM.press + 0.1
     const jitter = k % 3 === 0 || steady || tq > 7.6 ? 0 : (AD.hash(k * 17 + 3) - 0.5) * 0.9
-    return base + jitter
+    const value = base + jitter
+    return i >= BELOW ? Math.min(value, 0) : value
   }
 
   AD.defineScene('demo', {
@@ -159,7 +165,7 @@
       .scene--demo .d-strip .bd .d-num { font-size: var(--d-cell); }
 
       .scene--demo .d-foot { display: flex; align-items: center; overflow: hidden; }
-      .scene--demo .d-foot span { display: inline-block; font-family: var(--font-text); font-weight: 500; font-size: var(--d-foot); letter-spacing: 0.05em; text-transform: uppercase; color: var(--white); white-space: nowrap; line-height: 1.2; }
+      .scene--demo .d-foot span { display: inline-block; font-family: var(--font-text); font-weight: 500; font-size: var(--d-foot); letter-spacing: 0.05em; text-transform: uppercase; color: var(--white); white-space: nowrap; line-height: 1.15; }
 
       .scene--demo .d-url .m { display: block; overflow: hidden; padding: 0.08em 0.04em 0.12em; margin: -0.08em -0.04em -0.12em; }
       .scene--demo .d-url .tx { display: inline-block; font-family: var(--font-display); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1; color: var(--white); white-space: nowrap; }
@@ -182,16 +188,16 @@
       // ── metrics per format ─────────────────────────────────────────────
       const M = ctx.pick({
         '16x9': {
-          hdrH: 44, footH: 30, stripH: 100, ticketW: 452, pad: 16, secGap: 12, quoteH: 88, fieldH: 56, btnH: 68, timeH: 36, axisW: 160, step: 20, cursor: 22,
-          css: { label: 20, value: 24, quote: 28, sym: 27, badge: 21, 'badge-h': 38, chip: 19, 'chip-h': 28, btn: 26, time: 20, 'time-h': 36, rtitle: 22, rval: 22, cellgap: 12, col: 20, cell: 21, 'strip-hd': 40, 'strip-bd': 50, foot: 21, sq: 30, padx: 14 },
+          hdrH: 44, footH: 38, stripH: 92, ticketW: 452, pad: 16, secGap: 12, quoteH: 88, fieldH: 56, btnH: 68, timeH: 36, axisW: 160, step: 20, cursor: 22,
+          css: { label: 20, value: 24, quote: 28, sym: 27, badge: 21, 'badge-h': 38, chip: 19, 'chip-h': 28, btn: 26, time: 20, 'time-h': 36, rtitle: 22, rval: 22, cellgap: 12, col: 20, cell: 21, 'strip-hd': 36, 'strip-bd': 48, foot: 28, sq: 30, padx: 14 },
         },
         '4x5': {
           hdrH: 46, footH: 34, stripH: 112, ticketW: 404, pad: 16, secGap: 14, quoteH: 110, fieldH: 88, btnH: 80, timeH: 40, axisW: 164, step: 18, cursor: 26,
-          css: { label: 22, value: 28, quote: 30, sym: 28, badge: 22, 'badge-h': 40, chip: 19.5, 'chip-h': 30, btn: 30, time: 21, 'time-h': 40, rtitle: 23, rval: 24, cellgap: 0, col: 20, cell: 22, 'strip-hd': 44, 'strip-bd': 56, foot: 23, sq: 34, padx: 14 },
+          css: { label: 22, value: 28, quote: 30, sym: 28, badge: 22, 'badge-h': 40, chip: 19.5, 'chip-h': 30, btn: 30, time: 21, 'time-h': 40, rtitle: 23, rval: 24, cellgap: 0, col: 20, cell: 22, 'strip-hd': 44, 'strip-bd': 56, foot: 26, sq: 34, padx: 14 },
         },
         '9x16': {
-          hdrH: 38, footH: 28, stripH: 0, ticketW: 0, pad: 12, secGap: 8, quoteH: 56, fieldH: 62, btnH: 60, timeH: 32, axisW: 160, step: 20, cursor: 24,
-          css: { label: 20, value: 26, quote: 28, sym: 26, badge: 21, 'badge-h': 36, chip: 19, 'chip-h': 28, btn: 28, time: 20, 'time-h': 32, rtitle: 24, rval: 28, cellgap: 44, col: 20, cell: 21, 'strip-hd': 0, 'strip-bd': 0, foot: 21, sq: 30, padx: 12 },
+          hdrH: 38, footH: 30, stripH: 0, ticketW: 0, pad: 12, secGap: 8, quoteH: 56, fieldH: 62, btnH: 60, timeH: 32, axisW: 160, step: 20, cursor: 24,
+          css: { label: 20, value: 26, quote: 28, sym: 26, badge: 21, 'badge-h': 36, chip: 19, 'chip-h': 28, btn: 28, time: 20, 'time-h': 32, rtitle: 24, rval: 28, cellgap: 44, col: 20, cell: 21, 'strip-hd': 0, 'strip-bd': 0, foot: 24, sq: 30, padx: 12 },
         },
       })
       for (const [k, v] of Object.entries(M.css)) root.style.setProperty(`--d-${k}`, v + 'px')

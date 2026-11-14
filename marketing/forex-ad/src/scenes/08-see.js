@@ -499,8 +499,9 @@ AD.defineScene('see', {
     else s.words.forEach((w, i) => w.h.show(t, { at: wordAt[i], dur: 7 * f }))
     // Hard cut: each word is switched off on its own (no wrapper is toggled).
     if (t >= 4.0 - EPS) for (const w of s.words) w.h.lines[w.line].inner.style.opacity = '0'
-    s.h2.show(t, { at: 4.0 - f, each: 5 * f, dur: 8 * f })
-    s.cap.style.top = s.capTop + Math.round((1 - prog(t, 4.0 + 10 * f, 8 * f, ease.snap)) * 10) + 'px'
-    s.cap.style.opacity = prog(t, 4.0 + 10 * f, 5 * f).toFixed(4)
+    s.h2.show(t, { at: 4.0 - f, each: 2 * f, dur: 8 * f })
+    // The qualifier arrives with the headline: fully opaque by 22.13, set by 22.2, held to the cut.
+    s.cap.style.top = s.capTop + Math.round((1 - prog(t, 4.0 + f, 5 * f, ease.snap)) * 10) + 'px'
+    s.cap.style.opacity = prog(t, 4.0 + f, 3 * f).toFixed(4)
   },
 })

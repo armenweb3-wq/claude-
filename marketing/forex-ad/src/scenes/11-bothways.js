@@ -16,14 +16,12 @@
   const { clamp, lerp, prog, ease, el, svg } = AD
   const f = n => n / 30 // frames → seconds
 
-  const ENTRY = 1.08432
-  const PIP = 0.0001
-  const DIST = 25
+  // The chips carry labels only, as the storyboard lists them: no price is
+  // quoted here, so nothing can disagree with the fill shown in 03 TRACE.
   const LEVELS = {
-    entry: { label: 'ENTRY', pips: 0, color: 'var(--white)', dash: '12 8' },
-    stop: { label: 'STOP', pips: -DIST, color: 'var(--amber)' },
+    entry: { label: 'ENTRY', color: 'var(--white)', dash: '12 8' },
+    stop: { label: 'STOP', color: 'var(--amber)' },
   }
-  const priceText = pips => (ENTRY + pips * PIP).toFixed(5)
   // Positioned with 2-D transforms, and faded through colour rather than element
   // opacity or filters: nothing here is promoted to its own compositor layer,
   // so a frame never depends on what was shown before.
@@ -60,7 +58,6 @@
       }
       .scene--bothways .lv-chip .grip { flex: none; width: 7px; height: 0.62em; opacity: 0.8; background: linear-gradient(to right, currentColor 2px, transparent 2px) 0 0 / 5px 100%; }
       .scene--bothways .lv-chip .lbl { font-family: var(--font-display); font-weight: 600; font-size: 1.1em; letter-spacing: 0.1em; min-width: 2.95em; }
-      .scene--bothways .lv-chip .px { font-family: var(--font-mono); font-weight: 500; color: var(--white); font-variant-numeric: tabular-nums slashed-zero; }
       .scene--bothways .bw-marker {
         position: absolute; left: 0; top: 0; box-sizing: border-box; display: flex; white-space: nowrap;
         font-family: var(--font-mono); font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
@@ -122,7 +119,6 @@
         node.style.height = P.chipH + 'px'
         el('span', 'grip', node)
         el('span', 'lbl', node, L.label)
-        el('span', 'px', node, priceText(L.pips))
         chips[key] = node
       }
       const chipW = Math.ceil(Math.max(...Object.values(chips).map(n => n.getBoundingClientRect().width)))

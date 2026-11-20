@@ -122,6 +122,12 @@
   table.opt td.big { font-size: 18pt; }
   table.opt { table-layout: auto; width: 100%; }
   .kicker { font-size: 10pt; }
+
+  /* plain white boxes: no colour fills */
+  .card, .card.glow, .card.hot, .step2 { background: #FFFFFF !important; box-shadow: 0 8px 24px rgba(30,20,10,0.05); }
+  .card.hot { border: 2px solid var(--or); }
+  .card.hot .label { color: var(--or2); } .card.hot .stat { color: var(--or2); } .card.hot .small { color: var(--muted); }
+  .card.glow { border-color: rgba(218,119,86,0.6); }
 </style>
 </head>
 <body>
@@ -190,7 +196,7 @@
   </div>
 
 
-  <div class="card" style="margin-top: 4mm; padding: 10px 16px; background: #FBF8F4;">
+  <div class="card" style="margin-top: 4mm; padding: 10px 16px; background: #FFFFFF;">
     <div class="label" style="margin-bottom: 4px;">Risk disclaimer</div>
     <p class="small" style="margin: 0; font-size: 9.6pt; line-height: 1.42;">Trading CFDs and FX Contracts is highly speculative and involves significant risk of your capital. You should not risk more than you can afford. Before taking any market action, you need to be properly aware of the risk. Past performance is not a guarantee of future performance. The information above is intended to be general and is not to be considered investment advice. This information should not be understood as an offer. Should you proceed using the information above for opening market positions, it is considered you did so at your own risk.</p>
   </div>

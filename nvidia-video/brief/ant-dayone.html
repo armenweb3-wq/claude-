@@ -133,6 +133,12 @@
   .step2 .n { width: 26px; height: 26px; border-radius: 13px; background: var(--or); color: #fff; font: 800 11pt "Inter Tight"; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; margin-top: 1px; }
   table.opt td { font-size: 14.5pt; padding: 8px 5px; }
   table.opt td.inv { font-size: 16pt; } table.opt td.big { font-size: 17pt; }
+
+  /* plain white boxes: no colour fills */
+  .card, .card.glow, .card.hot, .step2 { background: #FFFFFF !important; box-shadow: 0 8px 24px rgba(30,20,10,0.05); }
+  .card.hot { border: 2px solid var(--or); }
+  .card.hot .label { color: var(--or2); } .card.hot .stat { color: var(--or2); } .card.hot .small { color: var(--muted); }
+  .card.glow { border-color: rgba(218,119,86,0.6); }
 </style>
 </head>
 <body>
@@ -172,7 +178,7 @@
       <div><div class="stat white" style="font-size: 30pt;">+17.1%</div><div class="small">IPO price to the close, still on the table</div></div>
     </div>
   </div>
-  <div class="card" style="margin-top: 6mm; padding: 10px 16px; background: #FBF8F4;">
+  <div class="card" style="margin-top: 6mm; padding: 10px 16px; background: #FFFFFF;">
     <div class="label" style="margin-bottom: 4px;">Risk disclaimer</div>
     <p class="small" style="margin: 0; font-size: 9.2pt; line-height: 1.42;">Trading CFDs and FX Contracts is highly speculative and involves significant risk of your capital. You should not risk more than you can afford. Before taking any market action, you need to be properly aware of the risk. Past performance is not a guarantee of future performance. The information above is intended to be general and is not to be considered investment advice. This information should not be understood as an offer. Should you proceed using the information above for opening market positions, it is considered you did so at your own risk.</p>
   </div>

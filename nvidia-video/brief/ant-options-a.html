@@ -131,6 +131,11 @@
 
   /* no shadows: some PDF viewers render them as solid blocks */
   *, .card, .card.hot, .card.glow, .step2, .dates { box-shadow: none !important; filter: none !important; }
+
+  /* flat: no background glows or gradients */
+  .page { background: #FFFFFF !important; }
+  .card.hot, .dates { background: #DA7756 !important; }
+  .card, .card.glow { background-image: none !important; }
 </style>
 </head>
 <body>

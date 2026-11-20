@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Anthropic IPO: day one review</title>
+<style>
+  @font-face { font-family: "Inter"; src: url("../public/fonts/inter-400.woff2"); font-weight: 400; }
+  @font-face { font-family: "Inter"; src: url("../public/fonts/inter-500.woff2"); font-weight: 500; }
+  @font-face { font-family: "Inter"; src: url("../public/fonts/inter-600.woff2"); font-weight: 600; }
+  @font-face { font-family: "Inter"; src: url("../public/fonts/inter-700.woff2"); font-weight: 700; }
+  @font-face { font-family: "Inter Tight"; src: url("../public/fonts/inter-tight-700.woff2"); font-weight: 700; }
+  @font-face { font-family: "Inter Tight"; src: url("../public/fonts/inter-tight-800.woff2"); font-weight: 800; }
+  @font-face { font-family: "JetBrains Mono"; src: url("../public/fonts/jetbrains-mono-500.woff2"); font-weight: 500; }
+  @font-face { font-family: "JetBrains Mono"; src: url("../public/fonts/jetbrains-mono-700.woff2"); font-weight: 700; }
+
+  :root {
+    --or: #DA7756; --or2: #F2A27E; --ink: #0A0807; --char: #181311; --char2: #231B18;
+    --line: rgba(255,210,180,0.14); --text: #F7F2EE; --muted: #B5A79F; --dim: #7A6D66; --red: #FF6B6B; --nv: #76B900;
+  }
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--ink); }
+  body { font-family: "Inter", sans-serif; color: var(--text); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page {
+    width: 210mm; height: 297mm; position: relative; overflow: hidden; page-break-after: always;
+    padding: 20mm 18mm 18mm;
+    background:
+      radial-gradient(520px 520px at 85% 8%, rgba(218,119,86,0.18), transparent 65%),
+      radial-gradient(600px 500px at 0% 100%, rgba(218,119,86,0.07), transparent 70%),
+      var(--ink);
+  }
+  .page:last-child { page-break-after: auto; }
+  .grid-bg { position: absolute; inset: 0; opacity: 0.18; pointer-events: none;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 46px 46px; -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent); }
+  .rail { position: absolute; top: 10mm; left: 18mm; right: 18mm; display: flex; justify-content: space-between; font: 500 8.5pt "JetBrains Mono"; letter-spacing: 2.5px; color: var(--muted); text-transform: uppercase; }
+  .rail b { color: var(--or); font-weight: 700; }
+  .foot { position: absolute; bottom: 9mm; left: 18mm; right: 18mm; display: flex; justify-content: space-between; font: 500 7.5pt "JetBrains Mono"; letter-spacing: 1.5px; color: var(--dim); }
+  .kicker { display: flex; align-items: center; gap: 10px; font: 700 9pt "JetBrains Mono"; letter-spacing: 4px; color: var(--or); text-transform: uppercase; margin-bottom: 8px; }
+  .kicker::before { content: ""; width: 28px; height: 2px; background: var(--or); }
+  .kicker.nv { color: var(--nv); } .kicker.nv::before { background: var(--nv); }
+  h1 { font: 800 34pt/1.02 "Inter Tight"; letter-spacing: -1px; margin: 0 0 10px; }
+  h2 { font: 800 27pt/1.05 "Inter Tight"; letter-spacing: -0.6px; margin: 0 0 8px; }
+  h3 { font: 700 14pt/1.2 "Inter Tight"; margin: 0 0 7px; }
+  .accent { color: var(--or2); }
+  p { font-size: 11.5pt; line-height: 1.55; color: #E3DAD4; margin: 0 0 10px; }
+  .lead { font-size: 13.5pt; line-height: 1.5; color: var(--text); }
+  .card { background: linear-gradient(160deg, var(--char2), var(--char)); border: 1px solid var(--line); border-radius: 16px; padding: 11px 14px; }
+  .card.glow { border-color: rgba(218,119,86,0.75); box-shadow: 0 0 40px rgba(218,119,86,0.16); }
+  .card.nv { border-color: rgba(118,185,0,0.6); box-shadow: 0 0 40px rgba(118,185,0,0.12); }
+  .row { display: flex; gap: 12px; }
+  .col { flex: 1; }
+  .stat { font: 800 22pt/1 "Inter Tight"; color: var(--or2); letter-spacing: -0.5px; }
+  .stat.white { color: var(--text); } .stat.nv { color: var(--nv); }
+  .label { font: 500 7.5pt "JetBrains Mono"; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+  .small { font-size: 9.8pt; color: var(--muted); line-height: 1.45; }
+  .src { font: 500 7pt "JetBrains Mono"; color: var(--dim); letter-spacing: 0.5px; margin-top: 6px; }
+  ul.clean { list-style: none; padding: 0; margin: 0; }
+  ul.clean li { position: relative; padding-left: 18px; margin: 0 0 9px; font-size: 11.5pt; line-height: 1.45; color: #E3DAD4; }
+  ul.clean li::before { content: ""; position: absolute; left: 2px; top: 6px; width: 7px; height: 7px; border-radius: 2px; background: var(--or); }
+  .pill { display: inline-block; padding: 3px 10px; border-radius: 99px; background: var(--or); color: var(--ink); font: 800 10pt "Inter Tight"; }
+  .tag { display: inline-block; padding: 2px 9px; border-radius: 99px; border: 1px solid var(--line); font: 500 7.5pt "JetBrains Mono"; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
+  .num { font-variant-numeric: tabular-nums; }
+  .bar { height: 22px; border-radius: 6px; }
+  .step { display: flex; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 12px; background: var(--char2); border: 1px solid var(--line); margin-bottom: 8px; }
+  .step .n { width: 28px; height: 28px; border-radius: 14px; background: var(--or); color: var(--ink); font: 800 12pt "Inter Tight"; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+
+  table.opt { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  table.opt th { font: 500 7.8pt "JetBrains Mono"; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; text-align: right; padding: 6px 8px 8px; border-bottom: 1px solid var(--line); line-height: 1.25; }
+  table.opt th:first-child { text-align: left; }
+  table.opt th.hi { color: var(--or2); }
+  table.opt .th-sub { font-size: 7pt; color: var(--dim); letter-spacing: 1px; }
+  table.opt td { padding: 8px 8px; text-align: right; font: 600 14pt "Inter Tight"; color: var(--text); border-bottom: 1px dashed var(--line); }
+  table.opt td:first-child { text-align: left; }
+  table.opt td.inv { font-weight: 800; font-size: 17pt; }
+  table.opt td.up { color: var(--or2); }
+  table.opt td.big { font-weight: 800; font-size: 18pt; }
+  table.opt tr:last-child td { border-bottom: none; }
+
+  /* ── light edition ── */
+  :root { --ink: #FFFFFF; --char: #FFFFFF; --char2: #FBF8F4; --line: rgba(20,16,12,0.10); --text: #16120F; --muted: #6E655E; --dim: #9A908A; --or: #DA7756; --or2: #C9633F; }
+  html, body { background: #FFFFFF; }
+  .page { background: radial-gradient(560px 520px at 88% 6%, rgba(218,119,86,0.16), transparent 65%), radial-gradient(600px 500px at 0% 100%, rgba(218,119,86,0.07), transparent 70%), #FFFFFF; }
+  .grid-bg { opacity: 0.5; }
+  p { color: #2A2420; }
+  .lead { color: var(--text); }
+  .card { background: #FFFFFF; border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(30,20,10,0.06); }
+  .card.glow { border-color: rgba(218,119,86,0.7); box-shadow: 0 12px 36px rgba(218,119,86,0.16); background: linear-gradient(160deg, #FFF4EE, #FFFFFF); }
+  .stat { color: var(--or2); } .stat.white { color: var(--text); }
+  .kicker { color: var(--or2); } .kicker::before { background: var(--or); }
+  .rail { color: var(--muted); } .rail b { color: var(--or2); }
+  .foot { color: var(--dim); }
+  .src { color: var(--dim); }
+  table.opt th { color: var(--muted); border-bottom-color: rgba(20,16,12,0.18); }
+  table.opt th.hi { color: var(--or2); }
+  table.opt td { color: var(--text); border-bottom-color: var(--line); }
+  table.opt td.up { color: var(--or2); }
+  table.opt .th-sub { color: var(--dim); }
+
+  .dates { display: flex; align-items: stretch; margin-top: 5mm; border-radius: 18px; padding: 14px 22px; background: linear-gradient(120deg, #DA7756, #E8906F); box-shadow: 0 14px 36px rgba(218,119,86,0.35); color: #FFFFFF; }
+  .dates .d { flex: 1; }
+  .dates .sep { width: 1px; background: rgba(255,255,255,0.45); margin: 2px 22px; }
+  .dates .dl { font: 700 8.5pt "JetBrains Mono"; letter-spacing: 3px; text-transform: uppercase; opacity: 0.9; }
+  .dates .dv { font: 800 34pt/1.05 "Inter Tight"; letter-spacing: -0.8px; margin-top: 3px; }
+  .dates .ds { font-size: 10pt; margin-top: 4px; opacity: 0.92; }
+  .stat { font-size: 18pt; }
+  .label { letter-spacing: 1.5px; font-size: 7pt; }
+
+  /* bigger type, highlighted dates */
+  .card.hot { background: linear-gradient(135deg, #DA7756, #E8906F); border-color: #DA7756; box-shadow: 0 14px 36px rgba(218,119,86,0.35); }
+  .card.hot .label { color: rgba(255,255,255,0.9); }
+  .card.hot .stat { color: #FFFFFF; font-size: 24pt; }
+  .card.hot .small { color: #FFFFFF; }
+  .stat { font-size: 22pt; }
+  .label { font-size: 8.5pt; letter-spacing: 2px; }
+  .small { font-size: 11pt; }
+  .lead { font-size: 13pt; }
+  .card { padding: 14px 16px; }
+  table.opt th { font-size: 9pt; }
+  table.opt td { font-size: 15pt; padding: 10px 5px; letter-spacing: -0.3px; white-space: nowrap; }
+  table.opt td.inv { font-size: 17pt; }
+  table.opt td.big { font-size: 18pt; }
+  table.opt { table-layout: auto; width: 100%; }
+  .kicker { font-size: 10pt; }
+
+  .timeline { margin-top: 5mm; border-left: 3px solid #DA7756; padding-left: 14px; }
+  .tl-row { display: flex; gap: 14px; align-items: baseline; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+  .tl-row:last-child { border-bottom: none; }
+  .tl-t { flex: 0 0 140px; font: 700 8.5pt "JetBrains Mono"; letter-spacing: 1.5px; color: var(--or2); text-transform: uppercase; }
+  .tl-d { font-size: 11pt; line-height: 1.4; color: #2A2420; }
+  .steps2 { display: flex; flex-direction: column; gap: 7px; margin-top: 3mm; }
+  .step2 { display: flex; gap: 12px; align-items: flex-start; padding: 8px 14px; border-radius: 12px; background: #FFFFFF; border: 1px solid var(--line); box-shadow: 0 8px 24px rgba(30,20,10,0.05); font-size: 10.2pt; line-height: 1.38; color: #2A2420; }
+  .step2 .n { width: 26px; height: 26px; border-radius: 13px; background: var(--or); color: #fff; font: 800 11pt "Inter Tight"; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; margin-top: 1px; }
+  table.opt td { font-size: 14.5pt; padding: 8px 5px; }
+  table.opt td.inv { font-size: 16pt; } table.opt td.big { font-size: 17pt; }
+</style>
+</head>
+<body>
+<section class="page">
+  <div class="grid-bg"></div>
+  <div class="rail"><span><b>ANT</b> · IPO · day one review</span><span>20 November 2026 · 1 / 2</span></div>
+  <svg width="110" height="110" viewBox="0 0 100 100" style="position:absolute; right: 18mm; top: 22mm;">
+    <g fill="#DA7756">
+      <rect x="46" y="8" width="8" height="38" rx="4"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(45 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(90 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(135 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(180 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(225 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(270 50 50)"/><rect x="46" y="8" width="8" height="38" rx="4" transform="rotate(315 50 50)"/>
+    </g>
+    <circle cx="50" cy="50" r="9" fill="#FFFFFF" stroke="#DA7756" stroke-width="4"/>
+  </svg>
+  <div style="margin-top: 4mm;">
+    <div class="kicker">Anthropic · Nasdaq Global Select Market</div>
+    <h1 style="font-size: 30pt; max-width: 125mm;">What happened<br/><span class="accent">on IPO day.</span></h1>
+    <p class="lead" style="max-width: 128mm; font-size: 12.5pt;">Anthropic priced its IPO at <b>$83</b> on Wednesday 18 November, above the $70–$78 range. On Thursday 19 November the shares opened at <b>$111.50</b> and closed at <b>$97.17</b>: the largest IPO in history, up 17% on day one.</p>
+  </div>
+
+  <div class="row" style="margin-top: 5mm;">
+    <div class="card col"><div class="label">Institutions · IPO price</div><div class="stat white">$83.00</div><div class="small">allocated on 18 Nov · ~980M shares · ~$81B raised</div></div>
+    <div class="card col hot"><div class="label">Retail · opening trade</div><div class="stat">$111.50</div><div class="small">19 Nov, 11:50 ET · first public price</div></div>
+    <div class="card col"><div class="label">Close · 19 Nov</div><div class="stat white">$97.17</div><div class="small">+17.07% vs IPO price · −12.9% vs the open</div></div>
+  </div>
+
+  <div class="timeline">
+    <div class="tl-row"><span class="tl-t">Wed 18 Nov</span><span class="tl-d">Priced at <b>$83</b>, above the expected $70–$78. Institutions receive their allocation at this price.</span></div>
+    <div class="tl-row"><span class="tl-t">Thu 19 Nov · 09:30</span><span class="tl-d">Nasdaq opens. ANT does not trade yet: the opening auction runs for more than two hours to match record demand.</span></div>
+    <div class="tl-row"><span class="tl-t">Thu 19 Nov · 11:50</span><span class="tl-d">First public trade at <b>$111.50</b>, 34% above the IPO price. This is the first price available to retail buyers.</span></div>
+    <div class="tl-row"><span class="tl-t">Thu 19 Nov · 16:00</span><span class="tl-d">Closes at <b>$97.17</b> as the wider market slides. Still +$14.17 on the IPO price; about $1.3T market value.</span></div>
+  </div>
+
+  <div class="card glow" style="margin-top: 5mm; padding: 12px 18px 10px;">
+    <div class="kicker" style="margin-bottom: 4px;">The gap · $83 to $111.50</div>
+    <div class="row" style="align-items: baseline; gap: 18px;">
+      <div><div class="stat" style="font-size: 30pt;">+$28.50</div><div class="small">per share, IPO price to opening trade</div></div>
+      <div><div class="stat" style="font-size: 30pt;">+34.3%</div><div class="small">the move retail buyers did not get</div></div>
+      <div><div class="stat white" style="font-size: 30pt;">+17.1%</div><div class="small">IPO price to the close, still on the table</div></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top: 6mm; padding: 10px 16px; background: #FBF8F4;">
+    <div class="label" style="margin-bottom: 4px;">Risk disclaimer</div>
+    <p class="small" style="margin: 0; font-size: 9.2pt; line-height: 1.42;">Trading CFDs and FX Contracts is highly speculative and involves significant risk of your capital. You should not risk more than you can afford. Before taking any market action, you need to be properly aware of the risk. Past performance is not a guarantee of future performance. The information above is intended to be general and is not to be considered investment advice. This information should not be understood as an offer. Should you proceed using the information above for opening market positions, it is considered you did so at your own risk.</p>
+  </div>
+  <div class="foot"><span>Anthropic IPO · day one review · 1/2</span><span>Sources: Nasdaq, Forbes, Bloomberg, NBC · 19–20.11.2026</span></div>
+</section>
+
+<section class="page">
+  <div class="grid-bg"></div>
+  <div class="rail"><span><b>ANT</b> · IPO · day one review</span><span>20 November 2026 · 2 / 2</span></div>
+  <div style="margin-top: 4mm;">
+    <div class="kicker">Profit missed · from the $83 allocation</div>
+    <h2 style="font-size: 25pt;">What an $83 entry would have made, <span class="accent">on 1:10 leverage.</span></h2>
+  </div>
+  <div class="card glow" style="margin-top: 4mm; padding: 12px 18px 8px;">
+    <table class="opt">
+      <thead>
+        <tr>
+          <th>Investment</th>
+          <th>Buying power</th>
+          <th>ANT shares<br/><span class="th-sub">at $83</span></th>
+          <th>At the close<br/><span class="th-sub">$97.17 · +17.1%</span></th>
+          <th class="hi">At the open<br/><span class="th-sub">$111.50 · +34.3%</span></th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td class="num inv">$5,000</td>
+        <td class="num">$50,000</td>
+        <td class="num">602</td>
+        <td class="num up">+$8,536</td>
+        <td class="num up big">+$17,169</td>
+      </tr>
+      <tr>
+        <td class="num inv">$10,000</td>
+        <td class="num">$100,000</td>
+        <td class="num">1,205</td>
+        <td class="num up">+$17,072</td>
+        <td class="num up big">+$34,337</td>
+      </tr>
+      <tr>
+        <td class="num inv">$25,000</td>
+        <td class="num">$250,000</td>
+        <td class="num">3,012</td>
+        <td class="num up">+$42,681</td>
+        <td class="num up big">+$85,843</td>
+      </tr>
+      <tr>
+        <td class="num inv">$50,000</td>
+        <td class="num">$500,000</td>
+        <td class="num">6,024</td>
+        <td class="num up">+$85,361</td>
+        <td class="num up big">+$171,687</td>
+      </tr>
+      <tr>
+        <td class="num inv">$100,000</td>
+        <td class="num">$1,000,000</td>
+        <td class="num">12,048</td>
+        <td class="num up">+$170,723</td>
+        <td class="num up big">+$343,373</td>
+      </tr>
+      <tr>
+        <td class="num inv">$250,000</td>
+        <td class="num">$2,500,000</td>
+        <td class="num">30,120</td>
+        <td class="num up">+$426,807</td>
+        <td class="num up big">+$858,434</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top: 5mm;">
+    <div class="kicker">Until the end of November · protecting the gain</div>
+    <h2 style="font-size: 22pt;">How we hold these profits <span class="accent">to month end.</span></h2>
+  </div>
+  <div class="steps2">
+    <div class="step2"><div class="n">1</div><div><b>Stop-loss at break-even, straight away.</b> A protective stop at the entry price means the position can no longer turn into a loss. Whatever the market does, the worst case is zero.</div></div>
+    <div class="step2"><div class="n">2</div><div><b>Trail the stop as ANT rises.</b> Move the stop up behind the price, for example 8–10% below the highest close. New highs lock in more; a pull-back closes the trade in profit instead of giving it back.</div></div>
+    <div class="step2"><div class="n">3</div><div><b>Take part of the profit off the table.</b> Close a third of the position now and a third at the next target. Realised profit cannot be lost; the rest stays in for the upside.</div></div>
+    <div class="step2"><div class="n">4</div><div><b>Hedge through the volatile days.</b> New listings swing most in the first weeks. On event days a short CFD against part of the long position freezes the result until the day has passed, then the hedge is lifted.</div></div>
+    <div class="step2"><div class="n">5</div><div><b>Keep leverage and margin comfortable.</b> At 1:10 a 10% move is 100% of margin. Keeping free margin high and position size disciplined is what lets the plan above run to 30 November without a forced close.</div></div>
+  </div>
+  <div class="foot"><span>Anthropic IPO · day one review · 2/2</span><span>Before spreads, commissions and financing</span></div>
+</section>
+</body>
+</html>

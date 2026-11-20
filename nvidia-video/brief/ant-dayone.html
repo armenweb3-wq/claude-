@@ -147,6 +147,12 @@
   .page { background: #FFFFFF !important; }
   .card.hot, .dates { background: #DA7756 !important; }
   .card, .card.glow { background-image: none !important; }
+
+  .statement { margin-top: 4mm; padding: 6px 0 0; }
+  .statement p { font-size: 15pt; line-height: 1.5; color: var(--text); margin: 0 0 10px; max-width: 160mm; }
+  .statement p b { color: var(--or2); }
+  .statement .tc { font: 500 9pt "JetBrains Mono"; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-top: 6px; }
+  .disc-bottom { position: absolute; left: 18mm; right: 18mm; bottom: 18mm; }
 </style>
 </head>
 <body>
@@ -186,10 +192,6 @@
       <div><div class="stat white" style="font-size: 30pt;">+17.1%</div><div class="small">IPO price to the close, still on the table</div></div>
     </div>
   </div>
-  <div class="card" style="margin-top: 6mm; padding: 10px 16px; background: #FFFFFF;">
-    <div class="label" style="margin-bottom: 4px;">Risk disclaimer</div>
-    <p class="small" style="margin: 0; font-size: 9.2pt; line-height: 1.42;">Trading CFDs and FX Contracts is highly speculative and involves significant risk of your capital. You should not risk more than you can afford. Before taking any market action, you need to be properly aware of the risk. Past performance is not a guarantee of future performance. The information above is intended to be general and is not to be considered investment advice. This information should not be understood as an offer. Should you proceed using the information above for opening market positions, it is considered you did so at your own risk.</p>
-  </div>
   <div class="foot"><span>Anthropic IPO · day one review · 1/2</span><span>Sources: Nasdaq, Forbes, Bloomberg, NBC · 19–20.11.2026</span></div>
 </section>
 
@@ -198,7 +200,7 @@
   <div class="rail"><span><b>ANT</b> · IPO · day one review</span><span>20 November 2026 · 2 / 2</span></div>
   <div style="margin-top: 4mm;">
     <div class="kicker">Profit missed · from the $83 allocation</div>
-    <h2 style="font-size: 25pt;">What an $83 entry would have made, <span class="accent">on 1:10 leverage.</span></h2>
+    <h2 style="font-size: 25pt;">What an $83 entry made at the open, <span class="accent">on 1:10 leverage.</span></h2>
   </div>
   <div class="card glow" style="margin-top: 4mm; padding: 12px 18px 8px;">
     <table class="opt">
@@ -207,7 +209,6 @@
           <th>Investment</th>
           <th>Buying power</th>
           <th>ANT shares<br/><span class="th-sub">at $83</span></th>
-          <th>At the close<br/><span class="th-sub">$97.17 · +17.1%</span></th>
           <th class="hi">At the open<br/><span class="th-sub">$111.50 · +34.3%</span></th>
         </tr>
       </thead>
@@ -216,58 +217,56 @@
         <td class="num inv">$5,000</td>
         <td class="num">$50,000</td>
         <td class="num">602</td>
-        <td class="num up">+$8,536</td>
         <td class="num up big">+$17,169</td>
       </tr>
       <tr>
         <td class="num inv">$10,000</td>
         <td class="num">$100,000</td>
         <td class="num">1,205</td>
-        <td class="num up">+$17,072</td>
         <td class="num up big">+$34,337</td>
       </tr>
       <tr>
         <td class="num inv">$25,000</td>
         <td class="num">$250,000</td>
         <td class="num">3,012</td>
-        <td class="num up">+$42,681</td>
         <td class="num up big">+$85,843</td>
       </tr>
       <tr>
         <td class="num inv">$50,000</td>
         <td class="num">$500,000</td>
         <td class="num">6,024</td>
-        <td class="num up">+$85,361</td>
         <td class="num up big">+$171,687</td>
       </tr>
       <tr>
         <td class="num inv">$100,000</td>
         <td class="num">$1,000,000</td>
         <td class="num">12,048</td>
-        <td class="num up">+$170,723</td>
         <td class="num up big">+$343,373</td>
       </tr>
       <tr>
         <td class="num inv">$250,000</td>
         <td class="num">$2,500,000</td>
         <td class="num">30,120</td>
-        <td class="num up">+$426,807</td>
         <td class="num up big">+$858,434</td>
       </tr>
       </tbody>
     </table>
   </div>
 
-  <div style="margin-top: 5mm;">
-    <div class="kicker">Until the end of November · protecting the gain</div>
-    <h2 style="font-size: 22pt;">How we hold these profits <span class="accent">to month end.</span></h2>
+  <div style="margin-top: 8mm;">
+    <div class="kicker">Until the end of November</div>
+    <h2 style="font-size: 24pt;">Our position, <span class="accent">and yours.</span></h2>
   </div>
-  <div class="steps2">
-    <div class="step2"><div class="n">1</div><div><b>Stop-loss at break-even, straight away.</b> A protective stop at the entry price means the position can no longer turn into a loss. Whatever the market does, the worst case is zero.</div></div>
-    <div class="step2"><div class="n">2</div><div><b>Trail the stop as ANT rises.</b> Move the stop up behind the price, for example 8–10% below the highest close. New highs lock in more; a pull-back closes the trade in profit instead of giving it back.</div></div>
-    <div class="step2"><div class="n">3</div><div><b>Take part of the profit off the table.</b> Close a third of the position now and a third at the next target. Realised profit cannot be lost; the rest stays in for the upside.</div></div>
-    <div class="step2"><div class="n">4</div><div><b>Hedge through the volatile days.</b> New listings swing most in the first weeks. On event days a short CFD against part of the long position freezes the result until the day has passed, then the hedge is lifted.</div></div>
-    <div class="step2"><div class="n">5</div><div><b>Keep leverage and margin comfortable.</b> At 1:10 a 10% move is 100% of margin. Keeping free margin high and position size disciplined is what lets the plan above run to 30 November without a forced close.</div></div>
+  <div class="statement">
+    <p>As an institution, we participated in the IPO at the <b>$83</b> allocation price and secured the profit at <b>$111.50</b>.</p>
+    <p>Our liquidity provider can profit-share at these prices until the end of the month.</p>
+    <p class="tc">Terms &amp; conditions apply.</p>
+  </div>
+  <div class="disc-bottom">
+  <div class="card" style="margin-top: 0; padding: 10px 16px; background: #FFFFFF;">
+    <div class="label" style="margin-bottom: 4px;">Risk disclaimer</div>
+    <p class="small" style="margin: 0; font-size: 9.2pt; line-height: 1.42;">Trading CFDs and FX Contracts is highly speculative and involves significant risk of your capital. You should not risk more than you can afford. Before taking any market action, you need to be properly aware of the risk. Past performance is not a guarantee of future performance. The information above is intended to be general and is not to be considered investment advice. This information should not be understood as an offer. Should you proceed using the information above for opening market positions, it is considered you did so at your own risk.</p>
+  </div>
   </div>
   <div class="foot"><span>Anthropic IPO · day one review · 2/2</span><span>Before spreads, commissions and financing</span></div>
 </section>

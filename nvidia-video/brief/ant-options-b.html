@@ -128,6 +128,9 @@
   .card.hot .label { color: rgba(255,255,255,0.9); } .card.hot .stat { color: #FFFFFF; } .card.hot .small { color: #FFFFFF; }
   /* no extra outlined boxes: table and gap sections sit flat on the page */
   .card.glow { background: transparent !important; border: none !important; box-shadow: none !important; padding-left: 0 !important; padding-right: 0 !important; }
+
+  /* no shadows: some PDF viewers render them as solid blocks */
+  *, .card, .card.hot, .card.glow, .step2, .dates { box-shadow: none !important; filter: none !important; }
 </style>
 </head>
 <body>
